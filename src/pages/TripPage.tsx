@@ -66,6 +66,7 @@ export default function TripPage() {
       <BookingFlow trip={trip} />
       <FAQ />
       <SquadCTA />
+      <div className="h-1 bg-mm-bone/20" />
       <SiteFooter />
     </main>
   );
