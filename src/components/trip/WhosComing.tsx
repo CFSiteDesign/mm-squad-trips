@@ -41,8 +41,8 @@ export function WhosComing({ trip }: { trip: Trip }) {
                   {t.photo ? (
                     <img src={t.photo} alt={t.name} className="h-10 w-10 border-[3px] border-mm-black object-cover" />
                   ) : (
-                    <div className="flex h-10 w-10 items-center justify-center border-[3px] border-mm-black bg-mm-black font-display text-xs text-mm-bone">
-                      {t.name.slice(0, 2).toUpperCase()}
+                    <div className="flex h-10 w-10 items-center justify-center border-[3px] border-mm-black bg-mm-black font-display text-[9px] text-mm-bone leading-tight text-center">
+                      PLACEHOLDER IMAGE
                     </div>
                   )}
                   <div className="font-sticker text-[10px] tracking-[0.18em] text-mm-black">

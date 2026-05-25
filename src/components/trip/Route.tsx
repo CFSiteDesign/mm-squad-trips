@@ -28,7 +28,7 @@ export function Route({ trip }: { trip: Trip }) {
               </h3>
               <p className="mt-2 text-sm text-mm-bone/80">{stop.description}</p>
 
-              {stop.photos?.length > 0 && (
+              {stop.photos?.length > 0 ? (
                 <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
                   {stop.photos.map((p, j) => (
                     <img
@@ -39,6 +39,10 @@ export function Route({ trip }: { trip: Trip }) {
                       loading="lazy"
                     />
                   ))}
+                </div>
+              ) : (
+                <div className="mt-4 flex h-32 w-48 items-center justify-center border-[3px] border-mm-bone bg-mm-orange">
+                  <span className="font-display text-xs text-mm-black text-center px-2">PLACEHOLDER IMAGE</span>
                 </div>
               )}
 
