@@ -28,9 +28,9 @@ export function Wordmark({
 
 export function PinnedWordmark() {
   return (
-    <div className="pointer-events-none absolute left-4 top-2 z-40 md:left-10 md:top-6">
-      <Wordmark size={80} className="md:hidden" />
-      <Wordmark size={144} className="hidden md:block" />
+    <div className="pointer-events-none absolute left-4 top-3 z-40 md:left-8 md:top-4">
+      <Wordmark size={120} className="md:hidden" />
+      <Wordmark size={180} className="hidden md:block" />
     </div>
   );
 }
