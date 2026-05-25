@@ -54,6 +54,9 @@ export function Hero({ trip }: { trip: Trip }) {
           <p className="mt-6 max-w-xl text-base text-mm-bone/90 md:text-lg">
             {trip.days} days · {stopCount} stops · {trip.activityCount} activities · One crew
           </p>
+          <p className="mt-3 max-w-xl text-base text-mm-bone/80 md:text-lg">
+            For those with friends who never commit. Trips that actually make it out the group chat.
+          </p>
         </div>
 
         {/* Bottom booking strip */}
