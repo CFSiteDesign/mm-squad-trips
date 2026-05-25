@@ -32,56 +32,60 @@ export function Hero({ trip }: { trip: Trip }) {
       <div className="absolute inset-0 bg-gradient-to-b from-mm-black/55 via-mm-black/25 to-mm-black/80" />
 
       {/* Starburst device */}
-      <div className="absolute right-3 top-6 z-20 md:right-10 md:top-10">
-        <Starburst size={96} color="pink" rotate={-12}>
+      <div className="absolute right-3 top-20 z-20 md:right-10 md:top-10">
+        <Starburst size={88} color="pink" rotate={-12}>
           {trip.days}<br />DAYS
         </Starburst>
       </div>
 
       {/* Main content stack */}
-      <div className="relative z-10 mx-auto flex min-h-[100svh] max-w-7xl flex-col justify-end px-4 pb-6 pt-32 md:justify-between md:px-12 md:pt-40 md:pb-10">
-        <div className="hidden md:block" />
-        <div className="mt-auto">
-          <h1 className="font-display uppercase leading-[0.86] tracking-tight text-[clamp(2.75rem,13vw,9rem)]">
+      <div className="relative z-10 mx-auto grid min-h-[100svh] max-w-7xl grid-rows-[7rem_1fr_auto] px-4 pb-6 pt-0 md:grid-rows-[9rem_1fr_auto] md:px-12 md:pb-10">
+        <div />
+
+        <div className="flex items-center md:items-end">
+          <div className="max-w-[19rem] md:max-w-5xl">
+            <h1 className="font-display uppercase leading-[0.88] tracking-tight text-[clamp(2.7rem,12vw,9rem)] md:leading-[0.86]">
             <span className="block text-mm-bone">SOLO<br className="md:hidden" /> TRAVELLER?</span>
             <span className="block text-mm-pink">NOT FOR</span>
             <span className="block text-mm-lime">LONG.</span>
-          </h1>
+            </h1>
 
-          <p className="mt-4 max-w-xl whitespace-pre-line text-[13px] leading-snug text-mm-bone/90 md:mt-5 md:text-lg">
-            For those with friends who never commit.{"\n"}Trips that actually make it out the group chat.
-          </p>
-        </div>
-
-
-
-        {/* Bottom booking strip */}
-        <div className="mt-6 w-full max-w-3xl border-mm-thick border-mm-black bg-mm-bone text-mm-black shadow-mm md:mt-10">
-          <div className="flex items-stretch">
-            <div className="flex-1 border-r-mm-thick border-mm-black px-3 py-2 md:px-5 md:py-4">
-              <p className="font-sticker text-[9px] tracking-[0.18em] text-mm-black/70 md:text-[10px] md:tracking-[0.22em]">FROM</p>
-              <div className="mt-0.5 flex items-end gap-2 md:mt-1 md:gap-3">
-                <span className="font-display text-2xl leading-none md:text-5xl">{formatPrice(headPrice)}</span>
-                {headStrike ? (
-                  <span className="mb-0.5 font-display text-xs text-mm-black/50 line-through md:mb-1 md:text-lg">{formatPrice(headStrike)}</span>
-                ) : null}
-              </div>
-              <p className="mt-0.5 font-sticker text-[8px] leading-tight tracking-[0.16em] text-mm-black/70 md:mt-1 md:text-[10px] md:tracking-[0.22em]">
-                {payInFull ? "PAY IN FULL" : "$99 DEPOSIT HOLDS YOUR SPOT"}
-              </p>
-            </div>
-            <Button
-              onClick={() => document.getElementById("booking")?.scrollIntoView({ behavior: "smooth" })}
-              className="h-auto min-h-0 flex-1 rounded-none bg-mm-orange px-3 py-2 font-display text-sm leading-tight text-mm-black hover:bg-mm-orange md:min-h-[72px] md:px-4 md:text-xl"
-            >
-              PICK YOUR<br className="md:hidden" /> DATES →
-            </Button>
+            <p className="mt-4 max-w-[17rem] text-sm leading-[1.15] text-mm-bone/90 md:mt-5 md:max-w-xl md:text-lg md:leading-snug">
+              For those with friends who never commit.<br />
+              Trips that actually make it out the group chat.
+            </p>
           </div>
         </div>
 
-        <p className="mt-4 font-sticker text-[9px] tracking-[0.2em] text-mm-bone/80 md:mt-8 md:text-[10px] md:tracking-[0.24em]">
-          REAL MAD MONKEY HOSTELS IN EVERY CITY · 53,000+ IN OUR COMMUNITY
-        </p>
+        {/* Bottom booking strip */}
+        <div>
+          <div className="w-full max-w-3xl border-mm-thick border-mm-black bg-mm-bone text-mm-black shadow-mm">
+            <div className="flex items-stretch">
+              <div className="flex-1 border-r-mm-thick border-mm-black px-3 py-2 md:px-5 md:py-4">
+                <p className="font-sticker text-[9px] tracking-[0.18em] text-mm-black/70 md:text-[10px] md:tracking-[0.22em]">FROM</p>
+                <div className="mt-0.5 flex items-end gap-2 md:mt-1 md:gap-3">
+                  <span className="font-display text-2xl leading-none md:text-5xl">{formatPrice(headPrice)}</span>
+                  {headStrike ? (
+                    <span className="mb-0.5 font-display text-xs text-mm-black/50 line-through md:mb-1 md:text-lg">{formatPrice(headStrike)}</span>
+                  ) : null}
+                </div>
+                <p className="mt-0.5 font-sticker text-[8px] leading-tight tracking-[0.16em] text-mm-black/70 md:mt-1 md:text-[10px] md:tracking-[0.22em]">
+                  {payInFull ? "PAY IN FULL" : "$99 DEPOSIT HOLDS YOUR SPOT"}
+                </p>
+              </div>
+              <Button
+                onClick={() => document.getElementById("booking")?.scrollIntoView({ behavior: "smooth" })}
+                className="h-auto min-h-0 flex-1 rounded-none bg-mm-orange px-3 py-2 font-display text-sm leading-tight text-mm-black hover:bg-mm-orange md:min-h-[72px] md:px-4 md:text-xl"
+              >
+                PICK YOUR<br className="md:hidden" /> DATES →
+              </Button>
+            </div>
+          </div>
+
+          <p className="mt-4 font-sticker text-[9px] tracking-[0.2em] text-mm-bone/80 md:mt-8 md:text-[10px] md:tracking-[0.24em]">
+            REAL MAD MONKEY HOSTELS IN EVERY CITY · 53,000+ IN OUR COMMUNITY
+          </p>
+        </div>
       </div>
 
       <PinnedWordmark />
