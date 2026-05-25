@@ -2,89 +2,91 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Mad Monkey Group Trips — design tokens.
-   All colors HSL. Warm jungle + sunset palette with crisp lime accent. */
+/* ====================================================================
+   MAD MONKEY HOSTELS — Poster Brand System
+   8 canonical poster colours. Mad Black / Bone / Paper as anchors.
+   Hard-offset shadows. Montserrat 900 UPPERCASE display.
+   ==================================================================== */
 @layer base {
   :root {
-    --background: 36 33% 97%;
-    --foreground: 24 18% 12%;
+    /* anchors */
+    --paper: 0 0% 100%;              /* #ffffff */
+    --bone: 41 47% 93%;              /* #f5efe2 */
+    --mad-black: 0 0% 4%;            /* #0a0a0a */
 
-    --card: 0 0% 100%;
-    --card-foreground: 24 18% 12%;
+    /* poster palette — use 2–3 per composition */
+    --mm-blue:   211 99% 49%;        /* #0081f7 */
+    --mm-yellow: 45 100% 50%;        /* #ffc000 */
+    --mm-lime:   72 100% 50%;        /* #ccff01 */
+    --mm-cyan:   178 100% 50%;       /* #00fef3 */
+    --mm-orange: 24 100% 50%;        /* #ff6600 */
+    --mm-green:  120 99% 50%;        /* #03ff01 */
+    --mm-purple: 278 100% 50%;       /* #ab00ff */
+    --mm-pink:   320 100% 50%;       /* #ff01aa */
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 24 18% 12%;
+    /* semantic mapping */
+    --background: var(--bone);
+    --foreground: var(--mad-black);
+    --card: var(--paper);
+    --card-foreground: var(--mad-black);
+    --popover: var(--paper);
+    --popover-foreground: var(--mad-black);
 
-    /* Primary: warm Mad Monkey orange */
-    --primary: 18 92% 54%;
-    --primary-foreground: 0 0% 100%;
-    --primary-glow: 28 96% 62%;
+    --primary: var(--mm-orange);
+    --primary-foreground: var(--mad-black);
 
-    /* Secondary: deep jungle */
-    --secondary: 158 48% 18%;
-    --secondary-foreground: 36 33% 97%;
+    --secondary: var(--mad-black);
+    --secondary-foreground: var(--bone);
 
-    /* Accent: lime / mint */
-    --accent: 84 72% 52%;
-    --accent-foreground: 158 48% 12%;
+    --accent: var(--mm-lime);
+    --accent-foreground: var(--mad-black);
 
-    --muted: 36 20% 92%;
-    --muted-foreground: 24 10% 38%;
+    --muted: 41 28% 88%;
+    --muted-foreground: 0 0% 26%;
 
-    --destructive: 0 78% 52%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: var(--mm-pink);
+    --destructive-foreground: var(--mad-black);
 
-    --border: 24 14% 88%;
-    --divider: 24 14% 92%;
-    --input: 24 14% 88%;
-    --ring: 18 92% 54%;
+    --border: var(--mad-black);
+    --divider: 0 0% 4%;
+    --input: var(--mad-black);
+    --ring: var(--mm-orange);
 
-    --radius: 0.875rem;
+    --radius: 0px;
 
-    /* Spot-remaining badge ramp (per brief) */
-    --spot-green: 152 64% 38%;
-    --spot-amber: 38 95% 50%;
-    --spot-orange: 22 95% 52%;
-    --spot-red: 0 80% 52%;
-    --spot-grey: 24 8% 50%;
+    /* spot ramp — mapped onto the poster palette */
+    --spot-green: var(--mm-lime);     /* heavy use of lime for "open" */
+    --spot-amber: var(--mm-yellow);
+    --spot-orange: var(--mm-orange);
+    --spot-red: var(--mm-pink);
+    --spot-grey: 0 0% 25%;
 
-    /* Cranky placeholder kept for shadcn compatibility */
-    --cranky: 18 92% 54%;
-    --cranky-foreground: 0 0% 100%;
+    --cranky: var(--mm-orange);
+    --cranky-foreground: var(--mad-black);
 
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 24 18% 12%;
-    --sidebar-primary: 18 92% 54%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 36 20% 92%;
-    --sidebar-accent-foreground: 24 18% 12%;
-    --sidebar-border: 24 14% 88%;
-    --sidebar-ring: 18 92% 54%;
+    --sidebar-background: var(--bone);
+    --sidebar-foreground: var(--mad-black);
+    --sidebar-primary: var(--mm-orange);
+    --sidebar-primary-foreground: var(--mad-black);
+    --sidebar-accent: var(--mm-lime);
+    --sidebar-accent-foreground: var(--mad-black);
+    --sidebar-border: var(--mad-black);
+    --sidebar-ring: var(--mm-orange);
 
-    --gradient-hero: linear-gradient(180deg, hsl(0 0% 0% / 0) 0%, hsl(0 0% 0% / 0.75) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(0 0% 0% / 0.15) 0%, hsl(0 0% 0% / 0.82) 100%);
   }
 
   .dark {
-    --background: 24 18% 8%;
-    --foreground: 36 33% 97%;
-    --card: 24 18% 12%;
-    --card-foreground: 36 33% 97%;
-    --popover: 24 18% 12%;
-    --popover-foreground: 36 33% 97%;
-    --primary: 18 92% 58%;
-    --primary-foreground: 24 18% 8%;
-    --secondary: 158 30% 22%;
-    --secondary-foreground: 36 33% 97%;
-    --muted: 24 12% 18%;
-    --muted-foreground: 36 12% 70%;
-    --accent: 84 60% 50%;
-    --accent-foreground: 24 18% 8%;
-    --destructive: 0 70% 50%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 24 12% 22%;
-    --divider: 24 12% 18%;
-    --input: 24 12% 22%;
-    --ring: 18 92% 58%;
+    --background: var(--mad-black);
+    --foreground: var(--bone);
+    --card: 0 0% 8%;
+    --card-foreground: var(--bone);
+    --popover: 0 0% 8%;
+    --popover-foreground: var(--bone);
+    --muted: 0 0% 14%;
+    --muted-foreground: 0 0% 70%;
+    --border: var(--bone);
+    --input: var(--bone);
   }
 }
 
@@ -92,7 +94,110 @@
   * { @apply border-border; }
   body {
     @apply bg-background text-foreground antialiased;
-    font-feature-settings: "ss01", "cv11";
+    font-family: 'Montserrat', system-ui, sans-serif;
   }
   html { scroll-behavior: smooth; }
+
+  /* display headlines: Montserrat 900 UPPERCASE */
+  .font-display {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: -0.01em;
+    line-height: 0.92;
+  }
+  /* Bungee — reserved for WINNER / sticker accents only */
+  .font-sticker {
+    font-family: 'Bungee', 'Montserrat', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.01em;
+  }
+}
+
+@layer utilities {
+  /* HARD-OFFSET shadows — never blur */
+  .shadow-mm        { box-shadow: 6px 6px 0 0 hsl(var(--mad-black)); }
+  .shadow-mm-lg     { box-shadow: 10px 10px 0 0 hsl(var(--mad-black)); }
+  .shadow-mm-xl     { box-shadow: 14px 14px 0 0 hsl(var(--mad-black)); }
+  .shadow-mm-bone   { box-shadow: 8px 8px 0 0 hsl(var(--bone)); }
+  .shadow-mm-paper  { box-shadow: 8px 8px 0 0 hsl(var(--paper)); }
+  .shadow-mm-sm     { box-shadow: 4px 4px 0 0 hsl(var(--mad-black)); }
+
+  .border-mm        { border: 3px solid hsl(var(--mad-black)); }
+  .border-mm-thick  { border: 4px solid hsl(var(--mad-black)); }
+
+  /* Brand sticker — diagonal pill */
+  .sticker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.9rem;
+    border: 3px solid hsl(var(--mad-black));
+    background: hsl(var(--mm-lime));
+    color: hsl(var(--mad-black));
+    font-family: 'Bungee', sans-serif;
+    text-transform: uppercase;
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    box-shadow: 5px 5px 0 0 hsl(var(--mad-black));
+    transform: rotate(-4deg);
+  }
+
+  /* Starburst — pure CSS spikes via clip-path approximated mask */
+  .starburst {
+    --burst-size: 9rem;
+    width: var(--burst-size);
+    height: var(--burst-size);
+    background: hsl(var(--mm-yellow));
+    color: hsl(var(--mad-black));
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 900;
+    text-transform: uppercase;
+    line-height: 0.9;
+    padding: 1rem;
+    clip-path: polygon(
+      50% 0%, 58% 12%, 72% 4%, 73% 19%, 88% 16%, 82% 30%,
+      96% 36%, 84% 46%, 100% 54%, 84% 62%, 96% 76%, 80% 76%,
+      85% 90%, 70% 84%, 66% 100%, 56% 88%, 46% 100%, 40% 86%,
+      27% 96%, 28% 80%, 12% 84%, 18% 70%, 4% 64%, 16% 54%,
+      0% 46%, 16% 38%, 4% 24%, 20% 24%, 14% 10%, 28% 16%, 32% 2%, 42% 14%
+    );
+  }
+
+  /* spiky speech pill */
+  .speech-pill {
+    border: 3px solid hsl(var(--mad-black));
+    background: hsl(var(--paper));
+    color: hsl(var(--mad-black));
+    padding: 0.5rem 1rem;
+    display: inline-block;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    box-shadow: 4px 4px 0 0 hsl(var(--mad-black));
+  }
+
+  /* native ticker tape band */
+  .ticker {
+    display: flex;
+    overflow: hidden;
+    white-space: nowrap;
+    border-top: 3px solid hsl(var(--mad-black));
+    border-bottom: 3px solid hsl(var(--mad-black));
+  }
+  .ticker-track {
+    display: inline-flex;
+    gap: 2rem;
+    padding: 0.6rem 0;
+    animation: ticker-scroll 28s linear infinite;
+  }
+  @keyframes ticker-scroll {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
 }

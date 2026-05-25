@@ -9,17 +9,17 @@ import { BookingFlow } from "@/components/trip/BookingFlow";
 import { FAQ } from "@/components/trip/FAQ";
 import { SiteFooter } from "@/components/trip/SiteFooter";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Sticker } from "@/components/brand/Sticker";
+import { PinnedWordmark } from "@/components/brand/Wordmark";
 
 function getSetupHint(message: string, slug: string) {
   if (message.includes('Airtable GET Trips [404]')) {
-    return `Airtable is connected, but the base currently does not contain a table named "Trips" for this project. In Airtable, verify the exact table names are Trips, Pricing Calendar, Departures, Bookings, Discount Codes, and Waitlist, then confirm the saved base ID points to that same base.`;
+    return `Airtable is connected, but the base does not yet contain a "Trips" table. Verify table names: Trips, Pricing Calendar, Departures, Bookings, Discount Codes, Waitlist.`;
   }
-
   if (message.includes('Trip not found')) {
-    return `The Airtable base is reachable, but there is no active trip row with URL Slug "${slug}" in the Trips table.`;
+    return `Airtable is reachable, but no active trip row has URL Slug "${slug}".`;
   }
-
-  return `If you're the operator, verify the Airtable base is set up and that the slug "${slug}" exists in the Trips table.`;
+  return `Operator check: verify the Airtable base and that slug "${slug}" exists in Trips.`;
 }
 
 export default function TripPage() {
@@ -32,9 +32,9 @@ export default function TripPage() {
 
   if (isLoading) {
     return (
-      <div className="p-5 space-y-4">
-        <Skeleton className="h-[88vh] w-full rounded-none" />
-        <Skeleton className="h-60 w-full" />
+      <div className="space-y-4 bg-mm-black p-5">
+        <Skeleton className="h-[88vh] w-full rounded-none bg-mm-bone/10" />
+        <Skeleton className="h-60 w-full rounded-none bg-mm-bone/10" />
       </div>
     );
   }
@@ -42,14 +42,16 @@ export default function TripPage() {
   if (error || !trip) {
     const message = error instanceof Error ? error.message : "Could not reach the trip data.";
     return (
-      <div className="mx-auto max-w-md px-5 py-20 text-center">
-        <h1 className="font-['Archivo_Black'] text-3xl">Trip not loading</h1>
-        <p className="mt-4 text-sm text-muted-foreground">
-          {message}
-        </p>
-        <p className="mt-2 text-xs text-muted-foreground">
-          {getSetupHint(message, slug)}
-        </p>
+      <div className="relative min-h-screen bg-mm-black px-6 py-24 text-mm-bone">
+        <div className="mx-auto max-w-md text-center">
+          <Sticker color="pink" rotate={-4}>HEADS UP</Sticker>
+          <h1 className="mt-5 font-display text-4xl">TRIP NOT LOADING.</h1>
+          <p className="mt-4 text-sm text-mm-bone/80">{message}</p>
+          <p className="mt-3 font-sticker text-[10px] tracking-[0.18em] text-mm-bone/60">
+            {getSetupHint(message, slug)}
+          </p>
+        </div>
+        <PinnedWordmark tone="light" />
       </div>
     );
   }

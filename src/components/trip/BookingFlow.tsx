@@ -17,27 +17,15 @@ import {
 import { SpotBadge } from "./SpotBadge";
 import type { Trip, Departure } from "@/types/trip";
 import { createCheckoutSession, validateDiscount } from "@/lib/api";
+import { Sticker } from "@/components/brand/Sticker";
 
 const SOURCES = ["TikTok", "Instagram", "Friend", "Other"] as const;
 
 interface LeadFields {
-  name: string;
-  email: string;
-  phone: string;
-  country: string;
-  age: string;
-  solo: boolean;
-  source: string;
-  friends: string;
+  name: string; email: string; phone: string; country: string; age: string;
+  solo: boolean; source: string; friends: string;
 }
-
-interface TravelerFields {
-  firstName: string;
-  lastName: string;
-  email: string;
-  age: string;
-  dietary: string;
-}
+interface TravelerFields { firstName: string; lastName: string; email: string; age: string; dietary: string; }
 
 const emptyLead: LeadFields = {
   name: "", email: "", phone: "", country: "", age: "", solo: true, source: "", friends: "",
@@ -80,15 +68,14 @@ export function BookingFlow({ trip }: { trip: Trip }) {
   }
 
   async function submit() {
-    if (!selected) return toast.error("Pick a departure date first");
+    if (!selected) return toast.error("Pick a departure first");
     if (!lead.name || !lead.email || !lead.phone) return toast.error("Fill out your details");
     setSubmitting(true);
     try {
       const params = new URLSearchParams(window.location.search);
       const utm: Record<string, string> = {};
       ["utm_source", "utm_medium", "utm_campaign", "utm_content"].forEach((k) => {
-        const v = params.get(k);
-        if (v) utm[k] = v;
+        const v = params.get(k); if (v) utm[k] = v;
       });
       const { url } = await createCheckoutSession({
         tripSlug: trip.slug,
@@ -108,32 +95,37 @@ export function BookingFlow({ trip }: { trip: Trip }) {
   }
 
   return (
-    <section id="booking" className="px-5 py-14">
-      <div className="mx-auto max-w-2xl space-y-8">
-        <h2 className="font-['Archivo_Black'] text-3xl">Book your spot</h2>
+    <section id="booking" className="relative bg-mm-blue px-6 py-20 text-mm-bone">
+      <div className="mx-auto max-w-3xl space-y-10">
+        <div>
+          <Sticker color="yellow" rotate={-4}>STEP UP</Sticker>
+          <h2 className="mt-4 font-display text-5xl md:text-6xl text-mm-bone">
+            BOOK<br />YOUR SPOT.
+          </h2>
+        </div>
 
         {/* Step 1: spots */}
-        <div>
-          <Label className="text-sm font-bold uppercase tracking-wider">1. How many spots?</Label>
+        <FormStep n={1} label="HOW MANY SPOTS?">
           <Select value={String(groupSize)} onValueChange={(v) => changeGroup(Number(v))}>
-            <SelectTrigger className="mt-2 h-12 w-32"><SelectValue /></SelectTrigger>
-            <SelectContent>
+            <SelectTrigger className="h-14 w-40 rounded-none border-[3px] border-mm-black bg-mm-paper text-mm-black font-display text-lg shadow-mm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="rounded-none border-[3px] border-mm-black bg-mm-paper">
               {[1, 2, 3, 4, 5].map((n) => (
-                <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                <SelectItem key={n} value={String(n)} className="font-display">{n}</SelectItem>
               ))}
             </SelectContent>
           </Select>
-        </div>
+        </FormStep>
 
         {/* Step 2: departure */}
-        <div>
-          <Label className="text-sm font-bold uppercase tracking-wider">2. Pick your departure</Label>
+        <FormStep n={2} label="PICK YOUR DEPARTURE">
           {visible.length === 0 ? (
-            <p className="mt-2 text-sm text-muted-foreground">
-              No departures with {groupSize} spot{groupSize > 1 ? "s" : ""} available right now.
+            <p className="mt-2 font-sticker text-xs tracking-[0.15em] text-mm-bone/80">
+              NO DEPARTURES WITH {groupSize} SPOT{groupSize > 1 ? "S" : ""} RIGHT NOW.
             </p>
           ) : (
-            <div className="mt-3 -mx-5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-2 md:mx-0 md:grid md:grid-cols-3 md:gap-4 md:overflow-visible md:px-0">
+            <div className="-mx-6 flex snap-x snap-mandatory gap-4 overflow-x-auto px-6 pb-3 md:mx-0 md:grid md:grid-cols-3 md:overflow-visible md:px-0">
               {visible.map((d) => (
                 <DepartureCard
                   key={d.id}
@@ -145,72 +137,88 @@ export function BookingFlow({ trip }: { trip: Trip }) {
               ))}
             </div>
           )}
-        </div>
+        </FormStep>
 
         {selected && (
           <>
-            {/* Step 3: traveler details */}
-            <div className="space-y-4">
-              <Label className="text-sm font-bold uppercase tracking-wider">3. Your details</Label>
-              <LeadForm value={lead} onChange={setLead} groupSize={groupSize} />
-              {travelers.map((t, i) => (
-                <TravelerForm
-                  key={i}
-                  index={i + 2}
-                  value={t}
-                  onChange={(v) => setTravelers((arr) => arr.map((x, j) => (j === i ? v : x)))}
-                />
-              ))}
-            </div>
+            <FormStep n={3} label="YOUR DETAILS">
+              <div className="space-y-4">
+                <LeadForm value={lead} onChange={setLead} groupSize={groupSize} />
+                {travelers.map((t, i) => (
+                  <TravelerForm
+                    key={i}
+                    index={i + 2}
+                    value={t}
+                    onChange={(v) => setTravelers((arr) => arr.map((x, j) => (j === i ? v : x)))}
+                  />
+                ))}
+              </div>
+            </FormStep>
 
-            {/* Step 4: discount */}
-            <div>
+            <FormStep n={4} label="GOT A CODE?">
               <button
                 type="button"
                 onClick={() => setDiscountOpen((o) => !o)}
-                className="text-sm font-semibold text-primary underline-offset-4 hover:underline"
+                className="font-sticker text-xs tracking-[0.15em] text-mm-lime underline-offset-4 hover:underline"
               >
-                Have a code?
+                {discountOpen ? "HIDE" : "ENTER A DISCOUNT CODE"}
               </button>
               {discountOpen && (
-                <div className="mt-2 flex gap-2">
+                <div className="mt-3 flex gap-3">
                   <Input
                     value={discountCode}
                     onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
                     placeholder="MADMONKEY50"
-                    className="h-11 uppercase"
+                    className="h-12 rounded-none border-[3px] border-mm-black bg-mm-paper text-mm-black uppercase font-display tracking-wide"
                   />
-                  <Button type="button" variant="secondary" onClick={tryDiscount} className="h-11">
-                    Apply
+                  <Button
+                    type="button"
+                    onClick={tryDiscount}
+                    className="h-12 rounded-none border-[3px] border-mm-black bg-mm-yellow font-display text-mm-black hover:bg-mm-yellow shadow-mm-sm"
+                  >
+                    APPLY
                   </Button>
                 </div>
               )}
               {discountState && (
-                <p className={`mt-2 text-sm ${discountState.valid ? "text-[hsl(var(--spot-green))]" : "text-destructive"}`}>
-                  {discountState.msg}
+                <p className={`mt-3 font-sticker text-[11px] tracking-[0.15em] ${discountState.valid ? "text-mm-lime" : "text-mm-pink"}`}>
+                  {discountState.msg.toUpperCase()}
                 </p>
               )}
-            </div>
+            </FormStep>
 
-            {/* Step 5: pay */}
-            <div className="rounded-2xl border border-border bg-card p-5">
+            <div className="border-mm-thick bg-mm-paper p-6 text-mm-black shadow-mm-lg">
               <PaymentSummary trip={trip} selected={selected} groupSize={groupSize} />
               <Button
                 disabled={submitting}
                 onClick={submit}
                 size="lg"
-                className="mt-5 h-14 w-full rounded-full bg-primary text-base font-bold text-primary-foreground hover:bg-primary/90"
+                className="mt-6 h-14 w-full rounded-none border-[3px] border-mm-black bg-mm-orange font-display text-base text-mm-black hover:bg-mm-orange shadow-mm transition-transform hover:-translate-x-[2px] hover:-translate-y-[2px]"
               >
-                {submitting ? "Redirecting…" : "Continue to payment"}
+                {submitting ? "REDIRECTING…" : "CONTINUE TO PAYMENT →"}
               </Button>
-              <p className="mt-3 text-center text-xs text-muted-foreground">
-                Secure payment via Stripe. Your spot is held the moment you pay.
+              <p className="mt-3 text-center font-sticker text-[10px] tracking-[0.18em] text-mm-black/70">
+                SECURE STRIPE CHECKOUT · SPOT HELD ON PAYMENT
               </p>
             </div>
           </>
         )}
       </div>
     </section>
+  );
+}
+
+function FormStep({ n, label, children }: { n: number; label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <div className="mb-3 flex items-center gap-3">
+        <span className="inline-flex h-9 w-9 items-center justify-center border-[3px] border-mm-bone bg-mm-yellow font-display text-base text-mm-black">
+          {n}
+        </span>
+        <Label className="font-display text-sm tracking-[0.1em] text-mm-bone">{label}</Label>
+      </div>
+      {children}
+    </div>
   );
 }
 
@@ -223,14 +231,16 @@ function DepartureCard({
     <button
       type="button"
       onClick={onSelect}
-      className={`flex w-[220px] shrink-0 snap-start flex-col rounded-2xl border-2 p-4 text-left transition md:w-auto ${
-        selected ? "border-primary bg-primary/5" : "border-border bg-card hover:border-primary/50"
+      className={`flex w-[240px] shrink-0 snap-start flex-col border-[3px] p-4 text-left transition md:w-auto ${
+        selected
+          ? "border-mm-black bg-mm-lime text-mm-black shadow-mm"
+          : "border-mm-black bg-mm-paper text-mm-black hover:-translate-x-[2px] hover:-translate-y-[2px] shadow-mm-sm"
       }`}
     >
-      <span className="text-sm font-bold">{formatDateLong(dep.date)}</span>
-      <SpotBadge badge={badge} className="mt-2 self-start" />
-      <span className="mt-3 text-[11px] text-muted-foreground">{freeArrivalNightLine(dep.date)}</span>
-      <span className="mt-1 text-xs font-semibold text-foreground">{pay.label}</span>
+      <span className="font-display text-lg">{formatDateLong(dep.date).toUpperCase()}</span>
+      <SpotBadge badge={badge} className="mt-3 self-start" />
+      <span className="mt-3 text-[11px] font-medium text-mm-black/70">{freeArrivalNightLine(dep.date)}</span>
+      <span className="mt-2 font-sticker text-[11px] tracking-[0.12em] text-mm-black">{pay.label.toUpperCase()}</span>
     </button>
   );
 }
@@ -240,8 +250,8 @@ function LeadForm({
 }: { value: LeadFields; onChange: (v: LeadFields) => void; groupSize: number }) {
   const set = <K extends keyof LeadFields>(k: K, v: LeadFields[K]) => onChange({ ...value, [k]: v });
   return (
-    <div className="space-y-3 rounded-xl border border-border bg-card p-4">
-      <h4 className="text-sm font-bold">{groupSize > 1 ? "Lead booker (you)" : "Your details"}</h4>
+    <div className="space-y-3 border-mm-thick bg-mm-paper p-5 text-mm-black shadow-mm">
+      <h4 className="font-display text-sm tracking-wide">{groupSize > 1 ? "LEAD BOOKER (YOU)" : "YOUR DETAILS"}</h4>
       <Field label="Full name" v={value.name} onChange={(v) => set("name", v)} />
       <Field label="Email" type="email" v={value.email} onChange={(v) => set("email", v)} />
       <Field label="Phone" type="tel" v={value.phone} onChange={(v) => set("phone", v)} />
@@ -250,28 +260,32 @@ function LeadForm({
         <Field label="Age" type="number" v={value.age} onChange={(v) => set("age", v)} />
       </div>
       {groupSize === 1 && (
-        <div className="flex items-center justify-between rounded-lg bg-muted/40 px-3 py-2">
-          <Label htmlFor="solo" className="text-sm">Travelling solo?</Label>
+        <div className="flex items-center justify-between border-[3px] border-mm-black bg-mm-lime px-3 py-2">
+          <Label htmlFor="solo" className="font-sticker text-[11px] tracking-[0.12em] text-mm-black">TRAVELLING SOLO?</Label>
           <Switch id="solo" checked={value.solo} onCheckedChange={(v) => set("solo", v)} />
         </div>
       )}
       <div>
-        <Label className="text-xs">Where did you hear about us?</Label>
+        <Label className="font-sticker text-[10px] tracking-[0.15em] text-mm-black/80">WHERE DID YOU HEAR ABOUT US?</Label>
         <Select value={value.source} onValueChange={(v) => set("source", v)}>
-          <SelectTrigger className="mt-1 h-11"><SelectValue placeholder="Choose one" /></SelectTrigger>
-          <SelectContent>
+          <SelectTrigger className="mt-1 h-11 rounded-none border-[3px] border-mm-black bg-mm-paper font-medium">
+            <SelectValue placeholder="Choose one" />
+          </SelectTrigger>
+          <SelectContent className="rounded-none border-[3px] border-mm-black">
             {SOURCES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
       {groupSize === 1 && (
         <div>
-          <Label className="text-xs">Coming with friends booking separately? Add their names so we group you</Label>
+          <Label className="font-sticker text-[10px] tracking-[0.15em] text-mm-black/80">
+            FRIENDS BOOKING SEPARATELY? ADD THEIR NAMES
+          </Label>
           <Textarea
             value={value.friends}
             onChange={(e) => set("friends", e.target.value)}
             rows={2}
-            className="mt-1"
+            className="mt-1 rounded-none border-[3px] border-mm-black bg-mm-paper"
           />
         </div>
       )}
@@ -284,8 +298,8 @@ function TravelerForm({
 }: { index: number; value: TravelerFields; onChange: (v: TravelerFields) => void }) {
   const set = <K extends keyof TravelerFields>(k: K, v: TravelerFields[K]) => onChange({ ...value, [k]: v });
   return (
-    <div className="space-y-3 rounded-xl border border-border bg-card p-4">
-      <h4 className="text-sm font-bold">Traveller {index}</h4>
+    <div className="space-y-3 border-mm-thick bg-mm-paper p-5 text-mm-black shadow-mm">
+      <h4 className="font-display text-sm tracking-wide">TRAVELLER {String(index).padStart(2, "0")}</h4>
       <div className="grid grid-cols-2 gap-3">
         <Field label="First name" v={value.firstName} onChange={(v) => set("firstName", v)} />
         <Field label="Last name" v={value.lastName} onChange={(v) => set("lastName", v)} />
@@ -302,8 +316,13 @@ function TravelerForm({
 function Field({ label, v, onChange, type = "text" }: { label: string; v: string; onChange: (v: string) => void; type?: string }) {
   return (
     <div>
-      <Label className="text-xs">{label}</Label>
-      <Input type={type} value={v} onChange={(e) => onChange(e.target.value)} className="mt-1 h-11" />
+      <Label className="font-sticker text-[10px] tracking-[0.15em] text-mm-black/80">{label.toUpperCase()}</Label>
+      <Input
+        type={type}
+        value={v}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-1 h-11 rounded-none border-[3px] border-mm-black bg-mm-paper font-medium"
+      />
     </div>
   );
 }
@@ -314,20 +333,25 @@ function PaymentSummary({
   const pay = paymentLine(selected.date, groupSize, selected.price);
   const subtotal = selected.price * groupSize;
   return (
-    <dl className="space-y-1 text-sm">
-      <Row k={`${trip.name} × ${groupSize}`} v={formatPrice(subtotal)} />
-      <Row k="Departure" v={formatDateLong(selected.date)} />
-      <Row k={pay.type === "deposit" ? "Deposit today" : "Pay today"} v={formatPrice(pay.amount)} bold />
-      {pay.type === "deposit" && (
-        <Row k="Balance due 60 days before departure" v={formatPrice(subtotal - pay.amount)} muted />
-      )}
-    </dl>
+    <div>
+      <p className="font-sticker text-[10px] tracking-[0.18em] text-mm-black/60">YOUR BOOKING</p>
+      <h3 className="mt-1 font-display text-2xl">{trip.name.toUpperCase()} × {groupSize}</h3>
+      <dl className="mt-4 space-y-2 text-sm">
+        <Row k="Subtotal" v={formatPrice(subtotal)} />
+        <Row k="Departure" v={formatDateLong(selected.date)} />
+        <div className="my-2 h-[3px] bg-mm-black" />
+        <Row k={pay.type === "deposit" ? "Deposit today" : "Pay today"} v={formatPrice(pay.amount)} bold />
+        {pay.type === "deposit" && (
+          <Row k="Balance due 60 days before departure" v={formatPrice(subtotal - pay.amount)} muted />
+        )}
+      </dl>
+    </div>
   );
 }
 
 function Row({ k, v, bold, muted }: { k: string; v: string; bold?: boolean; muted?: boolean }) {
   return (
-    <div className={`flex justify-between ${bold ? "text-base font-bold" : ""} ${muted ? "text-xs text-muted-foreground" : ""}`}>
+    <div className={`flex justify-between ${bold ? "font-display text-lg" : "font-medium"} ${muted ? "text-xs text-mm-black/60" : ""}`}>
       <dt>{k}</dt>
       <dd>{v}</dd>
     </div>

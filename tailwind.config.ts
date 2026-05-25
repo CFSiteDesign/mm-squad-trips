@@ -5,16 +5,12 @@ export default {
   content: ["./pages/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}"],
   prefix: "",
   theme: {
-    container: {
-      center: true,
-      padding: "2rem",
-      screens: {
-        "2xl": "1400px",
-      },
-    },
+    container: { center: true, padding: "2rem", screens: { "2xl": "1400px" } },
     extend: {
       fontFamily: {
-        sans: ["Inter", "sans-serif"],
+        sans: ["Montserrat", "system-ui", "sans-serif"],
+        display: ["Montserrat", "sans-serif"],
+        sticker: ["Bungee", "Montserrat", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -23,38 +19,14 @@ export default {
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
-        primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
-        },
-        secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
-        },
-        destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
-        },
-        muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
-        },
-        accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
-        },
-        popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
-        },
-        card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
-        },
-        cranky: {
-          DEFAULT: "hsl(var(--cranky))",
-          foreground: "hsl(var(--cranky-foreground))",
-        },
+        primary: { DEFAULT: "hsl(var(--primary))", foreground: "hsl(var(--primary-foreground))" },
+        secondary: { DEFAULT: "hsl(var(--secondary))", foreground: "hsl(var(--secondary-foreground))" },
+        destructive: { DEFAULT: "hsl(var(--destructive))", foreground: "hsl(var(--destructive-foreground))" },
+        muted: { DEFAULT: "hsl(var(--muted))", foreground: "hsl(var(--muted-foreground))" },
+        accent: { DEFAULT: "hsl(var(--accent))", foreground: "hsl(var(--accent-foreground))" },
+        popover: { DEFAULT: "hsl(var(--popover))", foreground: "hsl(var(--popover-foreground))" },
+        card: { DEFAULT: "hsl(var(--card))", foreground: "hsl(var(--card-foreground))" },
+        cranky: { DEFAULT: "hsl(var(--cranky))", foreground: "hsl(var(--cranky-foreground))" },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
@@ -65,41 +37,36 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // Mad Monkey poster palette
+        mm: {
+          black:  "hsl(var(--mad-black))",
+          bone:   "hsl(var(--bone))",
+          paper:  "hsl(var(--paper))",
+          blue:   "hsl(var(--mm-blue))",
+          yellow: "hsl(var(--mm-yellow))",
+          lime:   "hsl(var(--mm-lime))",
+          cyan:   "hsl(var(--mm-cyan))",
+          orange: "hsl(var(--mm-orange))",
+          green:  "hsl(var(--mm-green))",
+          purple: "hsl(var(--mm-purple))",
+          pink:   "hsl(var(--mm-pink))",
+        },
       },
-      borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
-      },
+      borderRadius: { lg: "var(--radius)", md: "var(--radius)", sm: "var(--radius)" },
       keyframes: {
-        "accordion-down": {
-          from: { height: "0" },
-          to: { height: "var(--radix-accordion-content-height)" },
-        },
-        "accordion-up": {
-          from: { height: "var(--radix-accordion-content-height)" },
-          to: { height: "0" },
-        },
-        "float": {
-          "0%, 100%": { transform: "translateY(0) rotate(var(--float-rotate, 3deg))" },
-          "50%": { transform: "translateY(-20px) rotate(var(--float-rotate, 3deg))" },
-        },
-        "float-reverse": {
-          "0%, 100%": { transform: "translateY(0) rotate(var(--float-rotate, -6deg))" },
-          "50%": { transform: "translateY(20px) rotate(var(--float-rotate, -6deg))" },
-        },
-        "falling-heart": {
-          "0%": { transform: "translateY(-10vh) rotate(0deg)", opacity: "0.7" },
-          "50%": { opacity: "0.5" },
-          "100%": { transform: "translateY(110vh) rotate(360deg)", opacity: "0" },
+        "accordion-down": { from: { height: "0" }, to: { height: "var(--radix-accordion-content-height)" } },
+        "accordion-up": { from: { height: "var(--radix-accordion-content-height)" }, to: { height: "0" } },
+        "spin-slow": { from: { transform: "rotate(0deg)" }, to: { transform: "rotate(360deg)" } },
+        "wobble": {
+          "0%,100%": { transform: "rotate(-4deg)" },
+          "50%": { transform: "rotate(4deg)" },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "float": "float 4s ease-in-out infinite",
-        "float-reverse": "float-reverse 5s ease-in-out infinite",
-        "falling-heart": "falling-heart linear infinite",
+        "spin-slow": "spin-slow 18s linear infinite",
+        "wobble": "wobble 3s ease-in-out infinite",
       },
     },
   },

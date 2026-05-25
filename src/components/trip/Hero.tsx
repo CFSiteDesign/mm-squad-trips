@@ -1,6 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { formatPrice, allDeparturesUnder60Days } from "@/lib/trip-helpers";
 import type { Trip } from "@/types/trip";
+import { PinnedWordmark } from "@/components/brand/Wordmark";
+import { Sticker, Starburst } from "@/components/brand/Sticker";
 
 export function Hero({ trip }: { trip: Trip }) {
   const stopCount = trip.stops.length;
@@ -9,51 +11,66 @@ export function Hero({ trip }: { trip: Trip }) {
   const payInFull = allDeparturesUnder60Days(trip.departures);
 
   return (
-    <section className="relative isolate min-h-[88vh] w-full overflow-hidden bg-secondary text-white">
-      {trip.heroVideoUrl && (
+    <section className="relative isolate min-h-[92vh] w-full overflow-hidden bg-mm-black text-mm-bone">
+      {trip.heroVideoUrl ? (
         <video
-          className="absolute inset-0 h-full w-full object-cover"
+          className="absolute inset-0 h-full w-full object-cover opacity-90"
           src={trip.heroVideoUrl}
           autoPlay
           muted
           loop
           playsInline
-          poster=""
         />
+      ) : (
+        // brand-coloured placeholder block (real Mad Monkey photo goes here)
+        <div className="absolute inset-0 bg-mm-orange" />
       )}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/40 to-black/85" />
-      <div className="relative z-10 mx-auto flex min-h-[88vh] max-w-2xl flex-col justify-end px-5 pb-10 pt-24">
-        <h1 className="font-['Archivo_Black'] text-[clamp(2.4rem,9vw,4rem)] leading-[0.95] tracking-tight">
-          Solo traveller?
-          <br />
-          Not for long.
+      <div className="absolute inset-0" style={{ background: "var(--gradient-hero)" }} />
+
+      {/* Brand devices */}
+      <div className="absolute right-6 top-8 z-20">
+        <Sticker color="lime" rotate={-6}>ALL · IN</Sticker>
+      </div>
+      <div className="absolute left-6 bottom-44 z-20 md:left-12 md:bottom-32">
+        <Starburst size={132} color="yellow" rotate={-12}>
+          {trip.days}<br />DAYS
+        </Starburst>
+      </div>
+
+      <div className="relative z-10 mx-auto flex min-h-[92vh] max-w-3xl flex-col justify-end px-6 pb-16 pt-28 md:px-10">
+        <p className="font-sticker text-xs text-mm-lime">{trip.name.toUpperCase()}</p>
+        <h1 className="mt-3 font-display text-[clamp(3rem,12vw,7rem)] text-mm-bone">
+          SOLO?<br />
+          <span className="text-mm-orange">NOT</span> FOR<br />LONG.
         </h1>
-        <p className="mt-4 text-base sm:text-lg text-white/90">
-          {trip.days} days · {stopCount} stops · {trip.activityCount} activities · One crew
+        <p className="mt-5 font-sticker text-[11px] tracking-[0.18em] text-mm-bone/85">
+          {trip.days} DAYS · {stopCount} STOPS · {trip.activityCount} ACTIVITIES · ONE CREW
         </p>
 
-        <div className="mt-6 flex items-end gap-3">
-          <span className="font-['Archivo_Black'] text-5xl text-accent">{formatPrice(headPrice)}</span>
-          {headStrike && (
-            <span className="mb-1 text-xl text-white/60 line-through">{formatPrice(headStrike)}</span>
-          )}
+        <div className="mt-7 inline-flex items-end gap-4 border-mm-thick border-mm-bone bg-mm-black px-4 py-3 shadow-mm-bone w-fit">
+          <span className="font-display text-5xl text-mm-lime md:text-6xl">{formatPrice(headPrice)}</span>
+          {headStrike ? (
+            <span className="mb-1 font-display text-xl text-mm-bone/60 line-through">{formatPrice(headStrike)}</span>
+          ) : null}
         </div>
-        <p className="mt-1 text-sm text-white/80">
-          {payInFull ? "Pay in full" : "$99 deposit holds your spot"}
+        <p className="mt-3 font-sticker text-[11px] tracking-[0.18em] text-mm-bone/80">
+          {payInFull ? "PAY IN FULL" : "$99 HOLDS YOUR SPOT"}
         </p>
 
         <Button
           size="lg"
-          className="mt-6 h-14 rounded-full bg-primary text-base font-bold text-primary-foreground hover:bg-primary/90"
+          className="mt-7 h-14 w-full max-w-sm rounded-none border-[3px] border-mm-black bg-mm-lime font-display text-base text-mm-black shadow-mm hover:bg-mm-lime hover:-translate-x-[2px] hover:-translate-y-[2px] transition-transform"
           onClick={() => document.getElementById("booking")?.scrollIntoView({ behavior: "smooth" })}
         >
-          Pick your dates
+          PICK YOUR DATES →
         </Button>
 
-        <p className="mt-8 text-xs uppercase tracking-wider text-white/70">
-          Real Mad Monkey hostels in every city · 53,000+ in our community
+        <p className="mt-10 font-sticker text-[10px] tracking-[0.25em] text-mm-bone/70">
+          REAL MAD MONKEY HOSTELS · 53,000+ IN THE CREW
         </p>
       </div>
+
+      <PinnedWordmark tone="light" />
     </section>
   );
 }

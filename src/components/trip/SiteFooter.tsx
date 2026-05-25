@@ -1,24 +1,31 @@
 import { MessageCircle } from "lucide-react";
+import { Wordmark } from "@/components/brand/Wordmark";
 
 export function SiteFooter() {
   return (
-    <footer className="bg-secondary px-5 py-10 text-secondary-foreground">
-      <div className="mx-auto max-w-2xl">
-        <a
-          href="https://wa.me/855000000000"
-          className="inline-flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-bold text-accent-foreground"
-        >
-          <MessageCircle className="h-4 w-4" />
-          Chat on WhatsApp
-        </a>
-        <nav className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-secondary-foreground/80">
-          <a href="/terms" className="hover:text-secondary-foreground">Terms</a>
-          <a href="/privacy" className="hover:text-secondary-foreground">Privacy</a>
-          <a href="mailto:hello@madmonkeyhostels.com" className="hover:text-secondary-foreground">Contact</a>
-        </nav>
-        <p className="mt-6 text-xs text-secondary-foreground/60">
-          © {new Date().getFullYear()} Mad Monkey Hostels · Group Trips
-        </p>
+    <footer className="relative bg-mm-black px-6 py-14 text-mm-bone">
+      <div className="mx-auto flex max-w-3xl flex-col gap-10 md:flex-row md:items-end md:justify-between">
+        <div>
+          <a
+            href="https://wa.me/855000000000"
+            className="inline-flex items-center gap-2 border-[3px] border-mm-bone bg-mm-lime px-4 py-2 font-sticker text-xs text-mm-black tracking-[0.12em] shadow-mm-bone hover:-translate-y-[2px] hover:-translate-x-[2px] transition-transform"
+          >
+            <MessageCircle className="h-4 w-4" />
+            CHAT ON WHATSAPP
+          </a>
+
+          <nav className="mt-7 flex flex-wrap gap-x-6 gap-y-2 font-sticker text-[11px] tracking-[0.2em] text-mm-bone/70">
+            <a href="/terms" className="hover:text-mm-lime">TERMS</a>
+            <a href="/privacy" className="hover:text-mm-lime">PRIVACY</a>
+            <a href="mailto:hello@madmonkeyhostels.com" className="hover:text-mm-lime">CONTACT</a>
+          </nav>
+
+          <p className="mt-6 font-sticker text-[10px] tracking-[0.22em] text-mm-bone/50">
+            © {new Date().getFullYear()} MAD MONKEY HOSTELS · GROUP TRIPS
+          </p>
+        </div>
+
+        <Wordmark tone="light" />
       </div>
     </footer>
   );
