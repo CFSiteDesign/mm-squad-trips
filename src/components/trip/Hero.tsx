@@ -36,7 +36,7 @@ export function Hero({ trip }: { trip: Trip }) {
 
       {/* Starburst device */}
       <div className="absolute right-4 top-10 z-20 md:right-10 md:top-16">
-        <Starburst size={112} color="yellow" rotate={-12}>
+        <Starburst size={112} color="pink" rotate={-12}>
           {trip.days}<br />DAYS
         </Starburst>
       </div>
