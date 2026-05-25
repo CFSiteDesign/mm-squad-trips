@@ -4,7 +4,7 @@ import { Sticker, Starburst } from "@/components/brand/Sticker";
 
 const TRIPS = [
   { slug: "indonesia", name: "Indonesia",   sub: "Island hopping",     route: "Bali → Gili T → Lombok",                          days: 12, price: 700, accent: "bg-mm-orange" },
-  { slug: "cambodia",  name: "Cambodia",    sub: "Coast to coast",     route: "Phnom Penh → Siem Reap → Koh Rong → Koh Sdach",   days: 14, price: 650, accent: "bg-mm-cyan" },
+  { slug: "cambodia",  name: "Cambodia",    sub: "Coast to coast",     route: "Phnom Penh → Siem Reap → Koh Rong → Koh Sdach",   days: 14, price: 650, accent: "bg-mm-lime" },
   { slug: "vietnam",   name: "Vietnam",     sub: "North loop",         route: "Hanoi → Ha Giang → Cao Bang → Halong → Hanoi",    days: 10, price: 750, accent: "bg-mm-pink" },
 ];
 

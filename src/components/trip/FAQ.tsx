@@ -14,7 +14,7 @@ const FAQS = [
 
 export function FAQ() {
   return (
-    <section className="bg-mm-yellow px-6 py-20 text-mm-black">
+    <section className="bg-mm-orange px-6 py-20 text-mm-black">
       <div className="mx-auto max-w-3xl">
         <Sticker color="purple" rotate={-4}>BEFORE YOU ASK</Sticker>
         <h2 className="mt-4 font-display text-5xl md:text-6xl">FAQ.</h2>
