@@ -11,7 +11,7 @@ export function Hero({ trip }: { trip: Trip }) {
   const payInFull = allDeparturesUnder60Days(trip.departures);
 
   return (
-    <section className="relative isolate min-h-[100svh] w-full overflow-hidden bg-mm-black text-mm-bone">
+    <section className="relative isolate min-h-[88svh] w-full overflow-hidden bg-mm-black text-mm-bone md:min-h-[100svh]">
       {/* Background media */}
       {trip.heroVideoUrl ? (
         <video
