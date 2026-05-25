@@ -46,10 +46,10 @@ export function Hero({ trip }: { trip: Trip }) {
       </div>
 
       {/* Main content stack */}
-      <div className="relative z-10 mx-auto flex h-[88svh] max-w-7xl flex-col px-6 pb-[max(1rem,env(safe-area-inset-bottom))] pt-20 md:h-auto md:min-h-[100svh] md:grid md:grid-rows-[6rem_1fr_auto] md:px-12 md:pb-10 md:pt-0">
+      <div className="relative z-10 mx-auto grid h-[88svh] max-w-7xl grid-rows-[auto_1fr_auto] px-6 pb-[max(1rem,env(safe-area-inset-bottom))] pt-14 md:flex md:h-auto md:min-h-[100svh] md:grid md:grid-rows-[6rem_1fr_auto] md:px-12 md:pb-10 md:pt-0">
         <div className="hidden md:block" />
 
-        <div className="mt-4 md:mt-0 md:flex md:flex-1 md:items-center">
+        <div className="mt-2 flex items-center md:mt-0 md:flex md:flex-1 md:items-center">
           <div className="max-w-[18rem] md:max-w-5xl">
             <h1 className="font-display uppercase leading-[0.88] tracking-tight text-[clamp(2.5rem,11vw,9rem)] md:leading-[0.86]">
             <span className="block text-mm-bone">SOLO<br className="md:hidden" /> TRAVELLER?</span>
@@ -61,14 +61,37 @@ export function Hero({ trip }: { trip: Trip }) {
               For those with friends who never commit.<br />
               Trips that actually make it out the group chat.
             </p>
+
+            <div className="mt-5 w-full max-w-3xl border-mm-thick border-mm-black bg-mm-bone text-mm-black shadow-mm md:hidden">
+              <div className="flex items-stretch">
+                <div className="flex-1 border-r-mm-thick border-mm-black px-3 py-2">
+                  <p className="font-sticker text-[9px] tracking-[0.18em] text-mm-black/70">FROM</p>
+                  <div className="mt-0.5 flex items-end gap-2">
+                    <span className="font-display text-2xl leading-none">{formatPrice(headPrice)}</span>
+                    {headStrike ? (
+                      <span className="mb-0.5 font-display text-xs text-mm-black/50 line-through">{formatPrice(headStrike)}</span>
+                    ) : null}
+                  </div>
+                  <p className="mt-0.5 font-sticker text-[8px] leading-tight tracking-[0.16em] text-mm-black/70">
+                    {payInFull ? "PAY IN FULL" : "$99 DEPOSIT HOLDS YOUR SPOT"}
+                  </p>
+                </div>
+                <Button
+                  onClick={() => document.getElementById("booking")?.scrollIntoView({ behavior: "smooth" })}
+                  className="h-auto min-h-0 flex-1 rounded-none bg-mm-orange px-3 py-2 font-display text-sm leading-tight text-mm-black hover:bg-mm-orange"
+                >
+                  PICK YOUR<br /> DATES →
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
 
 
         {/* Bottom booking strip */}
-        <div className="mt-6 md:mt-0 md:pt-0">
+        <div className="mt-4 md:mt-0 md:pt-0">
 
-          <div className="w-full max-w-3xl border-mm-thick border-mm-black bg-mm-bone text-mm-black shadow-mm">
+          <div className="hidden w-full max-w-3xl border-mm-thick border-mm-black bg-mm-bone text-mm-black shadow-mm md:block">
             <div className="flex items-stretch">
               <div className="flex-1 border-r-mm-thick border-mm-black px-3 py-2 md:px-5 md:py-4">
                 <p className="font-sticker text-[9px] tracking-[0.18em] text-mm-black/70 md:text-[10px] md:tracking-[0.22em]">FROM</p>
