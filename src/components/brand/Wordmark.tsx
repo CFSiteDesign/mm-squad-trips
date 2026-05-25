@@ -1,24 +1,39 @@
 import { cn } from "@/lib/utils";
+import logo from "@/assets/mad-monkey-logo.webp";
 
 /**
- * Mad Monkey wordmark. ALWAYS present bottom-right per brand rule #7.
- * White on dark, black on light. ~120–140px wide, 48px safe-area.
+ * Mad Monkey logo mark. ALWAYS present bottom-right per brand rule #7.
+ * The source asset is black-on-transparent; invert for dark backgrounds.
  */
-export function Wordmark({ tone = "light", className }: { tone?: "light" | "dark"; className?: string }) {
-  const fg = tone === "light" ? "text-mm-bone" : "text-mm-black";
+export function Wordmark({
+  tone = "light",
+  className,
+  size = 56,
+}: {
+  tone?: "light" | "dark";
+  className?: string;
+  size?: number;
+}) {
   return (
-    <div className={cn("pointer-events-none select-none leading-none", fg, className)}>
-      <div className="font-display text-[11px] tracking-[0.22em]">MAD</div>
-      <div className="font-display text-[26px] tracking-[-0.02em]">MONKEY</div>
-      <div className="font-display text-[10px] tracking-[0.3em] opacity-80">HOSTELS</div>
-    </div>
+    <img
+      src={logo}
+      alt="Mad Monkey Hostels"
+      width={size}
+      height={size}
+      className={cn(
+        "pointer-events-none select-none object-contain",
+        tone === "light" && "invert",
+        className,
+      )}
+      style={{ width: size, height: size }}
+    />
   );
 }
 
 export function PinnedWordmark({ tone = "light" }: { tone?: "light" | "dark" }) {
   return (
-    <div className="pointer-events-none absolute bottom-12 right-12 z-20">
-      <Wordmark tone={tone} />
+    <div className="pointer-events-none absolute bottom-8 right-8 z-20 md:bottom-12 md:right-12">
+      <Wordmark tone={tone} size={64} />
     </div>
   );
 }
