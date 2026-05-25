@@ -19,18 +19,18 @@ export default function Index() {
           ALL<br />IN
         </Starburst>
       </div>
-      <div className="pointer-events-none absolute top-8 left-6 z-10">
-        <Sticker color="yellow" rotate={-7}>ALL · IN</Sticker>
+      <div className="pointer-events-none absolute left-4 top-20 z-10 md:left-6 md:top-8">
+        <Sticker color="yellow" rotate={-7} className="px-2.5 py-1 text-[11px] md:px-3 md:py-1.5 md:text-xs">ALL · IN</Sticker>
       </div>
 
-      <section className="relative z-0 mx-auto max-w-5xl px-6 pt-28 pb-12 md:pt-36">
-        <p className="font-sticker text-xs text-mm-lime">MAD MONKEY · GROUP TRIPS</p>
-        <h1 className="mt-4 font-display text-[clamp(3.5rem,13vw,9rem)] text-mm-bone">
+      <section className="relative z-0 mx-auto max-w-5xl px-5 pb-10 pt-40 md:px-6 md:pt-36 md:pb-12">
+        <p className="font-sticker text-[11px] leading-none text-mm-lime md:text-xs">MAD MONKEY · GROUP TRIPS</p>
+        <h1 className="mt-5 max-w-[18rem] font-display text-[clamp(3.25rem,15vw,9rem)] leading-[0.88] text-mm-bone md:mt-4 md:max-w-none md:text-[clamp(3.5rem,13vw,9rem)]">
           SOLO?<br />
           <span className="text-mm-orange">NOT</span><br />
           FOR LONG.
         </h1>
-        <p className="mt-6 max-w-xl text-base text-mm-bone/80">
+        <p className="mt-5 max-w-[18rem] text-[15px] leading-[1.28] text-mm-bone/82 md:mt-6 md:max-w-xl md:text-base md:leading-normal">
           Three packaged backpacker trips through SE Asia. Real Mad Monkey hostels every night. Pick one and book the flight.
         </p>
       </section>
@@ -43,22 +43,22 @@ export default function Index() {
         </div>
       </div>
 
-      <section className="relative z-0 mx-auto max-w-5xl px-6 pt-14 pb-32">
-        <h2 className="font-display text-3xl text-mm-bone">PICK ONE.</h2>
-        <ul className="mt-8 space-y-7">
+      <section className="relative z-0 mx-auto max-w-5xl px-5 pb-24 pt-12 md:px-6 md:pt-14 md:pb-32">
+        <h2 className="font-display text-[2.25rem] leading-none text-mm-bone md:text-3xl">PICK ONE.</h2>
+        <ul className="mt-6 space-y-5 md:mt-8 md:space-y-7">
           {TRIPS.map((t, i) => (
             <li key={t.slug}>
               <Link
                 to={`/${t.slug}`}
-                className="group relative block border-mm-thick border-mm-bone bg-mm-bone p-6 text-mm-black shadow-mm-bone transition hover:-translate-x-[4px] hover:-translate-y-[4px] md:p-8"
+                className="group relative block border-mm-thick border-mm-bone bg-mm-bone p-5 text-mm-black shadow-mm-bone transition hover:-translate-x-[4px] hover:-translate-y-[4px] md:p-8"
               >
-                <div className="flex items-start justify-between gap-6">
+                <div className="flex items-start justify-between gap-4 md:gap-6">
                   <div className="min-w-0">
                     <p className="font-sticker text-[11px] text-mm-black/70">TRIP 0{i + 1}</p>
-                    <h3 className="mt-1 font-display text-5xl md:text-7xl">{t.name}.</h3>
-                    <p className="mt-2 font-display text-xl text-mm-orange">{t.sub.toUpperCase()}</p>
-                    <p className="mt-4 text-sm font-medium text-mm-black/80">{t.route}</p>
-                    <p className="mt-4 text-xs font-bold uppercase tracking-wider">
+                    <h3 className="mt-1 max-w-[13rem] font-display text-[3rem] leading-[0.88] md:max-w-none md:text-7xl">{t.name}.</h3>
+                    <p className="mt-2 font-display text-lg leading-none text-mm-orange md:text-xl">{t.sub.toUpperCase()}</p>
+                    <p className="mt-3 max-w-[15rem] text-sm font-medium leading-snug text-mm-black/80 md:mt-4 md:max-w-none">{t.route}</p>
+                    <p className="mt-4 text-[11px] font-bold uppercase tracking-[0.12em] md:text-xs md:tracking-wider">
                       {t.days} days · from ${t.price}
                     </p>
                   </div>
