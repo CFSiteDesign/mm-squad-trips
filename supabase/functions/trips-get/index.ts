@@ -12,6 +12,7 @@ interface TripFields {
   "Testimonials": string;
   "Activity Count": number;
   "Hero Video URL"?: string;
+  "Video Testimonial URL"?: string;
   "Default Price": number;
   "Default Strikethrough": number;
   "Active?": boolean;
