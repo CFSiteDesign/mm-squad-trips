@@ -39,45 +39,45 @@ export function Hero({ trip }: { trip: Trip }) {
       </div>
 
       {/* Main content stack */}
-      <div className="relative z-10 mx-auto flex min-h-[100svh] max-w-7xl flex-col justify-between px-5 pb-8 pt-16 md:px-12 md:pt-24">
-        <div className="pt-8 md:pt-12">
-
-          <h1 className="mt-5 font-display uppercase leading-[0.88] tracking-tight text-[clamp(3.25rem,14vw,9rem)]">
+      <div className="relative z-10 mx-auto flex min-h-[100svh] max-w-7xl flex-col justify-end px-5 pb-8 pt-24 md:justify-between md:px-12 md:pt-24 md:pb-10">
+        <div className="hidden md:block md:pt-12" />
+        <div>
+          <h1 className="font-display uppercase leading-[0.88] tracking-tight text-[clamp(3rem,13vw,9rem)]">
             <span className="block text-mm-bone">SOLO TRAVELLER?</span>
             <span className="block text-mm-pink">NOT FOR</span>
             <span className="block text-mm-lime">LONG.</span>
           </h1>
 
-          <p className="mt-6 max-w-xl whitespace-pre-line text-base text-mm-bone/90 md:text-lg">
+          <p className="mt-5 max-w-xl whitespace-pre-line text-sm text-mm-bone/90 md:text-lg">
             For those with friends who never commit.{"\n"}Trips that actually make it out the group chat.
           </p>
         </div>
 
         {/* Bottom booking strip */}
-        <div className="mt-10 w-full max-w-3xl border-mm-thick border-mm-black bg-mm-bone text-mm-black shadow-mm">
-          <div className="flex flex-col md:flex-row md:items-stretch">
-            <div className="flex-1 border-b-mm-thick border-mm-black px-5 py-4 md:border-b-0 md:border-r-mm-thick">
-              <p className="font-sticker text-[10px] tracking-[0.22em] text-mm-black/70">FROM</p>
-              <div className="mt-1 flex items-end gap-3">
-                <span className="font-display text-4xl leading-none md:text-5xl">{formatPrice(headPrice)}</span>
+        <div className="mt-6 w-full max-w-3xl border-mm-thick border-mm-black bg-mm-bone text-mm-black shadow-mm md:mt-10">
+          <div className="flex items-stretch">
+            <div className="flex-1 border-r-mm-thick border-mm-black px-3 py-2 md:px-5 md:py-4">
+              <p className="font-sticker text-[9px] tracking-[0.18em] text-mm-black/70 md:text-[10px] md:tracking-[0.22em]">FROM</p>
+              <div className="mt-0.5 flex items-end gap-2 md:mt-1 md:gap-3">
+                <span className="font-display text-2xl leading-none md:text-5xl">{formatPrice(headPrice)}</span>
                 {headStrike ? (
-                  <span className="mb-1 font-display text-lg text-mm-black/50 line-through">{formatPrice(headStrike)}</span>
+                  <span className="mb-0.5 font-display text-xs text-mm-black/50 line-through md:mb-1 md:text-lg">{formatPrice(headStrike)}</span>
                 ) : null}
               </div>
-              <p className="mt-1 font-sticker text-[10px] tracking-[0.22em] text-mm-black/70">
+              <p className="mt-0.5 font-sticker text-[8px] leading-tight tracking-[0.16em] text-mm-black/70 md:mt-1 md:text-[10px] md:tracking-[0.22em]">
                 {payInFull ? "PAY IN FULL" : "$99 DEPOSIT HOLDS YOUR SPOT"}
               </p>
             </div>
             <Button
               onClick={() => document.getElementById("booking")?.scrollIntoView({ behavior: "smooth" })}
-              className="h-auto min-h-[72px] flex-1 rounded-none bg-mm-orange font-display text-lg text-mm-black hover:bg-mm-orange md:text-xl"
+              className="h-auto min-h-0 flex-1 rounded-none bg-mm-orange px-3 py-2 font-display text-sm leading-tight text-mm-black hover:bg-mm-orange md:min-h-[72px] md:px-4 md:text-xl"
             >
-              PICK YOUR DATES →
+              PICK YOUR<br className="md:hidden" /> DATES →
             </Button>
           </div>
         </div>
 
-        <p className="mt-8 font-sticker text-[10px] tracking-[0.24em] text-mm-bone/80">
+        <p className="mt-4 font-sticker text-[9px] tracking-[0.2em] text-mm-bone/80 md:mt-8 md:text-[10px] md:tracking-[0.24em]">
           REAL MAD MONKEY HOSTELS IN EVERY CITY · 53,000+ IN OUR COMMUNITY
         </p>
       </div>
