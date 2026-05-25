@@ -52,7 +52,7 @@ export function Hero({ trip }: { trip: Trip }) {
           </h1>
 
           <p className="mt-6 max-w-xl text-base text-mm-bone/90 md:text-lg">
-            {trip.days} days · {stopCount} stops · {trip.activityCount} activities. One crew. Book. Your. Flight. Now.
+            {trip.days} days · {stopCount} stops · {trip.activityCount} activities · One crew
           </p>
         </div>
 
@@ -80,8 +80,8 @@ export function Hero({ trip }: { trip: Trip }) {
           </div>
         </div>
 
-        <p className="mt-4 font-sticker text-[10px] tracking-[0.28em] text-mm-bone/80">
-          ONE RULE: BOOK. YOUR. FLIGHT. NOW. ALL IN.
+        <p className="mt-4 font-sticker text-[10px] tracking-[0.24em] text-mm-bone/80">
+          REAL MAD MONKEY HOSTELS IN EVERY CITY · 53,000+ IN OUR COMMUNITY
         </p>
       </div>
 
