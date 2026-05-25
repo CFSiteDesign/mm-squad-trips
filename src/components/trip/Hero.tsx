@@ -12,9 +12,6 @@ export function Hero({ trip }: { trip: Trip }) {
 
   return (
     <section className="relative isolate min-h-[100svh] w-full overflow-hidden bg-mm-black text-mm-bone">
-      {/* Top lime accent bar */}
-      <div className="absolute inset-x-0 top-0 z-30 h-[6px] bg-mm-lime" />
-
       {/* Background media */}
       {trip.heroVideoUrl ? (
         <video
