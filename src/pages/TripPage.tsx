@@ -65,6 +65,7 @@ export default function TripPage() {
       <WhosComing trip={trip} />
       <BookingFlow trip={trip} />
       <FAQ />
+      <SquadCTA />
       <SiteFooter />
     </main>
   );
