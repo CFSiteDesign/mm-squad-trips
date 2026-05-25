@@ -32,7 +32,7 @@ export function Hero({ trip }: { trip: Trip }) {
       <div className="absolute inset-0 bg-gradient-to-b from-mm-black/55 via-mm-black/25 to-mm-black/80" />
 
       {/* Starburst device */}
-      <div className="absolute right-3 top-20 z-20 md:right-auto md:left-[44%] md:top-28">
+      <div className="absolute right-3 top-20 z-20 md:right-12 md:left-auto md:top-28">
         <Starburst size={88} color="pink" rotate={-12} className="md:hidden">
           {trip.days}<br />DAYS
         </Starburst>
