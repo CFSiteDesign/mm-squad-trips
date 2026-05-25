@@ -4,7 +4,7 @@ import { Wordmark } from "@/components/brand/Wordmark";
 export function SiteFooter() {
   return (
     <footer className="relative bg-mm-black px-6 pt-8 pb-4 text-mm-bone">
-      <div className="mx-auto flex max-w-3xl flex-col gap-10 md:flex-row md:items-end md:justify-between">
+      <div className="mx-auto flex max-w-3xl flex-col gap-6 md:flex-row md:items-end md:justify-between">
         <div>
           <a
             href="https://wa.me/855000000000"
