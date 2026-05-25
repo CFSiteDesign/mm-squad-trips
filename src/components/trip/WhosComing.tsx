@@ -14,6 +14,15 @@ export function WhosComing({ trip }: { trip: Trip }) {
             82% of guests come solo
           </span>
         </div>
+        {trip.videoTestimonialUrl && (
+          <video
+            src={trip.videoTestimonialUrl}
+            controls
+            playsInline
+            className="mt-6 w-full rounded-xl bg-black"
+          />
+        )}
+
 
         <div className="mt-6 space-y-4">
           {trip.testimonials.slice(0, 4).map((t) => (
