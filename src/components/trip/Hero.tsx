@@ -23,7 +23,9 @@ export function Hero({ trip }: { trip: Trip }) {
         />
       ) : (
         // brand-coloured placeholder block (real Mad Monkey photo goes here)
-        <div className="absolute inset-0 bg-mm-orange" />
+        <div className="absolute inset-0 flex items-center justify-center bg-mm-orange">
+          <span className="font-display text-xl text-mm-black">PLACEHOLDER IMAGE</span>
+        </div>
       )}
       <div className="absolute inset-0" style={{ background: "var(--gradient-hero)" }} />
 
