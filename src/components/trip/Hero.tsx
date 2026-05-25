@@ -32,17 +32,20 @@ export function Hero({ trip }: { trip: Trip }) {
       <div className="absolute inset-0 bg-gradient-to-b from-mm-black/55 via-mm-black/25 to-mm-black/80" />
 
       {/* Starburst device */}
-      <div className="absolute right-3 top-20 z-20 md:right-10 md:top-10">
-        <Starburst size={88} color="pink" rotate={-12}>
+      <div className="absolute right-3 top-20 z-20 md:right-auto md:left-[44%] md:top-28">
+        <Starburst size={88} color="pink" rotate={-12} className="md:hidden">
+          {trip.days}<br />DAYS
+        </Starburst>
+        <Starburst size={132} color="pink" rotate={-12} className="hidden md:flex">
           {trip.days}<br />DAYS
         </Starburst>
       </div>
 
       {/* Main content stack */}
-      <div className="relative z-10 mx-auto grid min-h-[100svh] max-w-7xl grid-rows-[7rem_1fr_auto] px-4 pb-6 pt-0 md:grid-rows-[9rem_1fr_auto] md:px-12 md:pb-10">
+      <div className="relative z-10 mx-auto grid min-h-[100svh] max-w-7xl grid-rows-[7rem_1fr_auto] px-4 pb-6 pt-0 md:grid-rows-[7rem_1fr_auto] md:px-12 md:pb-10">
         <div />
 
-        <div className="flex items-center md:items-end">
+        <div className="flex items-center md:items-start md:pt-4">
           <div className="max-w-[19rem] md:max-w-5xl">
             <h1 className="font-display uppercase leading-[0.88] tracking-tight text-[clamp(2.7rem,12vw,9rem)] md:leading-[0.86]">
             <span className="block text-mm-bone">SOLO<br className="md:hidden" /> TRAVELLER?</span>
