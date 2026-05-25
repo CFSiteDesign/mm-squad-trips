@@ -1,11 +1,27 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Trip } from "@/types/trip";
 
+async function getFunctionErrorMessage(error: unknown): Promise<string> {
+  if (!(error instanceof Error)) return "Request failed";
+
+  const context = (error as Error & { context?: unknown }).context;
+  if (typeof context === "string") {
+    try {
+      const parsed = JSON.parse(context) as { error?: string; message?: string };
+      if (parsed.error || parsed.message) return parsed.error || parsed.message || error.message;
+    } catch {
+      return context;
+    }
+  }
+
+  return error.message;
+}
+
 export async function fetchTrip(slug: string): Promise<Trip> {
   const { data, error } = await supabase.functions.invoke("trips-get", {
     body: { slug },
   });
-  if (error) throw error;
+  if (error) throw new Error(await getFunctionErrorMessage(error));
   if (!data?.trip) throw new Error(data?.error || "Trip not found");
   return data.trip as Trip;
 }
@@ -40,7 +56,7 @@ export interface CreateCheckoutInput {
 
 export async function createCheckoutSession(input: CreateCheckoutInput): Promise<{ url: string }> {
   const { data, error } = await supabase.functions.invoke("create-checkout-session", { body: input });
-  if (error) throw error;
+  if (error) throw new Error(await getFunctionErrorMessage(error));
   if (!data?.url) throw new Error(data?.error || "Could not create checkout session");
   return data as { url: string };
 }
