@@ -95,7 +95,7 @@ export function BookingFlow({ trip }: { trip: Trip }) {
   }
 
   return (
-    <section id="booking" className="relative bg-mm-blue px-6 py-20 text-mm-bone">
+    <section id="booking" className="relative bg-mm-pink px-6 py-20 text-mm-bone">
       <div className="mx-auto max-w-3xl space-y-10">
         <div>
           <Sticker color="yellow" rotate={-4}>STEP UP</Sticker>
@@ -174,7 +174,7 @@ export function BookingFlow({ trip }: { trip: Trip }) {
                   <Button
                     type="button"
                     onClick={tryDiscount}
-                    className="h-12 rounded-none border-[3px] border-mm-black bg-mm-yellow font-display text-mm-black hover:bg-mm-yellow shadow-mm-sm"
+                    className="h-12 rounded-none border-[3px] border-mm-black bg-mm-orange font-display text-mm-black hover:bg-mm-orange shadow-mm-sm"
                   >
                     APPLY
                   </Button>
@@ -212,7 +212,7 @@ function FormStep({ n, label, children }: { n: number; label: string; children: 
   return (
     <div>
       <div className="mb-3 flex items-center gap-3">
-        <span className="inline-flex h-9 w-9 items-center justify-center border-[3px] border-mm-bone bg-mm-yellow font-display text-base text-mm-black">
+        <span className="inline-flex h-9 w-9 items-center justify-center border-[3px] border-mm-bone bg-mm-orange font-display text-base text-mm-black">
           {n}
         </span>
         <Label className="font-display text-sm tracking-[0.1em] text-mm-bone">{label}</Label>

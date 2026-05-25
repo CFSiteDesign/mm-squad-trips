@@ -8,7 +8,7 @@ export function Route({ trip }: { trip: Trip }) {
         <Sticker color="cyan" rotate={3}>THE ROUTE</Sticker>
         <h2 className="mt-4 font-display text-5xl md:text-6xl text-mm-bone">
           {trip.days} DAYS.<br />
-          <span className="text-mm-cyan">{trip.stops.length} STOPS.</span>
+          <span className="text-mm-lime">{trip.stops.length} STOPS.</span>
         </h2>
 
         <ol className="mt-12 space-y-8">
@@ -22,7 +22,7 @@ export function Route({ trip }: { trip: Trip }) {
               )}
               <h3 className="font-display text-3xl text-mm-bone">
                 {stop.name.toUpperCase()}
-                <span className="ml-3 font-sticker text-[11px] tracking-[0.18em] text-mm-cyan">
+                <span className="ml-3 font-sticker text-[11px] tracking-[0.18em] text-mm-lime">
                   {stop.nights} NIGHT{stop.nights === 1 ? "" : "S"}
                 </span>
               </h3>
@@ -49,7 +49,7 @@ export function Route({ trip }: { trip: Trip }) {
               {stop.activities?.length > 0 && (
                 <ul className="mt-4 flex flex-wrap gap-2">
                   {stop.activities.map((a, k) => {
-                    const tones = ["bg-mm-lime text-mm-black", "bg-mm-yellow text-mm-black", "bg-mm-pink text-mm-black"];
+                    const tones = ["bg-mm-lime text-mm-black", "bg-mm-orange text-mm-black", "bg-mm-pink text-mm-black"];
                     return (
                       <li
                         key={a}

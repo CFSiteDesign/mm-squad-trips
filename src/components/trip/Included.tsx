@@ -26,7 +26,7 @@ export function Included({ trip }: { trip: Trip }) {
               key={label}
               className={`flex items-center gap-4 px-4 py-4 ${i < items.length - 1 ? "border-b-[3px] border-mm-black" : ""} ${i % 2 === 0 ? "bg-mm-paper" : "bg-mm-lime/30"}`}
             >
-              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center border-[3px] border-mm-black bg-mm-yellow">
+              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center border-[3px] border-mm-black bg-mm-orange">
                 <Icon className="h-4 w-4" />
               </span>
               <span className="text-sm font-bold uppercase tracking-tight">{label}</span>

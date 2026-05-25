@@ -31,7 +31,7 @@ export function WhosComing({ trip }: { trip: Trip }) {
 
         <div className="mt-8 grid gap-5 md:grid-cols-2">
           {trip.testimonials.slice(0, 4).map((t, i) => {
-            const bg = ["bg-mm-yellow", "bg-mm-cyan", "bg-mm-paper", "bg-mm-lime"][i % 4];
+            const bg = ["bg-mm-orange", "bg-mm-lime", "bg-mm-paper", "bg-mm-lime"][i % 4];
             return (
               <figure key={t.name} className={`border-mm-thick ${bg} p-5 shadow-mm`}>
                 <blockquote className="font-display text-lg leading-tight text-mm-black">
