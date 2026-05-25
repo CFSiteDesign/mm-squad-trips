@@ -1,47 +1,57 @@
 import type { Trip } from "@/types/trip";
+import { Sticker } from "@/components/brand/Sticker";
 
 export function WhosComing({ trip }: { trip: Trip }) {
   return (
-    <section className="px-5 py-14">
-      <div className="mx-auto max-w-2xl">
-        <h2 className="font-['Archivo_Black'] text-3xl">Who's coming</h2>
+    <section className="relative bg-mm-bone px-6 py-20 text-mm-black">
+      <div className="mx-auto max-w-3xl">
+        <Sticker color="pink" rotate={-3}>WHO&apos;S COMING</Sticker>
+        <h2 className="mt-4 font-display text-5xl md:text-6xl">
+          YOUR<br />
+          <span className="text-mm-pink">NEW CREW.</span>
+        </h2>
 
-        <div className="mt-5 flex flex-wrap gap-2">
-          <span className="rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-secondary-foreground">
-            Most guests 23–31
+        <div className="mt-6 flex flex-wrap gap-3">
+          <span className="border-[3px] border-mm-black bg-mm-black px-4 py-2 font-sticker text-[11px] text-mm-bone tracking-[0.18em] shadow-mm-sm">
+            MOST GUESTS 23–31
           </span>
-          <span className="rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-secondary-foreground">
-            82% of guests come solo
+          <span className="border-[3px] border-mm-black bg-mm-lime px-4 py-2 font-sticker text-[11px] text-mm-black tracking-[0.18em] shadow-mm-sm">
+            82% COME SOLO
           </span>
         </div>
+
         {trip.videoTestimonialUrl && (
           <video
             src={trip.videoTestimonialUrl}
             controls
             playsInline
-            className="mt-6 w-full rounded-xl bg-black"
+            className="mt-8 w-full border-mm-thick bg-mm-black shadow-mm-lg"
           />
         )}
 
-
-        <div className="mt-6 space-y-4">
-          {trip.testimonials.slice(0, 4).map((t) => (
-            <figure key={t.name} className="rounded-xl border border-border bg-card p-4">
-              <blockquote className="text-sm leading-relaxed">"{t.quote}"</blockquote>
-              <figcaption className="mt-3 flex items-center gap-3">
-                {t.photo ? (
-                  <img src={t.photo} alt={t.name} className="h-10 w-10 rounded-full object-cover" />
-                ) : (
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
-                    {t.name.slice(0, 2).toUpperCase()}
+        <div className="mt-8 grid gap-5 md:grid-cols-2">
+          {trip.testimonials.slice(0, 4).map((t, i) => {
+            const bg = ["bg-mm-yellow", "bg-mm-cyan", "bg-mm-paper", "bg-mm-lime"][i % 4];
+            return (
+              <figure key={t.name} className={`border-mm-thick ${bg} p-5 shadow-mm`}>
+                <blockquote className="font-display text-lg leading-tight text-mm-black">
+                  &ldquo;{t.quote}&rdquo;
+                </blockquote>
+                <figcaption className="mt-4 flex items-center gap-3">
+                  {t.photo ? (
+                    <img src={t.photo} alt={t.name} className="h-10 w-10 border-[3px] border-mm-black object-cover" />
+                  ) : (
+                    <div className="flex h-10 w-10 items-center justify-center border-[3px] border-mm-black bg-mm-black font-display text-xs text-mm-bone">
+                      {t.name.slice(0, 2).toUpperCase()}
+                    </div>
+                  )}
+                  <div className="font-sticker text-[10px] tracking-[0.18em] text-mm-black">
+                    {t.name} · {t.age} · {t.country}
                   </div>
-                )}
-                <div className="text-xs text-muted-foreground">
-                  <strong className="text-foreground">{t.name}</strong>, {t.age} · {t.country}
-                </div>
-              </figcaption>
-            </figure>
-          ))}
+                </figcaption>
+              </figure>
+            );
+          })}
         </div>
       </div>
     </section>

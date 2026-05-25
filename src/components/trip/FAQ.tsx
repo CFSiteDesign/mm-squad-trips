@@ -1,4 +1,5 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Sticker } from "@/components/brand/Sticker";
 
 const FAQS = [
   { q: "Will I be the only solo person?", a: "Definitely not. 82% of our guests come solo. The whole product is designed for it." },
@@ -13,14 +14,22 @@ const FAQS = [
 
 export function FAQ() {
   return (
-    <section className="bg-muted/40 px-5 py-14">
-      <div className="mx-auto max-w-2xl">
-        <h2 className="font-['Archivo_Black'] text-3xl">FAQ</h2>
-        <Accordion type="single" collapsible className="mt-6">
+    <section className="bg-mm-yellow px-6 py-20 text-mm-black">
+      <div className="mx-auto max-w-3xl">
+        <Sticker color="purple" rotate={-4}>BEFORE YOU ASK</Sticker>
+        <h2 className="mt-4 font-display text-5xl md:text-6xl">FAQ.</h2>
+
+        <Accordion type="single" collapsible className="mt-8 border-mm-thick bg-mm-paper">
           {FAQS.map((f, i) => (
-            <AccordionItem value={`f${i}`} key={i}>
-              <AccordionTrigger className="text-left text-sm font-semibold">{f.q}</AccordionTrigger>
-              <AccordionContent className="text-sm text-muted-foreground">{f.a}</AccordionContent>
+            <AccordionItem
+              value={`f${i}`}
+              key={i}
+              className={i < FAQS.length - 1 ? "border-b-[3px] border-mm-black" : "border-b-0"}
+            >
+              <AccordionTrigger className="px-4 py-4 text-left font-display text-base uppercase hover:no-underline">
+                {f.q}
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4 text-sm text-mm-black/80">{f.a}</AccordionContent>
             </AccordionItem>
           ))}
         </Accordion>
