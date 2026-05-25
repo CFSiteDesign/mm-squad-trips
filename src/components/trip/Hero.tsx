@@ -32,7 +32,7 @@ export function Hero({ trip }: { trip: Trip }) {
         <Sticker color="lime" rotate={-6}>ALL · IN</Sticker>
       </div>
       <div className="absolute right-4 top-24 z-20 md:left-12 md:right-auto md:top-auto md:bottom-32">
-        <Starburst size={96} color="yellow" rotate={-12} className="md:!w-[132px] md:!h-[132px]">
+        <Starburst size={108} color="yellow" rotate={-12}>
           {trip.days}<br />DAYS
         </Starburst>
       </div>
