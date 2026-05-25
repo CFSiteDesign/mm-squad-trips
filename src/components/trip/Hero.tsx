@@ -88,7 +88,7 @@ export function Hero({ trip }: { trip: Trip }) {
         </p>
       </div>
 
-      <PinnedWordmark tone="light" />
+      <PinnedWordmark />
     </section>
   );
 }

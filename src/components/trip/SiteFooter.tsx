@@ -26,7 +26,7 @@ export function SiteFooter() {
           </p>
         </div>
 
-        <Wordmark tone="light" />
+        <Wordmark size={64} />
       </div>
     </footer>
   );
