@@ -46,10 +46,10 @@ export function Hero({ trip }: { trip: Trip }) {
       </div>
 
       {/* Main content stack */}
-      <div className="relative z-10 mx-auto flex min-h-[100svh] max-w-7xl flex-col px-4 pb-5 pt-24 md:grid md:grid-rows-[6rem_1fr_auto] md:px-12 md:pb-10 md:pt-0">
+      <div className="relative z-10 mx-auto flex min-h-[100svh] max-w-7xl flex-col px-4 pb-6 pt-20 md:grid md:grid-rows-[6rem_1fr_auto] md:px-12 md:pb-10 md:pt-0">
         <div className="hidden md:block" />
 
-        <div className="flex flex-1 items-end md:items-center">
+        <div className="mt-8 md:mt-0 md:flex md:flex-1 md:items-center">
           <div className="max-w-[18rem] md:max-w-5xl">
             <h1 className="font-display uppercase leading-[0.88] tracking-tight text-[clamp(2.5rem,11vw,9rem)] md:leading-[0.86]">
             <span className="block text-mm-bone">SOLO<br className="md:hidden" /> TRAVELLER?</span>
@@ -66,7 +66,7 @@ export function Hero({ trip }: { trip: Trip }) {
 
 
         {/* Bottom booking strip */}
-        <div className="mt-5 md:mt-0">
+        <div className="mt-auto pt-8 md:mt-0 md:pt-0">
           <div className="w-full max-w-3xl border-mm-thick border-mm-black bg-mm-bone text-mm-black shadow-mm">
             <div className="flex items-stretch">
               <div className="flex-1 border-r-mm-thick border-mm-black px-3 py-2 md:px-5 md:py-4">
