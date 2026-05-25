@@ -133,7 +133,7 @@ export function BookingFlow({ trip }: { trip: Trip }) {
               No departures with {groupSize} spot{groupSize > 1 ? "s" : ""} available right now.
             </p>
           ) : (
-            <div className="mt-3 -mx-5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-2">
+            <div className="mt-3 -mx-5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-2 md:mx-0 md:grid md:grid-cols-3 md:gap-4 md:overflow-visible md:px-0">
               {visible.map((d) => (
                 <DepartureCard
                   key={d.id}
@@ -223,7 +223,7 @@ function DepartureCard({
     <button
       type="button"
       onClick={onSelect}
-      className={`flex w-[220px] shrink-0 snap-start flex-col rounded-2xl border-2 p-4 text-left transition ${
+      className={`flex w-[220px] shrink-0 snap-start flex-col rounded-2xl border-2 p-4 text-left transition md:w-auto ${
         selected ? "border-primary bg-primary/5" : "border-border bg-card hover:border-primary/50"
       }`}
     >
@@ -264,15 +264,17 @@ function LeadForm({
           </SelectContent>
         </Select>
       </div>
-      <div>
-        <Label className="text-xs">Coming with friends booking separately? Add their names so we group you</Label>
-        <Textarea
-          value={value.friends}
-          onChange={(e) => set("friends", e.target.value)}
-          rows={2}
-          className="mt-1"
-        />
-      </div>
+      {groupSize === 1 && (
+        <div>
+          <Label className="text-xs">Coming with friends booking separately? Add their names so we group you</Label>
+          <Textarea
+            value={value.friends}
+            onChange={(e) => set("friends", e.target.value)}
+            rows={2}
+            className="mt-1"
+          />
+        </div>
+      )}
     </div>
   );
 }
