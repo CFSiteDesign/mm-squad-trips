@@ -15,8 +15,9 @@ export function SiteFooter() {
           </a>
 
           <nav className="mt-7 flex flex-wrap gap-x-6 gap-y-2 font-sticker text-[11px] tracking-[0.2em] text-mm-bone/70">
-            <a href="/terms" className="hover:text-mm-lime">TERMS</a>
-            <a href="/privacy" className="hover:text-mm-lime">PRIVACY</a>
+            <a href="https://madmonkeyhostels.com/terms-and-conditions/" target="_blank" rel="noopener noreferrer" className="hover:text-mm-lime">TERMS</a>
+            <a href="https://madmonkeyhostels.com/privacy-policy/" target="_blank" rel="noopener noreferrer" className="hover:text-mm-lime">PRIVACY</a>
+            <a href="https://madmonkeyhostels.com/cancellation-policy/" target="_blank" rel="noopener noreferrer" className="hover:text-mm-lime">CANCELLATION</a>
             <a href="mailto:hello@madmonkeyhostels.com" className="hover:text-mm-lime">CONTACT</a>
           </nav>
 
