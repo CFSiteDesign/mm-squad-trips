@@ -76,7 +76,7 @@ export default function Index() {
         </p>
       </section>
 
-      <PinnedWordmark tone="light" />
+      <PinnedWordmark />
     </main>
   );
 }
