@@ -7,11 +7,9 @@ import logo from "@/assets/mad-monkey-logo.webp";
 export function Wordmark({
   className,
   size = 56,
-  tone = "dark",
 }: {
   className?: string;
   size?: number;
-  tone?: "dark" | "light";
 }) {
   const width = Math.round(size * 3.3);
 
@@ -38,8 +36,8 @@ export function Wordmark({
 export function PinnedWordmark() {
   return (
     <div className="pointer-events-none absolute left-4 top-3 z-40 md:left-8 md:top-4">
-      <Wordmark size={48} tone="light" className="md:hidden" />
-      <Wordmark size={64} tone="light" className="hidden md:block" />
+      <Wordmark size={48} className="md:hidden" />
+      <Wordmark size={64} className="hidden md:block" />
     </div>
   );
 }
