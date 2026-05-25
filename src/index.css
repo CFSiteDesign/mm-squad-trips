@@ -2,59 +2,97 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Mad Monkey Group Trips — design tokens.
+   All colors HSL. Warm jungle + sunset palette with crisp lime accent. */
 @layer base {
   :root {
-    --background: 220 20% 4%;
-    --foreground: 210 20% 96%;
+    --background: 36 33% 97%;
+    --foreground: 24 18% 12%;
 
-    --card: 220 18% 8%;
-    --card-foreground: 210 20% 96%;
+    --card: 0 0% 100%;
+    --card-foreground: 24 18% 12%;
 
-    --popover: 220 18% 8%;
-    --popover-foreground: 210 20% 96%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 24 18% 12%;
 
-    --primary: 174 72% 56%;
-    --primary-foreground: 220 20% 4%;
+    /* Primary: warm Mad Monkey orange */
+    --primary: 18 92% 54%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 28 96% 62%;
 
-    --secondary: 220 15% 14%;
-    --secondary-foreground: 210 20% 96%;
+    /* Secondary: deep jungle */
+    --secondary: 158 48% 18%;
+    --secondary-foreground: 36 33% 97%;
 
-    --muted: 220 15% 14%;
-    --muted-foreground: 215 15% 55%;
+    /* Accent: lime / mint */
+    --accent: 84 72% 52%;
+    --accent-foreground: 158 48% 12%;
 
-    --accent: 174 72% 56%;
-    --accent-foreground: 220 20% 4%;
+    --muted: 36 20% 92%;
+    --muted-foreground: 24 10% 38%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 0 78% 52%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 15% 18%;
-    --input: 220 15% 18%;
-    --ring: 174 72% 56%;
+    --border: 24 14% 88%;
+    --divider: 24 14% 92%;
+    --input: 24 14% 88%;
+    --ring: 18 92% 54%;
 
-    --radius: 0.75rem;
+    --radius: 0.875rem;
 
-    --sidebar-background: 220 18% 6%;
-    --sidebar-foreground: 210 20% 96%;
-    --sidebar-primary: 174 72% 56%;
-    --sidebar-primary-foreground: 220 20% 4%;
-    --sidebar-accent: 220 15% 14%;
-    --sidebar-accent-foreground: 210 20% 96%;
-    --sidebar-border: 220 15% 18%;
-    --sidebar-ring: 174 72% 56%;
+    /* Spot-remaining badge ramp (per brief) */
+    --spot-green: 152 64% 38%;
+    --spot-amber: 38 95% 50%;
+    --spot-orange: 22 95% 52%;
+    --spot-red: 0 80% 52%;
+    --spot-grey: 24 8% 50%;
+
+    /* Cranky placeholder kept for shadcn compatibility */
+    --cranky: 18 92% 54%;
+    --cranky-foreground: 0 0% 100%;
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 24 18% 12%;
+    --sidebar-primary: 18 92% 54%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 36 20% 92%;
+    --sidebar-accent-foreground: 24 18% 12%;
+    --sidebar-border: 24 14% 88%;
+    --sidebar-ring: 18 92% 54%;
+
+    --gradient-hero: linear-gradient(180deg, hsl(0 0% 0% / 0) 0%, hsl(0 0% 0% / 0.75) 100%);
+  }
+
+  .dark {
+    --background: 24 18% 8%;
+    --foreground: 36 33% 97%;
+    --card: 24 18% 12%;
+    --card-foreground: 36 33% 97%;
+    --popover: 24 18% 12%;
+    --popover-foreground: 36 33% 97%;
+    --primary: 18 92% 58%;
+    --primary-foreground: 24 18% 8%;
+    --secondary: 158 30% 22%;
+    --secondary-foreground: 36 33% 97%;
+    --muted: 24 12% 18%;
+    --muted-foreground: 36 12% 70%;
+    --accent: 84 60% 50%;
+    --accent-foreground: 24 18% 8%;
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 24 12% 22%;
+    --divider: 24 12% 18%;
+    --input: 24 12% 22%;
+    --ring: 18 92% 58%;
   }
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
-
+  * { @apply border-border; }
   body {
     @apply bg-background text-foreground antialiased;
+    font-feature-settings: "ss01", "cv11";
   }
-
-  html {
-    scroll-behavior: smooth;
-  }
+  html { scroll-behavior: smooth; }
 }
