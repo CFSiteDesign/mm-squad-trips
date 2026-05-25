@@ -34,6 +34,7 @@ export interface Trip {
   testimonials: Testimonial[];
   activityCount: number;
   heroVideoUrl: string;
+  videoTestimonialUrl?: string;
   defaultPrice: number;
   defaultStrikethrough: number;
   departures: Departure[];

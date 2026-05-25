@@ -12,6 +12,7 @@ interface TripFields {
   "Testimonials": string;
   "Activity Count": number;
   "Hero Video URL"?: string;
+  "Video Testimonial URL"?: string;
   "Default Price": number;
   "Default Strikethrough": number;
   "Active?": boolean;
@@ -116,6 +117,7 @@ Deno.serve(async (req) => {
       testimonials: safeJson(t["Testimonials"], []),
       activityCount: t["Activity Count"],
       heroVideoUrl: t["Hero Video URL"] ?? "",
+      videoTestimonialUrl: t["Video Testimonial URL"] ?? "",
       defaultPrice: t["Default Price"],
       defaultStrikethrough: t["Default Strikethrough"] ?? 0,
       departures: resolvedDepartures,
