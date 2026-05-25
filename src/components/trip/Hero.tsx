@@ -44,9 +44,6 @@ export function Hero({ trip }: { trip: Trip }) {
       {/* Main content stack */}
       <div className="relative z-10 mx-auto flex min-h-[100svh] max-w-7xl flex-col justify-between px-5 pb-8 pt-16 md:px-12 md:pt-24">
         <div className="pt-8 md:pt-12">
-          <p className="font-sticker text-[11px] tracking-[0.25em] text-mm-lime md:text-xs">
-            ★ SOLO TRAVELLER · {trip.name.toUpperCase()} ★
-          </p>
 
           <h1 className="mt-5 font-display uppercase leading-[0.88] tracking-tight text-[clamp(3.25rem,14vw,9rem)]">
             <span className="block text-mm-bone">SOLO TRAVELLER?</span>
