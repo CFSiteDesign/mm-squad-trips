@@ -42,10 +42,10 @@ export function Hero({ trip }: { trip: Trip }) {
       </div>
 
       {/* Main content stack */}
-      <div className="relative z-10 mx-auto grid min-h-[100svh] max-w-7xl grid-rows-[7rem_1fr_auto] px-4 pb-6 pt-0 md:grid-rows-[7rem_1fr_auto] md:px-12 md:pb-10">
+      <div className="relative z-10 mx-auto grid min-h-[100svh] max-w-7xl grid-rows-[7rem_1fr_auto] px-4 pb-6 md:grid-rows-[6rem_1fr_auto] md:px-12 md:pb-10">
         <div />
 
-        <div className="flex items-center md:items-start md:pt-4">
+        <div className="flex items-center">
           <div className="max-w-[19rem] md:max-w-5xl">
             <h1 className="font-display uppercase leading-[0.88] tracking-tight text-[clamp(2.7rem,12vw,9rem)] md:leading-[0.86]">
             <span className="block text-mm-bone">SOLO<br className="md:hidden" /> TRAVELLER?</span>
@@ -53,12 +53,13 @@ export function Hero({ trip }: { trip: Trip }) {
             <span className="block text-mm-lime">LONG.</span>
             </h1>
 
-            <p className="mt-4 max-w-[17rem] text-sm leading-[1.15] text-mm-bone/90 md:mt-5 md:max-w-xl md:text-lg md:leading-snug">
+            <p className="mt-4 max-w-[17rem] text-sm leading-[1.15] text-mm-bone/90 md:mt-6 md:max-w-xl md:text-lg md:leading-snug">
               For those with friends who never commit.<br />
               Trips that actually make it out the group chat.
             </p>
           </div>
         </div>
+
 
         {/* Bottom booking strip */}
         <div>
