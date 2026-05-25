@@ -77,13 +77,19 @@ export function Hero({ trip }: { trip: Trip }) {
           </div>
         </div>
 
-        <a
-          href="#booking"
-          onClick={(e) => { e.preventDefault(); document.getElementById("booking")?.scrollIntoView({ behavior: "smooth" }); }}
-          className="mt-5 inline-flex items-center gap-3 border-mm-thick border-mm-bone bg-mm-pink px-4 py-3 font-display text-sm text-mm-bone shadow-mm-bone transition-transform hover:-translate-x-[2px] hover:-translate-y-[2px] md:text-base"
-        >
-          EARN A FREE TRIP? <span className="text-mm-lime">BRING YOUR SQUAD →</span>
-        </a>
+        <div className="mt-8 w-full max-w-4xl border-mm-thick border-mm-bone bg-mm-black p-6 shadow-mm-bone md:p-10">
+          <h2 className="font-display text-3xl uppercase leading-[0.95] tracking-tight text-mm-bone md:text-5xl lg:text-6xl">
+            Earn a free trip?<br />
+            <span className="text-mm-lime">Bring your squad.</span>
+          </h2>
+          <a
+            href="#booking"
+            onClick={(e) => { e.preventDefault(); document.getElementById("booking")?.scrollIntoView({ behavior: "smooth" }); }}
+            className="mt-5 inline-flex items-center gap-2 border-mm-thick border-mm-bone bg-mm-pink px-6 py-3 font-display text-sm text-mm-bone shadow-mm-bone transition-transform hover:-translate-x-[2px] hover:-translate-y-[2px] md:text-base"
+          >
+            Become a Squad Leader →
+          </a>
+        </div>
 
         <p className="mt-4 font-sticker text-[10px] tracking-[0.24em] text-mm-bone/80">
           REAL MAD MONKEY HOSTELS IN EVERY CITY · 53,000+ IN OUR COMMUNITY
