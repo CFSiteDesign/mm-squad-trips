@@ -46,7 +46,7 @@ export function Hero({ trip }: { trip: Trip }) {
       </div>
 
       {/* Main content stack */}
-      <div className="relative z-10 mx-auto flex h-[88svh] max-w-7xl flex-col justify-between px-6 pb-[max(1rem,env(safe-area-inset-bottom))] pt-20 md:h-auto md:min-h-[100svh] md:grid md:grid-rows-[6rem_1fr_auto] md:justify-normal md:px-12 md:pb-10 md:pt-0">
+      <div className="relative z-10 mx-auto flex h-[88svh] max-w-7xl flex-col px-6 pb-[max(1rem,env(safe-area-inset-bottom))] pt-20 md:h-auto md:min-h-[100svh] md:grid md:grid-rows-[6rem_1fr_auto] md:px-12 md:pb-10 md:pt-0">
         <div className="hidden md:block" />
 
         <div className="mt-4 md:mt-0 md:flex md:flex-1 md:items-center">
@@ -66,7 +66,7 @@ export function Hero({ trip }: { trip: Trip }) {
 
 
         {/* Bottom booking strip */}
-        <div className="md:mt-0 md:pt-0">
+        <div className="mt-auto pt-8 md:mt-0 md:pt-0">
 
           <div className="w-full max-w-3xl border-mm-thick border-mm-black bg-mm-bone text-mm-black shadow-mm">
             <div className="flex items-stretch">
