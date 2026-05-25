@@ -29,7 +29,13 @@ export function WhosComing({ trip }: { trip: Trip }) {
             <figure key={t.name} className="rounded-xl border border-border bg-card p-4">
               <blockquote className="text-sm leading-relaxed">"{t.quote}"</blockquote>
               <figcaption className="mt-3 flex items-center gap-3">
-                <img src={t.photo} alt={t.name} className="h-10 w-10 rounded-full object-cover" />
+                {t.photo ? (
+                  <img src={t.photo} alt={t.name} className="h-10 w-10 rounded-full object-cover" />
+                ) : (
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
+                    {t.name.slice(0, 2).toUpperCase()}
+                  </div>
+                )}
                 <div className="text-xs text-muted-foreground">
                   <strong className="text-foreground">{t.name}</strong>, {t.age} · {t.country}
                 </div>

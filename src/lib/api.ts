@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { getFallbackTrip } from "@/data/fallback-trips";
 import type { Trip } from "@/types/trip";
 
 async function getFunctionErrorMessage(error: unknown): Promise<string> {
@@ -21,7 +22,14 @@ export async function fetchTrip(slug: string): Promise<Trip> {
   const { data, error } = await supabase.functions.invoke("trips-get", {
     body: { slug },
   });
-  if (error) throw new Error(await getFunctionErrorMessage(error));
+  if (error) {
+    const message = await getFunctionErrorMessage(error);
+    const fallback = getFallbackTrip(slug);
+    if (fallback && message.includes('Airtable GET Trips [404]')) {
+      return fallback;
+    }
+    throw new Error(message);
+  }
   if (!data?.trip) throw new Error(data?.error || "Trip not found");
   return data.trip as Trip;
 }
