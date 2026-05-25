@@ -26,7 +26,7 @@ export function Wordmark({
         alt="Mad Monkey Hostels"
         width={width}
         height={size}
-        className="h-full w-full object-contain object-left"
+        className="block h-full w-full object-contain object-left brightness-0"
         style={{ width, height: size }}
       />
     </div>
