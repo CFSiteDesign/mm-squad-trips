@@ -11,7 +11,7 @@ export function Hero({ trip }: { trip: Trip }) {
   const payInFull = allDeparturesUnder60Days(trip.departures);
 
   return (
-    <section className="relative isolate min-h-[88svh] w-full overflow-hidden bg-mm-black text-mm-bone md:min-h-[100svh]">
+    <section className="relative isolate min-h-[74svh] w-full overflow-hidden bg-mm-black text-mm-bone md:min-h-[100svh]">
       {/* Background media */}
       {trip.heroVideoUrl ? (
         <video
@@ -46,7 +46,7 @@ export function Hero({ trip }: { trip: Trip }) {
       </div>
 
       {/* Main content stack */}
-      <div className="relative z-10 mx-auto grid h-[88svh] max-w-7xl grid-rows-[auto_1fr_auto] px-6 pb-[max(1rem,env(safe-area-inset-bottom))] pt-14 md:flex md:h-auto md:min-h-[100svh] md:grid md:grid-rows-[6rem_1fr_auto] md:px-12 md:pb-10 md:pt-0">
+      <div className="relative z-10 mx-auto grid h-[74svh] max-w-7xl grid-rows-[auto_1fr_auto] px-6 pb-[max(1rem,env(safe-area-inset-bottom))] pt-12 md:flex md:h-auto md:min-h-[100svh] md:grid md:grid-rows-[6rem_1fr_auto] md:px-12 md:pb-10 md:pt-0">
         <div className="hidden md:block" />
 
         <div className="mt-2 flex items-center md:mt-0 md:flex md:flex-1 md:items-center">
