@@ -4,8 +4,8 @@ import type { SpotBadge as Badge } from "@/lib/trip-helpers";
 
 const toneClasses: Record<Badge["tone"], string> = {
   green:  "bg-mm-lime text-mm-black",
-  amber:  "bg-mm-yellow text-mm-black",
-  orange: "bg-mm-orange text-mm-black",
+  amber:  "bg-mm-orange text-mm-black",
+  orange: "bg-mm-pink text-mm-black",
   red:    "bg-mm-pink text-mm-black",
   grey:   "bg-mm-black text-mm-bone",
 };
