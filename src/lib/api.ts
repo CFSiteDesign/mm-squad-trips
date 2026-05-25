@@ -31,8 +31,8 @@ export interface CreateCheckoutInput {
   tripSlug: string;
   departureId: string;
   groupSize: number;
-  leadBooker: Record<string, unknown>;
-  travelers: Record<string, unknown>[];
+  leadBooker: unknown;
+  travelers: unknown[];
   discountCode?: string;
   friendsMentioned?: string;
   utm?: Record<string, string>;
