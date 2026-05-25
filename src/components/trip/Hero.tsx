@@ -45,7 +45,7 @@ export function Hero({ trip }: { trip: Trip }) {
           <h1 className="mt-5 font-display uppercase leading-[0.88] tracking-tight text-[clamp(3.25rem,14vw,9rem)]">
             <span className="block text-mm-bone">SOLO TRAVELLER?</span>
             <span className="block text-mm-pink">NOT FOR</span>
-            <span className="block text-mm-pink">LONG.</span>
+            <span className="block text-mm-lime">LONG.</span>
           </h1>
 
           <p className="mt-6 max-w-xl whitespace-pre-line text-base text-mm-bone/90 md:text-lg">
