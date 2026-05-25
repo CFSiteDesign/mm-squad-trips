@@ -66,7 +66,7 @@ export function Hero({ trip }: { trip: Trip }) {
 
 
         {/* Bottom booking strip */}
-        <div className="md:mt-0 md:pt-0">
+        <div className="mt-auto pt-8 md:mt-0 md:pt-0">
 
           <div className="w-full max-w-3xl border-mm-thick border-mm-black bg-mm-bone text-mm-black shadow-mm">
             <div className="flex items-stretch">
