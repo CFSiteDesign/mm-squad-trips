@@ -83,6 +83,14 @@ export function Hero({ trip }: { trip: Trip }) {
           </div>
         </div>
 
+        <a
+          href="#booking"
+          onClick={(e) => { e.preventDefault(); document.getElementById("booking")?.scrollIntoView({ behavior: "smooth" }); }}
+          className="mt-5 inline-flex items-center gap-3 border-mm-thick border-mm-bone bg-mm-pink px-4 py-3 font-display text-sm text-mm-bone shadow-mm-bone transition-transform hover:-translate-x-[2px] hover:-translate-y-[2px] md:text-base"
+        >
+          EARN A FREE TRIP? <span className="text-mm-lime">BRING YOUR SQUAD →</span>
+        </a>
+
         <p className="mt-4 font-sticker text-[10px] tracking-[0.24em] text-mm-bone/80">
           REAL MAD MONKEY HOSTELS IN EVERY CITY · 53,000+ IN OUR COMMUNITY
         </p>
