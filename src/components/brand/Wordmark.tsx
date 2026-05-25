@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import logo from "@/assets/mad-monkey-logo.webp";
+import logo from "@/assets/mad-monkey-logo-solid.png";
 
 /**
  * Mad Monkey logo mark.
@@ -26,7 +26,7 @@ export function Wordmark({
         alt="Mad Monkey Hostels"
         width={width}
         height={size}
-        className="block h-full w-full object-contain object-left brightness-0"
+        className="block h-full w-full object-contain object-left"
         style={{ width, height: size }}
       />
     </div>
