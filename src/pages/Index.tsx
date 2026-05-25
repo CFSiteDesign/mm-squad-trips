@@ -19,18 +19,18 @@ export default function Index() {
           ALL<br />IN
         </Starburst>
       </div>
-      <div className="pointer-events-none absolute left-4 top-20 z-10 md:left-6 md:top-8">
+      <div className="pointer-events-none absolute left-4 top-[4.9rem] z-10 md:left-6 md:top-8">
         <Sticker color="yellow" rotate={-7} className="px-2.5 py-1 text-[11px] md:px-3 md:py-1.5 md:text-xs">ALL · IN</Sticker>
       </div>
 
-      <section className="relative z-0 mx-auto max-w-5xl px-5 pb-10 pt-40 md:px-6 md:pt-36 md:pb-12">
+      <section className="relative z-0 mx-auto max-w-5xl px-5 pb-10 pt-[8.75rem] md:px-6 md:pt-36 md:pb-12">
         <p className="font-sticker text-[11px] leading-none text-mm-lime md:text-xs">MAD MONKEY · GROUP TRIPS</p>
-        <h1 className="mt-5 max-w-[18rem] font-display text-[clamp(3.25rem,15vw,9rem)] leading-[0.88] text-mm-bone md:mt-4 md:max-w-none md:text-[clamp(3.5rem,13vw,9rem)]">
+        <h1 className="mt-4 max-w-[18rem] font-display text-[clamp(3.25rem,15vw,9rem)] leading-[0.88] text-mm-bone md:mt-4 md:max-w-none md:text-[clamp(3.5rem,13vw,9rem)]">
           SOLO?<br />
           <span className="text-mm-orange">NOT</span><br />
           FOR LONG.
         </h1>
-        <p className="mt-5 max-w-[18rem] text-[15px] leading-[1.28] text-mm-bone/82 md:mt-6 md:max-w-xl md:text-base md:leading-normal">
+        <p className="mt-4 max-w-[18rem] text-[15px] leading-[1.28] text-mm-bone/82 md:mt-6 md:max-w-xl md:text-base md:leading-normal">
           Three packaged backpacker trips through SE Asia. Real Mad Monkey hostels every night. Pick one and book the flight.
         </p>
       </section>
