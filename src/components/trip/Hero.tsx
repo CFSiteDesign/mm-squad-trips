@@ -32,26 +32,27 @@ export function Hero({ trip }: { trip: Trip }) {
       <div className="absolute inset-0 bg-gradient-to-b from-mm-black/55 via-mm-black/25 to-mm-black/80" />
 
       {/* Starburst device */}
-      <div className="absolute right-4 top-10 z-20 md:right-10 md:top-16">
-        <Starburst size={112} color="pink" rotate={-12}>
+      <div className="absolute right-3 top-4 z-20 md:right-10 md:top-20">
+        <Starburst size={88} color="pink" rotate={-12}>
           {trip.days}<br />DAYS
         </Starburst>
       </div>
 
       {/* Main content stack */}
-      <div className="relative z-10 mx-auto flex min-h-[100svh] max-w-7xl flex-col justify-end px-5 pb-8 pt-24 md:justify-between md:px-12 md:pt-24 md:pb-10">
-        <div className="hidden md:block md:pt-12" />
+      <div className="relative z-10 mx-auto flex min-h-[100svh] max-w-7xl flex-col justify-end px-4 pb-6 pt-20 md:justify-between md:px-12 md:pt-32 md:pb-10">
+        <div className="hidden md:block" />
         <div>
-          <h1 className="font-display uppercase leading-[0.88] tracking-tight text-[clamp(3rem,13vw,9rem)]">
-            <span className="block text-mm-bone">SOLO TRAVELLER?</span>
+          <h1 className="font-display uppercase leading-[0.86] tracking-tight text-[clamp(2.5rem,12vw,9rem)]">
+            <span className="block text-mm-bone">SOLO<br className="md:hidden" /> TRAVELLER?</span>
             <span className="block text-mm-pink">NOT FOR</span>
             <span className="block text-mm-lime">LONG.</span>
           </h1>
 
-          <p className="mt-5 max-w-xl whitespace-pre-line text-sm text-mm-bone/90 md:text-lg">
+          <p className="mt-4 max-w-xl whitespace-pre-line text-[13px] leading-snug text-mm-bone/90 md:mt-5 md:text-lg">
             For those with friends who never commit.{"\n"}Trips that actually make it out the group chat.
           </p>
         </div>
+
 
         {/* Bottom booking strip */}
         <div className="mt-6 w-full max-w-3xl border-mm-thick border-mm-black bg-mm-bone text-mm-black shadow-mm md:mt-10">
