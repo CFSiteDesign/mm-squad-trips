@@ -13,24 +13,23 @@ export function Wordmark({
   size?: number;
   tone?: "dark" | "light";
 }) {
+  const width = Math.round(size * 3.3);
+
   return (
     <div
       className={cn(
-        "pointer-events-none select-none overflow-hidden",
+        "pointer-events-none select-none",
         className,
       )}
-      style={{ width: size, height: size }}
+      style={{ width, height: size }}
     >
       <img
         src={logo}
         alt="Mad Monkey Hostels"
-        width={Math.round(size * 3.3)}
+        width={width}
         height={size}
-        className={cn(
-          "h-full max-w-none object-cover object-left",
-          tone === "light" && "brightness-0 invert",
-        )}
-        style={{ width: size * 3.3, height: size }}
+        className="h-full w-full object-contain object-left"
+        style={{ width, height: size }}
       />
     </div>
   );
