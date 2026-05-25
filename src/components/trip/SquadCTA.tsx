@@ -1,6 +1,6 @@
 export function SquadCTA() {
   return (
-    <section className="relative overflow-hidden bg-mm-black pt-20 pb-8 text-mm-bone md:pt-28 md:pb-10">
+    <section className="relative overflow-hidden bg-mm-black pt-16 pb-10 text-mm-bone md:pt-20 md:pb-12">
       <div className="mx-auto max-w-5xl px-6 text-center">
         <span className="font-sticker text-[10px] tracking-[0.24em] text-mm-bone/70">
           SQUAD LEADER PROGRAM

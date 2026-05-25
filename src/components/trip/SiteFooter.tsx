@@ -3,7 +3,7 @@ import { Wordmark } from "@/components/brand/Wordmark";
 
 export function SiteFooter() {
   return (
-    <footer className="relative bg-mm-black px-6 pt-10 pb-6 text-mm-bone">
+    <footer className="relative bg-mm-black px-6 pt-8 pb-4 text-mm-bone">
       <div className="mx-auto flex max-w-3xl flex-col gap-10 md:flex-row md:items-end md:justify-between">
         <div>
           <a
