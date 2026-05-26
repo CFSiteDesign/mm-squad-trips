@@ -42,11 +42,11 @@ export function Hero({ trip }: { trip: Trip }) {
         </Starburst>
       </div>
 
-      <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-col px-6 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-16 md:hidden">
-        <div className="max-w-[13.25rem] pt-8">
-          <h1 className="pr-4 font-display text-[clamp(2.6rem,14vw,3.7rem)] uppercase leading-[0.9] tracking-tight">
+      <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-col px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-16 md:hidden">
+        <div className="max-w-[15.5rem] pt-8">
+          <h1 className="font-display text-[clamp(2.6rem,14vw,3.7rem)] uppercase leading-[0.9] tracking-tight">
             <span className="block text-mm-bone">SOLO TRAVELLER?</span>
-            <span className="block text-mm-pink">NOT FOR</span>
+            <span className="block whitespace-nowrap text-mm-pink">NOT FOR</span>
             <span className="block text-mm-lime">LONG.</span>
           </h1>
 
