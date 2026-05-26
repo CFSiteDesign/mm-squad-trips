@@ -31,8 +31,8 @@ export function Hero({ trip }: { trip: Trip }) {
       <div className="absolute inset-0 bg-gradient-to-b from-mm-black/55 via-mm-black/25 to-mm-black/80" />
 
       {/* Starburst device */}
-      <div className="absolute right-5 top-24 z-20 md:hidden">
-        <Starburst size={72} color="pink" rotate={-12}>
+      <div className="absolute right-4 top-20 z-20 md:hidden">
+        <Starburst size={64} color="pink" rotate={-12}>
           {trip.days}<br />DAYS
         </Starburst>
       </div>
@@ -43,14 +43,14 @@ export function Hero({ trip }: { trip: Trip }) {
       </div>
 
       <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-col px-6 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-16 md:hidden">
-        <div className="max-w-[15.5rem] pt-8">
-          <h1 className="font-display text-[clamp(3rem,16vw,4.4rem)] uppercase leading-[0.88] tracking-tight">
+        <div className="max-w-[13.25rem] pt-8">
+          <h1 className="pr-4 font-display text-[clamp(2.6rem,14vw,3.7rem)] uppercase leading-[0.9] tracking-tight">
             <span className="block text-mm-bone">SOLO<br />TRAVELLER?</span>
             <span className="block text-mm-pink">NOT FOR</span>
             <span className="block text-mm-lime">LONG.</span>
           </h1>
 
-          <p className="mt-4 max-w-[17.5rem] text-[13px] leading-[1.15] text-mm-bone/90">
+          <p className="mt-4 max-w-[16rem] text-[13px] leading-[1.15] text-mm-bone/90">
             For those with friends who never commit.<br />
             Trips that actually make it out the group chat.
           </p>
