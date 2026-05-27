@@ -42,21 +42,19 @@ export function Hero({ trip }: { trip: Trip }) {
         </Starburst>
       </div>
 
-      <div className="relative z-10 mx-auto flex min-h-[92svh] w-full max-w-7xl flex-col px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-20 md:hidden">
-        <div className="max-w-[16rem] pt-10">
-          <h1 className="font-display text-[clamp(2.8rem,15vw,4.2rem)] uppercase leading-[0.9] tracking-tight">
+      <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-col px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-16 md:hidden">
+        <div className="max-w-[15.5rem] pt-8">
+          <h1 className="font-display text-[clamp(2.6rem,14vw,3.7rem)] uppercase leading-[0.9] tracking-tight">
             <span className="block text-mm-bone">SOLO TRAVELLER?</span>
             <span className="block whitespace-nowrap text-mm-pink">NOT FOR</span>
             <span className="block text-mm-lime">LONG.</span>
           </h1>
 
-          <p className="mt-5 max-w-[16rem] text-[13px] leading-[1.2] text-mm-bone/90">
+          <p className="mt-4 max-w-[16rem] text-[13px] leading-[1.15] text-mm-bone/90">
             For those with friends who never commit.<br />
             Trips that actually make it out the group chat.
           </p>
         </div>
-
-        <div className="mt-auto" />
 
         <div className="mt-6 w-full max-w-[21rem] border-mm-thick border-mm-black bg-mm-bone text-mm-black shadow-mm">
           <div className="flex items-stretch">
