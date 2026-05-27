@@ -82,10 +82,12 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 3. Future departures for this trip (next 14 days+)
+    // 3. Future departures for this trip (next 7 days+). Filter by Trip Code lookup
+    // because ARRAYJOIN({Trip}) returns linked record IDs, not the trip name.
     const minDate = todayPlusDays(7);
+    const tripCode = t["Trip Code"].replace(/"/g, "");
     const departures = await airtableGet<DepartureFields>("Departures", {
-      filterByFormula: `AND(ARRAYJOIN({Trip}) = "${t["Trip Name"].replace(/"/g, "")}", IS_AFTER({Departure Date}, "${minDate}"))`,
+      filterByFormula: `AND(ARRAYJOIN({Trip Code (from Trip)}) = "${tripCode}", IS_AFTER({Departure Date}, "${minDate}"))`,
       "sort[0][field]": "Departure Date",
       "sort[0][direction]": "asc",
     });
