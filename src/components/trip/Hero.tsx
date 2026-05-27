@@ -52,8 +52,8 @@ export function Hero({ trip }: { trip: Trip }) {
             <span className="block text-mm-lime">LONG.</span>
           </h1>
 
-          <p className="mt-4 max-w-[16rem] text-[13px] leading-[1.15] text-mm-bone/90">
-            {trip.days} days · {trip.stops.length} stops · {trip.activityCount} activities · One crew
+          <p className="mt-4 text-[13px] leading-[1.15] text-mm-bone/90">
+            {trip.days} days · {trip.stops.length} stops · {trip.activityCount} activities <span className="whitespace-nowrap">· One crew</span>
           </p>
         </div>
 
