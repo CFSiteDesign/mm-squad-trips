@@ -8,7 +8,7 @@ export function Included({ trip }: { trip: Trip }) {
     { icon: Bed, label: "Beds in Mad Monkey hostels every night" },
     { icon: Bus, label: "All inter-city transport" },
     { icon: Coffee, label: "Daily breakfast" },
-    { icon: Compass, label: `${trip.activityCount} named activities` },
+    { icon: Compass, label: `${trip.activityCount} activities` },
     { icon: HeadphonesIcon, label: "24/7 local crew support" },
     { icon: PartyPopper, label: "Welcome night drinks" },
     { icon: Moon, label: "Free pre-trip night. Arrive Sunday before. First night on us." },
