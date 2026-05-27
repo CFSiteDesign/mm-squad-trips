@@ -10,7 +10,7 @@ export function Hero({ trip }: { trip: Trip }) {
   const payInFull = allDeparturesUnder60Days(trip.departures);
 
   return (
-    <section className="relative isolate w-full overflow-hidden bg-mm-black text-mm-bone md:min-h-[100svh]">
+    <section className="relative isolate w-full overflow-hidden bg-mm-black text-mm-bone min-h-[92svh] md:min-h-[100svh]">
       {/* Background media */}
       {trip.heroVideoUrl ? (
         <video
@@ -20,6 +20,7 @@ export function Hero({ trip }: { trip: Trip }) {
           muted
           loop
           playsInline
+          preload="auto"
         />
       ) : (
         <div className="absolute inset-0 flex items-center justify-center bg-mm-orange">
@@ -27,11 +28,11 @@ export function Hero({ trip }: { trip: Trip }) {
         </div>
       )}
 
-      {/* Dark scrim for legibility */}
-      <div className="absolute inset-0 bg-gradient-to-b from-mm-black/55 via-mm-black/25 to-mm-black/80" />
+      {/* Dark scrim for legibility — stronger on mobile for video legibility */}
+      <div className="absolute inset-0 bg-gradient-to-b from-mm-black/70 via-mm-black/35 to-mm-black/85 md:from-mm-black/55 md:via-mm-black/25 md:to-mm-black/80" />
 
       {/* Starburst device */}
-      <div className="absolute right-4 top-20 z-20 md:hidden">
+      <div className="absolute right-4 top-16 z-20 md:hidden">
         <Starburst size={64} color="pink" rotate={-12}>
           {trip.days}<br />DAYS
         </Starburst>
@@ -42,20 +43,21 @@ export function Hero({ trip }: { trip: Trip }) {
         </Starburst>
       </div>
 
-      <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-col px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-16 md:hidden">
-        <div className="max-w-[15.5rem] pt-8">
-          <h1 className="font-display text-[clamp(2.6rem,14vw,3.7rem)] uppercase leading-[0.9] tracking-tight">
+      {/* Mobile: full-bleed video, headline top, booking strip pinned to bottom */}
+      <div className="relative z-10 flex min-h-[92svh] w-full flex-col px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-14 md:hidden">
+        <div className="max-w-[15.5rem]">
+          <h1 className="font-display text-[clamp(2.6rem,14vw,3.7rem)] uppercase leading-[0.9] tracking-tight [text-shadow:0_2px_12px_rgba(0,0,0,0.45)]">
             <span className="block text-mm-bone">SOLO TRAVELLER?</span>
             <span className="block whitespace-nowrap text-mm-pink">NOT FOR</span>
             <span className="block text-mm-lime">LONG.</span>
           </h1>
 
-          <p className="mt-4 max-w-[16rem] text-[13px] leading-[1.15] text-mm-bone/90">
+          <p className="mt-4 max-w-[16rem] text-[13px] leading-[1.15] text-mm-bone [text-shadow:0_1px_6px_rgba(0,0,0,0.55)]">
             {trip.days} days · {trip.stops.length} stops · {trip.activityCount} activities · One crew
           </p>
         </div>
 
-        <div className="mt-6 w-full max-w-[21rem] border-mm-thick border-mm-black bg-mm-bone text-mm-black shadow-mm">
+        <div className="mt-auto w-full max-w-[21rem] border-mm-thick border-mm-black bg-mm-bone text-mm-black shadow-mm">
           <div className="flex items-stretch">
             <div className="flex-1 border-r-mm-thick border-mm-black px-3 py-2.5">
               <p className="font-sticker text-[9px] tracking-[0.18em] text-mm-black/70">FROM</p>
@@ -78,7 +80,7 @@ export function Hero({ trip }: { trip: Trip }) {
           </div>
         </div>
 
-        <p className="mt-5 max-w-[19rem] font-sticker text-[9px] tracking-[0.18em] text-mm-bone/80">
+        <p className="mt-3 max-w-[19rem] font-sticker text-[9px] tracking-[0.18em] text-mm-bone [text-shadow:0_1px_4px_rgba(0,0,0,0.6)]">
           REAL MAD MONKEY HOSTELS IN EVERY CITY · 53,000+ IN OUR COMMUNITY
         </p>
       </div>
