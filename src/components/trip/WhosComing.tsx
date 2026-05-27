@@ -3,13 +3,14 @@ import { Sticker } from "@/components/brand/Sticker";
 
 export function WhosComing({ trip }: { trip: Trip }) {
   return (
-    <section className="relative bg-mm-bone px-6 py-20 text-mm-black">
+    <section className="relative bg-mm-bone px-5 py-12 text-mm-black md:px-6 md:py-20">
       <div className="mx-auto max-w-3xl">
         <Sticker color="pink" rotate={-3}>WHO&apos;S COMING</Sticker>
-        <h2 className="mt-4 font-display text-5xl md:text-6xl">
+        <h2 className="mt-4 font-display text-[2.5rem] leading-[0.92] md:text-6xl">
           YOUR<br />
           <span className="text-mm-pink">NEW CREW.</span>
         </h2>
+
 
         <div className="mt-6 flex flex-wrap gap-3">
           <span className="border-[3px] border-mm-black bg-mm-black px-4 py-2 font-sticker text-[11px] text-mm-bone tracking-[0.18em] shadow-mm-sm">
@@ -29,14 +30,15 @@ export function WhosComing({ trip }: { trip: Trip }) {
           />
         )}
 
-        <div className="mt-8 grid gap-5 md:grid-cols-2">
+        <div className="mt-8 grid gap-4 md:grid-cols-2 md:gap-5">
           {trip.testimonials.slice(0, 4).map((t, i) => {
             const bg = ["bg-mm-orange", "bg-mm-lime", "bg-mm-orange", "bg-mm-lime"][i % 4];
             return (
-              <figure key={t.name} className={`border-mm-thick ${bg} p-5 shadow-mm`}>
-                <blockquote className="font-display text-lg leading-tight text-mm-black">
+              <figure key={t.name} className={`border-mm-thick ${bg} p-4 shadow-mm md:p-5`}>
+                <blockquote className="font-display text-base leading-tight text-mm-black md:text-lg">
                   &ldquo;{t.quote}&rdquo;
                 </blockquote>
+
                 <figcaption className="mt-4 flex items-center gap-3">
                   {t.photo ? (
                     <img src={t.photo} alt={t.name} className="h-10 w-10 border-[3px] border-mm-black object-cover" />

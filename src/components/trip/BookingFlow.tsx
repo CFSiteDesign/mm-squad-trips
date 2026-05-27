@@ -95,14 +95,15 @@ export function BookingFlow({ trip }: { trip: Trip }) {
   }
 
   return (
-    <section id="booking" className="relative bg-mm-pink px-6 py-20 text-mm-bone">
-      <div className="mx-auto max-w-3xl space-y-10">
+    <section id="booking" className="relative bg-mm-pink px-5 py-12 text-mm-bone md:px-6 md:py-20">
+      <div className="mx-auto max-w-3xl space-y-8 md:space-y-10">
         <div>
           <Sticker color="yellow" rotate={-4}>STEP UP</Sticker>
-          <h2 className="mt-4 font-display text-5xl md:text-6xl text-mm-bone">
+          <h2 className="mt-4 font-display text-[2.5rem] leading-[0.92] text-mm-bone md:text-6xl">
             BOOK<br />YOUR SPOT.
           </h2>
         </div>
+
 
         {/* Step 1: spots */}
         <FormStep n={1} label="HOW MANY SPOTS?">
@@ -125,7 +126,7 @@ export function BookingFlow({ trip }: { trip: Trip }) {
               NO DEPARTURES WITH {groupSize} SPOT{groupSize > 1 ? "S" : ""} RIGHT NOW.
             </p>
           ) : (
-            <div className="-mx-6 flex snap-x snap-mandatory gap-4 overflow-x-auto px-6 pb-3 md:mx-0 md:grid md:grid-cols-3 md:overflow-visible md:px-0">
+            <div className="-mx-5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-3 md:mx-0 md:grid md:grid-cols-3 md:gap-4 md:overflow-visible md:px-0">
               {visible.map((d) => (
                 <DepartureCard
                   key={d.id}
@@ -187,13 +188,13 @@ export function BookingFlow({ trip }: { trip: Trip }) {
               )}
             </FormStep>
 
-            <div className="border-mm-thick bg-mm-paper p-6 text-mm-black shadow-mm-lg">
+            <div className="border-mm-thick bg-mm-paper p-4 text-mm-black shadow-mm-lg md:p-6">
               <PaymentSummary trip={trip} selected={selected} groupSize={groupSize} />
               <Button
                 disabled={submitting}
                 onClick={submit}
                 size="lg"
-                className="mt-6 h-14 w-full rounded-none border-[3px] border-mm-black bg-mm-orange font-display text-base text-mm-black hover:bg-mm-orange shadow-mm transition-transform hover:-translate-x-[2px] hover:-translate-y-[2px]"
+                className="mt-5 h-14 w-full rounded-none border-[3px] border-mm-black bg-mm-orange font-display text-[15px] text-mm-black hover:bg-mm-orange shadow-mm transition-transform hover:-translate-x-[2px] hover:-translate-y-[2px] md:mt-6 md:text-base"
               >
                 {submitting ? "REDIRECTING…" : "CONTINUE TO PAYMENT →"}
               </Button>
@@ -201,6 +202,7 @@ export function BookingFlow({ trip }: { trip: Trip }) {
                 SECURE STRIPE CHECKOUT · SPOT HELD ON PAYMENT
               </p>
             </div>
+
           </>
         )}
       </div>
@@ -250,7 +252,8 @@ function LeadForm({
 }: { value: LeadFields; onChange: (v: LeadFields) => void; groupSize: number }) {
   const set = <K extends keyof LeadFields>(k: K, v: LeadFields[K]) => onChange({ ...value, [k]: v });
   return (
-    <div className="space-y-3 border-mm-thick bg-mm-paper p-5 text-mm-black shadow-mm">
+    <div className="space-y-3 border-mm-thick bg-mm-paper p-4 text-mm-black shadow-mm md:p-5">
+
       <h4 className="font-display text-sm tracking-wide">{groupSize > 1 ? "LEAD BOOKER (YOU)" : "YOUR DETAILS"}</h4>
       <Field label="Full name" v={value.name} onChange={(v) => set("name", v)} />
       <Field label="Email" type="email" v={value.email} onChange={(v) => set("email", v)} />
@@ -298,7 +301,7 @@ function TravelerForm({
 }: { index: number; value: TravelerFields; onChange: (v: TravelerFields) => void }) {
   const set = <K extends keyof TravelerFields>(k: K, v: TravelerFields[K]) => onChange({ ...value, [k]: v });
   return (
-    <div className="space-y-3 border-mm-thick bg-mm-paper p-5 text-mm-black shadow-mm">
+    <div className="space-y-3 border-mm-thick bg-mm-paper p-4 text-mm-black shadow-mm md:p-5">
       <h4 className="font-display text-sm tracking-wide">TRAVELLER {String(index).padStart(2, "0")}</h4>
       <div className="grid grid-cols-2 gap-3">
         <Field label="First name" v={value.firstName} onChange={(v) => set("firstName", v)} />
