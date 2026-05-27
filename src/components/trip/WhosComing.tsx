@@ -34,10 +34,11 @@ export function WhosComing({ trip }: { trip: Trip }) {
           {trip.testimonials.slice(0, 4).map((t, i) => {
             const bg = ["bg-mm-orange", "bg-mm-lime", "bg-mm-orange", "bg-mm-lime"][i % 4];
             return (
-              <figure key={t.name} className={`border-mm-thick ${bg} p-5 shadow-mm`}>
-                <blockquote className="font-display text-lg leading-tight text-mm-black">
+              <figure key={t.name} className={`border-mm-thick ${bg} p-4 shadow-mm md:p-5`}>
+                <blockquote className="font-display text-base leading-tight text-mm-black md:text-lg">
                   &ldquo;{t.quote}&rdquo;
                 </blockquote>
+
                 <figcaption className="mt-4 flex items-center gap-3">
                   {t.photo ? (
                     <img src={t.photo} alt={t.name} className="h-10 w-10 border-[3px] border-mm-black object-cover" />
