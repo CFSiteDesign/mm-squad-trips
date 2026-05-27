@@ -15,10 +15,12 @@ export function Included({ trip }: { trip: Trip }) {
   ];
 
   return (
-    <section className="relative bg-mm-bone px-6 py-10 text-mm-black md:py-20">
+    <section className="relative bg-mm-bone px-5 py-12 text-mm-black md:px-6 md:py-20">
       <div className="mx-auto max-w-3xl">
         <Sticker color="orange" rotate={-3}>WHAT YOU GET</Sticker>
-        <h2 className="mt-4 font-display text-5xl md:text-6xl">EVERYTHING<br />SORTED.</h2>
+        <h2 className="mt-4 font-display text-[2.5rem] leading-[0.92] md:text-6xl">EVERYTHING<br />SORTED.</h2>
+
+
 
         <ul className="mt-10 grid gap-0 border-mm-thick">
           {items.map(({ icon: Icon, label }, i) => (
