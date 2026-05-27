@@ -124,17 +124,47 @@ export function Hero({ trip }: { trip: Trip }) {
         </div>
       </div>
 
-      {/* Desktop: same 4-layer logic */}
-      <div className="relative z-10 mx-auto hidden w-full max-w-7xl flex-col px-12 pb-14 pt-32 md:flex">
-        {HeadlineCluster}
-
-        <div className="mt-10 flex-1">
-          {MediaBand}
+      {/* Desktop: video as full hero background, content overlaid */}
+      <div className="relative hidden min-h-[88vh] w-full md:block">
+        <div className="absolute inset-0 z-0">
+          {trip.heroVideoUrl ? (
+            <video
+              className="absolute inset-0 h-full w-full object-cover"
+              src={trip.heroVideoUrl}
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="auto"
+            />
+          ) : (
+            <div
+              className="absolute inset-0 flex items-center justify-center"
+              style={{ backgroundImage: "linear-gradient(to bottom, hsl(0 0% 12%), hsl(0 0% 0%))" }}
+            >
+              <span className="font-sticker text-sm uppercase tracking-[0.4em] text-mm-bone/35">
+                VIDEO PLACEHOLDER
+              </span>
+            </div>
+          )}
+          {/* Scrim for legibility over video */}
+          <div className="absolute inset-0 bg-gradient-to-b from-mm-black/70 via-mm-black/25 to-mm-black/80" />
         </div>
 
-        <div className="mt-10 flex flex-col gap-6">
-          {PriceBlock}
-          {ProofLine}
+        {/* Starburst floats over background */}
+        <div className="absolute right-12 top-32 z-20">
+          <Starburst size={132} color="pink" rotate={-12}>
+            {trip.days}<br />DAYS
+          </Starburst>
+        </div>
+
+        <div className="relative z-10 mx-auto flex min-h-[88vh] w-full max-w-7xl flex-col justify-between px-12 pb-14 pt-32">
+          {HeadlineCluster}
+
+          <div className="flex flex-col gap-6">
+            {PriceBlock}
+            {ProofLine}
+          </div>
         </div>
       </div>
 
