@@ -135,13 +135,9 @@ export function Hero({ trip }: { trip: Trip }) {
             />
           ) : (
             <div
-              className="absolute inset-0 flex items-center justify-center"
+              className="absolute inset-0"
               style={{ backgroundImage: "linear-gradient(to bottom, hsl(0 0% 12%), hsl(0 0% 0%))" }}
-            >
-              <span className="font-sticker text-sm uppercase tracking-[0.4em] text-mm-bone/35">
-                VIDEO PLACEHOLDER
-              </span>
-            </div>
+            />
           )}
           {/* Scrim for legibility over video */}
           <div className="absolute inset-0 bg-gradient-to-b from-mm-black/70 via-mm-black/25 to-mm-black/80" />
