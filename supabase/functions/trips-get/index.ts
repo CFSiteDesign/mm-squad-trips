@@ -103,7 +103,7 @@ Deno.serve(async (req) => {
         departureId: f["Departure ID"] ?? `${t["Trip Code"]}-${f["Departure Date"]}`,
         date: f["Departure Date"],
         spotsRemaining: f["Spots Remaining"] ?? f["Total Spots"] ?? 0,
-        bookable: f["Bookable?"] ?? true,
+        bookable: f["Bookable?"] === true,
         price,
         strikethrough: strike,
       };
