@@ -27,7 +27,7 @@ export function SiteFooter() {
           </p>
         </div>
 
-        <Wordmark size={64} />
+        <Wordmark size={40} />
       </div>
     </footer>
   );
