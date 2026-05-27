@@ -30,7 +30,7 @@ export function WhosComing({ trip }: { trip: Trip }) {
           />
         )}
 
-        <div className="mt-8 grid gap-5 md:grid-cols-2">
+        <div className="mt-8 grid gap-4 md:grid-cols-2 md:gap-5">
           {trip.testimonials.slice(0, 4).map((t, i) => {
             const bg = ["bg-mm-orange", "bg-mm-lime", "bg-mm-orange", "bg-mm-lime"][i % 4];
             return (
