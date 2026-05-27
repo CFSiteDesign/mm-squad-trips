@@ -51,8 +51,7 @@ export function Hero({ trip }: { trip: Trip }) {
           </h1>
 
           <p className="mt-4 max-w-[16rem] text-[13px] leading-[1.15] text-mm-bone/90">
-            For those with friends who never commit.<br />
-            Trips that actually make it out the group chat.
+            {trip.days} days · {trip.stops.length} stops · {trip.activityCount} activities · One crew
           </p>
         </div>
 
