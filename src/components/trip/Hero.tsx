@@ -98,7 +98,7 @@ export function Hero({ trip }: { trip: Trip }) {
             </h1>
 
             <p className="mt-6 max-w-xl text-lg leading-snug text-mm-bone/90">
-              {trip.days} days · {trip.stops.length} stops · {trip.activityCount} activities · One crew
+              {trip.days} days · {trip.stops.length} stops · {trip.activityCount} activities <span className="whitespace-nowrap">· One crew</span>
             </p>
           </div>
         </div>
