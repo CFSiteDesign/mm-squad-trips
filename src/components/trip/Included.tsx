@@ -22,23 +22,24 @@ export function Included({ trip }: { trip: Trip }) {
 
 
 
-        <ul className="mt-10 grid gap-0 border-mm-thick">
+        <ul className="mt-8 grid gap-0 border-mm-thick md:mt-10">
           {items.map(({ icon: Icon, label }, i) => (
             <li
               key={label}
-              className={`flex items-center gap-4 px-4 py-4 ${i < items.length - 1 ? "border-b-[3px] border-mm-black" : ""} ${i % 2 === 0 ? "bg-mm-paper" : "bg-mm-lime/30"}`}
+              className={`flex items-center gap-3 px-3 py-3 md:gap-4 md:px-4 md:py-4 ${i < items.length - 1 ? "border-b-[3px] border-mm-black" : ""} ${i % 2 === 0 ? "bg-mm-paper" : "bg-mm-lime/30"}`}
             >
-              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center border-[3px] border-mm-black bg-mm-orange">
+              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center border-[3px] border-mm-black bg-mm-orange md:h-10 md:w-10">
                 <Icon className="h-4 w-4" />
               </span>
-              <span className="text-sm font-bold uppercase tracking-tight">{label}</span>
+              <span className="text-[12px] font-bold uppercase leading-tight tracking-tight md:text-sm">{label}</span>
             </li>
           ))}
         </ul>
 
-        <div className="mt-8 border-mm-thick bg-mm-black p-5 text-sm shadow-mm">
+        <div className="mt-6 border-mm-thick bg-mm-black p-4 text-sm shadow-mm md:mt-8 md:p-5">
           <p className="font-sticker text-[11px] tracking-[0.18em] text-mm-lime">NOT INCLUDED</p>
-          <p className="mt-2 text-sm font-semibold text-mm-bone">
+          <p className="mt-2 text-[13px] font-semibold leading-snug text-mm-bone md:text-sm">
+
             Flights · Lunch + dinner · Optional add-ons · Travel insurance
           </p>
         </div>
