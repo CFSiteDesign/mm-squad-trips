@@ -44,45 +44,46 @@ export function Hero({ trip }: { trip: Trip }) {
       </div>
 
       {/* Mobile content stack — natural height */}
-      <div className="relative z-10 flex min-h-[78svh] w-full flex-col px-4 pb-10 pt-24 md:hidden">
-        <div className="max-w-[15.5rem]">
+      <div className="relative z-10 flex min-h-[78svh] w-full flex-col justify-between gap-6 px-4 pb-8 pt-20 md:hidden">
+        <div className="max-w-[16rem]">
           <h1 className="font-display text-[clamp(2.6rem,14vw,3.7rem)] uppercase leading-[0.9] tracking-tight">
             <span className="block text-mm-bone">SOLO TRAVELLER?</span>
             <span className="block whitespace-nowrap text-mm-pink">NOT FOR</span>
             <span className="block text-mm-lime">LONG.</span>
           </h1>
+          <p className="mt-3 whitespace-nowrap text-[13px] leading-[1.15] text-mm-bone/90">
+            {trip.days} days · {trip.stops.length} stops · {trip.activityCount} activities · One crew
+          </p>
         </div>
 
-        <p className="mt-4 whitespace-nowrap text-[13px] leading-[1.15] text-mm-bone/90">
-          {trip.days} days · {trip.stops.length} stops · {trip.activityCount} activities · One crew
-        </p>
-
-        <div className="mt-6 w-full max-w-[21rem] border-mm-thick border-mm-black bg-mm-bone text-mm-black shadow-mm">
-          <div className="flex items-stretch">
-            <div className="flex-1 border-r-mm-thick border-mm-black px-3 py-2.5">
-              <p className="font-sticker text-[9px] tracking-[0.18em] text-mm-black/70">FROM</p>
-              <div className="mt-0.5 flex items-end gap-2">
-                <span className="font-display text-2xl leading-none">{formatPrice(headPrice)}</span>
-                {headStrike ? (
-                  <span className="mb-0.5 font-display text-xs text-mm-black/50 line-through">{formatPrice(headStrike)}</span>
-                ) : null}
+        <div className="flex flex-col gap-3">
+          <div className="w-full max-w-[21rem] border-mm-thick border-mm-black bg-mm-bone text-mm-black shadow-mm">
+            <div className="flex items-stretch">
+              <div className="flex-1 border-r-mm-thick border-mm-black px-3 py-2.5">
+                <p className="font-sticker text-[9px] tracking-[0.18em] text-mm-black/70">FROM</p>
+                <div className="mt-0.5 flex items-end gap-2">
+                  <span className="font-display text-2xl leading-none">{formatPrice(headPrice)}</span>
+                  {headStrike ? (
+                    <span className="mb-0.5 font-display text-xs text-mm-black/50 line-through">{formatPrice(headStrike)}</span>
+                  ) : null}
+                </div>
+                <p className="mt-0.5 max-w-[8.5rem] font-sticker text-[8px] leading-tight tracking-[0.16em] text-mm-black/70">
+                  {payInFull ? "PAY IN FULL" : "$99 DEPOSIT HOLDS YOUR SPOT"}
+                </p>
               </div>
-              <p className="mt-0.5 max-w-[8.5rem] font-sticker text-[8px] leading-tight tracking-[0.16em] text-mm-black/70">
-                {payInFull ? "PAY IN FULL" : "$99 DEPOSIT HOLDS YOUR SPOT"}
-              </p>
+              <Button
+                onClick={() => document.getElementById("booking")?.scrollIntoView({ behavior: "smooth" })}
+                className="h-auto min-h-0 flex-1 rounded-none bg-mm-orange px-3 py-2.5 font-display text-[1.05rem] leading-[1.05] text-mm-black hover:bg-mm-orange"
+              >
+                PICK YOUR<br />DATES →
+              </Button>
             </div>
-            <Button
-              onClick={() => document.getElementById("booking")?.scrollIntoView({ behavior: "smooth" })}
-              className="h-auto min-h-0 flex-1 rounded-none bg-mm-orange px-3 py-2.5 font-display text-[1.05rem] leading-[1.05] text-mm-black hover:bg-mm-orange"
-            >
-              PICK YOUR<br />DATES →
-            </Button>
           </div>
-        </div>
 
-        <p className="mt-3 max-w-[19rem] font-sticker text-[9px] tracking-[0.18em] text-mm-bone/80">
-          REAL MAD MONKEY HOSTELS IN EVERY CITY · 53,000+ IN OUR COMMUNITY
-        </p>
+          <p className="max-w-[19rem] font-sticker text-[9px] tracking-[0.18em] text-mm-bone/80">
+            REAL MAD MONKEY HOSTELS IN EVERY CITY · 53,000+ IN OUR COMMUNITY
+          </p>
+        </div>
       </div>
 
       {/* Desktop content stack */}
