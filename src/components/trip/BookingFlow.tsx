@@ -301,7 +301,7 @@ function TravelerForm({
 }: { index: number; value: TravelerFields; onChange: (v: TravelerFields) => void }) {
   const set = <K extends keyof TravelerFields>(k: K, v: TravelerFields[K]) => onChange({ ...value, [k]: v });
   return (
-    <div className="space-y-3 border-mm-thick bg-mm-paper p-5 text-mm-black shadow-mm">
+    <div className="space-y-3 border-mm-thick bg-mm-paper p-4 text-mm-black shadow-mm md:p-5">
       <h4 className="font-display text-sm tracking-wide">TRAVELLER {String(index).padStart(2, "0")}</h4>
       <div className="grid grid-cols-2 gap-3">
         <Field label="First name" v={value.firstName} onChange={(v) => set("firstName", v)} />
