@@ -3,13 +3,14 @@ import { Sticker } from "@/components/brand/Sticker";
 
 export function WhosComing({ trip }: { trip: Trip }) {
   return (
-    <section className="relative bg-mm-bone px-6 py-20 text-mm-black">
+    <section className="relative bg-mm-bone px-5 py-12 text-mm-black md:px-6 md:py-20">
       <div className="mx-auto max-w-3xl">
         <Sticker color="pink" rotate={-3}>WHO&apos;S COMING</Sticker>
-        <h2 className="mt-4 font-display text-5xl md:text-6xl">
+        <h2 className="mt-4 font-display text-[2.5rem] leading-[0.92] md:text-6xl">
           YOUR<br />
           <span className="text-mm-pink">NEW CREW.</span>
         </h2>
+
 
         <div className="mt-6 flex flex-wrap gap-3">
           <span className="border-[3px] border-mm-black bg-mm-black px-4 py-2 font-sticker text-[11px] text-mm-bone tracking-[0.18em] shadow-mm-sm">
