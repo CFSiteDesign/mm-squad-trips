@@ -46,7 +46,7 @@ export function Hero({ trip }: { trip: Trip }) {
               autoPlay muted loop playsInline preload="auto"
             />
       */}
-      {trip.heroVideoUrl ? (
+      {hasVideo ? (
         <video
           className="absolute inset-0 h-full w-full object-cover"
           src={trip.heroVideoUrl}
@@ -128,7 +128,7 @@ export function Hero({ trip }: { trip: Trip }) {
       {/* Desktop: video as full hero background, content overlaid */}
       <div className="relative hidden min-h-[100svh] w-full md:block">
         <div className="absolute inset-0 z-0">
-          {trip.heroVideoUrl ? (
+          {hasVideo ? (
             <video
               className="absolute inset-0 h-full w-full object-cover"
               src={trip.heroVideoUrl}
