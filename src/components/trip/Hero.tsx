@@ -58,7 +58,7 @@ export function Hero({ trip }: { trip: Trip }) {
       ) : (
         <div className="absolute inset-0 flex items-center justify-center">
           <span className="font-sticker text-[11px] uppercase tracking-[0.32em] text-mm-bone/35 md:text-sm md:tracking-[0.4em]">
-            TRIP IN MOTION
+            VIDEO PLACEHOLDER
           </span>
         </div>
       )}
