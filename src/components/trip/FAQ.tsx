@@ -14,10 +14,10 @@ const FAQS = [
 
 export function FAQ() {
   return (
-    <section className="bg-mm-orange px-5 py-12 text-mm-black md:px-6 md:py-20">
-      <div className="mx-auto max-w-3xl">
+    <section className="bg-mm-orange px-5 py-12 text-mm-black md:px-8 md:py-24">
+      <div className="mx-auto max-w-3xl md:max-w-5xl">
         <Sticker color="pink" rotate={-4}>BEFORE YOU ASK</Sticker>
-        <h2 className="mt-4 font-display text-[2.5rem] leading-[0.92] md:text-6xl">FAQ.</h2>
+        <h2 className="mt-4 font-display text-[2.5rem] leading-[0.92] md:mt-6 md:text-7xl lg:text-8xl">FAQ.</h2>
 
         <Accordion type="single" collapsible className="mt-6 border-mm-thick bg-mm-paper md:mt-8">
           {FAQS.map((f, i) => (
