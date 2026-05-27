@@ -51,11 +51,11 @@ export function Hero({ trip }: { trip: Trip }) {
             <span className="block whitespace-nowrap text-mm-pink">NOT FOR</span>
             <span className="block text-mm-lime">LONG.</span>
           </h1>
-
-          <p className="mt-4 text-[13px] leading-[1.15] text-mm-bone/90">
-            {trip.days} days · {trip.stops.length} stops · {trip.activityCount} activities <span className="whitespace-nowrap">· One crew</span>
-          </p>
         </div>
+
+        <p className="mt-4 whitespace-nowrap text-[13px] leading-[1.15] text-mm-bone/90">
+          {trip.days} days · {trip.stops.length} stops · {trip.activityCount} activities · One crew
+        </p>
 
         <div className="mt-6 w-full max-w-[21rem] border-mm-thick border-mm-black bg-mm-bone text-mm-black shadow-mm">
           <div className="flex items-stretch">
