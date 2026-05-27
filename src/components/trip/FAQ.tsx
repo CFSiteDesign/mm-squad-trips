@@ -14,25 +14,26 @@ const FAQS = [
 
 export function FAQ() {
   return (
-    <section className="bg-mm-orange px-6 py-20 text-mm-black">
+    <section className="bg-mm-orange px-5 py-12 text-mm-black md:px-6 md:py-20">
       <div className="mx-auto max-w-3xl">
-        <Sticker color="purple" rotate={-4}>BEFORE YOU ASK</Sticker>
-        <h2 className="mt-4 font-display text-5xl md:text-6xl">FAQ.</h2>
+        <Sticker color="pink" rotate={-4}>BEFORE YOU ASK</Sticker>
+        <h2 className="mt-4 font-display text-[2.5rem] leading-[0.92] md:text-6xl">FAQ.</h2>
 
-        <Accordion type="single" collapsible className="mt-8 border-mm-thick bg-mm-paper">
+        <Accordion type="single" collapsible className="mt-6 border-mm-thick bg-mm-paper md:mt-8">
           {FAQS.map((f, i) => (
             <AccordionItem
               value={`f${i}`}
               key={i}
               className={i < FAQS.length - 1 ? "border-b-[3px] border-mm-black" : "border-b-0"}
             >
-              <AccordionTrigger className="px-4 py-4 text-left font-display text-base uppercase hover:no-underline">
+              <AccordionTrigger className="px-3 py-3.5 text-left font-display text-[13px] uppercase leading-tight hover:no-underline md:px-4 md:py-4 md:text-base">
                 {f.q}
               </AccordionTrigger>
-              <AccordionContent className="px-4 pb-4 text-sm text-mm-black/80">{f.a}</AccordionContent>
+              <AccordionContent className="px-3 pb-3.5 text-[13px] leading-snug text-mm-black/80 md:px-4 md:pb-4 md:text-sm">{f.a}</AccordionContent>
             </AccordionItem>
           ))}
         </Accordion>
+
       </div>
     </section>
   );
