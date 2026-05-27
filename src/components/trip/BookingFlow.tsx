@@ -252,7 +252,8 @@ function LeadForm({
 }: { value: LeadFields; onChange: (v: LeadFields) => void; groupSize: number }) {
   const set = <K extends keyof LeadFields>(k: K, v: LeadFields[K]) => onChange({ ...value, [k]: v });
   return (
-    <div className="space-y-3 border-mm-thick bg-mm-paper p-5 text-mm-black shadow-mm">
+    <div className="space-y-3 border-mm-thick bg-mm-paper p-4 text-mm-black shadow-mm md:p-5">
+
       <h4 className="font-display text-sm tracking-wide">{groupSize > 1 ? "LEAD BOOKER (YOU)" : "YOUR DETAILS"}</h4>
       <Field label="Full name" v={value.name} onChange={(v) => set("name", v)} />
       <Field label="Email" type="email" v={value.email} onChange={(v) => set("email", v)} />
