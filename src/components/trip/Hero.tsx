@@ -56,7 +56,11 @@ export function Hero({ trip }: { trip: Trip }) {
           preload="auto"
         />
       ) : (
-        <div className="absolute inset-0" />
+        <div className="absolute inset-0 flex items-center justify-center bg-mm-black">
+          <span className="font-display text-2xl tracking-[0.2em] text-mm-lime md:text-4xl">
+            VIDEO PLACEHOLDER
+          </span>
+        </div>
       )}
 
       {/* Starburst sits over the media band */}
