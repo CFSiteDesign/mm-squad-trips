@@ -44,7 +44,7 @@ export function Hero({ trip }: { trip: Trip }) {
       </div>
 
       {/* Mobile content stack — natural height */}
-      <div className="relative z-10 flex w-full flex-col px-4 pb-36 pt-36 md:hidden">
+      <div className="relative z-10 flex min-h-[88svh] w-full flex-col px-4 pb-16 pt-28 md:hidden">
         <div className="max-w-[15.5rem]">
           <h1 className="font-display text-[clamp(2.6rem,14vw,3.7rem)] uppercase leading-[0.9] tracking-tight">
             <span className="block text-mm-bone">SOLO TRAVELLER?</span>
