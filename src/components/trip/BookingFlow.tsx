@@ -126,7 +126,7 @@ export function BookingFlow({ trip }: { trip: Trip }) {
               NO DEPARTURES WITH {groupSize} SPOT{groupSize > 1 ? "S" : ""} RIGHT NOW.
             </p>
           ) : (
-            <div className="-mx-6 flex snap-x snap-mandatory gap-4 overflow-x-auto px-6 pb-3 md:mx-0 md:grid md:grid-cols-3 md:overflow-visible md:px-0">
+            <div className="-mx-5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-3 md:mx-0 md:grid md:grid-cols-3 md:gap-4 md:overflow-visible md:px-0">
               {visible.map((d) => (
                 <DepartureCard
                   key={d.id}
