@@ -10,7 +10,7 @@ export function Hero({ trip }: { trip: Trip }) {
   const payInFull = allDeparturesUnder60Days(trip.departures);
 
   return (
-    <section className="relative isolate w-full overflow-hidden bg-mm-black text-mm-bone md:min-h-[120svh]">
+    <section className="relative isolate w-full overflow-hidden bg-mm-black text-mm-bone md:min-h-[140svh]">
       {/* Background media */}
       {trip.heroVideoUrl ? (
         <video
@@ -44,7 +44,7 @@ export function Hero({ trip }: { trip: Trip }) {
       </div>
 
       {/* Mobile content stack — natural height */}
-      <div className="relative z-10 flex w-full flex-col px-4 pb-24 pt-28 md:hidden">
+      <div className="relative z-10 flex w-full flex-col px-4 pb-36 pt-36 md:hidden">
         <div className="max-w-[15.5rem]">
           <h1 className="font-display text-[clamp(2.6rem,14vw,3.7rem)] uppercase leading-[0.9] tracking-tight">
             <span className="block text-mm-bone">SOLO TRAVELLER?</span>
@@ -86,7 +86,7 @@ export function Hero({ trip }: { trip: Trip }) {
       </div>
 
       {/* Desktop content stack */}
-      <div className="relative z-10 mx-auto hidden min-h-[120svh] max-w-7xl grid-rows-[6rem_1fr_auto] px-12 pb-10 pt-0 md:grid">
+      <div className="relative z-10 mx-auto hidden min-h-[140svh] max-w-7xl grid-rows-[8rem_1fr_auto] px-12 pb-14 pt-0 md:grid">
         <div />
 
         <div className="flex flex-1 items-center">
