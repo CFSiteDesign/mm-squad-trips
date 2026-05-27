@@ -5,7 +5,7 @@ export function SquadCTA() {
         <span className="font-sticker text-[10px] tracking-[0.24em] text-mm-black/70">
           SQUAD LEADER PROGRAM
         </span>
-        <h2 className="mt-3 font-display text-[2.25rem] uppercase leading-[0.95] tracking-tight text-white md:mt-4 md:text-6xl lg:text-7xl">
+        <h2 className="mt-3 font-display text-[2.25rem] uppercase leading-[0.95] tracking-tight text-mm-black md:mt-4 md:text-6xl lg:text-7xl">
           Earn a free trip?<br />
           <span className="text-mm-pink">Bring your squad.</span>
         </h2>
