@@ -188,13 +188,13 @@ export function BookingFlow({ trip }: { trip: Trip }) {
               )}
             </FormStep>
 
-            <div className="border-mm-thick bg-mm-paper p-6 text-mm-black shadow-mm-lg">
+            <div className="border-mm-thick bg-mm-paper p-4 text-mm-black shadow-mm-lg md:p-6">
               <PaymentSummary trip={trip} selected={selected} groupSize={groupSize} />
               <Button
                 disabled={submitting}
                 onClick={submit}
                 size="lg"
-                className="mt-6 h-14 w-full rounded-none border-[3px] border-mm-black bg-mm-orange font-display text-base text-mm-black hover:bg-mm-orange shadow-mm transition-transform hover:-translate-x-[2px] hover:-translate-y-[2px]"
+                className="mt-5 h-14 w-full rounded-none border-[3px] border-mm-black bg-mm-orange font-display text-[15px] text-mm-black hover:bg-mm-orange shadow-mm transition-transform hover:-translate-x-[2px] hover:-translate-y-[2px] md:mt-6 md:text-base"
               >
                 {submitting ? "REDIRECTING…" : "CONTINUE TO PAYMENT →"}
               </Button>
@@ -202,6 +202,7 @@ export function BookingFlow({ trip }: { trip: Trip }) {
                 SECURE STRIPE CHECKOUT · SPOT HELD ON PAYMENT
               </p>
             </div>
+
           </>
         )}
       </div>
