@@ -95,11 +95,11 @@ export function BookingFlow({ trip }: { trip: Trip }) {
   }
 
   return (
-    <section id="booking" className="relative bg-mm-pink px-5 py-12 text-mm-bone md:px-6 md:py-20">
-      <div className="mx-auto max-w-3xl space-y-8 md:space-y-10">
+    <section id="booking" className="relative bg-mm-pink px-5 py-12 text-mm-bone md:px-8 md:py-24">
+      <div className="mx-auto max-w-3xl space-y-8 md:max-w-5xl md:space-y-12">
         <div>
           <Sticker color="yellow" rotate={-4}>STEP UP</Sticker>
-          <h2 className="mt-4 font-display text-[2.5rem] leading-[0.92] text-mm-bone md:text-6xl">
+          <h2 className="mt-4 font-display text-[2.5rem] leading-[0.92] text-mm-bone md:mt-6 md:text-7xl lg:text-8xl">
             BOOK<br />YOUR SPOT.
           </h2>
         </div>

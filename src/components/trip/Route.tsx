@@ -3,15 +3,15 @@ import { Sticker } from "@/components/brand/Sticker";
 
 export function Route({ trip }: { trip: Trip }) {
   return (
-    <section className="relative bg-mm-black px-5 py-12 text-mm-bone md:px-6 md:py-20">
-      <div className="mx-auto max-w-3xl">
+    <section className="relative bg-mm-black px-5 py-12 text-mm-bone md:px-8 md:py-24">
+      <div className="mx-auto max-w-3xl md:max-w-5xl">
         <Sticker color="lime" rotate={3}>THE ROUTE</Sticker>
-        <h2 className="mt-4 font-display text-[2.5rem] leading-[0.92] text-mm-bone md:text-6xl">
+        <h2 className="mt-4 font-display text-[2.5rem] leading-[0.92] text-mm-bone md:mt-6 md:text-7xl lg:text-8xl">
           {trip.days} DAYS.<br />
           <span className="text-mm-lime">{trip.stops.length} STOPS.</span>
         </h2>
 
-        <ol className="mt-8 space-y-7 md:mt-12 md:space-y-8">
+        <ol className="mt-8 space-y-7 md:mt-14 md:space-y-10">
           {trip.stops.map((stop, i) => (
             <li key={stop.name + i} className="relative pl-12 md:pl-16">
               <span className="absolute left-0 top-0 flex h-9 w-9 items-center justify-center border-[3px] border-mm-bone bg-mm-orange font-display text-base text-mm-black md:h-12 md:w-12 md:text-xl">

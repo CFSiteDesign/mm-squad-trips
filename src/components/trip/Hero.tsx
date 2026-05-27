@@ -125,7 +125,7 @@ export function Hero({ trip }: { trip: Trip }) {
       </div>
 
       {/* Desktop: video as full hero background, content overlaid */}
-      <div className="relative hidden min-h-[88vh] w-full md:block">
+      <div className="relative hidden min-h-[100svh] w-full md:block">
         <div className="absolute inset-0 z-0">
           {trip.heroVideoUrl ? (
             <video
@@ -144,20 +144,21 @@ export function Hero({ trip }: { trip: Trip }) {
             />
           )}
           {/* Scrim for legibility over video */}
-          <div className="absolute inset-0 bg-gradient-to-b from-mm-black/70 via-mm-black/25 to-mm-black/80" />
+          <div className="absolute inset-0 bg-gradient-to-b from-mm-black/80 via-mm-black/30 to-mm-black/90" />
+          <div className="absolute inset-0 bg-gradient-to-r from-mm-black/70 via-transparent to-transparent" />
         </div>
 
         {/* Starburst floats over background */}
-        <div className="absolute right-12 top-32 z-20">
-          <Starburst size={132} color="pink" rotate={-12}>
+        <div className="absolute right-16 top-40 z-20 lg:right-24 lg:top-44">
+          <Starburst size={156} color="pink" rotate={-12}>
             {trip.days}<br />DAYS
           </Starburst>
         </div>
 
-        <div className="relative z-10 mx-auto flex min-h-[88vh] w-full max-w-7xl flex-col justify-between px-12 pb-14 pt-32">
+        <div className="relative z-10 mx-auto flex min-h-[100svh] w-full max-w-[88rem] flex-col justify-between px-12 pb-16 pt-36 lg:px-20 lg:pb-20 lg:pt-40">
           {HeadlineCluster}
 
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-8 lg:gap-10">
             {PriceBlock}
             {ProofLine}
           </div>

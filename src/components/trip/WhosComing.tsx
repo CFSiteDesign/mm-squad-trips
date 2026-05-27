@@ -3,10 +3,10 @@ import { Sticker } from "@/components/brand/Sticker";
 
 export function WhosComing({ trip }: { trip: Trip }) {
   return (
-    <section className="relative bg-mm-bone px-5 py-12 text-mm-black md:px-6 md:py-20">
-      <div className="mx-auto max-w-3xl">
+    <section className="relative bg-mm-bone px-5 py-12 text-mm-black md:px-8 md:py-24">
+      <div className="mx-auto max-w-3xl md:max-w-6xl">
         <Sticker color="pink" rotate={-3}>WHO&apos;S COMING</Sticker>
-        <h2 className="mt-4 font-display text-[2.5rem] leading-[0.92] md:text-6xl">
+        <h2 className="mt-4 font-display text-[2.5rem] leading-[0.92] md:mt-6 md:text-7xl lg:text-8xl">
           YOUR<br />
           <span className="text-mm-pink">NEW CREW.</span>
         </h2>
