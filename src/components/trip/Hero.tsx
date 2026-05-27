@@ -58,7 +58,7 @@ export function Hero({ trip }: { trip: Trip }) {
       ) : (
         <div className="absolute inset-0 flex items-center justify-center bg-mm-black">
           <span className="font-display text-2xl tracking-[0.2em] text-mm-lime md:text-4xl">
-            VIDEO PLACEHOLDER
+            PLACEHOLDER
           </span>
         </div>
       )}
@@ -138,10 +138,11 @@ export function Hero({ trip }: { trip: Trip }) {
               preload="auto"
             />
           ) : (
-            <div
-              className="absolute inset-0"
-              style={{ backgroundImage: "linear-gradient(to bottom, hsl(0 0% 12%), hsl(0 0% 0%))" }}
-            />
+            <div className="absolute inset-0 flex items-center justify-center" style={{ backgroundImage: "linear-gradient(to bottom, hsl(0 0% 12%), hsl(0 0% 0%))" }}>
+              <span className="font-display text-4xl tracking-[0.2em] text-mm-lime">
+                PLACEHOLDER
+              </span>
+            </div>
           )}
           {/* Scrim for legibility over video */}
           <div className="absolute inset-0 bg-gradient-to-b from-mm-black/80 via-mm-black/30 to-mm-black/90" />
