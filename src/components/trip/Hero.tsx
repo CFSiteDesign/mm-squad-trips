@@ -8,6 +8,7 @@ export function Hero({ trip }: { trip: Trip }) {
   const headPrice = trip.departures[0]?.price ?? trip.defaultPrice;
   const headStrike = trip.departures[0]?.strikethrough ?? trip.defaultStrikethrough;
   const payInFull = allDeparturesUnder60Days(trip.departures);
+  const hasVideo = /\.(mp4|webm|mov|m4v)(\?|$)/i.test(trip.heroVideoUrl ?? "");
 
   // Headline cluster: logo + headline + subhead — tight internal spacing
   const HeadlineCluster = (
