@@ -222,7 +222,7 @@ Deno.serve(async (req) => {
         metadata,
         description: `${tripName} × ${groupSize} · ${depDate}`,
       },
-      success_url: `${origin}/booking/success?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${origin}/booking-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/${tripSlug}?cancelled=1#booking`,
     });
 
