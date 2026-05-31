@@ -171,6 +171,7 @@ Deno.serve(async (req) => {
 
     const metadata: Record<string, string> = {
       trip_slug: tripSlug,
+      trip_id: trip.id,
       trip_code: tripCode,
       trip_name: tripName,
       departure_id: dep.id,
