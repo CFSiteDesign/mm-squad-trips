@@ -23,8 +23,10 @@ interface TripFields {
 }
 interface PricingFields {
   Trip: string[];
+  "Trip Code (from Trip)"?: string[];
   Month: string;
   Price: number;
+  Strikethrough?: number;
   "Active?": boolean;
 }
 interface DepartureFields {
