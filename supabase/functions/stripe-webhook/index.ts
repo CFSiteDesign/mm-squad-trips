@@ -108,6 +108,16 @@ async function writeBookings(session: Stripe.Checkout.Session) {
   const groupId = makeGroupId(sessionId);
   const isSolo = groupSize === 1;
 
+  // Pre-parse additional travelers once. Goes to the lead row's
+  // "Additional Travelers" JSON field per the v3 schema.
+  const additionalTravelers: Record<string, string>[] = [];
+  for (let i = 1; i < groupSize; i++) {
+    const raw = (m as Record<string, string>)[`traveler_${i}`];
+    additionalTravelers.push(
+      raw ? parseTraveler(raw) : { name: "", email: "", phone: "", country: "", age: "" },
+    );
+  }
+
   // Build the N rows
   const rows: Record<string, unknown>[] = [];
 
@@ -127,11 +137,9 @@ async function writeBookings(session: Stripe.Checkout.Session) {
     "Lead Age": m.lead_age ? Number(m.lead_age) : undefined,
     "Solo?": m.lead_solo === "true",
     "Source": m.lead_source || undefined,
-    "Traveler Name": m.lead_name,
-    "Traveler Email": m.lead_email,
-    "Traveler Phone": m.lead_phone,
-    "Traveler Country": m.lead_country || undefined,
-    "Traveler Age": m.lead_age ? Number(m.lead_age) : undefined,
+    "Additional Travelers": additionalTravelers.length > 0
+      ? JSON.stringify(additionalTravelers)
+      : undefined,
     "Payment Type": paymentType,
     "Original Price": pricePerSpot || subtotal / groupSize,
     "Discount Code": discountLink,
@@ -146,10 +154,9 @@ async function writeBookings(session: Stripe.Checkout.Session) {
     "UTM Content": m.utm_content || undefined,
   });
 
-  // Rows 2..N: additional travelers
+  // Rows 2..N: additional travelers (identity captured in lead row's
+  // "Additional Travelers" JSON per the v3 schema)
   for (let i = 1; i < groupSize; i++) {
-    const raw = (m as Record<string, string>)[`traveler_${i}`];
-    const t = raw ? parseTraveler(raw) : { name: "", email: "", phone: "", country: "", age: "" };
     rows.push({
       "Trip": tripId ? [tripId] : undefined,
       "Departure": departureId ? [departureId] : undefined,
@@ -159,11 +166,6 @@ async function writeBookings(session: Stripe.Checkout.Session) {
       "Spot Number": i + 1,
       "Lead Name": m.lead_name,
       "Lead Email": m.lead_email,
-      "Traveler Name": t.name || undefined,
-      "Traveler Email": t.email || undefined,
-      "Traveler Phone": t.phone || undefined,
-      "Traveler Country": t.country || undefined,
-      "Traveler Age": t.age ? Number(t.age) : undefined,
       "Payment Type": paymentType,
       "Original Price": pricePerSpot || subtotal / groupSize,
       "Discount Code": discountLink,
