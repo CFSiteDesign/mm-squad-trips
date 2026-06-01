@@ -2,16 +2,13 @@
 // - Verifies signature (STRIPE_WEBHOOK_SECRET)
 // - Handles checkout.session.completed
 // - Idempotent: skips if a Booking with the same Stripe Session ID exists
-// - Writes one Booking row using metadata snapshot from create-checkout-session
+// - Multi-traveler: writes N rows (1 lead + N-1 members) sharing a Group ID
+// - Decrements Departure Spots Remaining by N
+// - Increments Discount Code Used Count by N (mirrors Squad demo: each
+//   traveler counts as 1 toward the code's tally)
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import Stripe from "https://esm.sh/stripe@18.5.0";
-import { airtableGet, airtableCreate } from "../_shared/airtable.ts";
-
-const SLUG_TO_LABEL: Record<string, string> = {
-  indonesia: "Indonesia",
-  cambodia: "Cambodia",
-  vietnam: "Vietnam",
-};
+import { airtableGet, airtableCreateMany, airtablePatch } from "../_shared/airtable.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -40,7 +37,7 @@ Deno.serve(async (req) => {
   try {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
-      await writeBooking(session);
+      await writeBookings(session);
     } else {
       console.log("Ignoring event type:", event.type);
     }
@@ -51,7 +48,6 @@ Deno.serve(async (req) => {
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error("Webhook handler error:", msg);
-    // Return 200 to avoid Stripe retries on Airtable-side data errors; logs will surface it.
     return new Response(JSON.stringify({ received: true, error: msg }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -59,7 +55,17 @@ Deno.serve(async (req) => {
   }
 });
 
-async function writeBooking(session: Stripe.Checkout.Session) {
+function parseTraveler(v: string): Record<string, string> {
+  const [name = "", email = "", phone = "", country = "", age = ""] = v.split("|");
+  return { name, email, phone, country, age };
+}
+
+function makeGroupId(sessionId: string): string {
+  const tail = sessionId.replace(/[^A-Z0-9]/gi, "").slice(-6).toUpperCase();
+  return `GRP-${tail}`;
+}
+
+async function writeBookings(session: Stripe.Checkout.Session) {
   const m = session.metadata ?? {};
   const sessionId = session.id;
 
@@ -73,33 +79,47 @@ async function writeBooking(session: Stripe.Checkout.Session) {
     return;
   }
 
-  const tripSlug = m.trip_slug ?? "";
-  const tripId = m.trip_id || (await lookupTripIdBySlug(tripSlug));
+  const tripId = m.trip_id || (await lookupTripIdBySlug(m.trip_slug ?? ""));
   const departureId = m.departure_id;
-  const groupSize = Number(m.group_size || "1");
+  const groupSize = Math.max(1, Number(m.group_size || "1"));
   const paymentType = m.payment_type === "deposit" ? "Deposit" : "Full";
-  const amountPaid = (session.amount_total ?? 0) / 100;
+  const amountPaidTotal = (session.amount_total ?? 0) / 100;
   const subtotal = Number(m.subtotal || "0");
   const discountAmount = Number(m.discount_amount || "0");
   const fullDue = Number(m.full_due || String(subtotal - discountAmount));
+  const pricePerSpot = Number(m.price_per_spot || "0");
+  const perSpotPaid = amountPaidTotal / groupSize;
+  const perSpotFinal = fullDue / groupSize;
+  const perSpotDiscount = discountAmount / groupSize;
 
   // Optional discount link
   let discountLink: string[] | undefined;
+  let discountRecordId: string | undefined;
   if (m.discount_code) {
-    const discounts = await airtableGet("Discount Codes", {
+    const discounts = await airtableGet<{ "Used Count"?: number }>("Discount Codes", {
       filterByFormula: `UPPER({Code}) = "${m.discount_code.replace(/"/g, "")}"`,
       maxRecords: "1",
     });
-    if (discounts.length > 0) discountLink = [discounts[0].id];
+    if (discounts.length > 0) {
+      discountRecordId = discounts[0].id;
+      discountLink = [discountRecordId];
+    }
   }
 
-  const bookingType = groupSize === 1 ? "Solo" : "Group lead";
+  const groupId = makeGroupId(sessionId);
+  const isSolo = groupSize === 1;
 
-  const fields: Record<string, unknown> = {
+  // Build the N rows
+  const rows: Record<string, unknown>[] = [];
+
+  // Row 1: lead
+  rows.push({
     "Trip": tripId ? [tripId] : undefined,
     "Departure": departureId ? [departureId] : undefined,
-    "Booking Type": bookingType,
+    "Booking Type": isSolo ? "Solo" : "Group lead",
+    "Group ID": groupId,
     "Group Size": groupSize,
+    "Spot Number": 1,
     "Friend Names Mentioned": m.friends_mentioned || undefined,
     "Lead Name": m.lead_name,
     "Lead Email": m.lead_email,
@@ -108,28 +128,96 @@ async function writeBooking(session: Stripe.Checkout.Session) {
     "Lead Age": m.lead_age ? Number(m.lead_age) : undefined,
     "Solo?": m.lead_solo === "true",
     "Source": m.lead_source || undefined,
-    "Additional Travelers": m.travelers_json || undefined,
+    "Traveler Name": m.lead_name,
+    "Traveler Email": m.lead_email,
+    "Traveler Phone": m.lead_phone,
+    "Traveler Country": m.lead_country || undefined,
+    "Traveler Age": m.lead_age ? Number(m.lead_age) : undefined,
     "Payment Type": paymentType,
-    "Original Price": subtotal,
+    "Original Price": pricePerSpot || subtotal / groupSize,
     "Discount Code": discountLink,
-    "Discount Amount": discountAmount,
-    "Final Price": fullDue,
-    "Amount Paid": amountPaid,
+    "Discount Amount": Math.round(perSpotDiscount * 100) / 100,
+    "Final Price": Math.round(perSpotFinal * 100) / 100,
+    "Amount Paid": Math.round(perSpotPaid * 100) / 100,
     "Status": "Confirmed",
     "Stripe Session ID": sessionId,
     "UTM Source": m.utm_source || undefined,
     "UTM Medium": m.utm_medium || undefined,
     "UTM Campaign": m.utm_campaign || undefined,
     "UTM Content": m.utm_content || undefined,
-  };
+  });
 
-  // Strip undefined so Airtable doesn't complain about unknown fields
-  for (const k of Object.keys(fields)) {
-    if (fields[k] === undefined) delete fields[k];
+  // Rows 2..N: additional travelers
+  for (let i = 1; i < groupSize; i++) {
+    const raw = (m as Record<string, string>)[`traveler_${i}`];
+    const t = raw ? parseTraveler(raw) : { name: "", email: "", phone: "", country: "", age: "" };
+    rows.push({
+      "Trip": tripId ? [tripId] : undefined,
+      "Departure": departureId ? [departureId] : undefined,
+      "Booking Type": "Group member",
+      "Group ID": groupId,
+      "Group Size": groupSize,
+      "Spot Number": i + 1,
+      "Lead Name": m.lead_name,
+      "Lead Email": m.lead_email,
+      "Traveler Name": t.name || undefined,
+      "Traveler Email": t.email || undefined,
+      "Traveler Phone": t.phone || undefined,
+      "Traveler Country": t.country || undefined,
+      "Traveler Age": t.age ? Number(t.age) : undefined,
+      "Payment Type": paymentType,
+      "Original Price": pricePerSpot || subtotal / groupSize,
+      "Discount Code": discountLink,
+      "Discount Amount": Math.round(perSpotDiscount * 100) / 100,
+      "Final Price": Math.round(perSpotFinal * 100) / 100,
+      "Amount Paid": Math.round(perSpotPaid * 100) / 100,
+      "Status": "Confirmed",
+      "Stripe Session ID": sessionId,
+    });
   }
 
-  const created = await airtableCreate("Bookings", fields);
-  console.log("Booking created:", created.id, "for", sessionId, `(${SLUG_TO_LABEL[tripSlug] ?? tripSlug})`);
+  // Strip undefineds
+  for (const row of rows) {
+    for (const k of Object.keys(row)) if (row[k] === undefined) delete row[k];
+  }
+
+  const created = await airtableCreateMany("Bookings", rows);
+  console.log(`Created ${created.length} booking row(s) for ${sessionId} group ${groupId}`);
+
+  // Decrement Departure Spots Remaining by N
+  if (departureId) {
+    try {
+      const deps = await airtableGet<{ "Spots Remaining"?: number; "Total Spots"?: number }>(
+        "Departures",
+        { filterByFormula: `RECORD_ID() = "${departureId.replace(/"/g, "")}"`, maxRecords: "1" },
+      );
+      if (deps.length > 0) {
+        const current = deps[0].fields["Spots Remaining"] ?? deps[0].fields["Total Spots"] ?? 0;
+        const next = Math.max(0, current - groupSize);
+        await airtablePatch("Departures", departureId, { "Spots Remaining": next });
+        console.log(`Decremented Departure ${departureId} spots ${current} → ${next}`);
+      }
+    } catch (e) {
+      console.error("Failed to decrement spots:", e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  // Bump Discount Code Used Count by N (Squad-demo logic: each traveler = 1)
+  if (discountRecordId) {
+    try {
+      const codes = await airtableGet<{ "Used Count"?: number }>("Discount Codes", {
+        filterByFormula: `RECORD_ID() = "${discountRecordId}"`,
+        maxRecords: "1",
+      });
+      const used = codes[0]?.fields["Used Count"] ?? 0;
+      await airtablePatch("Discount Codes", discountRecordId, {
+        "Used Count": used + groupSize,
+      });
+      console.log(`Bumped discount ${m.discount_code} used ${used} → ${used + groupSize}`);
+    } catch (e) {
+      console.error("Failed to bump discount usage:", e instanceof Error ? e.message : String(e));
+    }
+  }
 }
 
 async function lookupTripIdBySlug(slug: string): Promise<string | undefined> {
