@@ -106,8 +106,8 @@ export default function Index() {
       {/* ============ HERO ============ */}
       <section className="relative isolate min-h-[100svh] overflow-hidden border-b-[4px] border-mm-bone">
         {/* corner ornaments */}
-        <div className="pointer-events-none absolute -right-12 top-24 z-20 hidden md:block">
-          <Starburst size={220} color="lime" rotate={12}>
+        <div className="pointer-events-none absolute right-4 top-24 z-20 hidden md:block lg:right-8">
+          <Starburst size={180} color="lime" rotate={12}>
             ALL<br />IN
           </Starburst>
         </div>
