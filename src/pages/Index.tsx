@@ -190,7 +190,7 @@ export default function Index() {
               </div>
             </div>
 
-            <p className="font-sticker text-[10px] tracking-[0.22em] text-mm-bone/55">
+            <p className="mt-16 font-sticker text-[10px] tracking-[0.22em] text-mm-bone/55">
               53,000+ IN THE CREW · 24/7 LOCAL · $99 HOLDS YOUR SPOT
             </p>
           </div>
