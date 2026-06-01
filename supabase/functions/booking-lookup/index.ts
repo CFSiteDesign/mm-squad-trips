@@ -41,9 +41,10 @@ Deno.serve(async (req) => {
       });
       tripName = tr[0]?.fields["Trip Name"] ?? "";
     }
+    const ref = b["Booking Ref"] || `MM-${rows[0].id.slice(-6).toUpperCase()}`;
     return jr({
       booking: {
-        bookingRef: b["Booking Ref"],
+        bookingRef: ref,
         tripName,
         departureDate,
         amountPaid: b["Amount Paid"],
