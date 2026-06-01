@@ -121,14 +121,26 @@ Deno.serve(async (req) => {
     if (spotsRemaining < groupSize) return err(`Only ${spotsRemaining} spot${spotsRemaining === 1 ? "" : "s"} left`);
     if (daysUntil(depDate) < HIDE_WITHIN_DAYS) return err("This departure is too close to book online");
 
-    // 3. Resolve price (month override → default)
-    const month = depDate.slice(0, 7);
-    const pricing = await airtableGet<PricingFields>("Pricing Calendar", {
-      filterByFormula: `AND({Active?} = TRUE(), ARRAYJOIN({Trip}) = "${tripName.replace(/"/g, "")}", {Month} = "${month}")`,
-      maxRecords: "1",
+    // 3. Resolve price: fetch all active Pricing Calendar rows and match in code
+    // by linked Trip record id (ARRAYJOIN({Trip}) returns record IDs, not names).
+    // Month key must be zero-padded YYYY-MM to match the plain-text Month field exactly.
+    const month = depDate.slice(0, 7); // "2026-08-10" -> "2026-08"
+    const allPricing = await airtableGet<PricingFields>("Pricing Calendar", {
+      filterByFormula: `{Active?} = TRUE()`,
     });
-    const pricePerSpot = pricing[0]?.fields.Price ?? trip.fields["Default Price"];
-    const subtotal = pricePerSpot * groupSize;
+    const match = allPricing.find((p) => {
+      const linkedIds = p.fields.Trip ?? [];
+      const linkedCodes = p.fields["Trip Code (from Trip)"] ?? [];
+      const tripMatches = linkedIds.includes(trip.id) || linkedCodes.includes(tripCode);
+      return tripMatches && p.fields.Month === month;
+    });
+    const pricePerSpot = match?.fields.Price ?? trip.fields["Default Price"];
+    const strikethrough = match?.fields.Strikethrough ?? trip.fields["Default Strikethrough"] ?? null;
+    const originalPrice = pricePerSpot * groupSize;
+    const subtotal = originalPrice;
+    console.log("price resolution", {
+      tripCode, month, matched: !!match, pricePerSpot, groupSize, originalPrice,
+    });
 
     // 4. Discount (full price only)
     let discountAmount = 0;
