@@ -114,6 +114,11 @@ export default function Index() {
 
         {/* MOBILE: stacked — headline / media box / CTAs / proof */}
         <div className="relative z-10 flex w-full flex-col px-5 pt-[9rem] pb-8 md:hidden">
+          {/* Starburst floats in the hero, top-right above headline */}
+          <div className="pointer-events-none absolute right-3 top-[7.5rem] z-30">
+            <Starburst size={92} color="lime" rotate={12}>ALL<br />IN</Starburst>
+          </div>
+
           <p className="font-sticker text-[11px] tracking-[0.22em] text-mm-lime">
             MAD MONKEY · GROUP TRIPS
           </p>
@@ -126,10 +131,8 @@ export default function Index() {
           {/* Media placeholder box */}
           <div className="relative mt-6 flex min-h-[32vh] items-center justify-center overflow-hidden border-[3px] border-mm-bone bg-gradient-to-b from-neutral-900 to-black">
             <span className="font-display text-3xl tracking-[0.2em] text-mm-lime">PLACEHOLDER</span>
-            <div className="absolute -right-3 -top-3">
-              <Starburst size={84} color="lime" rotate={12}>ALL<br />IN</Starburst>
-            </div>
           </div>
+
 
           <p className="mt-5 text-[14px] leading-snug text-mm-bone/85">
             For travellers with friends who never commit. Trips that actually make it out of the group chat.
