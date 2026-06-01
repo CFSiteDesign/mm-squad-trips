@@ -70,7 +70,7 @@ export function BookingFlow({ trip }: { trip: Trip }) {
 
   async function submit() {
     if (!selected) return toast.error("Pick a departure first");
-    if (!lead.name || !lead.email || !lead.phone) return toast.error("Fill out your details");
+    if (!lead.name || !lead.email || !lead.phone || !lead.country) return toast.error("Fill out your details");
     setSubmitting(true);
     try {
       const params = new URLSearchParams(window.location.search);
@@ -78,11 +78,12 @@ export function BookingFlow({ trip }: { trip: Trip }) {
       ["utm_source", "utm_medium", "utm_campaign", "utm_content"].forEach((k) => {
         const v = params.get(k); if (v) utm[k] = v;
       });
+      const fullPhone = `+${lead.phoneDial} ${lead.phone}`.trim();
       const { url } = await createCheckoutSession({
         tripSlug: trip.slug,
         departureId: selected.id,
         groupSize,
-        leadBooker: lead,
+        leadBooker: { ...lead, phone: fullPhone },
         travelers,
         discountCode: discountState?.valid ? discountCode.trim().toUpperCase() : undefined,
         friendsMentioned: lead.friends,
