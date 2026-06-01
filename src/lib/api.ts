@@ -1,5 +1,4 @@
 import { supabase } from "@/integrations/supabase/client";
-import { getFallbackTrip } from "@/data/fallback-trips";
 import type { Trip } from "@/types/trip";
 
 async function getFunctionErrorMessage(error: unknown): Promise<string> {
