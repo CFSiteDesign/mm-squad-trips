@@ -1,57 +1,56 @@
-// Look up a Booking by Stripe session ID for the confirmation page.
+// Lookup booking details for the confirmation page.
+// - Always returns trip/departure/amount from the Stripe session metadata so the
+//   page renders even before the webhook has written the Airtable row.
+// - Returns bookingRef from Airtable when the Bookings row exists; otherwise
+//   bookingRef is null. The client polls until it appears.
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import Stripe from "https://esm.sh/stripe@18.5.0";
 import { airtableGet } from "../_shared/airtable.ts";
 
 interface BookingFields {
-  "Booking Ref": string;
-  "Departure": string[];
-  "Trip": string[];
-  "Amount Paid": number;
-  "Balance Due": number;
-  "Payment Type": "Deposit" | "Full";
+  "Booking Ref"?: string;
 }
-interface DepFields { "Departure Date": string }
-interface TripFields { "Trip Name": string }
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
     const { sessionId } = await req.json();
-    if (!sessionId) return jr({ error: "sessionId required" }, 400);
-    const rows = await airtableGet<BookingFields>("Bookings", {
-      filterByFormula: `{Stripe Session ID} = "${String(sessionId).replace(/"/g, "")}"`,
-      maxRecords: "1",
-    });
-    if (!rows[0]) return jr({ error: "Booking not found yet" }, 404);
-    const b = rows[0].fields;
+    if (!sessionId || typeof sessionId !== "string") return jr({ error: "sessionId required" }, 400);
 
-    let departureDate = "";
-    if (b.Departure?.[0]) {
-      const dep = await airtableGet<DepFields>("Departures", {
-        filterByFormula: `RECORD_ID() = "${b.Departure[0]}"`,
+    // 1. Always fetch Stripe session so the page can render without Airtable.
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeKey) return jr({ error: "Stripe not configured" }, 503);
+    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    const m = (session.metadata ?? {}) as Record<string, string>;
+    const amountPaid = (session.amount_total ?? 0) / 100;
+    const paymentType = m.payment_type === "deposit" ? "Deposit" : "Full";
+    const finalPrice = Number(m.final_price ?? m.full_due ?? 0);
+    const balanceDue = paymentType === "Deposit" ? Math.max(0, finalPrice - amountPaid) : 0;
+
+    const sessionInfo = {
+      tripName: m.trip_name ?? "",
+      departureDate: m.departure_date ?? "",
+      amountPaid,
+      balanceDue,
+      paymentType,
+    };
+
+    // 2. Try Airtable for Booking Ref. Don't fail the response if missing.
+    let bookingRef: string | null = null;
+    try {
+      const safe = sessionId.replace(/"/g, "");
+      const rows = await airtableGet<BookingFields>("Bookings", {
+        filterByFormula: `{Stripe Session ID} = "${safe}"`,
         maxRecords: "1",
       });
-      departureDate = dep[0]?.fields["Departure Date"] ?? "";
+      const ref = rows[0]?.fields["Booking Ref"];
+      if (ref) bookingRef = String(ref);
+    } catch (e) {
+      console.warn("booking-lookup airtable error", e instanceof Error ? e.message : e);
     }
-    let tripName = "";
-    if (b.Trip?.[0]) {
-      const tr = await airtableGet<TripFields>("Trips", {
-        filterByFormula: `RECORD_ID() = "${b.Trip[0]}"`,
-        maxRecords: "1",
-      });
-      tripName = tr[0]?.fields["Trip Name"] ?? "";
-    }
-    const ref = b["Booking Ref"] || `MM-${rows[0].id.slice(-6).toUpperCase()}`;
-    return jr({
-      booking: {
-        bookingRef: ref,
-        tripName,
-        departureDate,
-        amountPaid: b["Amount Paid"],
-        balanceDue: b["Balance Due"] ?? 0,
-        paymentType: b["Payment Type"],
-      },
-    });
+
+    return jr({ booking: { ...sessionInfo, bookingRef } });
   } catch (e) {
     return jr({ error: e instanceof Error ? e.message : "error" }, 500);
   }
