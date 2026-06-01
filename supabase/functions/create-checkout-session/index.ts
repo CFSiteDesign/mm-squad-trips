@@ -215,9 +215,20 @@ Deno.serve(async (req) => {
       utm_medium: utm.utm_medium ?? "",
       utm_campaign: utm.utm_campaign ?? "",
       utm_content: utm.utm_content ?? "",
-      // Truncated traveler snapshot — full payload kept in payment_intent description
-      travelers_json: JSON.stringify(travelers).slice(0, 450),
     };
+
+    // Per-traveler compact metadata (Stripe caps each value at 500 chars).
+    // Format: "name|email|phone|country|age". Max 4 extra travelers (groupSize ≤ 5).
+    (travelers as Array<Record<string, string>>).slice(0, 4).forEach((t, i) => {
+      const compact = [
+        t.name ?? "",
+        t.email ?? "",
+        t.phone ?? "",
+        t.country ?? "",
+        t.age ?? "",
+      ].map((s) => String(s).replace(/\|/g, "/")).join("|");
+      metadata[`traveler_${i + 1}`] = compact.slice(0, 490);
+    });
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
