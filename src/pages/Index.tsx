@@ -142,7 +142,7 @@ export default function Index() {
                 href="#included"
                 className="inline-flex items-center gap-2 border-[3px] border-mm-bone bg-transparent px-5 py-3 font-sticker text-xs tracking-[0.14em] text-mm-bone hover:bg-mm-bone hover:text-mm-black md:text-sm"
               >
-                WHAT'S IN
+                WHAT'S IN IT
               </a>
             </div>
           </div>
