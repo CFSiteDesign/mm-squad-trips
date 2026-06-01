@@ -104,62 +104,100 @@ export default function Index() {
       <PinnedWordmark />
 
       {/* ============ HERO ============ */}
-      <section className="relative isolate min-h-[100svh] overflow-hidden border-b-[4px] border-mm-bone">
-        {/* corner ornaments */}
-        <div className="pointer-events-none absolute right-4 top-24 z-20 hidden md:block lg:right-8">
-          <Starburst size={180} color="lime" rotate={12}>
-            ALL<br />IN
-          </Starburst>
-        </div>
-        <div className="pointer-events-none absolute left-4 top-[5.2rem] z-20 md:left-8 md:top-28">
+      <section className="relative isolate w-full overflow-hidden border-b-[4px] border-mm-bone bg-mm-black text-mm-bone">
+        {/* ALL · IN sticker (both layouts) */}
+        <div className="pointer-events-none absolute left-4 top-[5.2rem] z-30 md:left-8 md:top-28">
           <Sticker color="yellow" rotate={-7} className="px-2.5 py-1 text-[11px] md:px-3 md:py-1.5 md:text-xs">
             ALL · IN
           </Sticker>
         </div>
 
-        <div className="relative z-10 mx-auto flex min-h-[100svh] max-w-6xl flex-col justify-between px-5 pt-[10rem] pb-10 md:px-8 md:pt-40 md:pb-16">
-          <div>
-            <p className="font-sticker text-[11px] tracking-[0.22em] text-mm-lime md:text-xs">
-              MAD MONKEY · GROUP TRIPS
-            </p>
-            <h1 className="mt-4 max-w-[20rem] font-display text-[clamp(3rem,14vw,8.5rem)] leading-[0.88] text-mm-bone md:mt-6 md:max-w-none md:text-[clamp(4rem,12vw,9rem)]">
-              ALL IN<br />
-              <span className="text-mm-lime">GROUP TRIPS</span><br />
-              <span className="text-mm-orange">BY MAD</span> MONKEY.
-            </h1>
-            <p className="mt-5 max-w-md text-[15px] leading-snug text-mm-bone/85 md:mt-7 md:max-w-xl md:text-lg">
-              For travellers with friends who never commit. Trips that actually make it out of the group chat.
-            </p>
+        {/* MOBILE: stacked — headline / media box / CTAs / proof */}
+        <div className="relative z-10 flex w-full flex-col px-5 pt-[9rem] pb-8 md:hidden">
+          <p className="font-sticker text-[11px] tracking-[0.22em] text-mm-lime">
+            MAD MONKEY · GROUP TRIPS
+          </p>
+          <h1 className="mt-3 font-display text-[clamp(2.75rem,13vw,4.25rem)] leading-[0.9] text-mm-bone">
+            ALL IN<br />
+            <span className="text-mm-lime">GROUP TRIPS</span><br />
+            <span className="text-mm-orange">BY MAD</span> MONKEY.
+          </h1>
 
-            <div className="mt-7 flex flex-wrap items-center gap-3 md:mt-10 md:gap-4">
-              <a
-                href="#destinations"
-                className="inline-flex items-center gap-2 border-[3px] border-mm-bone bg-mm-pink px-5 py-3 font-sticker text-xs tracking-[0.14em] text-mm-black shadow-mm-bone transition-transform hover:-translate-x-[3px] hover:-translate-y-[3px] md:text-sm"
-              >
-                FIND YOUR TRIP <ArrowRight className="h-4 w-4" />
-              </a>
-              <a
-                href="#included"
-                className="inline-flex items-center gap-2 border-[3px] border-mm-bone bg-transparent px-5 py-3 font-sticker text-xs tracking-[0.14em] text-mm-bone hover:bg-mm-bone hover:text-mm-black md:text-sm"
-              >
-                WHAT'S IN IT
-              </a>
+          {/* Media placeholder box */}
+          <div className="relative mt-6 flex min-h-[32vh] items-center justify-center overflow-hidden border-[3px] border-mm-bone bg-gradient-to-b from-neutral-900 to-black">
+            <span className="font-display text-3xl tracking-[0.2em] text-mm-lime">PLACEHOLDER</span>
+            <div className="absolute -right-3 -top-3">
+              <Starburst size={84} color="lime" rotate={12}>ALL<br />IN</Starburst>
             </div>
           </div>
 
-          {/* Media placeholder — swap with <video> when ready */}
-          <div className="mt-8 flex min-h-[28vh] items-center justify-center border-[4px] border-mm-bone bg-gradient-to-b from-neutral-900 to-black md:mt-10 md:min-h-[34vh]">
-            <span className="font-display text-3xl tracking-[0.2em] text-mm-lime md:text-5xl">
-              PLACEHOLDER
-            </span>
+          <p className="mt-5 text-[14px] leading-snug text-mm-bone/85">
+            For travellers with friends who never commit. Trips that actually make it out of the group chat.
+          </p>
+
+          <div className="mt-5 flex flex-wrap items-center gap-3">
+            <a href="#destinations" className="inline-flex items-center gap-2 border-[3px] border-mm-bone bg-mm-pink px-5 py-3 font-sticker text-xs tracking-[0.14em] text-mm-black shadow-mm-bone">
+              FIND YOUR TRIP <ArrowRight className="h-4 w-4" />
+            </a>
+            <a href="#included" className="inline-flex items-center gap-2 border-[3px] border-mm-bone bg-transparent px-5 py-3 font-sticker text-xs tracking-[0.14em] text-mm-bone">
+              WHAT'S IN IT
+            </a>
           </div>
 
-
-          <p className="mt-10 font-sticker text-[10px] tracking-[0.22em] text-mm-bone/55 md:mt-0">
+          <p className="mt-7 font-sticker text-[10px] tracking-[0.22em] text-mm-bone/55">
             53,000+ IN THE CREW · 24/7 LOCAL · $99 HOLDS YOUR SPOT
           </p>
         </div>
+
+        {/* DESKTOP: full-bleed media background + overlaid content */}
+        <div className="relative hidden min-h-[100svh] w-full md:block">
+          <div className="absolute inset-0 z-0">
+            {/* TODO: replace with <video ... /> when ready */}
+            <div
+              className="absolute inset-0 flex items-center justify-center"
+              style={{ backgroundImage: "linear-gradient(to bottom, hsl(0 0% 12%), hsl(0 0% 0%))" }}
+            >
+              <span className="font-display text-5xl tracking-[0.2em] text-mm-lime">PLACEHOLDER</span>
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-b from-mm-black/75 via-mm-black/25 to-mm-black/90" />
+            <div className="absolute inset-0 bg-gradient-to-r from-mm-black/70 via-transparent to-transparent" />
+          </div>
+
+          <div className="pointer-events-none absolute right-8 top-28 z-20 lg:right-16 lg:top-32">
+            <Starburst size={180} color="lime" rotate={12}>ALL<br />IN</Starburst>
+          </div>
+
+          <div className="relative z-10 mx-auto flex min-h-[100svh] max-w-6xl flex-col justify-between px-8 pt-40 pb-16">
+            <div>
+              <p className="font-sticker text-xs tracking-[0.22em] text-mm-lime">
+                MAD MONKEY · GROUP TRIPS
+              </p>
+              <h1 className="mt-6 font-display text-[clamp(4rem,12vw,9rem)] leading-[0.88] text-mm-bone">
+                ALL IN<br />
+                <span className="text-mm-lime">GROUP TRIPS</span><br />
+                <span className="text-mm-orange">BY MAD</span> MONKEY.
+              </h1>
+              <p className="mt-7 max-w-xl text-lg leading-snug text-mm-bone/85">
+                For travellers with friends who never commit. Trips that actually make it out of the group chat.
+              </p>
+
+              <div className="mt-10 flex flex-wrap items-center gap-4">
+                <a href="#destinations" className="inline-flex items-center gap-2 border-[3px] border-mm-bone bg-mm-pink px-5 py-3 font-sticker text-sm tracking-[0.14em] text-mm-black shadow-mm-bone transition-transform hover:-translate-x-[3px] hover:-translate-y-[3px]">
+                  FIND YOUR TRIP <ArrowRight className="h-4 w-4" />
+                </a>
+                <a href="#included" className="inline-flex items-center gap-2 border-[3px] border-mm-bone bg-transparent px-5 py-3 font-sticker text-sm tracking-[0.14em] text-mm-bone hover:bg-mm-bone hover:text-mm-black">
+                  WHAT'S IN IT
+                </a>
+              </div>
+            </div>
+
+            <p className="font-sticker text-[10px] tracking-[0.22em] text-mm-bone/55">
+              53,000+ IN THE CREW · 24/7 LOCAL · $99 HOLDS YOUR SPOT
+            </p>
+          </div>
+        </div>
       </section>
+
 
       {/* ============ TICKER ============ */}
       <div className="ticker bg-mm-lime text-mm-black">
