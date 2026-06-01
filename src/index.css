@@ -194,7 +194,7 @@
     display: inline-flex;
     gap: 2rem;
     padding: 0.6rem 0;
-    animation: ticker-scroll 28s linear infinite;
+    animation: ticker-scroll 60s linear infinite;
   }
   @keyframes ticker-scroll {
     from { transform: translateX(0); }
