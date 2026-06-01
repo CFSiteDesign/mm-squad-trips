@@ -119,10 +119,8 @@ export default function Index() {
             <Starburst size={92} color="lime" rotate={12}>ALL<br />IN</Starburst>
           </div>
 
-          <p className="font-sticker text-[11px] tracking-[0.22em] text-mm-lime">
-            MAD MONKEY · GROUP TRIPS
-          </p>
-          <h1 className="mt-3 font-display text-[clamp(2.75rem,13vw,4.25rem)] leading-[0.9] text-mm-bone">
+          <h1 className="font-display text-[clamp(2.75rem,13vw,4.25rem)] leading-[0.9] text-mm-bone">
+
             ALL IN<br />
             <span className="text-mm-lime">GROUP TRIPS</span><br />
             <span className="text-mm-orange">BY MAD</span> MONKEY.
@@ -172,10 +170,8 @@ export default function Index() {
 
           <div className="relative z-10 mx-auto flex min-h-[100svh] max-w-6xl flex-col justify-between px-8 pt-40 pb-16">
             <div>
-              <p className="font-sticker text-xs tracking-[0.22em] text-mm-lime">
-                MAD MONKEY · GROUP TRIPS
-              </p>
-              <h1 className="mt-6 font-display text-[clamp(4rem,12vw,9rem)] leading-[0.88] text-mm-bone">
+              <h1 className="font-display text-[clamp(4rem,12vw,9rem)] leading-[0.88] text-mm-bone">
+
                 ALL IN<br />
                 <span className="text-mm-lime">GROUP TRIPS</span><br />
                 <span className="text-mm-orange">BY MAD</span> MONKEY.
