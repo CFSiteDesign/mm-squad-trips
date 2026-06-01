@@ -155,7 +155,7 @@ export default function Index() {
 
       {/* ============ TICKER ============ */}
       <div className="ticker bg-mm-lime text-mm-black">
-        <div className="ticker-track font-display text-xl">
+        <div className="ticker-track text-2xl font-black uppercase tracking-tight md:text-3xl">
           <span>{TICKER}{TICKER}{TICKER}</span>
           <span>{TICKER}{TICKER}{TICKER}</span>
         </div>
