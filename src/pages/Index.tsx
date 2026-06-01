@@ -1,41 +1,159 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
+import {
+  Building2,
+  PartyPopper,
+  Bed,
+  Sparkles,
+  Lock,
+  Globe2,
+  Compass as CompassIcon,
+  UserCheck,
+  Users,
+  MessagesSquare,
+  PiggyBank,
+  Star,
+  ArrowRight,
+  MapPin,
+} from "lucide-react";
 import { PinnedWordmark } from "@/components/brand/Wordmark";
 import { Sticker, Starburst } from "@/components/brand/Sticker";
+import { SiteFooter } from "@/components/trip/SiteFooter";
+import { SquadCTA } from "@/components/trip/SquadCTA";
 
-const TRIPS = [
-  { slug: "indonesia", name: "Indonesia",   sub: "Island hopping",     route: "Bali → Gili T → Lombok",                          days: 12, price: 700, accent: "bg-mm-orange" },
-  { slug: "cambodia",  name: "Cambodia",    sub: "Coast to coast",     route: "Phnom Penh → Siem Reap → Koh Rong → Koh Sdach",   days: 14, price: 650, accent: "bg-mm-lime" },
-  { slug: "vietnam",   name: "Vietnam",     sub: "North loop",         route: "Hanoi → Ha Giang → Cao Bang → Halong → Hanoi",    days: 10, price: 750, accent: "bg-mm-pink" },
+type Filter = "Indonesia" | "Cambodia" | "Vietnam";
+
+type TripCard = {
+  slug: string;
+  country: Filter;
+  name: string;
+  sub: string;
+  route: string;
+  days: number;
+  price: number;
+  accent: "orange" | "lime" | "pink" | "cyan";
+};
+
+const TRIPS: TripCard[] = [
+  { slug: "indonesia", country: "Indonesia", name: "Indonesia",  sub: "Island hopping",  route: "Bali → Gili T → Lombok → Uluwatu",                days: 12, price: 700, accent: "orange" },
+  { slug: "cambodia",  country: "Cambodia",  name: "Cambodia",   sub: "Coast to coast",  route: "Phnom Penh → Siem Reap → Koh Rong → Koh Sdach",   days: 14, price: 650, accent: "lime"   },
+  { slug: "vietnam",   country: "Vietnam",   name: "Vietnam",    sub: "North loop",      route: "Hanoi → Ha Giang → Cao Bang → Halong → Hanoi",    days: 10, price: 750, accent: "pink"   },
 ];
 
-const TICKER = "ALL IN  ·  53,000+ IN THE CREW  ·  $99 HOLDS YOUR SPOT  ·  ALL IN  ·  REAL MAD MONKEY HOSTELS  ·  SOLO? NOT FOR LONG  ·  ";
+const ACCENT_BG: Record<TripCard["accent"], string> = {
+  orange: "bg-mm-orange",
+  lime: "bg-mm-lime",
+  pink: "bg-mm-pink",
+  cyan: "bg-mm-cyan",
+};
+
+const INCLUDED_TABS: { name: string; items: { icon: any; title: string; desc: string }[] }[] = [
+  {
+    name: "Accommodation",
+    items: [
+      { icon: Building2, title: "Best hostels on the route", desc: "Real Mad Monkey beds every single night. No mystery dorms." },
+      { icon: PartyPopper, title: "Hostel activities", desc: "Party nights, games evenings, pool hangs — built in." },
+      { icon: Bed, title: "Room options", desc: "Pick the dorm or private that actually works for you." },
+    ],
+  },
+  {
+    name: "Experiences",
+    items: [
+      { icon: Sparkles, title: "Must-see stops with a twist", desc: "You won't miss anything and you'll have stuff to brag about." },
+      { icon: Lock, title: "Exclusive experiences", desc: "Access stuff you simply can't book travelling solo." },
+      { icon: Globe2, title: "Local & authentic", desc: "Real culture, real places, no plastic tourist tours." },
+    ],
+  },
+  {
+    name: "Freedom",
+    items: [
+      { icon: CompassIcon, title: "Free time to do your thing", desc: "Spend your time and cash on what matters to you." },
+      { icon: UserCheck, title: "Local guide on call", desc: "Don't waste a day googling the best bar or beach." },
+    ],
+  },
+  {
+    name: "People",
+    items: [
+      { icon: Users, title: "Crews of up to 24", desc: "Meet like-minded travellers from all over." },
+      { icon: MessagesSquare, title: "Plus the hostel crowd", desc: "More chances to find your people every single night." },
+    ],
+  },
+  {
+    name: "Value",
+    items: [
+      { icon: PiggyBank, title: "Essentials in, ego out", desc: "Real prices. More cash left for what you actually want." },
+    ],
+  },
+];
+
+const TESTIMONIALS = [
+  { name: "Sarah K.", trip: "Ha Giang Loop",      quote: "Best 5 days of my life. Made friends I'll travel with for years." },
+  { name: "Tom L.",   trip: "Indonesia Islands",  quote: "Felt looked after the whole way. Sunsets were unreal." },
+  { name: "Maya R.",  trip: "Cambodia Coast",     quote: "I came alone and left with a squad. 10 / 10." },
+];
+
+const TICKER = "ALL IN  ·  53,000+ IN THE CREW  ·  $99 HOLDS YOUR SPOT  ·  REAL MAD MONKEY HOSTELS  ·  SOLO? NOT FOR LONG  ·  ";
 
 export default function Index() {
+  const [filter, setFilter] = useState<Filter>("Indonesia");
+  const [tab, setTab] = useState(0);
+  const visible = TRIPS.filter((t) => t.country === filter);
+
   return (
     <main className="relative min-h-screen overflow-hidden bg-mm-black text-mm-bone">
-      {/* corner decoration */}
-      <div className="pointer-events-none absolute -top-16 -right-16 z-10 hidden md:block">
-        <Starburst size={220} color="lime" rotate={12}>
-          ALL<br />IN
-        </Starburst>
-      </div>
-      <div className="pointer-events-none absolute left-4 top-[4.9rem] z-10 md:left-6 md:top-8">
-        <Sticker color="yellow" rotate={-7} className="px-2.5 py-1 text-[11px] md:px-3 md:py-1.5 md:text-xs">ALL · IN</Sticker>
-      </div>
+      <PinnedWordmark />
 
-      <section className="relative z-0 mx-auto max-w-5xl px-5 pb-10 pt-[8.75rem] md:px-6 md:pt-36 md:pb-12">
-        <p className="font-sticker text-[11px] leading-none text-mm-lime md:text-xs">MAD MONKEY · GROUP TRIPS</p>
-        <h1 className="mt-4 max-w-[18rem] font-display text-[clamp(3.25rem,15vw,9rem)] leading-[0.88] text-mm-bone md:mt-4 md:max-w-none md:text-[clamp(3.5rem,13vw,9rem)]">
-          SOLO?<br />
-          <span className="text-mm-orange">NOT</span><br />
-          FOR LONG.
-        </h1>
-        <p className="mt-4 max-w-[18rem] text-[15px] leading-[1.28] text-mm-bone/82 md:mt-6 md:max-w-xl md:text-base md:leading-normal">
-          Three packaged backpacker trips through SE Asia. Real Mad Monkey hostels every night. Pick one and book the flight.
-        </p>
+      {/* ============ HERO ============ */}
+      <section className="relative isolate min-h-[100svh] overflow-hidden border-b-[4px] border-mm-bone">
+        {/* corner ornaments */}
+        <div className="pointer-events-none absolute -right-12 top-24 z-20 hidden md:block">
+          <Starburst size={220} color="lime" rotate={12}>
+            ALL<br />IN
+          </Starburst>
+        </div>
+        <div className="pointer-events-none absolute left-4 top-[5.2rem] z-20 md:left-8 md:top-28">
+          <Sticker color="yellow" rotate={-7} className="px-2.5 py-1 text-[11px] md:px-3 md:py-1.5 md:text-xs">
+            ALL · IN
+          </Sticker>
+        </div>
+
+        <div className="relative z-10 mx-auto flex min-h-[100svh] max-w-6xl flex-col justify-between px-5 pt-[10rem] pb-10 md:px-8 md:pt-40 md:pb-16">
+          <div>
+            <p className="font-sticker text-[11px] tracking-[0.22em] text-mm-lime md:text-xs">
+              MAD MONKEY · GROUP TRIPS
+            </p>
+            <h1 className="mt-4 max-w-[20rem] font-display text-[clamp(3rem,14vw,8.5rem)] leading-[0.88] text-mm-bone md:mt-6 md:max-w-none md:text-[clamp(4rem,12vw,9rem)]">
+              ALL IN<br />
+              <span className="text-mm-lime">GROUP TRIPS</span><br />
+              <span className="text-mm-orange">BY MAD</span> MONKEY.
+            </h1>
+            <p className="mt-5 max-w-md text-[15px] leading-snug text-mm-bone/85 md:mt-7 md:max-w-xl md:text-lg">
+              For travellers with friends who never commit. Trips that actually make it out of the group chat.
+            </p>
+
+            <div className="mt-7 flex flex-wrap items-center gap-3 md:mt-10 md:gap-4">
+              <a
+                href="#destinations"
+                className="inline-flex items-center gap-2 border-[3px] border-mm-bone bg-mm-pink px-5 py-3 font-sticker text-xs tracking-[0.14em] text-mm-black shadow-mm-bone transition-transform hover:-translate-x-[3px] hover:-translate-y-[3px] md:text-sm"
+              >
+                FIND YOUR TRIP <ArrowRight className="h-4 w-4" />
+              </a>
+              <a
+                href="#included"
+                className="inline-flex items-center gap-2 border-[3px] border-mm-bone bg-transparent px-5 py-3 font-sticker text-xs tracking-[0.14em] text-mm-bone hover:bg-mm-bone hover:text-mm-black md:text-sm"
+              >
+                WHAT'S IN
+              </a>
+            </div>
+          </div>
+
+          <p className="mt-10 font-sticker text-[10px] tracking-[0.22em] text-mm-bone/55 md:mt-0">
+            53,000+ IN THE CREW · 24/7 LOCAL · $99 HOLDS YOUR SPOT
+          </p>
+        </div>
       </section>
 
-      {/* ticker tape */}
+      {/* ============ TICKER ============ */}
       <div className="ticker bg-mm-lime text-mm-black">
         <div className="ticker-track font-display text-xl">
           <span>{TICKER}{TICKER}{TICKER}</span>
@@ -43,40 +161,145 @@ export default function Index() {
         </div>
       </div>
 
-      <section className="relative z-0 mx-auto max-w-5xl px-5 pb-24 pt-12 md:px-6 md:pt-14 md:pb-32">
-        <h2 className="font-display text-[2.25rem] leading-none text-mm-bone md:text-3xl">PICK ONE.</h2>
-        <ul className="mt-6 space-y-5 md:mt-8 md:space-y-7">
-          {TRIPS.map((t, i) => (
-            <li key={t.slug}>
-              <Link
-                to={`/${t.slug}`}
-                className="group relative block border-mm-thick border-mm-bone bg-mm-bone p-5 text-mm-black shadow-mm-bone transition hover:-translate-x-[4px] hover:-translate-y-[4px] md:p-8"
-              >
-                <div className="flex items-start justify-between gap-4 md:gap-6">
-                  <div className="min-w-0">
-                    <p className="font-sticker text-[11px] text-mm-black/70">TRIP 0{i + 1}</p>
-                    <h3 className="mt-1 max-w-[13rem] font-display text-[3rem] leading-[0.88] md:max-w-none md:text-7xl">{t.name}.</h3>
-                    <p className="mt-2 font-display text-lg leading-none text-mm-orange md:text-xl">{t.sub.toUpperCase()}</p>
-                    <p className="mt-3 max-w-[15rem] text-sm font-medium leading-snug text-mm-black/80 md:mt-4 md:max-w-none">{t.route}</p>
-                    <p className="mt-4 text-[11px] font-bold uppercase tracking-[0.12em] md:text-xs md:tracking-wider">
-                      {t.days} days · from ${t.price}
-                    </p>
-                  </div>
-                  <div className={`hidden h-28 w-28 shrink-0 items-center justify-center border-[3px] border-mm-black ${t.accent} font-display text-4xl text-mm-black md:flex`}>
-                    →
-                  </div>
-                </div>
-              </Link>
-            </li>
-          ))}
-        </ul>
+      {/* ============ DESTINATIONS ============ */}
+      <section id="destinations" className="relative bg-mm-blue px-5 py-16 text-mm-bone md:px-8 md:py-24">
+        <div className="mx-auto max-w-6xl">
+          <span className="font-sticker text-[11px] tracking-[0.24em] text-mm-bone/80">PICK A VIBE</span>
+          <h2 className="mt-3 max-w-3xl font-display text-[2.5rem] leading-[0.92] text-mm-bone md:text-7xl">
+            WHERE'S YOUR<br /><span className="text-mm-lime">ADVENTURE?</span>
+          </h2>
+          <p className="mt-5 max-w-2xl text-[15px] leading-snug text-mm-bone/85 md:text-lg">
+            Maybe you know where you want to go. Maybe it's pin-in-the-map time. Scroll the trips — adventure is guaranteed either way.
+          </p>
 
-        <p className="mt-16 font-sticker text-xs text-mm-bone/60">
-          53,000+ IN OUR COMMUNITY · 24/7 LOCAL CREW · $99 HOLDS YOUR SPOT
-        </p>
+          {/* filter chips */}
+          <div className="mt-7 flex flex-wrap gap-3 md:mt-9">
+            {(["Indonesia", "Cambodia", "Vietnam"] as Filter[]).map((f) => {
+              const active = filter === f;
+              return (
+                <button
+                  key={f}
+                  onClick={() => setFilter(f)}
+                  className={[
+                    "inline-flex items-center gap-2 border-[3px] border-mm-bone px-4 py-2 font-sticker text-[11px] tracking-[0.14em] transition-transform md:text-xs",
+                    active
+                      ? "bg-mm-pink text-mm-black shadow-mm-bone -translate-x-[2px] -translate-y-[2px]"
+                      : "bg-transparent text-mm-bone hover:bg-mm-bone hover:text-mm-black",
+                  ].join(" ")}
+                >
+                  <MapPin className="h-3.5 w-3.5" />
+                  {f.toUpperCase()}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* trip cards */}
+          <ul className="mt-10 grid gap-6 md:mt-12 md:grid-cols-2 lg:grid-cols-3">
+            {visible.map((t, i) => (
+              <li key={t.slug}>
+                <Link
+                  to={`/${t.slug}`}
+                  className="group relative block h-full border-[4px] border-mm-bone bg-mm-bone p-5 text-mm-black shadow-mm-bone transition-transform hover:-translate-x-[4px] hover:-translate-y-[4px] md:p-6"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="font-sticker text-[10px] tracking-[0.18em] text-mm-black/70">TRIP 0{i + 1}</p>
+                    <span className={`flex h-12 w-12 items-center justify-center border-[3px] border-mm-black ${ACCENT_BG[t.accent]} font-display text-2xl text-mm-black`}>
+                      →
+                    </span>
+                  </div>
+                  <h3 className="mt-2 font-display text-[2.75rem] leading-[0.88] md:text-5xl">{t.name}.</h3>
+                  <p className="mt-1 font-display text-base leading-none text-mm-orange md:text-lg">
+                    {t.sub.toUpperCase()}
+                  </p>
+                  <p className="mt-4 text-[13px] font-medium leading-snug text-mm-black/80">{t.route}</p>
+                  <p className="mt-5 font-sticker text-[11px] tracking-[0.14em] text-mm-black">
+                    {t.days} DAYS · FROM ${t.price}
+                  </p>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
       </section>
 
-      <PinnedWordmark />
+      {/* ============ INCLUDED ============ */}
+      <section id="included" className="relative bg-mm-bone px-5 py-16 text-mm-black md:px-8 md:py-24">
+        <div className="mx-auto max-w-6xl">
+          <span className="font-sticker text-[11px] tracking-[0.24em] text-mm-black/70">WHAT'S IN</span>
+          <h2 className="mt-3 font-display text-[2.5rem] leading-[0.92] md:text-6xl">
+            INCLUDED IN<br /><span className="text-mm-pink">EVERY TRIP.</span>
+          </h2>
+
+          <div className="mt-7 flex flex-wrap gap-2.5 md:mt-9">
+            {INCLUDED_TABS.map((t, i) => (
+              <button
+                key={t.name}
+                onClick={() => setTab(i)}
+                className={[
+                  "border-[3px] border-mm-black px-4 py-2 font-sticker text-[11px] tracking-[0.14em] transition-transform md:text-xs",
+                  i === tab
+                    ? "bg-mm-black text-mm-bone shadow-mm-sm -translate-x-[2px] -translate-y-[2px]"
+                    : "bg-mm-paper text-mm-black hover:bg-mm-lime",
+                ].join(" ")}
+              >
+                {t.name.toUpperCase()}
+              </button>
+            ))}
+          </div>
+
+          <ul className="mt-10 grid gap-6 md:mt-12 md:grid-cols-2 lg:grid-cols-3">
+            {INCLUDED_TABS[tab].items.map((b) => (
+              <li key={b.title} className="border-[3px] border-mm-black bg-mm-paper p-5 shadow-mm-sm">
+                <div className="flex h-12 w-12 items-center justify-center border-[3px] border-mm-black bg-mm-lime text-mm-black">
+                  <b.icon className="h-6 w-6" />
+                </div>
+                <div className="mt-4 font-display text-xl leading-tight text-mm-black md:text-2xl">
+                  {b.title}
+                </div>
+                <p className="mt-2 text-sm leading-snug text-mm-black/75">{b.desc}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* ============ TESTIMONIALS ============ */}
+      <section className="relative bg-mm-orange px-5 py-16 text-mm-black md:px-8 md:py-24">
+        <div className="mx-auto max-w-6xl">
+          <span className="font-sticker text-[11px] tracking-[0.24em] text-mm-black/70">REVIEWS</span>
+          <h2 className="mt-3 font-display text-[2.5rem] leading-[0.92] md:text-6xl">
+            WHAT TRAVELLERS<br /><span className="text-mm-bone">ARE SAYING.</span>
+          </h2>
+
+          <div className="mt-10 grid gap-6 md:mt-12 md:grid-cols-3">
+            {TESTIMONIALS.map((r) => (
+              <div key={r.name} className="border-[3px] border-mm-black bg-mm-paper p-5 shadow-mm">
+                <div className="flex gap-1 text-mm-pink">
+                  {Array.from({ length: 5 }).map((_, j) => (
+                    <Star key={j} className="h-4 w-4 fill-current" />
+                  ))}
+                </div>
+                <p className="mt-4 text-[15px] leading-snug text-mm-black">"{r.quote}"</p>
+                <div className="mt-5 flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center border-[3px] border-mm-black bg-mm-lime font-display text-sm text-mm-black">
+                    {r.name.charAt(0)}
+                  </div>
+                  <div>
+                    <div className="font-sticker text-[11px] tracking-[0.12em] text-mm-black">{r.name}</div>
+                    <div className="text-xs text-mm-black/65">{r.trip}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ============ SQUAD LEADER CTA ============ */}
+      <SquadCTA />
+
+      <SiteFooter />
     </main>
   );
 }
