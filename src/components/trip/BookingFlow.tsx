@@ -18,17 +18,18 @@ import { SpotBadge } from "./SpotBadge";
 import type { Trip, Departure } from "@/types/trip";
 import { createCheckoutSession, validateDiscount } from "@/lib/api";
 import { Sticker } from "@/components/brand/Sticker";
+import { COUNTRIES } from "@/lib/countries";
 
 const SOURCES = ["TikTok", "Instagram", "Friend", "Other"] as const;
 
 interface LeadFields {
-  name: string; email: string; phone: string; country: string; age: string;
+  name: string; email: string; phone: string; phoneDial: string; country: string; age: string;
   solo: boolean; source: string; friends: string;
 }
 interface TravelerFields { firstName: string; lastName: string; email: string; age: string; dietary: string; }
 
 const emptyLead: LeadFields = {
-  name: "", email: "", phone: "", country: "", age: "", solo: true, source: "", friends: "",
+  name: "", email: "", phone: "", phoneDial: "44", country: "", age: "", solo: true, source: "", friends: "",
 };
 const emptyTraveler: TravelerFields = { firstName: "", lastName: "", email: "", age: "", dietary: "" };
 
@@ -69,7 +70,7 @@ export function BookingFlow({ trip }: { trip: Trip }) {
 
   async function submit() {
     if (!selected) return toast.error("Pick a departure first");
-    if (!lead.name || !lead.email || !lead.phone) return toast.error("Fill out your details");
+    if (!lead.name || !lead.email || !lead.phone || !lead.country) return toast.error("Fill out your details");
     setSubmitting(true);
     try {
       const params = new URLSearchParams(window.location.search);
@@ -77,11 +78,12 @@ export function BookingFlow({ trip }: { trip: Trip }) {
       ["utm_source", "utm_medium", "utm_campaign", "utm_content"].forEach((k) => {
         const v = params.get(k); if (v) utm[k] = v;
       });
+      const fullPhone = `+${lead.phoneDial} ${lead.phone}`.trim();
       const { url } = await createCheckoutSession({
         tripSlug: trip.slug,
         departureId: selected.id,
         groupSize,
-        leadBooker: lead,
+        leadBooker: { ...lead, phone: fullPhone },
         travelers,
         discountCode: discountState?.valid ? discountCode.trim().toUpperCase() : undefined,
         friendsMentioned: lead.friends,
@@ -257,9 +259,48 @@ function LeadForm({
       <h4 className="font-display text-sm tracking-wide">{groupSize > 1 ? "LEAD BOOKER (YOU)" : "YOUR DETAILS"}</h4>
       <Field label="Full name" v={value.name} onChange={(v) => set("name", v)} />
       <Field label="Email" type="email" v={value.email} onChange={(v) => set("email", v)} />
-      <Field label="Phone" type="tel" v={value.phone} onChange={(v) => set("phone", v)} />
+      <div>
+        <Label className="font-sticker text-[10px] tracking-[0.15em] text-mm-black/80">PHONE</Label>
+        <div className="mt-1 flex gap-2">
+          <Select value={value.phoneDial} onValueChange={(v) => set("phoneDial", v)}>
+            <SelectTrigger className="h-11 w-28 shrink-0 rounded-none border-[3px] border-mm-black bg-mm-paper font-medium">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="max-h-72 rounded-none border-[3px] border-mm-black">
+              {COUNTRIES.filter((c) => c.dial).map((c) => (
+                <SelectItem key={c.code} value={c.dial}>+{c.dial} {c.code}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Input
+            type="tel"
+            inputMode="tel"
+            value={value.phone}
+            onChange={(e) => set("phone", e.target.value)}
+            className="h-11 rounded-none border-[3px] border-mm-black bg-mm-paper font-medium"
+          />
+        </div>
+      </div>
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Country" v={value.country} onChange={(v) => set("country", v)} />
+        <div>
+          <Label className="font-sticker text-[10px] tracking-[0.15em] text-mm-black/80">COUNTRY</Label>
+          <Select
+            value={value.country}
+            onValueChange={(v) => {
+              const match = COUNTRIES.find((c) => c.name === v);
+              onChange({ ...value, country: v, phoneDial: match?.dial || value.phoneDial });
+            }}
+          >
+            <SelectTrigger className="mt-1 h-11 rounded-none border-[3px] border-mm-black bg-mm-paper font-medium">
+              <SelectValue placeholder="Choose" />
+            </SelectTrigger>
+            <SelectContent className="max-h-72 rounded-none border-[3px] border-mm-black">
+              {COUNTRIES.map((c) => (
+                <SelectItem key={c.code} value={c.name}>{c.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         <Field label="Age" type="number" v={value.age} onChange={(v) => set("age", v)} />
       </div>
       {groupSize === 1 && (

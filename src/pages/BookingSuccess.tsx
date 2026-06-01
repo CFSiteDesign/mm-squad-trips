@@ -34,7 +34,7 @@ export default function BookingSuccess() {
 
   return (
     <main className="mx-auto max-w-md px-5 py-16">
-      <p className="text-xs uppercase tracking-[0.2em] text-accent">You're in</p>
+      <p className="text-xs uppercase tracking-[0.2em] text-black font-bold">YOU'RE IN</p>
       <h1 className="mt-3 font-['Archivo_Black'] text-4xl">Welcome to the crew.</h1>
 
       {!info && !err && (
