@@ -259,9 +259,48 @@ function LeadForm({
       <h4 className="font-display text-sm tracking-wide">{groupSize > 1 ? "LEAD BOOKER (YOU)" : "YOUR DETAILS"}</h4>
       <Field label="Full name" v={value.name} onChange={(v) => set("name", v)} />
       <Field label="Email" type="email" v={value.email} onChange={(v) => set("email", v)} />
-      <Field label="Phone" type="tel" v={value.phone} onChange={(v) => set("phone", v)} />
+      <div>
+        <Label className="font-sticker text-[10px] tracking-[0.15em] text-mm-black/80">PHONE</Label>
+        <div className="mt-1 flex gap-2">
+          <Select value={value.phoneDial} onValueChange={(v) => set("phoneDial", v)}>
+            <SelectTrigger className="h-11 w-28 shrink-0 rounded-none border-[3px] border-mm-black bg-mm-paper font-medium">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="max-h-72 rounded-none border-[3px] border-mm-black">
+              {COUNTRIES.filter((c) => c.dial).map((c) => (
+                <SelectItem key={c.code} value={c.dial}>+{c.dial} {c.code}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Input
+            type="tel"
+            inputMode="tel"
+            value={value.phone}
+            onChange={(e) => set("phone", e.target.value)}
+            className="h-11 rounded-none border-[3px] border-mm-black bg-mm-paper font-medium"
+          />
+        </div>
+      </div>
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Country" v={value.country} onChange={(v) => set("country", v)} />
+        <div>
+          <Label className="font-sticker text-[10px] tracking-[0.15em] text-mm-black/80">COUNTRY</Label>
+          <Select
+            value={value.country}
+            onValueChange={(v) => {
+              const match = COUNTRIES.find((c) => c.name === v);
+              onChange({ ...value, country: v, phoneDial: match?.dial || value.phoneDial });
+            }}
+          >
+            <SelectTrigger className="mt-1 h-11 rounded-none border-[3px] border-mm-black bg-mm-paper font-medium">
+              <SelectValue placeholder="Choose" />
+            </SelectTrigger>
+            <SelectContent className="max-h-72 rounded-none border-[3px] border-mm-black">
+              {COUNTRIES.map((c) => (
+                <SelectItem key={c.code} value={c.name}>{c.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         <Field label="Age" type="number" v={value.age} onChange={(v) => set("age", v)} />
       </div>
       {groupSize === 1 && (
