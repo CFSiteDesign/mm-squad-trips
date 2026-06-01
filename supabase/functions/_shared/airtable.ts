@@ -55,3 +55,49 @@ export async function airtableCreate<T = Record<string, unknown>>(
   if (!r.ok) throw new Error(`Airtable CREATE ${table} [${r.status}]: ${JSON.stringify(data)}`);
   return data as AirtableRecord<T>;
 }
+
+export async function airtableCreateMany<T = Record<string, unknown>>(
+  table: string,
+  recordsFields: Record<string, unknown>[],
+): Promise<AirtableRecord<T>[]> {
+  const { lovableKey, airtableKey, baseId } = airtableEnv();
+  const url = `${GATEWAY}/v0/${baseId}/${encodeURIComponent(table)}`;
+  const out: AirtableRecord<T>[] = [];
+  for (let i = 0; i < recordsFields.length; i += 10) {
+    const chunk = recordsFields.slice(i, i + 10).map((fields) => ({ fields }));
+    const r = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${lovableKey}`,
+        "X-Connection-Api-Key": airtableKey,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ records: chunk }),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(`Airtable CREATE ${table} [${r.status}]: ${JSON.stringify(data)}`);
+    out.push(...(data.records as AirtableRecord<T>[]));
+  }
+  return out;
+}
+
+export async function airtablePatch<T = Record<string, unknown>>(
+  table: string,
+  recordId: string,
+  fields: Record<string, unknown>,
+): Promise<AirtableRecord<T>> {
+  const { lovableKey, airtableKey, baseId } = airtableEnv();
+  const url = `${GATEWAY}/v0/${baseId}/${encodeURIComponent(table)}/${recordId}`;
+  const r = await fetch(url, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${lovableKey}`,
+      "X-Connection-Api-Key": airtableKey,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ fields }),
+  });
+  const data = await r.json();
+  if (!r.ok) throw new Error(`Airtable PATCH ${table}/${recordId} [${r.status}]: ${JSON.stringify(data)}`);
+  return data as AirtableRecord<T>;
+}
