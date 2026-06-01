@@ -18,17 +18,18 @@ import { SpotBadge } from "./SpotBadge";
 import type { Trip, Departure } from "@/types/trip";
 import { createCheckoutSession, validateDiscount } from "@/lib/api";
 import { Sticker } from "@/components/brand/Sticker";
+import { COUNTRIES } from "@/lib/countries";
 
 const SOURCES = ["TikTok", "Instagram", "Friend", "Other"] as const;
 
 interface LeadFields {
-  name: string; email: string; phone: string; country: string; age: string;
+  name: string; email: string; phone: string; phoneDial: string; country: string; age: string;
   solo: boolean; source: string; friends: string;
 }
 interface TravelerFields { firstName: string; lastName: string; email: string; age: string; dietary: string; }
 
 const emptyLead: LeadFields = {
-  name: "", email: "", phone: "", country: "", age: "", solo: true, source: "", friends: "",
+  name: "", email: "", phone: "", phoneDial: "44", country: "", age: "", solo: true, source: "", friends: "",
 };
 const emptyTraveler: TravelerFields = { firstName: "", lastName: "", email: "", age: "", dietary: "" };
 
