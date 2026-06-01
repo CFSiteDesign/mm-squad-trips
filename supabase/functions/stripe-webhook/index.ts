@@ -3,12 +3,11 @@
 // - Handles checkout.session.completed
 // - Idempotent: skips if a Booking with the same Stripe Session ID exists
 // - Multi-traveler: writes N rows (1 lead + N-1 members) sharing a Group ID
-// - Decrements Departure Spots Remaining by N
-// - Increments Discount Code Used Count by N (mirrors Squad demo: each
-//   traveler counts as 1 toward the code's tally)
+// - Spots Booked / Spots Remaining (Departures) and Used Count (Discount Codes)
+//   are computed Airtable fields and update themselves; we never write them.
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import Stripe from "https://esm.sh/stripe@18.5.0";
-import { airtableGet, airtableCreateMany, airtablePatch } from "../_shared/airtable.ts";
+import { airtableGet, airtableCreateMany } from "../_shared/airtable.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -183,41 +182,6 @@ async function writeBookings(session: Stripe.Checkout.Session) {
 
   const created = await airtableCreateMany("Bookings", rows);
   console.log(`Created ${created.length} booking row(s) for ${sessionId} group ${groupId}`);
-
-  // Decrement Departure Spots Remaining by N
-  if (departureId) {
-    try {
-      const deps = await airtableGet<{ "Spots Remaining"?: number; "Total Spots"?: number }>(
-        "Departures",
-        { filterByFormula: `RECORD_ID() = "${departureId.replace(/"/g, "")}"`, maxRecords: "1" },
-      );
-      if (deps.length > 0) {
-        const current = deps[0].fields["Spots Remaining"] ?? deps[0].fields["Total Spots"] ?? 0;
-        const next = Math.max(0, current - groupSize);
-        await airtablePatch("Departures", departureId, { "Spots Remaining": next });
-        console.log(`Decremented Departure ${departureId} spots ${current} → ${next}`);
-      }
-    } catch (e) {
-      console.error("Failed to decrement spots:", e instanceof Error ? e.message : String(e));
-    }
-  }
-
-  // Bump Discount Code Used Count by N (Squad-demo logic: each traveler = 1)
-  if (discountRecordId) {
-    try {
-      const codes = await airtableGet<{ "Used Count"?: number }>("Discount Codes", {
-        filterByFormula: `RECORD_ID() = "${discountRecordId}"`,
-        maxRecords: "1",
-      });
-      const used = codes[0]?.fields["Used Count"] ?? 0;
-      await airtablePatch("Discount Codes", discountRecordId, {
-        "Used Count": used + groupSize,
-      });
-      console.log(`Bumped discount ${m.discount_code} used ${used} → ${used + groupSize}`);
-    } catch (e) {
-      console.error("Failed to bump discount usage:", e instanceof Error ? e.message : String(e));
-    }
-  }
 }
 
 async function lookupTripIdBySlug(slug: string): Promise<string | undefined> {
