@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { MessageCircle, Share2 } from "lucide-react";
 
 interface BookingInfo {
-  bookingRef: string;
+  bookingRef: string | null;
   tripName: string;
   departureDate: string;
   amountPaid: number;
@@ -17,6 +17,7 @@ export default function BookingSuccess() {
   const [params] = useSearchParams();
   const sessionId = params.get("session_id");
   const [info, setInfo] = useState<BookingInfo | null>(null);
+  const [refStatus, setRefStatus] = useState<"loading" | "ready" | "missing">("loading");
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
@@ -24,13 +25,42 @@ export default function BookingSuccess() {
       setErr("Missing session id");
       return;
     }
-    supabase.functions
-      .invoke("booking-lookup", { body: { sessionId } })
-      .then(({ data, error }) => {
-        if (error || !data?.booking) setErr(error?.message || "Booking not found yet — try refreshing in a few seconds.");
-        else setInfo(data.booking as BookingInfo);
-      });
+    let cancelled = false;
+    const MAX_ATTEMPTS = 5;
+
+    (async () => {
+      for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        const { data, error } = await supabase.functions.invoke("booking-lookup", { body: { sessionId } });
+        if (cancelled) return;
+        if (error || !data?.booking) {
+          if (attempt === MAX_ATTEMPTS) {
+            setErr(error?.message || "Could not load your booking.");
+            return;
+          }
+          await new Promise((r) => setTimeout(r, 1000));
+          continue;
+        }
+        const b = data.booking as BookingInfo;
+        setInfo(b);
+        if (b.bookingRef) {
+          setRefStatus("ready");
+          return;
+        }
+        if (attempt === MAX_ATTEMPTS) {
+          setRefStatus("missing");
+          return;
+        }
+        await new Promise((r) => setTimeout(r, 1000));
+      }
+    })();
+
+    return () => { cancelled = true; };
   }, [sessionId]);
+
+  const refDisplay =
+    refStatus === "ready" ? (info?.bookingRef ?? "") :
+    refStatus === "loading" ? "Generating…" :
+    "";
 
   return (
     <main className="mx-auto max-w-md px-5 py-16">
@@ -44,14 +74,15 @@ export default function BookingSuccess() {
         </div>
       )}
 
-      {err && (
+      {err && !info && (
         <p className="mt-6 rounded-lg bg-muted p-4 text-sm text-muted-foreground">{err}</p>
       )}
 
       {info && (
         <>
           <dl className="mt-8 rounded-2xl border border-border bg-card p-5 text-sm">
-            <Row k="Booking ref" v={info.bookingRef} bold />
+            <Row k="Booking ref" v={refDisplay} bold />
+
             <Row k="Trip" v={info.tripName} />
             <Row k="Departure" v={info.departureDate} />
             <Row k={info.paymentType === "Deposit" ? "Deposit paid" : "Paid in full"} v={`$${info.amountPaid}`} bold />
