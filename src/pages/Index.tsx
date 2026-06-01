@@ -147,6 +147,14 @@ export default function Index() {
             </div>
           </div>
 
+          {/* Media placeholder — swap with <video> when ready */}
+          <div className="mt-8 flex min-h-[28vh] items-center justify-center border-[4px] border-mm-bone bg-gradient-to-b from-neutral-900 to-black md:mt-10 md:min-h-[34vh]">
+            <span className="font-display text-3xl tracking-[0.2em] text-mm-lime md:text-5xl">
+              PLACEHOLDER
+            </span>
+          </div>
+
+
           <p className="mt-10 font-sticker text-[10px] tracking-[0.22em] text-mm-bone/55 md:mt-0">
             53,000+ IN THE CREW · 24/7 LOCAL · $99 HOLDS YOUR SPOT
           </p>
