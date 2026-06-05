@@ -80,16 +80,35 @@ Deno.serve(async (req) => {
       filterByFormula: `{Active?} = TRUE()`,
     });
     const priceByMonth = new Map<string, { price: number; strike: number | null }>();
+    let matchedCount = 0;
     for (const p of allPricing) {
       const linkedCodes: string[] = p.fields["Trip Code (from Trip)"] ?? [];
       const linkedIds: string[] = p.fields.Trip ?? [];
       const matches = linkedCodes.includes(tripCode) || linkedIds.includes(tripRec.id);
       if (!matches) continue;
+      matchedCount++;
       priceByMonth.set(p.fields.Month, {
         price: p.fields.Price,
         strike: p.fields.Strikethrough ?? null,
       });
     }
+
+    // DIAGNOSTIC: exposes what the function sees. Remove once pricing confirmed.
+    const _debug = {
+      version: "pricing-debug-v1",
+      tripCode,
+      tripRecId: tripRec.id,
+      pricingRowsFetched: allPricing.length,
+      pricingRowsMatched: matchedCount,
+      firstPricingRowShape: allPricing[0]
+        ? {
+            Trip: allPricing[0].fields.Trip,
+            "Trip Code (from Trip)": allPricing[0].fields["Trip Code (from Trip)"],
+            Month: allPricing[0].fields.Month,
+            Price: allPricing[0].fields.Price,
+          }
+        : null,
+    };
 
     // 3. Future departures for this trip (next 7 days+). Filter by Trip Code lookup
     // because ARRAYJOIN({Trip}) returns linked record IDs, not the trip name.
@@ -133,7 +152,7 @@ Deno.serve(async (req) => {
       departures: resolvedDepartures,
     };
 
-    return new Response(JSON.stringify({ trip }), {
+    return new Response(JSON.stringify({ trip, _debug }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
