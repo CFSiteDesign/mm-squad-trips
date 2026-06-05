@@ -128,8 +128,8 @@ export default function Index() {
           </h1>
 
           {/* Media placeholder box */}
-          <div className="relative mt-6 flex min-h-[32vh] items-center justify-center overflow-hidden border-[3px] border-mm-bone bg-gradient-to-b from-neutral-900 to-black">
-            <span className="font-display text-3xl tracking-[0.2em] text-mm-lime">PLACEHOLDER</span>
+          <div className="relative mt-6 flex min-h-[32vh] items-center justify-center overflow-hidden border-[3px] border-mm-bone bg-mm-black">
+            <img src={heroAsset.url} alt="Mad Monkey squad on the beach at sunset" className="absolute inset-0 h-full w-full object-cover" />
           </div>
 
 
