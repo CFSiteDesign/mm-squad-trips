@@ -71,11 +71,15 @@ Deno.serve(async (req) => {
     const t = tripRec.fields;
 
     // 2. Pricing rows for this trip
-    const pricing = await airtableGet<PricingFields>("Pricing Calendar", {
-      filterByFormula: `AND({Active?} = TRUE(), ARRAYJOIN({Trip}) = "${t["Trip Code"].replace(/"/g, "")}")`,
+    // Fetch all active pricing rows then filter client-side by record ID —
+    // avoids ARRAYJOIN primary-field ambiguity across different Airtable setups.
+    const allPricing = await airtableGet<PricingFields>("Pricing Calendar", {
+      filterByFormula: `{Active?} = TRUE()`,
     });
     const priceByMonth = new Map<string, { price: number; strike: number | null }>();
-    for (const p of pricing) {
+    for (const p of allPricing) {
+      const linkedIds: string[] = p.fields.Trip ?? [];
+      if (!linkedIds.includes(tripRec.id)) continue;
       priceByMonth.set(p.fields.Month, {
         price: p.fields.Price,
         strike: p.fields.Strikethrough ?? null,
