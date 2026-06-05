@@ -21,7 +21,7 @@ import { Sticker, Starburst } from "@/components/brand/Sticker";
 import { SiteFooter } from "@/components/trip/SiteFooter";
 import { SquadCTA } from "@/components/trip/SquadCTA";
 
-type Filter = "Indonesia" | "Cambodia" | "Vietnam";
+type Filter = "ALL" | "Indonesia" | "Cambodia" | "Vietnam";
 
 type TripCard = {
   slug: string;
@@ -95,9 +95,9 @@ const TESTIMONIALS = [
 const TICKER = "ALL IN  ·  53,000+ IN THE CREW  ·  $99 HOLDS YOUR SPOT  ·  REAL MAD MONKEY HOSTELS  ·  SOLO? NOT FOR LONG  ·  ";
 
 export default function Index() {
-  const [filter, setFilter] = useState<Filter>("Indonesia");
+  const [filter, setFilter] = useState<Filter>("ALL");
   const [tab, setTab] = useState(0);
-  const visible = TRIPS.filter((t) => t.country === filter);
+  const visible = filter === "ALL" ? TRIPS : TRIPS.filter((t) => t.country === filter);
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-mm-black text-mm-bone">
@@ -219,7 +219,7 @@ export default function Index() {
 
           {/* filter chips */}
           <div className="mt-7 flex flex-wrap gap-3 md:mt-9">
-            {(["Indonesia", "Cambodia", "Vietnam"] as Filter[]).map((f) => {
+            {(["ALL", "Indonesia", "Cambodia", "Vietnam"] as Filter[]).map((f) => {
               const active = filter === f;
               return (
                 <button
