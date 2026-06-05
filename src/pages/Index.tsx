@@ -20,6 +20,7 @@ import { PinnedWordmark } from "@/components/brand/Wordmark";
 import { Sticker, Starburst } from "@/components/brand/Sticker";
 import { SiteFooter } from "@/components/trip/SiteFooter";
 import { SquadCTA } from "@/components/trip/SquadCTA";
+import heroAsset from "@/assets/allinhero.png.asset.json";
 
 type Filter = "ALL" | "Indonesia" | "Cambodia" | "Vietnam";
 
