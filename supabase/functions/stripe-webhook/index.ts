@@ -59,9 +59,23 @@ function parseTraveler(v: string): Record<string, string> {
   return { name, email, phone, country, age };
 }
 
-function makeGroupId(sessionId: string): string {
-  const tail = sessionId.replace(/[^A-Z0-9]/gi, "").slice(-6).toUpperCase();
-  return `GRP-${tail}`;
+// Group ID: GRP-<TRIPCODE>-<NNN> per the v3 brief (e.g. GRP-IND-023).
+// Queries existing Bookings to find the highest existing sequence for this
+// trip code, then increments by 1. Race risk is acceptable at pilot volume.
+async function nextGroupId(tripCode: string): Promise<string> {
+  const prefix = `GRP-${tripCode}-`;
+  const rows = await airtableGet<{ "Group ID"?: string }>("Bookings", {
+    filterByFormula: `FIND("${prefix}", {Group ID}) = 1`,
+  });
+  let max = 0;
+  for (const r of rows) {
+    const gid = r.fields["Group ID"];
+    if (typeof gid !== "string") continue;
+    const n = parseInt(gid.slice(prefix.length), 10);
+    if (Number.isFinite(n) && n > max) max = n;
+  }
+  const seq = String(max + 1).padStart(3, "0");
+  return `${prefix}${seq}`;
 }
 
 async function writeBookings(session: Stripe.Checkout.Session) {
@@ -105,8 +119,9 @@ async function writeBookings(session: Stripe.Checkout.Session) {
     }
   }
 
-  const groupId = makeGroupId(sessionId);
   const isSolo = groupSize === 1;
+  const tripCode = (m.trip_code || "").toUpperCase();
+  const groupId = isSolo ? undefined : await nextGroupId(tripCode);
 
   // Pre-parse additional travelers once. Goes to the lead row's
   // "Additional Travelers" JSON field per the v3 schema.
@@ -126,7 +141,7 @@ async function writeBookings(session: Stripe.Checkout.Session) {
     "Trip": tripId ? [tripId] : undefined,
     "Departure": departureId ? [departureId] : undefined,
     "Booking Type": isSolo ? "Solo" : "Group lead",
-    "Group ID": groupId,
+    "Group ID": groupId || undefined,
     "Group Size": groupSize,
     "Spot Number": 1,
     "Friend Names Mentioned": m.friends_mentioned || undefined,
