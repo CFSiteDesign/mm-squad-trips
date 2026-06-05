@@ -154,13 +154,7 @@ export default function Index() {
         {/* DESKTOP: full-bleed media background + overlaid content */}
         <div className="relative hidden min-h-[100svh] w-full md:block">
           <div className="absolute inset-0 z-0">
-            {/* TODO: replace with <video ... /> when ready */}
-            <div
-              className="absolute inset-0 flex items-center justify-center"
-              style={{ backgroundImage: "linear-gradient(to bottom, hsl(0 0% 12%), hsl(0 0% 0%))" }}
-            >
-              <span className="font-display text-5xl tracking-[0.2em] text-mm-lime">PLACEHOLDER</span>
-            </div>
+            <img src={heroAsset.url} alt="Mad Monkey squad on the beach at sunset" className="absolute inset-0 h-full w-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-b from-mm-black/75 via-mm-black/25 to-mm-black/90" />
             <div className="absolute inset-0 bg-gradient-to-r from-mm-black/70 via-transparent to-transparent" />
           </div>
