@@ -95,9 +95,9 @@ const TESTIMONIALS = [
 const TICKER = "ALL IN  ·  53,000+ IN THE CREW  ·  $99 HOLDS YOUR SPOT  ·  REAL MAD MONKEY HOSTELS  ·  SOLO? NOT FOR LONG  ·  ";
 
 export default function Index() {
-  const [filter, setFilter] = useState<Filter>("Indonesia");
+  const [filter, setFilter] = useState<Filter>("ALL");
   const [tab, setTab] = useState(0);
-  const visible = TRIPS.filter((t) => t.country === filter);
+  const visible = filter === "ALL" ? TRIPS : TRIPS.filter((t) => t.country === filter);
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-mm-black text-mm-bone">
