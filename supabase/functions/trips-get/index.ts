@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
 
     // 2. Pricing rows for this trip
     const pricing = await airtableGet<PricingFields>("Pricing Calendar", {
-      filterByFormula: `AND({Active?} = TRUE(), ARRAYJOIN({Trip}) = "${t["Trip Name"].replace(/"/g, "")}")`,
+      filterByFormula: `AND({Active?} = TRUE(), ARRAYJOIN({Trip}) = "${t["Trip Code"].replace(/"/g, "")}")`,
     });
     const priceByMonth = new Map<string, { price: number; strike: number | null }>();
     for (const p of pricing) {
