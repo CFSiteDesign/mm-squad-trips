@@ -294,26 +294,17 @@ export default function Index() {
           </div>
 
           <ul className="mt-10 grid gap-6 md:mt-12 md:grid-cols-2 lg:grid-cols-3">
-            {INCLUDED_TABS[tab].items.map((b) => {
-              const isSingle = INCLUDED_TABS[tab].items.length === 1;
-              return (
-                <li
-                  key={b.title}
-                  className={[
-                    "border-[3px] border-mm-black bg-mm-paper p-5 shadow-mm-sm",
-                    isSingle ? "md:col-span-2 lg:col-span-3" : "",
-                  ].join(" ")}
-                >
-                  <div className="flex h-12 w-12 items-center justify-center border-[3px] border-mm-black bg-mm-lime text-mm-black">
-                    <b.icon className="h-6 w-6" />
-                  </div>
-                  <div className="mt-4 font-display text-xl leading-tight text-mm-black md:text-2xl">
-                    {b.title}
-                  </div>
-                  <p className="mt-2 text-sm leading-snug text-mm-black/75">{b.desc}</p>
-                </li>
-              );
-            })}
+            {INCLUDED_TABS[tab].items.map((b) => (
+              <li key={b.title} className="flex h-full min-h-[220px] flex-col border-[3px] border-mm-black bg-mm-paper p-5 shadow-mm-sm">
+                <div className="flex h-12 w-12 items-center justify-center border-[3px] border-mm-black bg-mm-lime text-mm-black">
+                  <b.icon className="h-6 w-6" />
+                </div>
+                <div className="mt-4 font-display text-xl leading-tight text-mm-black md:text-2xl">
+                  {b.title}
+                </div>
+                <p className="mt-2 text-sm leading-snug text-mm-black/75">{b.desc}</p>
+              </li>
+            ))}
           </ul>
         </div>
       </section>
