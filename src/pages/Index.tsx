@@ -20,7 +20,7 @@ import { PinnedWordmark } from "@/components/brand/Wordmark";
 import { Sticker, Starburst } from "@/components/brand/Sticker";
 import { SiteFooter } from "@/components/trip/SiteFooter";
 import { SquadCTA } from "@/components/trip/SquadCTA";
-import heroAsset from "@/assets/heroallin.png.asset.json";
+import heroImg from "@/assets/heroallin.png";
 
 type Filter = "ALL" | "Indonesia" | "Cambodia" | "Vietnam";
 
@@ -113,62 +113,67 @@ export default function Index() {
           </Sticker>
         </div>
 
-        {/* MOBILE: stacked — headline / media box / CTAs / proof */}
-        <div className="relative z-10 flex w-full flex-col px-5 pt-[9rem] pb-8 md:hidden">
-          {/* Starburst floats in the hero, top-right above headline */}
-          <div className="pointer-events-none absolute right-3 top-[7.5rem] z-30">
+        {/* MOBILE: full-bleed hero image, text overlaid — mirrors desktop layout */}
+        <div className="relative w-full md:hidden">
+          {/* Background image + overlays */}
+          <div className="absolute inset-0 z-0">
+            <img src={heroImg} alt="Mad Monkey squad on the beach at sunset" className="absolute inset-0 h-full w-full object-cover object-[60%_center]" />
+            <div className="absolute inset-0 bg-gradient-to-b from-mm-black/75 via-mm-black/25 to-mm-black/90" />
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.80)_0%,rgba(0,0,0,0.65)_40%,rgba(0,0,0,0.25)_65%,transparent_100%)]" />
+          </div>
+
+          {/* Starburst — top right */}
+          <div className="pointer-events-none absolute right-3 top-[5rem] z-30">
             <Starburst size={92} color="lime" rotate={12}>ALL<br />IN</Starburst>
           </div>
 
-          <h1 className="font-display text-[clamp(2.75rem,13vw,4.25rem)] leading-[0.9] text-mm-bone">
+          {/* Foreground content */}
+          <div className="relative z-10 flex flex-col px-5 pt-[9rem] pb-24">
+            <div>
+              <h1 className="font-display text-[clamp(2.75rem,13vw,4.25rem)] leading-[0.9] text-mm-bone">
+                ALL IN<br />
+                <span className="text-mm-lime">GROUP TRIPS</span><br />
+                <span className="text-mm-orange">BY MAD</span> MONKEY.
+              </h1>
 
-            ALL IN<br />
-            <span className="text-mm-lime">GROUP TRIPS</span><br />
-            <span className="text-mm-orange">BY MAD</span> MONKEY.
-          </h1>
+              <p className="mt-5 max-w-[260px] text-[14px] leading-snug text-mm-bone/85">
+                For travellers with friends who never commit. Trips that actually make it out of the group chat.
+              </p>
 
-          {/* Media placeholder box */}
-          <div className="relative mt-6 flex min-h-[32vh] items-center justify-center overflow-hidden border-[3px] border-mm-bone bg-mm-black">
-            <img src={heroAsset.url} alt="Mad Monkey squad on the beach at sunset" className="absolute inset-0 h-full w-full object-cover" />
+              <div className="mt-5 flex flex-wrap items-center gap-3">
+                <a href="#destinations" className="inline-flex items-center gap-2 border-[3px] border-mm-bone bg-mm-pink px-5 py-3 font-sticker text-xs tracking-[0.14em] text-mm-black shadow-mm-bone">
+                  FIND YOUR TRIP <ArrowRight className="h-4 w-4" />
+                </a>
+                <a href="#included" className="inline-flex items-center gap-2 border-[3px] border-mm-bone bg-transparent px-5 py-3 font-sticker text-xs tracking-[0.14em] text-mm-bone">
+                  WHAT'S IN IT
+                </a>
+              </div>
+            </div>
+
+            <p className="mt-7 font-sticker text-[10px] tracking-[0.22em] text-mm-bone/55">
+              53,000+ IN THE CREW · 24/7 LOCAL · $99 HOLDS YOUR SPOT
+            </p>
           </div>
-
-
-          <p className="mt-5 text-[14px] leading-snug text-mm-bone/85">
-            For travellers with friends who never commit. Trips that actually make it out of the group chat.
-          </p>
-
-          <div className="mt-5 flex flex-wrap items-center gap-3">
-            <a href="#destinations" className="inline-flex items-center gap-2 border-[3px] border-mm-bone bg-mm-pink px-5 py-3 font-sticker text-xs tracking-[0.14em] text-mm-black shadow-mm-bone">
-              FIND YOUR TRIP <ArrowRight className="h-4 w-4" />
-            </a>
-            <a href="#included" className="inline-flex items-center gap-2 border-[3px] border-mm-bone bg-transparent px-5 py-3 font-sticker text-xs tracking-[0.14em] text-mm-bone">
-              WHAT'S IN IT
-            </a>
-          </div>
-
-          <p className="mt-7 font-sticker text-[10px] tracking-[0.22em] text-mm-bone/55">
-            53,000+ IN THE CREW · 24/7 LOCAL · $99 HOLDS YOUR SPOT
-          </p>
         </div>
 
         {/* DESKTOP: full-bleed media background + overlaid content */}
         <div className="relative hidden min-h-[100svh] w-full md:block">
           <div className="absolute inset-0 z-0">
-            <img src={heroAsset.url} alt="Mad Monkey squad on the beach at sunset" className="absolute inset-0 h-full w-full object-cover" />
+            <img src={heroImg} alt="Mad Monkey squad on the beach at sunset" className="absolute inset-0 h-full w-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-b from-mm-black/75 via-mm-black/25 to-mm-black/90" />
-            <div className="absolute inset-0 bg-gradient-to-r from-mm-black/70 via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.80)_0%,rgba(0,0,0,0.65)_40%,rgba(0,0,0,0.25)_65%,transparent_100%)]" />
           </div>
 
-          <div className="pointer-events-none absolute right-8 top-28 z-20 lg:right-16 lg:top-32">
-            <Starburst size={180} color="lime" rotate={12}>ALL<br />IN</Starburst>
+          <div className="pointer-events-none absolute right-8 top-20 z-20 origin-top-right scale-[0.78] lg:right-16 lg:top-20 lg:scale-100">
+            <Starburst size={180} color="lime" rotate={12} textClassName="text-2xl">ALL<br />IN</Starburst>
           </div>
 
-          <div className="relative z-10 mx-auto flex min-h-[100svh] max-w-6xl flex-col justify-between px-8 pt-40 pb-16">
+          <div className="relative z-10 mr-auto flex min-h-[100svh] max-w-6xl flex-col justify-center px-8 pt-20 pb-16 lg:justify-between lg:pt-40 lg:pl-20">
             <div>
               <h1 className="font-display text-[clamp(4rem,12vw,9rem)] leading-[0.88] text-mm-bone">
 
                 ALL IN<br />
-                <span className="text-mm-lime">GROUP TRIPS</span><br />
+                <span className="whitespace-nowrap text-mm-lime">GROUP TRIPS</span><br />
                 <span className="text-mm-orange">BY MAD</span> MONKEY.
               </h1>
               <p className="mt-7 max-w-xl text-lg leading-snug text-mm-bone/85">
@@ -240,7 +245,7 @@ export default function Index() {
               <li key={t.slug}>
                 <Link
                   to={`/${t.slug}`}
-                  className="group relative block h-full border-[4px] border-mm-bone bg-mm-bone p-5 text-mm-black shadow-mm-bone transition-transform hover:-translate-x-[4px] hover:-translate-y-[4px] md:p-6"
+                  className="group relative block h-full border-[4px] border-mm-bone bg-mm-bone p-5 text-mm-black shadow-mm transition-transform hover:-translate-x-[4px] hover:-translate-y-[4px] md:p-6"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <p className="font-sticker text-[10px] tracking-[0.18em] text-mm-black/70">TRIP 0{i + 1}</p>

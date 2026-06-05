@@ -39,19 +39,21 @@ export function Starburst({
   color = "yellow",
   rotate = -8,
   className,
+  textClassName,
 }: {
   children: React.ReactNode;
   size?: number;
   color?: NonNullable<StickerProps["color"]>;
   rotate?: number;
   className?: string;
+  textClassName?: string;
 }) {
   return (
     <div
       className={cn("starburst", COLOR_BG[color], className)}
       style={{ width: size, height: size, transform: `rotate(${rotate}deg)` }}
     >
-      <span className="px-2 text-center font-display text-sm leading-[0.9]">{children}</span>
+      <span className={cn("px-2 text-center font-display text-sm leading-[0.9]", textClassName)}>{children}</span>
     </div>
   );
 }
