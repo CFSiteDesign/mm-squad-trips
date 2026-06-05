@@ -21,7 +21,7 @@ import { Sticker, Starburst } from "@/components/brand/Sticker";
 import { SiteFooter } from "@/components/trip/SiteFooter";
 import { SquadCTA } from "@/components/trip/SquadCTA";
 
-type Filter = "Indonesia" | "Cambodia" | "Vietnam";
+type Filter = "ALL" | "Indonesia" | "Cambodia" | "Vietnam";
 
 type TripCard = {
   slug: string;
