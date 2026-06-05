@@ -19,7 +19,8 @@ interface TripFields {
 }
 
 interface PricingFields {
-  Trip: string[];          // linked record ids
+  Trip: string[];
+  "Trip Code (from Trip)"?: string[];  // lookup — same pattern as Departures
   Month: string;
   Price: number;
   Strikethrough?: number;
@@ -71,15 +72,19 @@ Deno.serve(async (req) => {
     const t = tripRec.fields;
 
     // 2. Pricing rows for this trip
-    // Fetch all active pricing rows then filter client-side by record ID —
-    // avoids ARRAYJOIN primary-field ambiguity across different Airtable setups.
+    // Fetch all active pricing rows, match client-side by trip code lookup
+    // (same pattern as Departures "Trip Code (from Trip)" which is proven to work).
+    // Falls back to record ID match for safety.
+    const tripCode = t["Trip Code"];
     const allPricing = await airtableGet<PricingFields>("Pricing Calendar", {
       filterByFormula: `{Active?} = TRUE()`,
     });
     const priceByMonth = new Map<string, { price: number; strike: number | null }>();
     for (const p of allPricing) {
+      const linkedCodes: string[] = p.fields["Trip Code (from Trip)"] ?? [];
       const linkedIds: string[] = p.fields.Trip ?? [];
-      if (!linkedIds.includes(tripRec.id)) continue;
+      const matches = linkedCodes.includes(tripCode) || linkedIds.includes(tripRec.id);
+      if (!matches) continue;
       priceByMonth.set(p.fields.Month, {
         price: p.fields.Price,
         strike: p.fields.Strikethrough ?? null,
@@ -89,7 +94,6 @@ Deno.serve(async (req) => {
     // 3. Future departures for this trip (next 7 days+). Filter by Trip Code lookup
     // because ARRAYJOIN({Trip}) returns linked record IDs, not the trip name.
     const minDate = todayPlusDays(7);
-    const tripCode = t["Trip Code"].replace(/"/g, "");
     const departures = await airtableGet<DepartureFields>("Departures", {
       filterByFormula: `AND(ARRAYJOIN({Trip Code (from Trip)}) = "${tripCode}", IS_AFTER({Departure Date}, "${minDate}"))`,
       "sort[0][field]": "Departure Date",
