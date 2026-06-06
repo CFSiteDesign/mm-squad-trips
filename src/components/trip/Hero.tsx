@@ -174,7 +174,7 @@ export function Hero({ trip, heroImageUrl }: { trip: Trip; heroImageUrl?: string
             </div>
           </div>
 
-          <div className="mt-auto flex flex-col gap-4 lg:gap-6">
+          <div className="mt-10 flex flex-col gap-4 lg:mt-auto lg:gap-6">
             <div>
               <div className="flex items-baseline gap-4">
                 <span className="font-display text-5xl leading-none text-mm-lime lg:text-6xl">
