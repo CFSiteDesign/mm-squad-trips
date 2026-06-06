@@ -147,7 +147,7 @@ export function Hero({ trip, heroImageUrl }: { trip: Trip; heroImageUrl?: string
           </Starburst>
         </div>
 
-        <div className="relative z-10 mr-auto flex min-h-[100svh] max-w-6xl flex-col justify-between px-8 pt-24 pb-16 md:pt-32 md:pb-16 lg:pt-40 lg:pl-20">
+        <div className="relative z-10 mr-auto flex min-h-[100svh] max-w-6xl flex-col justify-between px-8 pt-24 pb-16 md:pt-40 md:pb-16 lg:pl-20">
           <div>
             <h1 className="font-display text-[clamp(4rem,12vw,9rem)] leading-[0.88] text-mm-bone">
               <span className="block">SOLO TRAVELLER?</span>
