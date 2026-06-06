@@ -365,6 +365,7 @@ function Field({ label, v, onChange, type = "text" }: { label: string; v: string
         type={type}
         value={v}
         onChange={(e) => onChange(e.target.value)}
+        onWheel={(e) => type === "number" && (e.target as HTMLInputElement).blur()}
         className="mt-1 h-11 rounded-none border-[3px] border-mm-black bg-mm-paper font-medium"
       />
     </div>
