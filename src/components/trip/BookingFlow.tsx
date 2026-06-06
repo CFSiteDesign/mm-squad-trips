@@ -40,7 +40,7 @@ export function BookingFlow({ trip }: { trip: Trip }) {
   const [travelers, setTravelers] = useState<TravelerFields[]>([]);
   const [discountOpen, setDiscountOpen] = useState(false);
   const [discountCode, setDiscountCode] = useState("");
-  const [discountState, setDiscountState] = useState<{ valid: boolean; msg: string } | null>(null);
+  const [discountState, setDiscountState] = useState<{ valid: boolean; msg: string; amount?: number } | null>(null);
   const [discountLoading, setDiscountLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -66,7 +66,7 @@ export function BookingFlow({ trip }: { trip: Trip }) {
         amount: subtotal,
       });
       if (result.valid) {
-        setDiscountState({ valid: true, msg: `Applied — ${formatPrice(result.discountAmount ?? 0)} off` });
+        setDiscountState({ valid: true, msg: `Applied — ${formatPrice(result.discountAmount ?? 0)} off`, amount: result.discountAmount });
       } else {
         setDiscountState({ valid: false, msg: result.reason || "Code does not exist" });
       }
@@ -210,7 +210,7 @@ export function BookingFlow({ trip }: { trip: Trip }) {
             </FormStep>
 
             <div className="border-mm-thick bg-mm-paper p-4 text-mm-black shadow-mm-lg md:p-6">
-              <PaymentSummary trip={trip} selected={selected} groupSize={groupSize} />
+              <PaymentSummary trip={trip} selected={selected} groupSize={groupSize} discountAmount={discountState?.amount ?? 0} />
               <Button
                 disabled={submitting}
                 onClick={submit}
@@ -392,8 +392,8 @@ function Field({ label, v, onChange, type = "text" }: { label: string; v: string
 }
 
 function PaymentSummary({
-  trip, selected, groupSize,
-}: { trip: Trip; selected: Departure; groupSize: number }) {
+  trip, selected, groupSize, discountAmount = 0,
+}: { trip: Trip; selected: Departure; groupSize: number; discountAmount?: number }) {
   const pay = paymentLine(selected.date, groupSize, selected.price);
   const subtotal = selected.price * groupSize;
   return (
@@ -403,8 +403,11 @@ function PaymentSummary({
       <dl className="mt-4 space-y-2 text-sm">
         <Row k="Subtotal" v={formatPrice(subtotal)} />
         <Row k="Departure" v={formatDateLong(selected.date)} />
+        {discountAmount > 0 && (
+          <Row k={`Discount — ${formatPrice(discountAmount)} off`} v={`- ${formatPrice(discountAmount)}`} />
+        )}
         <div className="my-2 h-[3px] bg-mm-black" />
-        <Row k={pay.type === "deposit" ? "Deposit today" : "Pay today"} v={formatPrice(pay.amount)} bold />
+        <Row k={pay.type === "deposit" ? "Deposit today" : "Pay today"} v={formatPrice(pay.amount - (pay.type === "full" ? discountAmount : 0))} bold />
         {pay.type === "deposit" && (
           <Row k="Balance due 60 days before departure" v={formatPrice(subtotal - pay.amount)} muted />
         )}
