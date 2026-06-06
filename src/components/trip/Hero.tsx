@@ -105,9 +105,17 @@ export function Hero({ trip, heroImageUrl }: { trip: Trip; heroImageUrl?: string
 
           {/* Price */}
           <div className="mt-6">
-            <p className="font-sticker text-[10px] tracking-[0.18em] text-mm-bone/70">
-              FROM {formatPrice(headPrice)}
-              {headStrike ? ` · WAS ${formatPrice(headStrike)}` : ""} ·{" "}
+            <div className="flex items-baseline gap-3">
+              <span className="font-display text-4xl leading-none text-mm-lime">
+                {formatPrice(headPrice)}
+              </span>
+              {headStrike ? (
+                <span className="font-display text-xl leading-none text-mm-bone/50 line-through">
+                  {formatPrice(headStrike)}
+                </span>
+              ) : null}
+            </div>
+            <p className="mt-2 font-sticker text-[10px] tracking-[0.18em] text-mm-bone/70">
               {payInFull ? "PAY IN FULL" : "$99 DEPOSIT HOLDS YOUR SPOT"}
             </p>
           </div>
@@ -117,6 +125,7 @@ export function Hero({ trip, heroImageUrl }: { trip: Trip; heroImageUrl?: string
           </p>
         </div>
       </div>
+
 
       {/* ============ DESKTOP ============ */}
       <div className="relative hidden min-h-[100svh] w-full md:block">
@@ -166,15 +175,26 @@ export function Hero({ trip, heroImageUrl }: { trip: Trip; heroImageUrl?: string
           </div>
 
           <div className="flex flex-col gap-4 lg:gap-6">
-            <p className="font-sticker text-[10px] tracking-[0.22em] text-mm-bone/55">
-              FROM {formatPrice(headPrice)}
-              {headStrike ? ` · WAS ${formatPrice(headStrike)}` : ""} ·{" "}
-              {payInFull ? "PAY IN FULL" : "$99 DEPOSIT HOLDS YOUR SPOT"}
-            </p>
+            <div>
+              <div className="flex items-baseline gap-4">
+                <span className="font-display text-5xl leading-none text-mm-lime lg:text-6xl">
+                  {formatPrice(headPrice)}
+                </span>
+                {headStrike ? (
+                  <span className="font-display text-2xl leading-none text-mm-bone/50 line-through lg:text-3xl">
+                    {formatPrice(headStrike)}
+                  </span>
+                ) : null}
+              </div>
+              <p className="mt-2 font-sticker text-[10px] tracking-[0.22em] text-mm-bone/70">
+                {payInFull ? "PAY IN FULL" : "$99 DEPOSIT HOLDS YOUR SPOT"}
+              </p>
+            </div>
             <p className="font-sticker text-[10px] tracking-[0.22em] text-mm-bone/55">
               REAL MAD MONKEY HOSTELS IN EVERY CITY · 53,000+ IN OUR COMMUNITY
             </p>
           </div>
+
         </div>
       </div>
 
