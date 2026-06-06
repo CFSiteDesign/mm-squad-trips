@@ -29,6 +29,12 @@ export default function SquadHub() {
       {/* Hero */}
       <section className="relative overflow-hidden bg-mm-black px-5 py-20 text-mm-bone md:px-8 md:py-28">
         <div className="mx-auto max-w-5xl">
+          <button
+            onClick={() => navigate(-1)}
+            className="mb-4 inline-flex items-center gap-2 font-display text-sm text-mm-bone/80 hover:text-mm-bone"
+          >
+            <ArrowLeft className="h-4 w-4" /> BACK
+          </button>
           <Sticker color="lime" rotate={-3}>SQUAD LEADER HUB</Sticker>
           <h1 className="mt-5 font-display text-[2.5rem] leading-[0.92] md:text-7xl lg:text-8xl">
             EARN A FREE TRIP?<br />
