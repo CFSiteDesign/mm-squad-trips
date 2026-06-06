@@ -14,7 +14,89 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      squad_bookings: {
+        Row: {
+          booker_email: string | null
+          booker_name: string | null
+          created_at: string
+          departure_date: string | null
+          id: string
+          squad_leader_id: string
+          stripe_session_id: string
+          trip_slug: string | null
+        }
+        Insert: {
+          booker_email?: string | null
+          booker_name?: string | null
+          created_at?: string
+          departure_date?: string | null
+          id?: string
+          squad_leader_id: string
+          stripe_session_id: string
+          trip_slug?: string | null
+        }
+        Update: {
+          booker_email?: string | null
+          booker_name?: string | null
+          created_at?: string
+          departure_date?: string | null
+          id?: string
+          squad_leader_id?: string
+          stripe_session_id?: string
+          trip_slug?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "squad_bookings_squad_leader_id_fkey"
+            columns: ["squad_leader_id"]
+            isOneToOne: false
+            referencedRelation: "squad_leaders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      squad_leaders: {
+        Row: {
+          access_token: string
+          code: string
+          created_at: string
+          email: string
+          id: string
+          instagram: string | null
+          name: string
+          phone: string
+          preferred_month: string | null
+          preferred_trip_slug: string | null
+          reason: string | null
+        }
+        Insert: {
+          access_token?: string
+          code: string
+          created_at?: string
+          email: string
+          id?: string
+          instagram?: string | null
+          name: string
+          phone: string
+          preferred_month?: string | null
+          preferred_trip_slug?: string | null
+          reason?: string | null
+        }
+        Update: {
+          access_token?: string
+          code?: string
+          created_at?: string
+          email?: string
+          id?: string
+          instagram?: string | null
+          name?: string
+          phone?: string
+          preferred_month?: string | null
+          preferred_trip_slug?: string | null
+          reason?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
