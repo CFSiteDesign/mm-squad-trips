@@ -18,7 +18,7 @@ const STOPS: Stop[] = [
     num: "01",
     location: "Uluwatu",
     nights: "2 nights",
-    image: uluwatuImg,
+    image: uluwatuImg.url,
     tag: "CLIFFS & SUNSETS",
     highlights: [
       "Land in Bali, transfer straight to Mad Monkey Uluwatu",
@@ -32,7 +32,7 @@ const STOPS: Stop[] = [
     num: "02",
     location: "Nusa Lembongan",
     nights: "3 nights",
-    image: lembonganImg,
+    image: lembonganImg.url,
     tag: "ISLAND LIFE",
     highlights: [
       "Fast boat from Sanur to our beachside hostel",
@@ -61,7 +61,7 @@ const STOPS: Stop[] = [
     num: "04",
     location: "Kuta Lombok",
     nights: "4 nights",
-    image: lombokImg,
+    image: lombokImg.url,
     tag: "SURF CAMP",
     highlights: [
       "Brekkie, then waves around 9–10AM — new beach each day",
