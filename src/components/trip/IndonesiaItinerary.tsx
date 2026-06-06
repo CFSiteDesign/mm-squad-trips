@@ -1,121 +1,74 @@
 import { Sticker } from "@/components/brand/Sticker";
+import uluwatuImg from "@/assets/indo-uluwatu.jpg";
+import lembonganImg from "@/assets/indo-lembongan.jpg";
+import giliImg from "@/assets/indo-hero.jpg.asset.json";
+import lombokImg from "@/assets/indo-lombok.jpg";
 
-type Day = {
-  day: string;
-  weekday: string;
+type Stop = {
+  num: string;
   location: string;
-  date: string;
+  nights: string;
+  image: string;
+  tag: string;
   highlights: string[];
 };
 
-const DAYS: Day[] = [
+const STOPS: Stop[] = [
   {
-    day: "Day 1",
-    weekday: "SAT",
+    num: "01",
     location: "Uluwatu",
-    date: "27/06",
+    nights: "2 nights",
+    image: uluwatuImg,
+    tag: "CLIFFS & SUNSETS",
     highlights: [
-      "Arrive at Denpasar (DPS) Airport. Transfer to Mad Monkey Uluwatu.",
-      "Welcome Sunset session (5PM–7:30PM) at Panorama Point Uluwatu.",
-      "Get to know your group.",
+      "Land in Bali, transfer straight to Mad Monkey Uluwatu",
+      "Welcome sunset session at Panorama Point — meet the crew",
+      "Pre-dawn Mt Batur sunrise trek (worth the alarm)",
+      "Recover in the sauna, hot tub & ice baths",
+      "Family dinner to seal the squad",
     ],
   },
   {
-    day: "Day 2",
-    weekday: "SUN",
-    location: "Uluwatu",
-    date: "28/06",
-    highlights: [
-      "Mt Batur Sunrise Trekking (1:30AM–11AM).",
-      "Relax and recharge using MM Sauna, hot tub and ice baths.",
-      "Family dinner.",
-    ],
-  },
-  {
-    day: "Day 3",
-    weekday: "MON",
-    location: "Uluwatu → Nusa Lembongan",
-    date: "29/06",
-    highlights: [
-      "Grab a taxi to Sanur, then a 30-min fast boat to Mad Monkey Nusa Lembongan.",
-      "Enjoy our Mad Monkey Hostel facilities (ice baths, saunas, gym and our luxury pool).",
-    ],
-  },
-  {
-    day: "Day 4",
-    weekday: "TUE",
+    num: "02",
     location: "Nusa Lembongan",
-    date: "30/06",
-    highlights: ["Watersports day (TBC)."],
-  },
-  {
-    day: "Day 5",
-    weekday: "WED",
-    location: "Nusa Lembongan",
-    date: "01/07",
+    nights: "3 nights",
+    image: lembonganImg,
+    tag: "ISLAND LIFE",
     highlights: [
-      "Island Hopping around Nusa Penida (8:30AM–5:00PM).",
-      "Join the Mad Monkey Pool Party (6:00PM–10:00PM).",
+      "Fast boat from Sanur to our beachside hostel",
+      "Pool, gym, sauna & ice bath days at MM Lembongan",
+      "Watersports day — pick your poison",
+      "Island hopping around Nusa Penida (the iconic one)",
+      "Mad Monkey pool party to close it out",
     ],
   },
   {
-    day: "Day 6",
-    weekday: "THUR",
-    location: "Nusa Lembongan → Gili T",
-    date: "02/07",
-    highlights: [
-      "Early fast boat to Gili Trawangan. Check into Mad Monkey Gili T.",
-      "Traditional Mexican Family Dinner.",
-    ],
-  },
-  {
-    day: "Day 7",
-    weekday: "FRI",
-    location: "Gili Trawangan",
-    date: "03/07",
-    highlights: [
-      "Gili T Bucket List Bike Tour!",
-      "Head back to Mad Monkey for Foam Party and Live DJ!",
-    ],
-  },
-  {
-    day: "Day 8",
-    weekday: "SAT",
+    num: "03",
     location: "Gili T",
-    date: "04/07",
+    nights: "3 nights",
+    image: giliImg.url,
+    tag: "PARTY ISLAND",
     highlights: [
-      "Mad Monkey Boat Party (2PM–6PM).",
-      "Unlimited BBQ and drinks back at MM.",
+      "Early boat over, check into Mad Monkey Gili T",
+      "Traditional Mexican family dinner",
+      "Bucket List Bike Tour around the island",
+      "Foam Party + Live DJ back at MM",
+      "Boat Party (2–6PM) → unlimited BBQ & drinks after",
+      "Monkey See, Monkey Do snorkel trip on the way out",
     ],
   },
   {
-    day: "Day 9",
-    weekday: "SUN",
-    location: "Gili T → Kuta Lombok",
-    date: "05/07",
-    highlights: [
-      "Monkey See, Monkey Do snorkeling trip (10:30AM–4PM).",
-      "Short boat to Lombok mainland, then shuttle to Mad Monkey Kuta Lombok.",
-    ],
-  },
-  {
-    day: "Day 10–12",
-    weekday: "MON–WED",
+    num: "04",
     location: "Kuta Lombok",
-    date: "06/07–08/07",
+    nights: "4 nights",
+    image: lombokImg,
+    tag: "SURF CAMP",
     highlights: [
-      "SURF CAMP.",
-      "Brekkie first, then hit the waves around 9–10AM — different beaches each day depending on conditions.",
-      "Back for lunch and video analysis with your instructors (watch yourself eat it in slo-mo).",
-      "Afternoon surf sesh, then nightly events. Rinse and repeat.",
+      "Brekkie, then waves around 9–10AM — new beach each day",
+      "Lunch + video analysis (watch yourself eat it in slo-mo)",
+      "Afternoon surf sesh, nightly events, rinse & repeat",
+      "Farewell, then 30-min shuttle to Lombok Airport",
     ],
-  },
-  {
-    day: "Day 13",
-    weekday: "WED",
-    location: "Kuta Lombok",
-    date: "09/07",
-    highlights: ["Farewell and 30-min shuttle to Lombok Airport (LOP)."],
   },
 ];
 
@@ -126,41 +79,62 @@ export function IndonesiaItinerary({ days }: { days: number }) {
         <Sticker color="lime" rotate={3}>THE ITINERARY</Sticker>
         <h2 className="mt-4 font-display text-[2.5rem] leading-[0.92] text-mm-bone md:mt-6 md:text-7xl lg:text-8xl">
           {days} DAYS.<br />
-          <span className="text-mm-lime">DAY BY DAY.</span>
+          <span className="text-mm-lime">FOUR STOPS.</span>
         </h2>
+        <p className="mt-4 max-w-xl font-sticker text-[11px] tracking-[0.18em] text-mm-bone/70 md:text-xs">
+          BALI → LEMBONGAN → GILI T → LOMBOK
+        </p>
 
-        <ol className="mt-8 space-y-7 md:mt-14 md:space-y-10">
-          {DAYS.map((d, i) => (
-            <li key={d.day} className="relative pl-12 md:pl-16">
-              <span className="absolute left-0 top-0 flex h-9 w-9 items-center justify-center border-[3px] border-mm-bone bg-mm-orange font-display text-[11px] leading-none text-mm-black md:h-12 md:w-12 md:text-sm">
-                {String(i + 1).padStart(2, "0")}
-              </span>
-              {i < DAYS.length - 1 && (
-                <span className="absolute left-[16px] top-9 h-[calc(100%+1rem)] w-[3px] bg-mm-bone md:left-[22px] md:top-12" />
-              )}
-
-              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                <h3 className="font-display text-2xl text-mm-bone md:text-3xl">
-                  {d.day.toUpperCase()}
-                </h3>
-                <span className="font-sticker text-[10px] tracking-[0.18em] text-mm-lime md:text-[11px]">
-                  {d.weekday} · {d.date}
-                </span>
+        <ol className="mt-10 space-y-10 md:mt-16 md:space-y-16">
+          {STOPS.map((s, i) => (
+            <li
+              key={s.num}
+              className="grid gap-5 md:grid-cols-[1.1fr_1fr] md:items-center md:gap-10"
+            >
+              {/* Image */}
+              <div
+                className={`relative overflow-hidden border-[3px] border-mm-bone ${
+                  i % 2 === 1 ? "md:order-2" : ""
+                }`}
+              >
+                <img
+                  src={s.image}
+                  alt={s.location}
+                  loading="lazy"
+                  className="aspect-[4/3] w-full object-cover"
+                />
+                <div className="absolute left-3 top-3">
+                  <Sticker color={i % 2 === 0 ? "pink" : "yellow"} rotate={-6}>
+                    STOP {s.num}
+                  </Sticker>
+                </div>
+                <div className="absolute bottom-3 right-3">
+                  <Sticker color="lime" rotate={4}>
+                    {s.nights.toUpperCase()}
+                  </Sticker>
+                </div>
               </div>
-              <p className="mt-1 font-sticker text-[11px] tracking-[0.16em] text-mm-bone/80 md:text-xs">
-                {d.location.toUpperCase()}
-              </p>
 
-              <ul className="mt-3 space-y-2">
-                {d.highlights.map((h, k) => (
-                  <li
-                    key={k}
-                    className="border-l-[3px] border-mm-bone/40 pl-3 text-[13px] leading-snug text-mm-bone/90 md:text-sm"
-                  >
-                    {h}
-                  </li>
-                ))}
-              </ul>
+              {/* Content */}
+              <div>
+                <p className="font-sticker text-[10px] tracking-[0.22em] text-mm-lime md:text-[11px]">
+                  {s.tag}
+                </p>
+                <h3 className="mt-2 font-display text-4xl leading-none text-mm-bone md:text-6xl">
+                  {s.location.toUpperCase()}
+                </h3>
+                <ul className="mt-5 space-y-2.5">
+                  {s.highlights.map((h, k) => (
+                    <li
+                      key={k}
+                      className="flex gap-3 border-l-[3px] border-mm-bone/40 pl-3 text-[13px] leading-snug text-mm-bone/90 md:text-sm"
+                    >
+                      <span className="font-sticker text-mm-pink">▸</span>
+                      <span>{h}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </li>
           ))}
         </ol>
