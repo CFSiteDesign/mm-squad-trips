@@ -23,6 +23,7 @@ const FAQS = [
 ];
 
 export default function SquadHub() {
+  const navigate = useNavigate();
   return (
     <main className="min-h-screen bg-mm-paper text-mm-black">
       {/* Hero */}
