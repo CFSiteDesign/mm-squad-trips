@@ -247,8 +247,7 @@ export default function Index() {
                   to={`/${t.slug}`}
                   className="group relative block h-full border-[4px] border-mm-bone bg-mm-bone p-5 text-mm-black shadow-mm transition-transform hover:-translate-x-[4px] hover:-translate-y-[4px] md:p-6"
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <p className="font-sticker text-[10px] tracking-[0.18em] text-mm-black/70">TRIP 0{i + 1}</p>
+                  <div className="flex items-start justify-end gap-3">
                     <span className={`flex h-12 w-12 items-center justify-center border-[3px] border-mm-black ${ACCENT_BG[t.accent]} font-display text-2xl text-mm-black`}>
                       →
                     </span>
