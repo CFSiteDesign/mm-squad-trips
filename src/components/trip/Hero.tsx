@@ -128,37 +128,27 @@ export function Hero({ trip, heroImageUrl }: { trip: Trip; heroImageUrl?: string
 
 
       {/* ============ DESKTOP ============ */}
-      <div className="relative hidden min-h-[100svh] w-full md:block">
-        <div className="absolute inset-0 z-0">{BackgroundMedia}</div>
+      <div className="relative hidden min-h-[100svh] w-full md:grid md:grid-cols-2">
+        {/* LEFT: content */}
+        <div className="relative z-10 flex min-h-[100svh] flex-col justify-center bg-mm-black px-8 py-24 lg:px-16">
+          {/* ALL · IN sticker */}
+          <div className="pointer-events-none absolute left-8 top-28 z-30 lg:left-16">
+            <Sticker color="yellow" rotate={-7} className="px-3 py-1.5 text-xs">
+              ALL · IN
+            </Sticker>
+          </div>
 
-        {/* ALL · IN sticker */}
-        <div className="pointer-events-none absolute left-8 top-28 z-30">
-          <Sticker color="yellow" rotate={-7} className="px-3 py-1.5 text-xs">
-            ALL · IN
-          </Sticker>
-        </div>
-
-        {/* Starburst */}
-        <div className="pointer-events-none absolute right-8 top-20 z-20 origin-top-right scale-[0.78] lg:right-16 lg:top-20 lg:scale-100">
-          <Starburst size={180} color="pink" rotate={-12} textClassName="text-2xl">
-            {trip.days}
-            <br />
-            DAYS
-          </Starburst>
-        </div>
-
-        <div className="relative z-10 mr-auto flex min-h-[100svh] max-w-6xl flex-col justify-center px-8 pt-20 pb-16 lg:justify-between lg:pt-40 lg:pl-20">
           <div>
-            <h1 className="font-display text-[clamp(4rem,12vw,9rem)] leading-[0.88] text-mm-bone">
+            <h1 className="font-display text-[clamp(3rem,6vw,6rem)] leading-[0.88] text-mm-bone">
               <span className="block">SOLO TRAVELLER?</span>
               <span className="block whitespace-nowrap text-mm-pink">NOT FOR</span>
               <span className="block text-mm-lime">LONG.</span>
             </h1>
-            <p className="mt-7 max-w-xl text-lg leading-snug text-mm-bone/85">
+            <p className="mt-6 max-w-xl text-base leading-snug text-mm-bone/85 lg:text-lg">
               {trip.days} days · {trip.stops.length} stops · {trip.activityCount} activities · One crew
             </p>
 
-            <div className="mt-10 flex flex-wrap items-center gap-4">
+            <div className="mt-8 flex flex-wrap items-center gap-3">
               <button
                 onClick={() => scrollTo("booking")}
                 className="inline-flex items-center gap-2 border-[3px] border-mm-bone bg-mm-pink px-5 py-3 font-sticker text-sm tracking-[0.14em] text-mm-black shadow-mm-bone transition-transform hover:-translate-x-[3px] hover:-translate-y-[3px]"
@@ -172,10 +162,9 @@ export function Hero({ trip, heroImageUrl }: { trip: Trip; heroImageUrl?: string
                 WHAT'S INCLUDED
               </button>
             </div>
-          </div>
 
-          <div className="flex flex-col gap-4 lg:gap-6">
-            <div>
+            {/* Price */}
+            <div className="mt-10">
               <div className="flex items-baseline gap-4">
                 <span className="font-display text-5xl leading-none text-mm-lime lg:text-6xl">
                   {formatPrice(headPrice)}
@@ -190,13 +179,29 @@ export function Hero({ trip, heroImageUrl }: { trip: Trip; heroImageUrl?: string
                 {payInFull ? "PAY IN FULL" : "$99 DEPOSIT HOLDS YOUR SPOT"}
               </p>
             </div>
-            <p className="font-sticker text-[10px] tracking-[0.22em] text-mm-bone/55">
+
+            <p className="mt-8 font-sticker text-[10px] tracking-[0.22em] text-mm-bone/55">
               REAL MAD MONKEY HOSTELS IN EVERY CITY · 53,000+ IN OUR COMMUNITY
             </p>
           </div>
+        </div>
 
+        {/* RIGHT: media */}
+        <div className="relative min-h-[100svh] overflow-hidden border-l-[4px] border-mm-bone">
+          {BackgroundMedia}
+
+          {/* Starburst */}
+          <div className="pointer-events-none absolute right-6 top-24 z-20 lg:right-12">
+            <Starburst size={160} color="pink" rotate={-12} textClassName="text-2xl">
+              {trip.days}
+              <br />
+              DAYS
+            </Starburst>
+          </div>
         </div>
       </div>
+
+
 
       <PinnedWordmark />
     </section>
