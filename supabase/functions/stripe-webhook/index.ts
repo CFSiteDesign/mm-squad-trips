@@ -55,8 +55,8 @@ Deno.serve(async (req) => {
 });
 
 function parseTraveler(v: string): Record<string, string> {
-  const [name = "", email = "", phone = "", country = "", age = "", dietary = ""] = v.split("|");
-  return { name, email, phone, country, age, dietary };
+  const [name = "", email = "", age = "", dietary = ""] = v.split("|");
+  return { name, email, age, dietary };
 }
 
 // Group ID: GRP-<TRIPCODE>-<NNN> per the v3 brief (e.g. GRP-IND-023).
