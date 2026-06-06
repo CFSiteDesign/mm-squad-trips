@@ -40,8 +40,13 @@ Deno.serve(async (req) => {
     let bookingRef: string | null = null;
     try {
       const safe = sessionId.replace(/"/g, "");
+      // Sort by Spot Number ascending so the lead row (Spot 1) is always
+      // returned first — otherwise a group booking can surface a member's
+      // ref on the confirmation page instead of the lead's.
       const rows = await airtableGet<BookingFields>("Bookings", {
         filterByFormula: `{Stripe Session ID} = "${safe}"`,
+        "sort[0][field]": "Spot Number",
+        "sort[0][direction]": "asc",
         maxRecords: "1",
       });
       const ref = rows[0]?.fields["Booking Ref"];
