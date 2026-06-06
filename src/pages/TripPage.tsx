@@ -5,6 +5,8 @@ import { Hero } from "@/components/trip/Hero";
 import { Included } from "@/components/trip/Included";
 import { Route } from "@/components/trip/Route";
 import { IndonesiaItinerary } from "@/components/trip/IndonesiaItinerary";
+import indoHero from "@/assets/indo-hero.jpg.asset.json";
+
 import { WhosComing } from "@/components/trip/WhosComing";
 import { BookingFlow } from "@/components/trip/BookingFlow";
 import { FAQ } from "@/components/trip/FAQ";
@@ -60,7 +62,7 @@ export default function TripPage() {
 
   return (
     <main>
-      <Hero trip={trip} />
+      <Hero trip={trip} heroImageUrl={slug === "indonesia" ? indoHero.url : undefined} />
       <Included trip={trip} />
       {slug === "indonesia" ? <IndonesiaItinerary days={trip.days} /> : <Route trip={trip} />}
       <WhosComing trip={trip} />

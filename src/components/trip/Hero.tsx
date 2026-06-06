@@ -4,11 +4,12 @@ import type { Trip } from "@/types/trip";
 import { PinnedWordmark } from "@/components/brand/Wordmark";
 import { Sticker, Starburst } from "@/components/brand/Sticker";
 
-export function Hero({ trip }: { trip: Trip }) {
+export function Hero({ trip, heroImageUrl }: { trip: Trip; heroImageUrl?: string }) {
   const headPrice = trip.departures[0]?.price ?? trip.defaultPrice;
   const headStrike = trip.departures[0]?.strikethrough ?? trip.defaultStrikethrough;
   const payInFull = allDeparturesUnder60Days(trip.departures);
   const hasVideo = /\.(mp4|webm|mov|m4v)(\?|$)/i.test(trip.heroVideoUrl ?? "");
+
 
   const scrollTo = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
@@ -26,6 +27,12 @@ export function Hero({ trip }: { trip: Trip }) {
           playsInline
           preload="auto"
         />
+      ) : heroImageUrl ? (
+        <img
+          src={heroImageUrl}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+        />
       ) : (
         <div
           className="absolute inset-0 flex items-center justify-center bg-mm-black"
@@ -39,6 +46,7 @@ export function Hero({ trip }: { trip: Trip }) {
           </span>
         </div>
       )}
+
       <div className="absolute inset-0 bg-gradient-to-b from-mm-black/75 via-mm-black/25 to-mm-black/90" />
       <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.80)_0%,rgba(0,0,0,0.65)_40%,rgba(0,0,0,0.25)_65%,transparent_100%)]" />
     </>
