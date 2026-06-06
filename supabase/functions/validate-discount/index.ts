@@ -1,6 +1,7 @@
 // Validate a discount code against the Discount Codes table.
 // One per booking, never stacks. Applies to full price, not deposit.
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { airtableGet } from "../_shared/airtable.ts";
 
 interface DiscountFields {
@@ -38,9 +39,27 @@ Deno.serve(async (req) => {
       maxRecords: "1",
     });
     if (rows.length === 0) {
-      return new Response(JSON.stringify({ valid: false, reason: "Code not found" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      // Fall back to Squad Leader codes (stored in Lovable Cloud, not Airtable).
+      // A matching squad code is valid but applies $0 to the booker — the
+      // reward goes to the leader, tracked via stripe-webhook.
+      const url = Deno.env.get("SUPABASE_URL");
+      const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      if (url && key) {
+        try {
+          const sb = createClient(url, key);
+          const { data: squad } = await sb
+            .from("squad_leaders")
+            .select("code")
+            .eq("code", safe)
+            .maybeSingle();
+          if (squad) {
+            return jr({ valid: true, discountAmount: 0, newTotal: amount, kind: "squad" });
+          }
+        } catch (e) {
+          console.warn("squad fallback failed", e);
+        }
+      }
+      return jr({ valid: false, reason: "Code not found" });
     }
     const d = rows[0].fields;
     if (!d["Active?"]) return jr({ valid: false, reason: "Code inactive" });
