@@ -79,12 +79,22 @@ export function BookingFlow({ trip }: { trip: Trip }) {
         const v = params.get(k); if (v) utm[k] = v;
       });
       const fullPhone = `+${lead.phoneDial} ${lead.phone}`.trim();
+      // create-checkout-session packs each traveler as name|email|phone|country|age.
+      // The form stores firstName/lastName separately, so combine them into `name`
+      // and pass dietary through — otherwise the traveller's name is dropped and
+      // never reaches the Additional Travelers field in Airtable.
+      const travelerPayload = travelers.map((t) => ({
+        name: `${t.firstName ?? ""} ${t.lastName ?? ""}`.trim(),
+        email: t.email,
+        age: t.age,
+        dietary: t.dietary,
+      }));
       const { url } = await createCheckoutSession({
         tripSlug: trip.slug,
         departureId: selected.id,
         groupSize,
         leadBooker: { ...lead, phone: fullPhone },
-        travelers,
+        travelers: travelerPayload,
         discountCode: discountState?.valid ? discountCode.trim().toUpperCase() : undefined,
         friendsMentioned: lead.friends,
         utm,
