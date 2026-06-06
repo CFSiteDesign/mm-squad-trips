@@ -184,19 +184,21 @@ export function BookingFlow({ trip }: { trip: Trip }) {
                 {discountOpen ? "HIDE" : "ENTER A DISCOUNT CODE"}
               </button>
               {discountOpen && (
-                <div className="mt-3 flex gap-3">
+              <div className="mt-3 flex gap-3">
                   <Input
                     value={discountCode}
                     onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
                     placeholder="MADMONKEY50"
-                    className="h-12 rounded-none border-[3px] border-mm-black bg-mm-paper text-mm-black uppercase font-display tracking-wide"
+                    disabled={discountLoading}
+                    className="h-12 rounded-none border-[3px] border-mm-black bg-mm-paper text-mm-black uppercase font-display tracking-wide disabled:opacity-50"
                   />
                   <Button
                     type="button"
                     onClick={tryDiscount}
-                    className="h-12 rounded-none border-[3px] border-mm-black bg-mm-orange font-display text-mm-black hover:bg-mm-orange shadow-mm-sm"
+                    disabled={discountLoading || !discountCode.trim()}
+                    className="h-12 rounded-none border-[3px] border-mm-black bg-mm-orange font-display text-mm-black hover:bg-mm-orange shadow-mm-sm disabled:opacity-50"
                   >
-                    APPLY
+                    {discountLoading ? "CHECKING…" : "APPLY"}
                   </Button>
                 </div>
               )}
