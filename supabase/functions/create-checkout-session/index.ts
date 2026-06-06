@@ -218,7 +218,7 @@ Deno.serve(async (req) => {
     };
 
     // Per-traveler compact metadata (Stripe caps each value at 500 chars).
-    // Format: "name|email|phone|country|age". Max 4 extra travelers (groupSize ≤ 5).
+    // Format: "name|email|phone|country|age|dietary". Max 4 extra travelers (groupSize ≤ 5).
     (travelers as Array<Record<string, string>>).slice(0, 4).forEach((t, i) => {
       const compact = [
         t.name ?? "",
@@ -226,6 +226,7 @@ Deno.serve(async (req) => {
         t.phone ?? "",
         t.country ?? "",
         t.age ?? "",
+        t.dietary ?? "",
       ].map((s) => String(s).replace(/\|/g, "/")).join("|");
       metadata[`traveler_${i + 1}`] = compact.slice(0, 490);
     });
