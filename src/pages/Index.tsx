@@ -106,6 +106,14 @@ export default function Index() {
 
       {/* ============ HERO ============ */}
       <section className="relative isolate w-full overflow-hidden border-b-[4px] border-mm-bone bg-mm-black text-mm-bone">
+        {/* Become a Squad Leader CTA — top right */}
+        <Link
+          to="/squad-leader"
+          className="absolute right-4 top-4 z-40 inline-flex items-center border-[3px] border-mm-bone bg-mm-pink px-3 py-1.5 font-display text-[10px] text-mm-bone shadow-mm transition-transform hover:-translate-x-[2px] hover:-translate-y-[2px] md:right-8 md:top-8 md:px-4 md:py-2 md:text-sm"
+        >
+          BECOME A SQUAD LEADER →
+        </Link>
+
         {/* ALL · IN sticker (both layouts) */}
         <div className="pointer-events-none absolute left-4 top-[5.2rem] z-30 md:left-8 md:top-28">
           <Sticker color="yellow" rotate={-7} className="px-2.5 py-1 text-[11px] md:px-3 md:py-1.5 md:text-xs">
