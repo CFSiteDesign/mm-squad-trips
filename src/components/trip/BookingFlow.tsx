@@ -210,7 +210,7 @@ export function BookingFlow({ trip }: { trip: Trip }) {
             </FormStep>
 
             <div className="border-mm-thick bg-mm-paper p-4 text-mm-black shadow-mm-lg md:p-6">
-              <PaymentSummary trip={trip} selected={selected} groupSize={groupSize} />
+              <PaymentSummary trip={trip} selected={selected} groupSize={groupSize} discountAmount={discountState?.amount ?? 0} />
               <Button
                 disabled={submitting}
                 onClick={submit}
