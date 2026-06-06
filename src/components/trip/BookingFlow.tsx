@@ -66,7 +66,7 @@ export function BookingFlow({ trip }: { trip: Trip }) {
         amount: subtotal,
       });
       if (result.valid) {
-        setDiscountState({ valid: true, msg: `Applied — ${formatPrice(result.discountAmount ?? 0)} off` });
+        setDiscountState({ valid: true, msg: `Applied — ${formatPrice(result.discountAmount ?? 0)} off`, amount: result.discountAmount });
       } else {
         setDiscountState({ valid: false, msg: result.reason || "Code does not exist" });
       }
