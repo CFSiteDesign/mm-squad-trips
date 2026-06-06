@@ -41,6 +41,7 @@ export function BookingFlow({ trip }: { trip: Trip }) {
   const [discountOpen, setDiscountOpen] = useState(false);
   const [discountCode, setDiscountCode] = useState("");
   const [discountState, setDiscountState] = useState<{ valid: boolean; msg: string } | null>(null);
+  const [discountLoading, setDiscountLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const visible = useMemo(() => visibleDepartures(trip.departures, groupSize), [trip.departures, groupSize]);
@@ -55,16 +56,22 @@ export function BookingFlow({ trip }: { trip: Trip }) {
 
   async function tryDiscount() {
     if (!selected || !discountCode.trim()) return;
+    setDiscountLoading(true);
+    setDiscountState(null);
     const subtotal = selected.price * groupSize;
-    const result = await validateDiscount({
-      code: discountCode.trim().toUpperCase(),
-      tripSlug: trip.slug,
-      amount: subtotal,
-    });
-    if (result.valid) {
-      setDiscountState({ valid: true, msg: `Applied — ${formatPrice(result.discountAmount ?? 0)} off` });
-    } else {
-      setDiscountState({ valid: false, msg: result.reason || "Code not valid" });
+    try {
+      const result = await validateDiscount({
+        code: discountCode.trim().toUpperCase(),
+        tripSlug: trip.slug,
+        amount: subtotal,
+      });
+      if (result.valid) {
+        setDiscountState({ valid: true, msg: `Applied — ${formatPrice(result.discountAmount ?? 0)} off` });
+      } else {
+        setDiscountState({ valid: false, msg: result.reason || "Code does not exist" });
+      }
+    } finally {
+      setDiscountLoading(false);
     }
   }
 
@@ -177,19 +184,21 @@ export function BookingFlow({ trip }: { trip: Trip }) {
                 {discountOpen ? "HIDE" : "ENTER A DISCOUNT CODE"}
               </button>
               {discountOpen && (
-                <div className="mt-3 flex gap-3">
+              <div className="mt-3 flex gap-3">
                   <Input
                     value={discountCode}
                     onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
                     placeholder="MADMONKEY50"
-                    className="h-12 rounded-none border-[3px] border-mm-black bg-mm-paper text-mm-black uppercase font-display tracking-wide"
+                    disabled={discountLoading}
+                    className="h-12 rounded-none border-[3px] border-mm-black bg-mm-paper text-mm-black uppercase font-display tracking-wide disabled:opacity-50"
                   />
                   <Button
                     type="button"
                     onClick={tryDiscount}
-                    className="h-12 rounded-none border-[3px] border-mm-black bg-mm-orange font-display text-mm-black hover:bg-mm-orange shadow-mm-sm"
+                    disabled={discountLoading || !discountCode.trim()}
+                    className="h-12 rounded-none border-[3px] border-mm-black bg-mm-orange font-display text-mm-black hover:bg-mm-orange shadow-mm-sm disabled:opacity-50"
                   >
-                    APPLY
+                    {discountLoading ? "CHECKING…" : "APPLY"}
                   </Button>
                 </div>
               )}
