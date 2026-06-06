@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 export function SquadCTA() {
   return (
     <section className="relative overflow-hidden bg-mm-lime pt-12 pb-10 text-mm-black md:pt-20 md:pb-16">
@@ -12,6 +14,12 @@ export function SquadCTA() {
         <p className="mx-auto mt-4 max-w-2xl text-[14px] leading-snug text-mm-black/80 md:mt-6 md:text-lg">
           Apply to become a Mad Monkey Squad Leader. Organize the vibes, we'll handle the rest.
         </p>
+        <Link
+          to="/squad-leader"
+          className="mt-6 inline-flex items-center border-[3px] border-mm-black bg-mm-pink px-6 py-3 font-display text-sm text-mm-bone shadow-mm transition-transform hover:-translate-x-[2px] hover:-translate-y-[2px] md:mt-8 md:text-base"
+        >
+          APPLY NOW →
+        </Link>
       </div>
     </section>
   );
