@@ -41,6 +41,7 @@ export function BookingFlow({ trip }: { trip: Trip }) {
   const [discountOpen, setDiscountOpen] = useState(false);
   const [discountCode, setDiscountCode] = useState("");
   const [discountState, setDiscountState] = useState<{ valid: boolean; msg: string } | null>(null);
+  const [discountLoading, setDiscountLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const visible = useMemo(() => visibleDepartures(trip.departures, groupSize), [trip.departures, groupSize]);
