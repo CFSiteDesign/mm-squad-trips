@@ -56,16 +56,22 @@ export function BookingFlow({ trip }: { trip: Trip }) {
 
   async function tryDiscount() {
     if (!selected || !discountCode.trim()) return;
+    setDiscountLoading(true);
+    setDiscountState(null);
     const subtotal = selected.price * groupSize;
-    const result = await validateDiscount({
-      code: discountCode.trim().toUpperCase(),
-      tripSlug: trip.slug,
-      amount: subtotal,
-    });
-    if (result.valid) {
-      setDiscountState({ valid: true, msg: `Applied — ${formatPrice(result.discountAmount ?? 0)} off` });
-    } else {
-      setDiscountState({ valid: false, msg: result.reason || "Code not valid" });
+    try {
+      const result = await validateDiscount({
+        code: discountCode.trim().toUpperCase(),
+        tripSlug: trip.slug,
+        amount: subtotal,
+      });
+      if (result.valid) {
+        setDiscountState({ valid: true, msg: `Applied — ${formatPrice(result.discountAmount ?? 0)} off` });
+      } else {
+        setDiscountState({ valid: false, msg: result.reason || "Code does not exist" });
+      }
+    } finally {
+      setDiscountLoading(false);
     }
   }
 
