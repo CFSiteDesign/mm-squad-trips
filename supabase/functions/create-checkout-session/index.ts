@@ -230,6 +230,31 @@ Deno.serve(async (req) => {
       metadata[`traveler_${i + 1}`] = compact.slice(0, 490);
     });
 
+    // If we're collecting full payment AND a discount applies, show the
+    // discount as a Stripe coupon line so checkout displays the $ off.
+    // Deposits don't get a discount (per brief: discounts apply to full price only).
+    const showDiscount = !isDeposit && discountAmount > 0 && appliedCode;
+    let discountsParam: Array<{ coupon: string }> | undefined;
+    if (showDiscount) {
+      try {
+        const coupon = await stripe.coupons.create({
+          amount_off: Math.round(discountAmount * 100),
+          currency: "usd",
+          duration: "once",
+          name: `Discount ${appliedCode}`,
+          max_redemptions: 1,
+          metadata: { code: appliedCode!, trip_slug: tripSlug },
+        });
+        discountsParam = [{ coupon: coupon.id }];
+      } catch (e) {
+        console.error("coupon create failed, falling back to net price", e);
+      }
+    }
+
+    // When the discount is shown via coupon, the line item must be the
+    // pre-discount original price so Stripe can subtract it visibly.
+    const lineUnitAmount = discountsParam ? originalPrice : amountToday;
+
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       customer: customerId,
@@ -238,7 +263,7 @@ Deno.serve(async (req) => {
         {
           price_data: {
             currency: "usd",
-            unit_amount: Math.round(amountToday * 100),
+            unit_amount: Math.round(lineUnitAmount * 100),
             product_data: {
               name: lineLabel,
               description: `${groupSize} spot${groupSize === 1 ? "" : "s"} · departs ${depDate}`,
@@ -247,6 +272,7 @@ Deno.serve(async (req) => {
           quantity: 1,
         },
       ],
+      discounts: discountsParam,
       metadata,
       payment_intent_data: {
         metadata,
@@ -255,6 +281,7 @@ Deno.serve(async (req) => {
       success_url: `${origin}/booking-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/${tripSlug}?cancelled=1#booking`,
     });
+
 
     return new Response(JSON.stringify({ url: session.url }), {
       status: 200,
