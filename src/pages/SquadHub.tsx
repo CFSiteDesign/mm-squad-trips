@@ -27,22 +27,22 @@ export default function SquadHub() {
   return (
     <main className="min-h-screen bg-mm-paper text-mm-black">
       {/* Hero */}
-      <section className="relative overflow-hidden bg-mm-black px-5 py-20 text-mm-bone md:px-8 md:py-28">
-        <div className="mx-auto max-w-5xl">
-          <div className="mb-4 flex items-center justify-between">
-            <button
-              onClick={() => navigate(-1)}
-              className="inline-flex items-center gap-2 font-display text-sm text-mm-bone/80 hover:text-mm-bone"
-            >
-              <ArrowLeft className="h-4 w-4" /> BACK
-            </button>
-            <Link
-              to="/squad-leader/register"
-              className="inline-flex items-center border-[3px] border-mm-bone bg-mm-pink px-4 py-2 font-display text-sm text-mm-bone shadow-mm transition-transform hover:-translate-x-[2px] hover:-translate-y-[2px]"
-            >
-              BECOME A SQUAD LEADER →
-            </Link>
-          </div>
+      <section className="relative overflow-hidden bg-mm-black px-5 pt-20 pb-20 text-mm-bone md:px-8 md:pt-28 md:pb-28">
+        <div className="absolute left-5 right-5 top-5 z-20 flex items-center justify-between md:left-8 md:right-8 md:top-8">
+          <button
+            onClick={() => navigate(-1)}
+            className="inline-flex items-center gap-2 font-display text-sm text-mm-bone/80 hover:text-mm-bone"
+          >
+            <ArrowLeft className="h-4 w-4" /> BACK
+          </button>
+          <Link
+            to="/squad-leader/register"
+            className="inline-flex items-center border-[3px] border-mm-bone bg-mm-pink px-3 py-1.5 font-display text-[11px] text-mm-bone shadow-mm transition-transform hover:-translate-x-[2px] hover:-translate-y-[2px] md:px-4 md:py-2 md:text-sm"
+          >
+            BECOME A SQUAD LEADER →
+          </Link>
+        </div>
+        <div className="mx-auto max-w-5xl pt-10 md:pt-6">
           <Sticker color="lime" rotate={-3}>SQUAD LEADER HUB</Sticker>
           <h1 className="mt-5 font-display text-[2.5rem] leading-[0.92] md:text-7xl lg:text-8xl">
             EARN A FREE TRIP?<br />
