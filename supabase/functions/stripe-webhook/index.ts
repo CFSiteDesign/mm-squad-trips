@@ -7,6 +7,7 @@
 //   are computed Airtable fields and update themselves; we never write them.
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import Stripe from "https://esm.sh/stripe@18.5.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { airtableGet, airtableCreateMany, airtablePatch } from "../_shared/airtable.ts";
 
 Deno.serve(async (req) => {
@@ -215,6 +216,39 @@ async function writeBookings(session: Stripe.Checkout.Session) {
       }
     } catch (e) {
       console.warn("Group Members link failed:", e instanceof Error ? e.message : e);
+    }
+  }
+
+  // Squad Leader credit: if the discount code matches a squad_leaders.code,
+  // insert a squad_bookings row so the leader's dashboard ticks up.
+  // Best-effort — never fails the webhook.
+  if (m.discount_code) {
+    try {
+      const url = Deno.env.get("SUPABASE_URL");
+      const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      if (url && key) {
+        const sb = createClient(url, key);
+        const { data: leader } = await sb
+          .from("squad_leaders")
+          .select("id")
+          .eq("code", m.discount_code)
+          .maybeSingle();
+        if (leader) {
+          const { error: sErr } = await sb.from("squad_bookings").insert({
+            squad_leader_id: leader.id,
+            booker_name: m.lead_name ?? null,
+            booker_email: m.lead_email ?? null,
+            trip_slug: m.trip_slug ?? null,
+            departure_date: m.departure_date ?? null,
+            stripe_session_id: sessionId,
+          });
+          if (sErr && !`${sErr.message}`.toLowerCase().includes("duplicate")) {
+            console.warn("squad_bookings insert failed:", sErr.message);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("Squad credit failed:", e instanceof Error ? e.message : e);
     }
   }
 }
