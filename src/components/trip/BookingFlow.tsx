@@ -392,8 +392,8 @@ function Field({ label, v, onChange, type = "text" }: { label: string; v: string
 }
 
 function PaymentSummary({
-  trip, selected, groupSize,
-}: { trip: Trip; selected: Departure; groupSize: number }) {
+  trip, selected, groupSize, discountAmount = 0,
+}: { trip: Trip; selected: Departure; groupSize: number; discountAmount?: number }) {
   const pay = paymentLine(selected.date, groupSize, selected.price);
   const subtotal = selected.price * groupSize;
   return (
@@ -403,8 +403,11 @@ function PaymentSummary({
       <dl className="mt-4 space-y-2 text-sm">
         <Row k="Subtotal" v={formatPrice(subtotal)} />
         <Row k="Departure" v={formatDateLong(selected.date)} />
+        {discountAmount > 0 && (
+          <Row k={`Discount — ${formatPrice(discountAmount)} off`} v={`- ${formatPrice(discountAmount)}`} />
+        )}
         <div className="my-2 h-[3px] bg-mm-black" />
-        <Row k={pay.type === "deposit" ? "Deposit today" : "Pay today"} v={formatPrice(pay.amount)} bold />
+        <Row k={pay.type === "deposit" ? "Deposit today" : "Pay today"} v={formatPrice(pay.amount - (pay.type === "full" ? discountAmount : 0))} bold />
         {pay.type === "deposit" && (
           <Row k="Balance due 60 days before departure" v={formatPrice(subtotal - pay.amount)} muted />
         )}
