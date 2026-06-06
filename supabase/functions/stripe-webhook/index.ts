@@ -7,7 +7,7 @@
 //   are computed Airtable fields and update themselves; we never write them.
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import Stripe from "https://esm.sh/stripe@18.5.0";
-import { airtableGet, airtableCreateMany } from "../_shared/airtable.ts";
+import { airtableGet, airtableCreateMany, airtablePatch } from "../_shared/airtable.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -199,6 +199,24 @@ async function writeBookings(session: Stripe.Checkout.Session) {
 
   const created = await airtableCreateMany("Bookings", rows);
   console.log(`Created ${created.length} booking row(s) for ${sessionId} group ${groupId}`);
+
+  // Populate the "Group Members" self-link per the v3 Bookings schema
+  // ("Group Members | Link to Bookings (self) | For linking"). Each row links
+  // to the other rows in the group. Best-effort and sequential: the booking
+  // rows already exist, so a failure here (e.g. the field is absent) must never
+  // fail the webhook. Solo bookings have no group members.
+  if (!isSolo && created.length > 1) {
+    const ids = created.map((r) => r.id);
+    try {
+      for (const r of created) {
+        await airtablePatch("Bookings", r.id, {
+          "Group Members": ids.filter((id) => id !== r.id),
+        });
+      }
+    } catch (e) {
+      console.warn("Group Members link failed:", e instanceof Error ? e.message : e);
+    }
+  }
 }
 
 async function lookupTripIdBySlug(slug: string): Promise<string | undefined> {
