@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Check, Copy, Share2, X } from "lucide-react";
+import { Check, Copy, Download, Share2, X } from "lucide-react";
 import { Sticker } from "@/components/brand/Sticker";
 import { getSquadDashboard, type SquadDashboardData } from "@/lib/squad";
+import { TEMPLATES_DRIVE_URL } from "@/lib/squadConstants";
+
 
 export default function SquadDashboard() {
   const [params] = useSearchParams();
@@ -77,6 +79,29 @@ export default function SquadDashboard() {
             >
               <Share2 className="h-4 w-4" /> SHARE
             </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Templates kit */}
+      <section className="px-5 pt-10 md:px-8 md:pt-14">
+        <div className="mx-auto max-w-5xl border-mm-thick bg-mm-orange p-6 shadow-mm md:p-8">
+          <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+            <div>
+              <Sticker color="pink" rotate={-3}>SQUAD KIT</Sticker>
+              <h3 className="mt-3 font-display text-2xl md:text-3xl">DOWNLOAD YOUR TEMPLATES</h3>
+              <p className="mt-2 max-w-xl text-sm text-mm-black/80">
+                Story stickers, captions, posters and DM scripts — everything you need to rally the crew.
+              </p>
+            </div>
+            <a
+              href={TEMPLATES_DRIVE_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 border-[3px] border-mm-black bg-mm-bone px-5 py-3 font-display text-mm-black shadow-mm-sm"
+            >
+              <Download className="h-4 w-4" /> GET THE KIT
+            </a>
           </div>
         </div>
       </section>
