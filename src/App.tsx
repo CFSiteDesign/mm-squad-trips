@@ -10,6 +10,7 @@ import BookingSuccess from "./pages/BookingSuccess";
 import SquadHub from "./pages/SquadHub";
 import SquadRegister from "./pages/SquadRegister";
 import SquadDashboard from "./pages/SquadDashboard";
+import SquadAdmin from "./pages/SquadAdmin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +36,7 @@ const App = () => (
           <Route path="/squad-leader" element={<SquadHub />} />
           <Route path="/squad-leader/register" element={<SquadRegister />} />
           <Route path="/squad-leader/dashboard" element={<SquadDashboard />} />
+          <Route path="/squad-leader/admin" element={<SquadAdmin />} />
           <Route path="/:slug" element={<TripPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
