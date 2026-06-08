@@ -76,3 +76,20 @@ export async function getSquadAdmin(password: string): Promise<SquadAdminData> {
   if (!data?.leaders) throw new Error(data?.error || "Could not load admin");
   return data as SquadAdminData;
 }
+
+export async function setSquadPassword(accessToken: string, password: string): Promise<void> {
+  const { data, error } = await supabase.functions.invoke("squad-set-password", {
+    body: { accessToken, password },
+  });
+  if (error) throw new Error(error.message);
+  if (!data?.ok) throw new Error(data?.error || "Could not set password");
+}
+
+export async function loginSquadLeader(code: string, password: string): Promise<string> {
+  const { data, error } = await supabase.functions.invoke("squad-login", {
+    body: { code, password },
+  });
+  if (error) throw new Error(error.message);
+  if (!data?.accessToken) throw new Error(data?.error || "Invalid squad code or password");
+  return data.accessToken as string;
+}

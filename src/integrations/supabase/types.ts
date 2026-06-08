@@ -64,6 +64,7 @@ export type Database = {
           id: string
           instagram: string | null
           name: string
+          password_hash: string | null
           phone: string
           preferred_month: string | null
           preferred_trip_slug: string | null
@@ -77,6 +78,7 @@ export type Database = {
           id?: string
           instagram?: string | null
           name: string
+          password_hash?: string | null
           phone: string
           preferred_month?: string | null
           preferred_trip_slug?: string | null
@@ -90,6 +92,7 @@ export type Database = {
           id?: string
           instagram?: string | null
           name?: string
+          password_hash?: string | null
           phone?: string
           preferred_month?: string | null
           preferred_trip_slug?: string | null

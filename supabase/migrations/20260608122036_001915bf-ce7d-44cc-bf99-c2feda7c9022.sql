@@ -1,0 +1,1 @@
+ALTER TABLE public.squad_leaders ADD COLUMN IF NOT EXISTS password_hash text;

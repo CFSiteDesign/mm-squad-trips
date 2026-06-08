@@ -10,6 +10,7 @@ import BookingSuccess from "./pages/BookingSuccess";
 import SquadHub from "./pages/SquadHub";
 import SquadRegister from "./pages/SquadRegister";
 import SquadDashboard from "./pages/SquadDashboard";
+import SquadLogin from "./pages/SquadLogin";
 import SquadAdmin from "./pages/SquadAdmin";
 import NotFound from "./pages/NotFound";
 
@@ -35,6 +36,7 @@ const App = () => (
           <Route path="/booking-success" element={<BookingSuccess />} />
           <Route path="/squad-leader" element={<SquadHub />} />
           <Route path="/squad-leader/register" element={<SquadRegister />} />
+          <Route path="/squad-leader/login" element={<SquadLogin />} />
           <Route path="/squad-leader/dashboard" element={<SquadDashboard />} />
           <Route path="/squad-leader/admin" element={<SquadAdmin />} />
           <Route path="/:slug" element={<TripPage />} />
