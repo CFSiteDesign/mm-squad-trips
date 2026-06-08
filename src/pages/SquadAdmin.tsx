@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { Link } from "react-router-dom";
 import { ExternalLink, Lock } from "lucide-react";
 import { Sticker } from "@/components/brand/Sticker";
@@ -107,8 +107,8 @@ export default function SquadAdmin() {
                     const open = expanded === l.id;
                     const dashUrl = `/squad-leader/dashboard?token=${l.accessToken}`;
                     return (
-                      <>
-                        <tr key={l.id} className="border-t-[2px] border-mm-black/10 align-top">
+                      <Fragment key={l.id}>
+                        <tr className="border-t-[2px] border-mm-black/10 align-top">
                           <td className="px-3 py-3 font-display tracking-[0.08em]">{l.code}</td>
                           <td className="px-3 py-3">
                             <div className="font-display">{l.name}</div>
@@ -207,7 +207,7 @@ export default function SquadAdmin() {
                             </td>
                           </tr>
                         )}
-                      </>
+                      </Fragment>
                     );
                   })}
                 </tbody>
