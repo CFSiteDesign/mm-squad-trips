@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import { fetchTrip } from "@/lib/api";
+import { getTripFallback } from "@/data/tripFallbacks";
 import { Hero } from "@/components/trip/Hero";
 import { Included } from "@/components/trip/Included";
 import { Route } from "@/components/trip/Route";
@@ -30,13 +31,18 @@ function getSetupHint(message: string, slug: string) {
 
 export default function TripPage() {
   const { slug = "" } = useParams();
+  const fallback = getTripFallback(slug);
+
   const { data: trip, isLoading, error } = useQuery({
     queryKey: ["trip", slug],
     queryFn: () => fetchTrip(slug),
     retry: false,
+    placeholderData: fallback,
   });
 
-  if (error) {
+  // Only show error state when there's no fallback to render. With a fallback,
+  // the page renders normally and Airtable just hydrates departures in the background.
+  if (error && !fallback) {
     const message = error instanceof Error ? error.message : "Could not reach the trip data.";
     return (
       <div className="relative min-h-screen bg-mm-black px-6 py-24 text-mm-bone">
@@ -53,32 +59,32 @@ export default function TripPage() {
     );
   }
 
-  // Static itinerary blocks for known slugs — render instantly without trip data.
-  const StaticItinerary =
-    slug === "indonesia" ? <IndonesiaItinerary days={14} /> :
-    slug === "vietnam"   ? <VietnamItinerary   days={14} /> :
-    slug === "cambodia"  ? <CambodiaItinerary  days={14} /> :
-    null;
+  if (isLoading && !trip) {
+    return (
+      <div className="space-y-4 bg-mm-black p-5">
+        <Skeleton className="h-[88vh] w-full rounded-none bg-mm-bone/10" />
+        <Skeleton className="h-60 w-full rounded-none bg-mm-bone/10" />
+      </div>
+    );
+  }
+
+  if (!trip) return null;
 
   return (
     <main>
-      {trip ? (
-        <Hero trip={trip} heroImageUrl={slug === "indonesia" ? indoHero.url : undefined} />
+      <Hero trip={trip} heroImageUrl={slug === "indonesia" ? indoHero.url : undefined} />
+      <Included trip={trip} />
+      {slug === "indonesia" ? (
+        <IndonesiaItinerary days={trip.days} />
+      ) : slug === "vietnam" ? (
+        <VietnamItinerary days={trip.days} />
+      ) : slug === "cambodia" ? (
+        <CambodiaItinerary days={trip.days} />
       ) : (
-        <div className="relative h-[88vh] w-full overflow-hidden bg-mm-black">
-          {slug === "indonesia" && (
-            <img src={indoHero.url} alt="" className="absolute inset-0 h-full w-full object-cover opacity-70" />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-b from-mm-black/30 via-transparent to-mm-black" />
-        </div>
+        <Route trip={trip} />
       )}
-
-      {trip ? <Included trip={trip} /> : <Skeleton className="h-40 w-full rounded-none bg-mm-bone/10" />}
-
-      {StaticItinerary ?? (trip ? <Route trip={trip} /> : <Skeleton className="h-96 w-full rounded-none bg-mm-bone/10" />)}
-
-      {trip ? <WhosComing trip={trip} /> : <Skeleton className="h-80 w-full rounded-none bg-mm-bone/10" />}
-      {trip ? <BookingFlow trip={trip} /> : <Skeleton className="h-[600px] w-full rounded-none bg-mm-bone/10" />}
+      <WhosComing trip={trip} />
+      <BookingFlow trip={trip} />
       <FAQ />
       <SquadCTA />
       <div className="h-1 bg-mm-bone/20" />
