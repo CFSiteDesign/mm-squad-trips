@@ -117,12 +117,12 @@ export default function SquadRegister() {
             >
               GO TO MY DASHBOARD →
             </Button>
-            <Link
-              to="/squad-leader"
+            <button
+              onClick={() => navigate("/squad-leader", { replace: true })}
               className="inline-flex h-14 items-center border-[3px] border-mm-black bg-mm-bone px-6 font-display text-mm-black shadow-mm-sm"
             >
               BACK TO HUB
-            </Link>
+            </button>
           </div>
         </div>
 
