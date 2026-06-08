@@ -117,12 +117,12 @@ export default function SquadRegister() {
             >
               GO TO MY DASHBOARD →
             </Button>
-            <Link
-              to="/squad-leader"
+            <button
+              onClick={() => navigate("/squad-leader", { replace: true })}
               className="inline-flex h-14 items-center border-[3px] border-mm-black bg-mm-bone px-6 font-display text-mm-black shadow-mm-sm"
             >
               BACK TO HUB
-            </Link>
+            </button>
           </div>
         </div>
 
@@ -181,9 +181,18 @@ export default function SquadRegister() {
   return (
     <main className="min-h-screen bg-mm-pink px-5 py-16 text-mm-bone md:px-8 md:py-24">
       <div className="mx-auto max-w-2xl">
-        <Link to="/squad-leader" className="font-sticker text-[11px] tracking-[0.15em] text-mm-bone/80 hover:underline">
-          ← BACK TO HUB
-        </Link>
+        <button
+          onClick={() => {
+            if (tripFromUrl && validTrips.includes(tripFromUrl)) {
+              navigate(`/trips/${tripFromUrl}`);
+            } else {
+              navigate("/squad-leader", { replace: true });
+            }
+          }}
+          className="font-sticker text-[11px] tracking-[0.15em] text-mm-bone/80 hover:underline"
+        >
+          ← BACK
+        </button>
         <div className="mt-4">
           <Sticker color="yellow" rotate={-4}>APPLY</Sticker>
           <h1 className="mt-4 font-display text-4xl md:text-6xl">BECOME A SQUAD LEADER</h1>
