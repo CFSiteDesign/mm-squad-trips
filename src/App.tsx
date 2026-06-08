@@ -14,7 +14,15 @@ import SquadLogin from "./pages/SquadLogin";
 import SquadAdmin from "./pages/SquadAdmin";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60_000,
+      gcTime: 30 * 60_000,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 function ScrollToTop() {
   const { pathname } = useLocation();
