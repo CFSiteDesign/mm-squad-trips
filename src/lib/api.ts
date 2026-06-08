@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Trip } from "@/types/trip";
+import { getLocalPrice } from "@/data/pricingCalendar";
 
 async function getFunctionErrorMessage(error: unknown): Promise<string> {
   if (!(error instanceof Error)) return "Request failed";
@@ -23,7 +24,16 @@ export async function fetchTrip(slug: string): Promise<Trip> {
   });
   if (error) throw new Error(await getFunctionErrorMessage(error));
   if (!data?.trip) throw new Error(data?.error || "Trip not found");
-  return data.trip as Trip;
+  const trip = data.trip as Trip;
+
+  // Apply local pricing calendar so prices don't depend on Airtable's Pricing table.
+  trip.departures = trip.departures.map((d) => {
+    const local = getLocalPrice(slug, d.date);
+    if (!local) return d;
+    return { ...d, price: local.price, strikethrough: local.strikethrough ?? d.strikethrough };
+  });
+
+  return trip;
 }
 
 export interface DiscountResult {

@@ -71,51 +71,26 @@ Deno.serve(async (req) => {
     const tripRec = trips[0];
     const t = tripRec.fields;
 
-    // 2 + 3. Pricing rows and future departures in parallel.
-    const tripCode = t["Trip Code"];
-    const safeCode = tripCode.replace(/"/g, "");
+    // Departures only — pricing is resolved on the client from a local calendar.
     const minDate = todayPlusDays(7);
+    const departures = await airtableGet<DepartureFields>("Departures", {
+      filterByFormula: `IS_AFTER({Departure Date}, "${minDate}")`,
+      "sort[0][field]": "Departure Date",
+      "sort[0][direction]": "asc",
+    });
 
-    const [allPricing, departures] = await Promise.all([
-      airtableGet<PricingFields>("Pricing Calendar", {
-        filterByFormula: `{Active?} = TRUE()`,
-      }),
-      airtableGet<DepartureFields>("Departures", {
-        filterByFormula: `IS_AFTER({Departure Date}, "${minDate}")`,
-        "sort[0][field]": "Departure Date",
-        "sort[0][direction]": "asc",
-      }),
-    ]);
-
-    // Filter departures to this trip by linked record ID (avoids brittle lookup field names)
     const tripDepartures = departures.filter((d) => (d.fields.Trip ?? []).includes(tripRec.id));
-
-    const priceByMonth = new Map<string, { price: number; strike: number | null }>();
-    for (const p of allPricing) {
-      const linkedCodes: string[] = p.fields["Trip Code (from Trip)"] ?? [];
-      const linkedIds: string[] = p.fields.Trip ?? [];
-      const matches = linkedCodes.includes(tripCode) || linkedIds.includes(tripRec.id);
-      if (!matches) continue;
-      priceByMonth.set(p.fields.Month, {
-        price: p.fields.Price,
-        strike: p.fields.Strikethrough ?? null,
-      });
-    }
 
     const resolvedDepartures = tripDepartures.map((d) => {
       const f = d.fields;
-      const month = (f["Departure Date"] ?? "").slice(0, 7);
-      const pc = priceByMonth.get(month);
-      const price = pc?.price ?? t["Default Price"];
-      const strike = pc?.strike ?? t["Default Strikethrough"] ?? null;
       return {
         id: d.id,
         departureId: f["Departure ID"] ?? `${t["Trip Code"]}-${f["Departure Date"]}`,
         date: f["Departure Date"],
         spotsRemaining: f["Spots Remaining"] ?? f["Total Spots"] ?? 0,
         bookable: f["Bookable?"] === true,
-        price,
-        strikethrough: strike,
+        price: t["Default Price"],
+        strikethrough: t["Default Strikethrough"] ?? null,
       };
     });
 

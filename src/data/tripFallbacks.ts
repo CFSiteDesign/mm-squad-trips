@@ -1,0 +1,70 @@
+// Static, instant-render fallbacks for each trip slug. Used as React Query
+// placeholderData so the page paints fully before Airtable responds.
+import type { Trip } from "@/types/trip";
+
+const BASE = {
+  testimonials: [],
+  videoTestimonialUrl: "",
+};
+
+const FALLBACKS: Record<string, Trip> = {
+  indonesia: {
+    ...BASE,
+    id: "placeholder-indonesia",
+    code: "IND",
+    name: "Indonesia",
+    slug: "indonesia",
+    days: 12,
+    stops: [
+      { name: "Bali", nights: 4, description: "", photos: [], activities: [] },
+      { name: "Lembongan", nights: 4, description: "", photos: [], activities: [] },
+      { name: "Gili Islands", nights: 4, description: "", photos: [], activities: [] },
+    ],
+    activityCount: 8,
+    heroVideoUrl: "",
+    defaultPrice: 700,
+    defaultStrikethrough: 1140,
+    departures: [],
+  },
+  cambodia: {
+    ...BASE,
+    id: "placeholder-cambodia",
+    code: "CAM",
+    name: "Cambodia",
+    slug: "cambodia",
+    days: 10,
+    stops: [
+      { name: "Phnom Penh", nights: 3, description: "", photos: [], activities: [] },
+      { name: "Siem Reap", nights: 4, description: "", photos: [], activities: [] },
+      { name: "Sihanoukville", nights: 3, description: "", photos: [], activities: [] },
+    ],
+    activityCount: 7,
+    heroVideoUrl: "",
+    defaultPrice: 650,
+    defaultStrikethrough: 1050,
+    departures: [],
+  },
+  vietnam: {
+    ...BASE,
+    id: "placeholder-vietnam",
+    code: "VIE",
+    name: "Vietnam",
+    slug: "vietnam",
+    days: 14,
+    stops: [
+      { name: "Hanoi", nights: 3, description: "", photos: [], activities: [] },
+      { name: "Ha Long Bay", nights: 2, description: "", photos: [], activities: [] },
+      { name: "Hoi An", nights: 4, description: "", photos: [], activities: [] },
+      { name: "Ho Chi Minh", nights: 5, description: "", photos: [], activities: [] },
+    ],
+    activityCount: 9,
+    heroVideoUrl: "",
+    defaultPrice: 750,
+    defaultStrikethrough: 1200,
+    departures: [],
+  },
+};
+
+export function getTripFallback(slug: string): Trip | undefined {
+  return FALLBACKS[slug];
+}
