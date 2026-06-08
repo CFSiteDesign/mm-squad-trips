@@ -15,6 +15,26 @@ export default function SquadRegister() {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState<{ code: string; accessToken: string; name: string } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+  const [pw, setPw] = useState("");
+  const [pw2, setPw2] = useState("");
+  const [savingPw, setSavingPw] = useState(false);
+
+  async function savePasswordAndGo() {
+    if (!success) return;
+    if (pw.length < 6) return toast.error("Password must be at least 6 characters");
+    if (pw !== pw2) return toast.error("Passwords don't match");
+    setSavingPw(true);
+    try {
+      await setSquadPassword(success.accessToken, pw);
+      toast.success("Password saved — next time log in with your squad code");
+      navigate(`/squad-leader/dashboard?token=${encodeURIComponent(success.accessToken)}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not save password");
+    } finally {
+      setSavingPw(false);
+    }
+  }
   const [f, setF] = useState({
     name: "", email: "", phone: "", instagram: "",
     preferred_trip_slug: "indonesia", preferred_month: "", reason: "",
