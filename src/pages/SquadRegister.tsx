@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Check, Copy, Download } from "lucide-react";
 import { Sticker } from "@/components/brand/Sticker";
@@ -35,9 +35,13 @@ export default function SquadRegister() {
       setSavingPw(false);
     }
   }
+  const [searchParams] = useSearchParams();
+  const tripFromUrl = searchParams.get("trip");
+  const validTrips = ["indonesia", "cambodia", "vietnam"];
+  const initialTrip = validTrips.includes(tripFromUrl || "") ? tripFromUrl! : "indonesia";
   const [f, setF] = useState({
     name: "", email: "", phone: "", instagram: "",
-    preferred_trip_slug: "indonesia", preferred_month: "", reason: "",
+    preferred_trip_slug: initialTrip, preferred_month: "", reason: "",
   });
   const set = <K extends keyof typeof f>(k: K, v: string) => setF((s) => ({ ...s, [k]: v }));
 

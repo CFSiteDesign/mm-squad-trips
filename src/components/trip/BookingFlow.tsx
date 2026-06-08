@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,6 +44,8 @@ export function BookingFlow({ trip }: { trip: Trip }) {
   const [discountState, setDiscountState] = useState<{ valid: boolean; msg: string; amount?: number } | null>(null);
   const [discountLoading, setDiscountLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [joinMode, setJoinMode] = useState(false);
+  const [joinCode, setJoinCode] = useState("");
 
   const visible = useMemo(() => visibleDepartures(trip.departures, groupSize), [trip.departures, groupSize]);
   const selected = visible.find((d) => d.id === selectedId) ?? null;
@@ -123,6 +126,52 @@ export function BookingFlow({ trip }: { trip: Trip }) {
           </h2>
         </div>
 
+        {/* Squad booking choice */}
+        <div className="space-y-3">
+          <p className="font-sticker text-xs tracking-[0.15em] text-mm-bone/80">BOOKING WITH A SQUAD?</p>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <Link
+              to={`/squad-leader/register?trip=${encodeURIComponent(trip.slug)}`}
+              className="flex flex-col border-[3px] border-mm-black bg-mm-paper p-4 text-left text-mm-black shadow-mm-sm transition hover:-translate-x-[2px] hover:-translate-y-[2px]"
+            >
+              <span className="font-display text-lg">START A SQUAD</span>
+              <span className="mt-1 text-xs text-mm-black/70">Lead your crew — 50% off at 4 bookings, free trip at 8.</span>
+            </Link>
+            <button
+              type="button"
+              onClick={() => setJoinMode((v) => !v)}
+              className={`flex flex-col border-[3px] p-4 text-left shadow-mm-sm transition ${
+                joinMode ? "border-mm-black bg-mm-lime text-mm-black shadow-mm" : "border-mm-black bg-mm-paper text-mm-black hover:-translate-x-[2px] hover:-translate-y-[2px]"
+              }`}
+            >
+              <span className="font-display text-lg">JOIN A SQUAD</span>
+              <span className="mt-1 text-xs text-mm-black/70">Have a squad code? Enter it to get your discount.</span>
+            </button>
+          </div>
+          {joinMode && (
+            <div className="flex gap-3">
+              <Input
+                value={joinCode}
+                onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                placeholder="SQUAD CODE"
+                className="h-12 flex-1 rounded-none border-[3px] border-mm-black bg-mm-paper text-mm-black uppercase font-display tracking-wide"
+              />
+              <Button
+                type="button"
+                onClick={() => { setDiscountCode(joinCode); setJoinMode(false); }}
+                disabled={!joinCode.trim()}
+                className="h-12 rounded-none border-[3px] border-mm-black bg-mm-orange font-display text-mm-black hover:bg-mm-orange shadow-mm-sm disabled:opacity-50"
+              >
+                SAVE & CONTINUE
+              </Button>
+            </div>
+          )}
+          {discountCode && !joinMode && (
+            <p className="font-sticker text-[11px] tracking-[0.15em] text-mm-lime">
+              SQUAD CODE ENTERED: {discountCode}
+            </p>
+          )}
+        </div>
 
         {/* Step 1: spots */}
         <FormStep n={1} label="HOW MANY SPOTS?">
