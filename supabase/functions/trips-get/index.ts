@@ -78,14 +78,17 @@ Deno.serve(async (req) => {
 
     const [allPricing, departures] = await Promise.all([
       airtableGet<PricingFields>("Pricing Calendar", {
-        filterByFormula: `AND({Active?} = TRUE(), ARRAYJOIN({Trip Code (from Trip)}) = "${safeCode}")`,
+        filterByFormula: `{Active?} = TRUE()`,
       }),
       airtableGet<DepartureFields>("Departures", {
-        filterByFormula: `AND(ARRAYJOIN({Trip Code (from Trip)}) = "${safeCode}", IS_AFTER({Departure Date}, "${minDate}"))`,
+        filterByFormula: `IS_AFTER({Departure Date}, "${minDate}")`,
         "sort[0][field]": "Departure Date",
         "sort[0][direction]": "asc",
       }),
     ]);
+
+    // Filter departures to this trip by linked record ID (avoids brittle lookup field names)
+    const tripDepartures = departures.filter((d) => (d.fields.Trip ?? []).includes(tripRec.id));
 
     const priceByMonth = new Map<string, { price: number; strike: number | null }>();
     for (const p of allPricing) {
