@@ -145,7 +145,7 @@ export function BookingFlow({ trip }: { trip: Trip }) {
               }`}
             >
               <span className="font-display text-lg">JOIN A SQUAD</span>
-              <span className="mt-1 text-xs text-mm-black/70">Have a squad code? Enter it to get your discount.</span>
+              <span className="mt-1 text-xs text-mm-black/70">Have a squad code? Enter it for good vibes.</span>
             </button>
           </div>
           {joinMode && (
