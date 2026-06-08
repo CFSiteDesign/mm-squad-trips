@@ -32,7 +32,7 @@ const FALLBACKS: Record<string, Trip> = {
     code: "CAM",
     name: "Cambodia",
     slug: "cambodia",
-    days: 10,
+    days: 14,
     stops: [
       { name: "Phnom Penh", nights: 3, description: "", photos: [], activities: [] },
       { name: "Siem Reap", nights: 4, description: "", photos: [], activities: [] },
@@ -50,7 +50,7 @@ const FALLBACKS: Record<string, Trip> = {
     code: "VIE",
     name: "Vietnam",
     slug: "vietnam",
-    days: 14,
+    days: 10,
     stops: [
       { name: "Hanoi", nights: 3, description: "", photos: [], activities: [] },
       { name: "Ha Long Bay", nights: 2, description: "", photos: [], activities: [] },
