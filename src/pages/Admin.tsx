@@ -113,7 +113,7 @@ export default function Admin() {
           </div>
         </div>
         <div className="flex gap-2">
-          {view === "database" && <ImportButton />}
+          
           <Button
             variant="outline"
             onClick={() => { setAdminToken(null); setAuthed(false); }}
