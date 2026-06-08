@@ -10,6 +10,7 @@ import BookingSuccess from "./pages/BookingSuccess";
 import SquadHub from "./pages/SquadHub";
 import SquadRegister from "./pages/SquadRegister";
 import SquadDashboard from "./pages/SquadDashboard";
+import SquadLogin from "./pages/SquadLogin";
 import SquadAdmin from "./pages/SquadAdmin";
 import NotFound from "./pages/NotFound";
 
