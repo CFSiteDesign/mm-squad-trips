@@ -1,8 +1,9 @@
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ExternalLink, Lock } from "lucide-react";
 import { Sticker } from "@/components/brand/Sticker";
 import { getSquadAdmin, type SquadAdminData } from "@/lib/squad";
+import { getAdminToken } from "@/lib/admin";
 
 export default function SquadAdmin() {
   const [password, setPassword] = useState("");
@@ -11,18 +12,47 @@ export default function SquadAdmin() {
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
 
+  const adminToken = getAdminToken();
+
+  useEffect(() => {
+    if (!adminToken || data) return;
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      try {
+        const d = await getSquadAdmin({ token: adminToken });
+        if (!cancelled) setData(d);
+      } catch (err) {
+        if (!cancelled) setError(err instanceof Error ? err.message : "Could not load");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [adminToken, data]);
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);
     try {
-      const d = await getSquadAdmin(password);
+      const d = await getSquadAdmin({ password });
       setData(d);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not load");
     } finally {
       setLoading(false);
     }
+  }
+
+  if (!data && adminToken) {
+    return (
+      <main className="grid min-h-screen place-items-center bg-mm-paper p-6 text-mm-black">
+        <div className="font-sticker text-[11px] tracking-[0.15em] text-mm-black/60">
+          {error ? error : "LOADING…"}
+        </div>
+      </main>
+    );
   }
 
   if (!data) {

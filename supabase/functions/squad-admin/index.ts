@@ -1,6 +1,7 @@
 // Admin overview of all squad leaders and their bookings. Gated by ADMIN_PASSWORD.
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { verifyAdminToken, adminAuthHeaderToken } from "../_shared/admin-auth.ts";
 
 const TIER_HALF = 4;
 const TIER_FREE = 8;
@@ -26,15 +27,21 @@ Deno.serve(async (req) => {
   const adminPassword = Deno.env.get("ADMIN_PASSWORD");
   if (!url || !key || !adminPassword) return jr({ error: "Backend not configured" }, 503);
 
-  let body: Record<string, string> = {};
-  try {
-    body = await req.json();
-  } catch {
-    return jr({ error: "Invalid JSON" }, 400);
-  }
-  const password = (body.password ?? "").trim();
-  if (!password || password !== adminPassword) {
-    return jr({ error: "Invalid password" }, 401);
+  // Accept either a valid admin token (Bearer) or the admin password in body.
+  const bearer = adminAuthHeaderToken(req);
+  let authed = bearer ? await verifyAdminToken(bearer) : false;
+
+  if (!authed) {
+    let body: Record<string, string> = {};
+    try {
+      body = await req.json();
+    } catch {
+      return jr({ error: "Unauthorized" }, 401);
+    }
+    const password = (body.password ?? "").trim();
+    if (!password || password !== adminPassword) {
+      return jr({ error: "Invalid password" }, 401);
+    }
   }
 
   const supabase = createClient(url, key);
