@@ -36,16 +36,7 @@ export default function TripPage() {
     retry: false,
   });
 
-  if (isLoading) {
-    return (
-      <div className="space-y-4 bg-mm-black p-5">
-        <Skeleton className="h-[88vh] w-full rounded-none bg-mm-bone/10" />
-        <Skeleton className="h-60 w-full rounded-none bg-mm-bone/10" />
-      </div>
-    );
-  }
-
-  if (error || !trip) {
+  if (error) {
     const message = error instanceof Error ? error.message : "Could not reach the trip data.";
     return (
       <div className="relative min-h-screen bg-mm-black px-6 py-24 text-mm-bone">
@@ -62,21 +53,32 @@ export default function TripPage() {
     );
   }
 
+  // Static itinerary blocks for known slugs — render instantly without trip data.
+  const StaticItinerary =
+    slug === "indonesia" ? <IndonesiaItinerary days={14} /> :
+    slug === "vietnam"   ? <VietnamItinerary   days={14} /> :
+    slug === "cambodia"  ? <CambodiaItinerary  days={14} /> :
+    null;
+
   return (
     <main>
-      <Hero trip={trip} heroImageUrl={slug === "indonesia" ? indoHero.url : undefined} />
-      <Included trip={trip} />
-      {slug === "indonesia" ? (
-        <IndonesiaItinerary days={trip.days} />
-      ) : slug === "vietnam" ? (
-        <VietnamItinerary days={trip.days} />
-      ) : slug === "cambodia" ? (
-        <CambodiaItinerary days={trip.days} />
+      {trip ? (
+        <Hero trip={trip} heroImageUrl={slug === "indonesia" ? indoHero.url : undefined} />
       ) : (
-        <Route trip={trip} />
+        <div className="relative h-[88vh] w-full overflow-hidden bg-mm-black">
+          {slug === "indonesia" && (
+            <img src={indoHero.url} alt="" className="absolute inset-0 h-full w-full object-cover opacity-70" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-b from-mm-black/30 via-transparent to-mm-black" />
+        </div>
       )}
-      <WhosComing trip={trip} />
-      <BookingFlow trip={trip} />
+
+      {trip ? <Included trip={trip} /> : <Skeleton className="h-40 w-full rounded-none bg-mm-bone/10" />}
+
+      {StaticItinerary ?? (trip ? <Route trip={trip} /> : <Skeleton className="h-96 w-full rounded-none bg-mm-bone/10" />)}
+
+      {trip ? <WhosComing trip={trip} /> : <Skeleton className="h-80 w-full rounded-none bg-mm-bone/10" />}
+      {trip ? <BookingFlow trip={trip} /> : <Skeleton className="h-[600px] w-full rounded-none bg-mm-bone/10" />}
       <FAQ />
       <SquadCTA />
       <div className="h-1 bg-mm-bone/20" />
