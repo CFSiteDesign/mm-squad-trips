@@ -190,30 +190,6 @@ function Login({ onSuccess }: { onSuccess: () => void }) {
   );
 }
 
-function ImportButton() {
-  const [busy, setBusy] = useState(false);
-  async function run() {
-    if (!confirm("Pull all current Airtable data into the database? Safe to re-run.")) return;
-    setBusy(true);
-    try {
-      const report = await importFromAirtable();
-      toast.success(`Imported: ${Object.entries(report).map(([k, v]) => `${k}=${v}`).join(", ")}`);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Import failed");
-    } finally {
-      setBusy(false);
-    }
-  }
-  return (
-    <Button
-      onClick={run}
-      disabled={busy}
-      className="rounded-none border-[2px] border-mm-black bg-mm-orange font-display text-mm-black hover:bg-mm-orange"
-    >
-      {busy ? "IMPORTING…" : "IMPORT FROM AIRTABLE"}
-    </Button>
-  );
-}
 
 function TableEditor({ table }: { table: AdminTable }) {
   const cols = COLUMNS[table];
