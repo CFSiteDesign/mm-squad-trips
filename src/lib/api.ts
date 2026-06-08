@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Trip } from "@/types/trip";
+import { getLocalPrice } from "@/data/pricingCalendar";
 
 async function getFunctionErrorMessage(error: unknown): Promise<string> {
   if (!(error instanceof Error)) return "Request failed";
