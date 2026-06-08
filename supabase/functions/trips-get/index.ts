@@ -1,40 +1,6 @@
-// GET trip by slug + future departures + resolved price per departure.
-// Returns shape consumed by src/types/trip.ts.
+// GET trip by slug + future departures. Reads from Postgres.
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
-import { airtableGet } from "../_shared/airtable.ts";
-
-interface TripFields {
-  "Trip Code": string;
-  "Trip Name": string;
-  "URL Slug": string;
-  "Days": number;
-  "Stops": string;
-  "Testimonials": string;
-  "Activity Count": number;
-  "Hero Video URL"?: string;
-  "Video Testimonial URL"?: string;
-  "Default Price": number;
-  "Default Strikethrough": number;
-  "Active?": boolean;
-}
-
-interface PricingFields {
-  Trip: string[];
-  "Trip Code (from Trip)"?: string[];  // lookup — same pattern as Departures
-  Month: string;
-  Price: number;
-  Strikethrough?: number;
-  "Active?": boolean;
-}
-
-interface DepartureFields {
-  "Departure ID"?: string;
-  Trip: string[];
-  "Departure Date": string;
-  "Total Spots": number;
-  "Spots Remaining": number;
-  "Bookable?": boolean;
-}
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 function todayPlusDays(d: number): string {
   const t = new Date();
@@ -43,74 +9,77 @@ function todayPlusDays(d: number): string {
   return t.toISOString().slice(0, 10);
 }
 
-function safeJson<T>(s: string | undefined, fallback: T): T {
-  if (!s) return fallback;
-  try { return JSON.parse(s) as T; } catch { return fallback; }
-}
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
     const { slug } = await req.json().catch(() => ({}));
-    if (!slug || typeof slug !== "string") {
-      return new Response(JSON.stringify({ error: "slug is required" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    if (!slug || typeof slug !== "string") return jr({ error: "slug required" }, 400);
 
-    // 1. Trip by slug
-    const trips = await airtableGet<TripFields>("Trips", {
-      filterByFormula: `AND({URL Slug} = "${slug.replace(/"/g, "")}", {Active?} = TRUE())`,
-      maxRecords: "1",
-    });
-    if (trips.length === 0) {
-      return new Response(JSON.stringify({ error: "Trip not found" }), {
-        status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    const tripRec = trips[0];
-    const t = tripRec.fields;
+    const url = Deno.env.get("SUPABASE_URL");
+    const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!url || !key) return jr({ error: "Supabase not configured" }, 503);
+    const sb = createClient(url, key);
 
-    // Departures only — pricing is resolved on the client from a local calendar.
+    const { data: trip, error: tErr } = await sb
+      .from("trips")
+      .select("*")
+      .eq("slug", slug)
+      .eq("active", true)
+      .maybeSingle();
+    if (tErr) return jr({ error: tErr.message }, 500);
+    if (!trip) return jr({ error: "Trip not found" }, 404);
+
     const minDate = todayPlusDays(7);
-    const departures = await airtableGet<DepartureFields>("Departures", {
-      filterByFormula: `IS_AFTER({Departure Date}, "${minDate}")`,
-      "sort[0][field]": "Departure Date",
-      "sort[0][direction]": "asc",
-    });
+    const { data: deps, error: dErr } = await sb
+      .from("departures")
+      .select("*")
+      .eq("trip_id", trip.id)
+      .gt("departure_date", minDate)
+      .order("departure_date", { ascending: true });
+    if (dErr) return jr({ error: dErr.message }, 500);
 
-    const tripDepartures = departures.filter((d) => (d.fields.Trip ?? []).includes(tripRec.id));
+    // Pricing override per month (optional table — client also has local fallback)
+    const { data: pricing } = await sb
+      .from("pricing_calendar")
+      .select("month,price,strikethrough,active")
+      .eq("trip_id", trip.id)
+      .eq("active", true);
+    const priceByMonth = new Map<string, { price: number; strikethrough: number | null }>();
+    for (const p of pricing ?? []) {
+      priceByMonth.set(p.month, { price: Number(p.price), strikethrough: p.strikethrough });
+    }
 
-    const resolvedDepartures = tripDepartures.map((d) => {
-      const f = d.fields;
+    const resolvedDepartures = (deps ?? []).map((d) => {
+      const month = (d.departure_date as string).slice(0, 7);
+      const pm = priceByMonth.get(month);
       return {
         id: d.id,
-        departureId: f["Departure ID"] ?? `${t["Trip Code"]}-${f["Departure Date"]}`,
-        date: f["Departure Date"],
-        spotsRemaining: f["Spots Remaining"] ?? f["Total Spots"] ?? 0,
-        bookable: f["Bookable?"] === true,
-        price: t["Default Price"],
-        strikethrough: t["Default Strikethrough"] ?? null,
+        departureId: d.departure_code ?? `${trip.code}-${d.departure_date}`,
+        date: d.departure_date,
+        spotsRemaining: d.spots_remaining ?? d.total_spots ?? 0,
+        bookable: d.bookable === true,
+        price: pm?.price ?? Number(trip.default_price),
+        strikethrough: pm?.strikethrough ?? trip.default_strikethrough ?? null,
       };
     });
 
-    const trip = {
-      id: tripRec.id,
-      code: t["Trip Code"],
-      name: t["Trip Name"],
-      slug: t["URL Slug"],
-      days: t["Days"],
-      stops: safeJson(t["Stops"], []),
-      testimonials: safeJson(t["Testimonials"], []),
-      activityCount: t["Activity Count"],
-      heroVideoUrl: t["Hero Video URL"] ?? "",
-      videoTestimonialUrl: t["Video Testimonial URL"] ?? "",
-      defaultPrice: t["Default Price"],
-      defaultStrikethrough: t["Default Strikethrough"] ?? 0,
+    const out = {
+      id: trip.id,
+      code: trip.code,
+      name: trip.name,
+      slug: trip.slug,
+      days: trip.days,
+      stops: Array.isArray(trip.stops) ? trip.stops : [],
+      testimonials: Array.isArray(trip.testimonials) ? trip.testimonials : [],
+      activityCount: trip.activity_count,
+      heroVideoUrl: trip.hero_video_url ?? "",
+      videoTestimonialUrl: trip.video_testimonial_url ?? "",
+      defaultPrice: Number(trip.default_price),
+      defaultStrikethrough: Number(trip.default_strikethrough ?? 0),
       departures: resolvedDepartures,
     };
 
-    return new Response(JSON.stringify({ trip }), {
+    return new Response(JSON.stringify({ trip: out }), {
       headers: {
         ...corsHeaders,
         "Content-Type": "application/json",
@@ -120,8 +89,12 @@ Deno.serve(async (req) => {
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error("trips-get error", msg);
-    return new Response(JSON.stringify({ error: msg }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jr({ error: msg }, 500);
   }
 });
+
+function jr(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}

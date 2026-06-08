@@ -1,18 +1,6 @@
-// Validate a discount code against the Discount Codes table.
-// One per booking, never stacks. Applies to full price, not deposit.
+// Validate a discount code against discount_codes (Postgres) with squad_leaders fallback.
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { airtableGet } from "../_shared/airtable.ts";
-
-interface DiscountFields {
-  Code: string;
-  "Discount Amount": string;        // "$50" / "$100" (single select)
-  "Active?": boolean;
-  "Usage Limit"?: number;
-  "Used Count"?: number;
-  "Expiry Date"?: string;
-  "Applicable To": string[];        // ["Indonesia"], ["All"], etc.
-}
 
 const SLUG_TO_LABEL: Record<string, string> = {
   indonesia: "Indonesia",
@@ -20,65 +8,54 @@ const SLUG_TO_LABEL: Record<string, string> = {
   vietnam: "Vietnam",
 };
 
-function parseDollar(s: string): number {
-  return Number(s.replace(/[^0-9.]/g, "")) || 0;
-}
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
     const { code, tripSlug, amount } = await req.json();
     if (!code || !tripSlug || typeof amount !== "number") {
-      return new Response(JSON.stringify({ valid: false, reason: "Missing fields" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jr({ valid: false, reason: "Missing fields" }, 400);
     }
-    const safe = String(code).toUpperCase().replace(/"/g, "");
-    const rows = await airtableGet<DiscountFields>("Discount Codes", {
-      filterByFormula: `UPPER({Code}) = "${safe}"`,
-      maxRecords: "1",
-    });
-    if (rows.length === 0) {
-      // Fall back to Squad Leader codes (stored in Lovable Cloud, not Airtable).
-      // A matching squad code is valid but applies $0 to the booker — the
-      // reward goes to the leader, tracked via stripe-webhook.
-      const url = Deno.env.get("SUPABASE_URL");
-      const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-      if (url && key) {
-        try {
-          const sb = createClient(url, key);
-          const { data: squad } = await sb
-            .from("squad_leaders")
-            .select("code")
-            .eq("code", safe)
-            .maybeSingle();
-          if (squad) {
-            return jr({ valid: true, discountAmount: 0, newTotal: amount, kind: "squad" });
-          }
-        } catch (e) {
-          console.warn("squad fallback failed", e);
-        }
-      }
+    const safe = String(code).toUpperCase();
+
+    const url = Deno.env.get("SUPABASE_URL");
+    const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!url || !key) return jr({ valid: false, reason: "Supabase not configured" }, 503);
+    const sb = createClient(url, key);
+
+    const { data: d } = await sb
+      .from("discount_codes")
+      .select("*")
+      .eq("code", safe)
+      .maybeSingle();
+
+    if (!d) {
+      // Squad leader fallback ($0 to booker; reward goes to leader)
+      const { data: squad } = await sb
+        .from("squad_leaders")
+        .select("code")
+        .eq("code", safe)
+        .maybeSingle();
+      if (squad) return jr({ valid: true, discountAmount: 0, newTotal: amount, kind: "squad" });
       return jr({ valid: false, reason: "Code not found" });
     }
-    const d = rows[0].fields;
-    if (!d["Active?"]) return jr({ valid: false, reason: "Code inactive" });
-    if (d["Expiry Date"] && new Date(d["Expiry Date"]) < new Date()) {
+
+    if (!d.active) return jr({ valid: false, reason: "Code inactive" });
+    if (d.expiry_date && new Date(d.expiry_date) < new Date()) {
       return jr({ valid: false, reason: "Code expired" });
     }
-    if (typeof d["Usage Limit"] === "number" && (d["Used Count"] ?? 0) >= d["Usage Limit"]) {
+    if (typeof d.usage_limit === "number" && (d.used_count ?? 0) >= d.usage_limit) {
       return jr({ valid: false, reason: "Code usage limit reached" });
     }
-    const appliesTo = d["Applicable To"] ?? [];
+    const appliesTo: string[] = d.applicable_to ?? [];
     const label = SLUG_TO_LABEL[tripSlug];
     if (!appliesTo.includes("All") && !appliesTo.includes(label)) {
       return jr({ valid: false, reason: "Code not valid for this trip" });
     }
-    const discountAmount = parseDollar(d["Discount Amount"]);
+    const discountAmount = Number(d.discount_amount) || 0;
     const newTotal = Math.max(0, amount - discountAmount);
     return jr({ valid: true, discountAmount, newTotal });
   } catch (e) {
-    return jr({ valid: false, reason: e instanceof Error ? e.message : "Unknown error" }, 500);
+    return jr({ valid: false, reason: e instanceof Error ? e.message : "error" }, 500);
   }
 });
 

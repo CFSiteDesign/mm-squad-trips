@@ -1,23 +1,26 @@
-// Stripe webhook → Airtable Bookings.
+// Stripe webhook → Postgres bookings.
 // - Verifies signature (STRIPE_WEBHOOK_SECRET)
 // - Handles checkout.session.completed
-// - Idempotent: skips if a Booking with the same Stripe Session ID exists
+// - Idempotent: skips if a booking with the same Stripe Session ID exists
 // - Multi-traveler: writes N rows (1 lead + N-1 members) sharing a Group ID
-// - Spots Booked / Spots Remaining (Departures) and Used Count (Discount Codes)
-//   are computed Airtable fields and update themselves; we never write them.
+// - Trigger recomputes departures.spots_remaining and discount_codes.used_count
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { airtableGet, airtableCreateMany, airtablePatch } from "../_shared/airtable.ts";
+
+function envClient() {
+  const url = Deno.env.get("SUPABASE_URL");
+  const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!url || !key) throw new Error("Supabase not configured");
+  return createClient(url, key);
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
   const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
-  if (!stripeKey || !webhookSecret) {
-    return new Response("webhook not configured", { status: 503, headers: corsHeaders });
-  }
+  if (!stripeKey || !webhookSecret) return new Response("webhook not configured", { status: 503, headers: corsHeaders });
 
   const sig = req.headers.get("stripe-signature");
   if (!sig) return new Response("missing signature", { status: 400, headers: corsHeaders });
@@ -42,15 +45,13 @@ Deno.serve(async (req) => {
       console.log("Ignoring event type:", event.type);
     }
     return new Response(JSON.stringify({ received: true }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error("Webhook handler error:", msg);
     return new Response(JSON.stringify({ received: true, error: msg }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
@@ -60,41 +61,57 @@ function parseTraveler(v: string): Record<string, string> {
   return { name, email, age, dietary };
 }
 
-// Group ID: GRP-<TRIPCODE>-<NNN> per the v3 brief (e.g. GRP-IND-023).
-// Queries existing Bookings to find the highest existing sequence for this
-// trip code, then increments by 1. Race risk is acceptable at pilot volume.
-async function nextGroupId(tripCode: string): Promise<string> {
+async function nextGroupId(sb: ReturnType<typeof envClient>, tripCode: string): Promise<string> {
   const prefix = `GRP-${tripCode}-`;
-  const rows = await airtableGet<{ "Group ID"?: string }>("Bookings", {
-    filterByFormula: `FIND("${prefix}", {Group ID}) = 1`,
-  });
+  const { data } = await sb
+    .from("bookings")
+    .select("group_id")
+    .like("group_id", `${prefix}%`);
   let max = 0;
-  for (const r of rows) {
-    const gid = r.fields["Group ID"];
-    if (typeof gid !== "string") continue;
+  for (const r of data ?? []) {
+    const gid = r.group_id as string | null;
+    if (!gid) continue;
     const n = parseInt(gid.slice(prefix.length), 10);
     if (Number.isFinite(n) && n > max) max = n;
   }
-  const seq = String(max + 1).padStart(3, "0");
-  return `${prefix}${seq}`;
+  return `${prefix}${String(max + 1).padStart(3, "0")}`;
 }
 
 async function writeBookings(session: Stripe.Checkout.Session) {
+  const sb = envClient();
   const m = session.metadata ?? {};
   const sessionId = session.id;
 
-  // Idempotency check
-  const existing = await airtableGet("Bookings", {
-    filterByFormula: `{Stripe Session ID} = "${sessionId.replace(/"/g, "")}"`,
-    maxRecords: "1",
-  });
-  if (existing.length > 0) {
+  // Idempotency
+  const { data: existing } = await sb
+    .from("bookings")
+    .select("id")
+    .eq("stripe_session_id", sessionId)
+    .limit(1);
+  if ((existing ?? []).length > 0) {
     console.log("Booking already exists for", sessionId);
     return;
   }
 
-  const tripId = m.trip_id || (await lookupTripIdBySlug(m.trip_slug ?? ""));
-  const departureId = m.departure_id;
+  // Resolve trip + departure ids (metadata carries Postgres uuids set by create-checkout-session)
+  let tripId: string | null = m.trip_id || null;
+  if (!tripId && m.trip_slug) {
+    const { data: t } = await sb.from("trips").select("id").eq("slug", m.trip_slug).maybeSingle();
+    tripId = t?.id ?? null;
+  }
+  const departureId: string | null = m.departure_id || null;
+
+  // Discount id: metadata if set, else lookup
+  let discountId: string | null = m.discount_code_id || null;
+  if (!discountId && m.discount_code) {
+    const { data: d } = await sb
+      .from("discount_codes")
+      .select("id")
+      .eq("code", String(m.discount_code).toUpperCase())
+      .maybeSingle();
+    discountId = d?.id ?? null;
+  }
+
   const groupSize = Math.max(1, Number(m.group_size || "1"));
   const paymentType = m.payment_type === "deposit" ? "Deposit" : "Full";
   const amountPaidTotal = (session.amount_total ?? 0) / 100;
@@ -106,158 +123,112 @@ async function writeBookings(session: Stripe.Checkout.Session) {
   const perSpotFinal = fullDue / groupSize;
   const perSpotDiscount = discountAmount / groupSize;
 
-  // Optional discount link
-  let discountLink: string[] | undefined;
-  let discountRecordId: string | undefined;
-  if (m.discount_code) {
-    const discounts = await airtableGet<{ "Used Count"?: number }>("Discount Codes", {
-      filterByFormula: `UPPER({Code}) = "${m.discount_code.replace(/"/g, "")}"`,
-      maxRecords: "1",
-    });
-    if (discounts.length > 0) {
-      discountRecordId = discounts[0].id;
-      discountLink = [discountRecordId];
-    }
-  }
-
   const isSolo = groupSize === 1;
   const tripCode = (m.trip_code || "").toUpperCase();
-  const groupId = isSolo ? undefined : await nextGroupId(tripCode);
+  const groupId = isSolo ? null : await nextGroupId(sb, tripCode);
 
-  // Pre-parse additional travelers once. Goes to the lead row's
-  // "Additional Travelers" JSON field per the v3 schema.
   const additionalTravelers: Record<string, string>[] = [];
   for (let i = 1; i < groupSize; i++) {
     const raw = (m as Record<string, string>)[`traveler_${i}`];
     additionalTravelers.push(
-      raw ? parseTraveler(raw) : { name: "", email: "", phone: "", country: "", age: "" },
+      raw ? parseTraveler(raw) : { name: "", email: "", age: "", dietary: "" },
     );
   }
 
-  // Build the N rows
   const rows: Record<string, unknown>[] = [];
-
-  // Row 1: lead
+  // Lead
   rows.push({
-    "Trip": tripId ? [tripId] : undefined,
-    "Departure": departureId ? [departureId] : undefined,
-    "Booking Type": isSolo ? "Solo" : "Group lead",
-    "Group ID": groupId || undefined,
-    "Group Size": groupSize,
-    "Spot Number": 1,
-    "Friend Names Mentioned": m.friends_mentioned || undefined,
-    "Lead Name": m.lead_name,
-    "Lead Email": m.lead_email,
-    "Lead Phone": m.lead_phone,
-    "Lead Country": m.lead_country || undefined,
-    "Lead Age": m.lead_age ? Number(m.lead_age) : undefined,
-    "Solo?": m.lead_solo === "true",
-    "Source": m.lead_source || undefined,
-    "Additional Travelers": additionalTravelers.length > 0
-      ? JSON.stringify(additionalTravelers)
-      : undefined,
-    "Payment Type": paymentType,
-    "Original Price": pricePerSpot || subtotal / groupSize,
-    "Discount Code": discountLink,
-    "Discount Amount": Math.round(perSpotDiscount * 100) / 100,
-    "Final Price": Math.round(perSpotFinal * 100) / 100,
-    "Amount Paid": Math.round(perSpotPaid * 100) / 100,
-    "Status": "Confirmed",
-    "Stripe Session ID": sessionId,
-    "UTM Source": m.utm_source || undefined,
-    "UTM Medium": m.utm_medium || undefined,
-    "UTM Campaign": m.utm_campaign || undefined,
-    "UTM Content": m.utm_content || undefined,
+    trip_id: tripId,
+    departure_id: departureId,
+    booking_type: isSolo ? "Solo" : "Group lead",
+    group_id: groupId,
+    group_size: groupSize,
+    spot_number: 1,
+    friend_names_mentioned: m.friends_mentioned || null,
+    lead_name: m.lead_name ?? null,
+    lead_email: m.lead_email ?? null,
+    lead_phone: m.lead_phone ?? null,
+    lead_country: m.lead_country || null,
+    lead_age: m.lead_age ? Number(m.lead_age) : null,
+    lead_solo: m.lead_solo === "true",
+    lead_source: m.lead_source || null,
+    additional_travelers: additionalTravelers.length > 0 ? additionalTravelers : null,
+    payment_type: paymentType,
+    original_price: pricePerSpot || subtotal / groupSize,
+    discount_code_id: discountId,
+    discount_amount: Math.round(perSpotDiscount * 100) / 100,
+    final_price: Math.round(perSpotFinal * 100) / 100,
+    amount_paid: Math.round(perSpotPaid * 100) / 100,
+    status: "Confirmed",
+    stripe_session_id: sessionId,
+    utm_source: m.utm_source || null,
+    utm_medium: m.utm_medium || null,
+    utm_campaign: m.utm_campaign || null,
+    utm_content: m.utm_content || null,
   });
-
-  // Rows 2..N: additional travelers (identity captured in lead row's
-  // "Additional Travelers" JSON per the v3 schema)
+  // Members
   for (let i = 1; i < groupSize; i++) {
     rows.push({
-      "Trip": tripId ? [tripId] : undefined,
-      "Departure": departureId ? [departureId] : undefined,
-      "Booking Type": "Group member",
-      "Group ID": groupId,
-      "Group Size": groupSize,
-      "Spot Number": i + 1,
-      "Lead Name": m.lead_name,
-      "Lead Email": m.lead_email,
-      "Payment Type": paymentType,
-      "Original Price": pricePerSpot || subtotal / groupSize,
-      "Discount Code": discountLink,
-      "Discount Amount": Math.round(perSpotDiscount * 100) / 100,
-      "Final Price": Math.round(perSpotFinal * 100) / 100,
-      "Amount Paid": Math.round(perSpotPaid * 100) / 100,
-      "Status": "Confirmed",
-      "Stripe Session ID": sessionId,
+      trip_id: tripId,
+      departure_id: departureId,
+      booking_type: "Group member",
+      group_id: groupId,
+      group_size: groupSize,
+      spot_number: i + 1,
+      lead_name: m.lead_name ?? null,
+      lead_email: m.lead_email ?? null,
+      payment_type: paymentType,
+      original_price: pricePerSpot || subtotal / groupSize,
+      discount_code_id: discountId,
+      discount_amount: Math.round(perSpotDiscount * 100) / 100,
+      final_price: Math.round(perSpotFinal * 100) / 100,
+      amount_paid: Math.round(perSpotPaid * 100) / 100,
+      status: "Confirmed",
+      stripe_session_id: sessionId,
     });
   }
 
-  // Strip undefineds
-  for (const row of rows) {
-    for (const k of Object.keys(row)) if (row[k] === undefined) delete row[k];
-  }
+  const { data: inserted, error: insErr } = await sb.from("bookings").insert(rows).select("id");
+  if (insErr) throw new Error(`bookings insert: ${insErr.message}`);
+  console.log(`Created ${inserted?.length ?? 0} booking row(s) for ${sessionId} group ${groupId}`);
 
-  const created = await airtableCreateMany("Bookings", rows);
-  console.log(`Created ${created.length} booking row(s) for ${sessionId} group ${groupId}`);
-
-  // Populate the "Group Members" self-link per the v3 Bookings schema
-  // ("Group Members | Link to Bookings (self) | For linking"). Each row links
-  // to the other rows in the group. Best-effort and sequential: the booking
-  // rows already exist, so a failure here (e.g. the field is absent) must never
-  // fail the webhook. Solo bookings have no group members.
-  if (!isSolo && created.length > 1) {
-    const ids = created.map((r) => r.id);
+  // Link group members (best-effort)
+  if (!isSolo && (inserted?.length ?? 0) > 1) {
+    const ids = (inserted ?? []).map((r) => r.id);
     try {
-      for (const r of created) {
-        await airtablePatch("Bookings", r.id, {
-          "Group Members": ids.filter((id) => id !== r.id),
-        });
+      for (const r of inserted ?? []) {
+        await sb.from("bookings")
+          .update({ group_members: ids.filter((id) => id !== r.id) })
+          .eq("id", r.id);
       }
     } catch (e) {
-      console.warn("Group Members link failed:", e instanceof Error ? e.message : e);
+      console.warn("group_members link failed:", e instanceof Error ? e.message : e);
     }
   }
 
-  // Squad Leader credit: if the discount code matches a squad_leaders.code,
-  // insert a squad_bookings row so the leader's dashboard ticks up.
-  // Best-effort — never fails the webhook.
+  // Squad leader credit
   if (m.discount_code) {
     try {
-      const url = Deno.env.get("SUPABASE_URL");
-      const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-      if (url && key) {
-        const sb = createClient(url, key);
-        const { data: leader } = await sb
-          .from("squad_leaders")
-          .select("id")
-          .eq("code", m.discount_code)
-          .maybeSingle();
-        if (leader) {
-          const { error: sErr } = await sb.from("squad_bookings").insert({
-            squad_leader_id: leader.id,
-            booker_name: m.lead_name ?? null,
-            booker_email: m.lead_email ?? null,
-            trip_slug: m.trip_slug ?? null,
-            departure_date: m.departure_date ?? null,
-            stripe_session_id: sessionId,
-          });
-          if (sErr && !`${sErr.message}`.toLowerCase().includes("duplicate")) {
-            console.warn("squad_bookings insert failed:", sErr.message);
-          }
+      const { data: leader } = await sb
+        .from("squad_leaders")
+        .select("id")
+        .eq("code", m.discount_code)
+        .maybeSingle();
+      if (leader) {
+        const { error: sErr } = await sb.from("squad_bookings").insert({
+          squad_leader_id: leader.id,
+          booker_name: m.lead_name ?? null,
+          booker_email: m.lead_email ?? null,
+          trip_slug: m.trip_slug ?? null,
+          departure_date: m.departure_date ?? null,
+          stripe_session_id: sessionId,
+        });
+        if (sErr && !`${sErr.message}`.toLowerCase().includes("duplicate")) {
+          console.warn("squad_bookings insert failed:", sErr.message);
         }
       }
     } catch (e) {
       console.warn("Squad credit failed:", e instanceof Error ? e.message : e);
     }
   }
-}
-
-async function lookupTripIdBySlug(slug: string): Promise<string | undefined> {
-  if (!slug) return undefined;
-  const rows = await airtableGet("Trips", {
-    filterByFormula: `{URL Slug} = "${slug.replace(/"/g, "")}"`,
-    maxRecords: "1",
-  });
-  return rows[0]?.id;
 }
