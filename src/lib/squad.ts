@@ -70,8 +70,12 @@ export interface SquadAdminData {
   leaders: SquadAdminLeader[];
   stats: { totalLeaders: number; totalBookings: number; unlockedHalf: number; unlockedFree: number };
 }
-export async function getSquadAdmin(password: string): Promise<SquadAdminData> {
-  const { data, error } = await supabase.functions.invoke("squad-admin", { body: { password } });
+export async function getSquadAdmin(passwordOrToken: { password?: string; token?: string }): Promise<SquadAdminData> {
+  const { password, token } = passwordOrToken;
+  const { data, error } = await supabase.functions.invoke("squad-admin", {
+    body: token ? {} : { password: password ?? "" },
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  });
   if (error) throw new Error(error.message);
   if (!data?.leaders) throw new Error(data?.error || "Could not load admin");
   return data as SquadAdminData;
