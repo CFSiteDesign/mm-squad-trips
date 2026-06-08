@@ -65,7 +65,13 @@ export default function TripPage() {
     <main>
       <Hero trip={trip} heroImageUrl={slug === "indonesia" ? indoHero.url : undefined} />
       <Included trip={trip} />
-      {slug === "indonesia" ? <IndonesiaItinerary days={trip.days} /> : <Route trip={trip} />}
+      {slug === "indonesia" ? (
+        <IndonesiaItinerary days={trip.days} />
+      ) : slug === "vietnam" ? (
+        <VietnamItinerary days={trip.days} />
+      ) : (
+        <Route trip={trip} />
+      )}
       <WhosComing trip={trip} />
       <BookingFlow trip={trip} />
       <FAQ />
