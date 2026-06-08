@@ -28,7 +28,6 @@ const COLUMNS: Record<AdminTable, ColumnDef[]> = {
     { key: "default_price", label: "Default Price", type: "number" },
     { key: "default_strikethrough", label: "Strikethrough", type: "number" },
     { key: "active", label: "Active", type: "boolean" },
-    { key: "hero_video_url", label: "Hero Video URL", type: "text" },
     { key: "video_testimonial_url", label: "Testimonial Video URL", type: "text" },
     { key: "stops", label: "Stops (JSON)", type: "json" },
     { key: "testimonials", label: "Testimonials (JSON)", type: "json" },
