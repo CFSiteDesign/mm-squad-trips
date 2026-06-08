@@ -10,12 +10,10 @@ function jr(body: unknown, status = 200) {
 }
 
 function randomCode(): string {
-  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // unambiguous base32
-  let s = "";
-  const buf = new Uint8Array(6);
+  // 5-digit numeric code, 10000–99999 (no leading zero so it's always 5 chars).
+  const buf = new Uint32Array(1);
   crypto.getRandomValues(buf);
-  for (const b of buf) s += alphabet[b % alphabet.length];
-  return `SQUAD-${s}`;
+  return String(10000 + (buf[0] % 90000));
 }
 
 Deno.serve(async (req) => {
@@ -52,7 +50,8 @@ Deno.serve(async (req) => {
   }
 
   // Try a handful of times in case of unique-violation on code.
-  for (let attempt = 0; attempt < 5; attempt++) {
+  // Retry on the (very unlikely) chance the 5-digit code collides.
+  for (let attempt = 0; attempt < 20; attempt++) {
     const code = randomCode();
     const { data, error } = await supabase
       .from("squad_leaders")
