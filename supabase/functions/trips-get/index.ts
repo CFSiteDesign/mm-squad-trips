@@ -71,14 +71,22 @@ Deno.serve(async (req) => {
     const tripRec = trips[0];
     const t = tripRec.fields;
 
-    // 2. Pricing rows for this trip
-    // Fetch all active pricing rows, match client-side by trip code lookup
-    // (same pattern as Departures "Trip Code (from Trip)" which is proven to work).
-    // Falls back to record ID match for safety.
+    // 2 + 3. Pricing rows and future departures in parallel.
     const tripCode = t["Trip Code"];
-    const allPricing = await airtableGet<PricingFields>("Pricing Calendar", {
-      filterByFormula: `{Active?} = TRUE()`,
-    });
+    const safeCode = tripCode.replace(/"/g, "");
+    const minDate = todayPlusDays(7);
+
+    const [allPricing, departures] = await Promise.all([
+      airtableGet<PricingFields>("Pricing Calendar", {
+        filterByFormula: `AND({Active?} = TRUE(), ARRAYJOIN({Trip Code (from Trip)}) = "${safeCode}")`,
+      }),
+      airtableGet<DepartureFields>("Departures", {
+        filterByFormula: `AND(ARRAYJOIN({Trip Code (from Trip)}) = "${safeCode}", IS_AFTER({Departure Date}, "${minDate}"))`,
+        "sort[0][field]": "Departure Date",
+        "sort[0][direction]": "asc",
+      }),
+    ]);
+
     const priceByMonth = new Map<string, { price: number; strike: number | null }>();
     for (const p of allPricing) {
       const linkedCodes: string[] = p.fields["Trip Code (from Trip)"] ?? [];
@@ -90,15 +98,6 @@ Deno.serve(async (req) => {
         strike: p.fields.Strikethrough ?? null,
       });
     }
-
-    // 3. Future departures for this trip (next 7 days+). Filter by Trip Code lookup
-    // because ARRAYJOIN({Trip}) returns linked record IDs, not the trip name.
-    const minDate = todayPlusDays(7);
-    const departures = await airtableGet<DepartureFields>("Departures", {
-      filterByFormula: `AND(ARRAYJOIN({Trip Code (from Trip)}) = "${tripCode}", IS_AFTER({Departure Date}, "${minDate}"))`,
-      "sort[0][field]": "Departure Date",
-      "sort[0][direction]": "asc",
-    });
 
     const resolvedDepartures = departures.map((d) => {
       const f = d.fields;
@@ -134,7 +133,11 @@ Deno.serve(async (req) => {
     };
 
     return new Response(JSON.stringify({ trip }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/json",
+        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+      },
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
