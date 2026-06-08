@@ -108,7 +108,7 @@ export default function SquadRegister() {
 
           <div className="mt-8 flex flex-wrap gap-3">
             <Button
-              onClick={() => navigate(`/squad-leader/dashboard?token=${encodeURIComponent(success.accessToken)}`)}
+              onClick={() => setPasswordModalOpen(true)}
               className="h-14 rounded-none border-[3px] border-mm-black bg-mm-pink px-6 font-display text-mm-bone hover:bg-mm-pink shadow-mm"
             >
               GO TO MY DASHBOARD →
@@ -121,6 +121,55 @@ export default function SquadRegister() {
             </Link>
           </div>
         </div>
+
+        {passwordModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-mm-black/60 px-5 backdrop-blur-md">
+            <div className="w-full max-w-md border-mm-thick bg-mm-paper p-6 text-mm-black shadow-mm-lg md:p-8">
+              <Sticker color="pink" rotate={-3}>ONE MORE THING</Sticker>
+              <h2 className="mt-4 font-display text-2xl md:text-3xl">CREATE A PASSWORD</h2>
+              <p className="mt-2 text-sm text-mm-black/70">
+                Set a password so you can log back in next time with your{" "}
+                <strong>squad code</strong> and password — no link needed.
+              </p>
+              <div className="mt-5 space-y-4">
+                <div>
+                  <Label className="font-sticker text-[10px] tracking-[0.15em] text-mm-black/80">PASSWORD (MIN 6 CHARS)</Label>
+                  <Input
+                    type="password"
+                    value={pw}
+                    onChange={(e) => setPw(e.target.value)}
+                    autoFocus
+                    className="mt-1 h-11 rounded-none border-[3px] border-mm-black bg-mm-paper font-medium"
+                  />
+                </div>
+                <div>
+                  <Label className="font-sticker text-[10px] tracking-[0.15em] text-mm-black/80">CONFIRM PASSWORD</Label>
+                  <Input
+                    type="password"
+                    value={pw2}
+                    onChange={(e) => setPw2(e.target.value)}
+                    className="mt-1 h-11 rounded-none border-[3px] border-mm-black bg-mm-paper font-medium"
+                  />
+                </div>
+                <Button
+                  onClick={savePasswordAndGo}
+                  disabled={savingPw}
+                  className="h-14 w-full rounded-none border-[3px] border-mm-black bg-mm-pink font-display text-mm-bone hover:bg-mm-pink shadow-mm"
+                >
+                  {savingPw ? "SAVING…" : "SAVE & GO TO DASHBOARD →"}
+                </Button>
+                <button
+                  onClick={() => {
+                    navigate(`/squad-leader/dashboard?token=${encodeURIComponent(success!.accessToken)}`);
+                  }}
+                  className="block w-full text-center text-xs text-mm-black/60 underline"
+                >
+                  Skip for now (you'll need your dashboard link to get back in)
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     );
   }
