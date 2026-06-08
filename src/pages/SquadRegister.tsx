@@ -184,7 +184,7 @@ export default function SquadRegister() {
         <button
           onClick={() => {
             if (tripFromUrl && validTrips.includes(tripFromUrl)) {
-              navigate(`/trips/${tripFromUrl}`);
+              navigate(`/${tripFromUrl}`);
             } else {
               navigate("/squad-leader", { replace: true });
             }

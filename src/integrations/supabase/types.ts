@@ -14,6 +14,254 @@ export type Database = {
   }
   public: {
     Tables: {
+      bookings: {
+        Row: {
+          additional_travelers: Json | null
+          amount_paid: number | null
+          booking_type: string | null
+          created_at: string
+          departure_id: string | null
+          discount_amount: number | null
+          discount_code_id: string | null
+          final_price: number | null
+          friend_names_mentioned: string | null
+          group_id: string | null
+          group_members: string[] | null
+          group_size: number
+          id: string
+          lead_age: number | null
+          lead_country: string | null
+          lead_email: string | null
+          lead_name: string | null
+          lead_phone: string | null
+          lead_solo: boolean | null
+          lead_source: string | null
+          original_price: number | null
+          payment_type: string | null
+          spot_number: number
+          status: string
+          stripe_session_id: string
+          trip_id: string | null
+          updated_at: string
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          additional_travelers?: Json | null
+          amount_paid?: number | null
+          booking_type?: string | null
+          created_at?: string
+          departure_id?: string | null
+          discount_amount?: number | null
+          discount_code_id?: string | null
+          final_price?: number | null
+          friend_names_mentioned?: string | null
+          group_id?: string | null
+          group_members?: string[] | null
+          group_size?: number
+          id?: string
+          lead_age?: number | null
+          lead_country?: string | null
+          lead_email?: string | null
+          lead_name?: string | null
+          lead_phone?: string | null
+          lead_solo?: boolean | null
+          lead_source?: string | null
+          original_price?: number | null
+          payment_type?: string | null
+          spot_number?: number
+          status?: string
+          stripe_session_id: string
+          trip_id?: string | null
+          updated_at?: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          additional_travelers?: Json | null
+          amount_paid?: number | null
+          booking_type?: string | null
+          created_at?: string
+          departure_id?: string | null
+          discount_amount?: number | null
+          discount_code_id?: string | null
+          final_price?: number | null
+          friend_names_mentioned?: string | null
+          group_id?: string | null
+          group_members?: string[] | null
+          group_size?: number
+          id?: string
+          lead_age?: number | null
+          lead_country?: string | null
+          lead_email?: string | null
+          lead_name?: string | null
+          lead_phone?: string | null
+          lead_solo?: boolean | null
+          lead_source?: string | null
+          original_price?: number | null
+          payment_type?: string | null
+          spot_number?: number
+          status?: string
+          stripe_session_id?: string
+          trip_id?: string | null
+          updated_at?: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_departure_id_fkey"
+            columns: ["departure_id"]
+            isOneToOne: false
+            referencedRelation: "departures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_discount_code_id_fkey"
+            columns: ["discount_code_id"]
+            isOneToOne: false
+            referencedRelation: "discount_codes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      departures: {
+        Row: {
+          bookable: boolean
+          created_at: string
+          departure_code: string | null
+          departure_date: string
+          id: string
+          spots_remaining: number
+          total_spots: number
+          trip_id: string
+          updated_at: string
+        }
+        Insert: {
+          bookable?: boolean
+          created_at?: string
+          departure_code?: string | null
+          departure_date: string
+          id?: string
+          spots_remaining?: number
+          total_spots?: number
+          trip_id: string
+          updated_at?: string
+        }
+        Update: {
+          bookable?: boolean
+          created_at?: string
+          departure_code?: string | null
+          departure_date?: string
+          id?: string
+          spots_remaining?: number
+          total_spots?: number
+          trip_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "departures_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      discount_codes: {
+        Row: {
+          active: boolean
+          applicable_to: string[]
+          code: string
+          created_at: string
+          discount_amount: number
+          expiry_date: string | null
+          id: string
+          updated_at: string
+          usage_limit: number | null
+          used_count: number
+        }
+        Insert: {
+          active?: boolean
+          applicable_to?: string[]
+          code: string
+          created_at?: string
+          discount_amount?: number
+          expiry_date?: string | null
+          id?: string
+          updated_at?: string
+          usage_limit?: number | null
+          used_count?: number
+        }
+        Update: {
+          active?: boolean
+          applicable_to?: string[]
+          code?: string
+          created_at?: string
+          discount_amount?: number
+          expiry_date?: string | null
+          id?: string
+          updated_at?: string
+          usage_limit?: number | null
+          used_count?: number
+        }
+        Relationships: []
+      }
+      pricing_calendar: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          month: string
+          price: number
+          strikethrough: number | null
+          trip_id: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          month: string
+          price: number
+          strikethrough?: number | null
+          trip_id: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          month?: string
+          price?: number
+          strikethrough?: number | null
+          trip_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pricing_calendar_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       squad_bookings: {
         Row: {
           booker_email: string | null
@@ -100,12 +348,73 @@ export type Database = {
         }
         Relationships: []
       }
+      trips: {
+        Row: {
+          active: boolean
+          activity_count: number | null
+          code: string
+          created_at: string
+          days: number | null
+          default_price: number
+          default_strikethrough: number | null
+          hero_video_url: string | null
+          id: string
+          name: string
+          slug: string
+          stops: Json
+          testimonials: Json
+          updated_at: string
+          video_testimonial_url: string | null
+        }
+        Insert: {
+          active?: boolean
+          activity_count?: number | null
+          code: string
+          created_at?: string
+          days?: number | null
+          default_price?: number
+          default_strikethrough?: number | null
+          hero_video_url?: string | null
+          id?: string
+          name: string
+          slug: string
+          stops?: Json
+          testimonials?: Json
+          updated_at?: string
+          video_testimonial_url?: string | null
+        }
+        Update: {
+          active?: boolean
+          activity_count?: number | null
+          code?: string
+          created_at?: string
+          days?: number | null
+          default_price?: number
+          default_strikethrough?: number | null
+          hero_video_url?: string | null
+          id?: string
+          name?: string
+          slug?: string
+          stops?: Json
+          testimonials?: Json
+          updated_at?: string
+          video_testimonial_url?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      recompute_departure_spots: {
+        Args: { _departure_id: string }
+        Returns: undefined
+      }
+      recompute_discount_used: {
+        Args: { _discount_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

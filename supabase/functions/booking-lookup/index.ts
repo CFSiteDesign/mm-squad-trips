@@ -1,15 +1,10 @@
 // Lookup booking details for the confirmation page.
-// - Always returns trip/departure/amount from the Stripe session metadata so the
-//   page renders even before the webhook has written the Airtable row.
-// - Returns bookingRef from Airtable when the Bookings row exists; otherwise
-//   bookingRef is null. The client polls until it appears.
+// - Returns trip/departure/amount from the Stripe session metadata so the
+//   page renders even before the webhook has written the booking row.
+// - Returns booking ref (short id) from Postgres when present; otherwise null.
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import Stripe from "https://esm.sh/stripe@18.5.0";
-import { airtableGet } from "../_shared/airtable.ts";
-
-interface BookingFields {
-  "Booking Ref"?: string;
-}
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -17,7 +12,6 @@ Deno.serve(async (req) => {
     const { sessionId } = await req.json();
     if (!sessionId || typeof sessionId !== "string") return jr({ error: "sessionId required" }, 400);
 
-    // 1. Always fetch Stripe session so the page can render without Airtable.
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) return jr({ error: "Stripe not configured" }, 503);
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
@@ -36,23 +30,22 @@ Deno.serve(async (req) => {
       paymentType,
     };
 
-    // 2. Try Airtable for Booking Ref. Don't fail the response if missing.
     let bookingRef: string | null = null;
     try {
-      const safe = sessionId.replace(/"/g, "");
-      // Sort by Spot Number ascending so the lead row (Spot 1) is always
-      // returned first — otherwise a group booking can surface a member's
-      // ref on the confirmation page instead of the lead's.
-      const rows = await airtableGet<BookingFields>("Bookings", {
-        filterByFormula: `{Stripe Session ID} = "${safe}"`,
-        "sort[0][field]": "Spot Number",
-        "sort[0][direction]": "asc",
-        maxRecords: "1",
-      });
-      const ref = rows[0]?.fields["Booking Ref"];
-      if (ref) bookingRef = String(ref);
+      const url = Deno.env.get("SUPABASE_URL");
+      const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      if (url && key) {
+        const sb = createClient(url, key);
+        const { data } = await sb
+          .from("bookings")
+          .select("id")
+          .eq("stripe_session_id", sessionId)
+          .order("spot_number", { ascending: true })
+          .limit(1);
+        if (data && data[0]) bookingRef = String(data[0].id).slice(0, 8).toUpperCase();
+      }
     } catch (e) {
-      console.warn("booking-lookup airtable error", e instanceof Error ? e.message : e);
+      console.warn("booking-lookup db error", e instanceof Error ? e.message : e);
     }
 
     return jr({ booking: { ...sessionInfo, bookingRef } });

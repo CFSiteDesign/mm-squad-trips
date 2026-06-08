@@ -12,6 +12,7 @@ import SquadRegister from "./pages/SquadRegister";
 import SquadDashboard from "./pages/SquadDashboard";
 import SquadLogin from "./pages/SquadLogin";
 import SquadAdmin from "./pages/SquadAdmin";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -47,6 +48,7 @@ const App = () => (
           <Route path="/squad-leader/login" element={<SquadLogin />} />
           <Route path="/squad-leader/dashboard" element={<SquadDashboard />} />
           <Route path="/squad-leader/admin" element={<SquadAdmin />} />
+          <Route path="/admin" element={<Admin />} />
           <Route path="/:slug" element={<TripPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
