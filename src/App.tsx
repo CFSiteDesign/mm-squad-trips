@@ -11,7 +11,7 @@ import SquadHub from "./pages/SquadHub";
 import SquadRegister from "./pages/SquadRegister";
 import SquadDashboard from "./pages/SquadDashboard";
 import SquadLogin from "./pages/SquadLogin";
-import SquadAdmin from "./pages/SquadAdmin";
+// SquadAdmin is now embedded inside Admin at /admin
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
@@ -47,7 +47,7 @@ const App = () => (
           <Route path="/squad-leader/register" element={<SquadRegister />} />
           <Route path="/squad-leader/login" element={<SquadLogin />} />
           <Route path="/squad-leader/dashboard" element={<SquadDashboard />} />
-          <Route path="/squad-leader/admin" element={<SquadAdmin />} />
+          {/* /squad-leader/admin merged into /admin */}
           <Route path="/admin" element={<Admin />} />
           <Route path="/:slug" element={<TripPage />} />
           <Route path="*" element={<NotFound />} />

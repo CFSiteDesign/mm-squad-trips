@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import SquadAdmin from "./SquadAdmin";
 
 type Row = Record<string, unknown>;
 
@@ -88,15 +89,32 @@ const TABS: { id: AdminTable; label: string }[] = [
 
 export default function Admin() {
   const [authed, setAuthed] = useState<boolean>(() => !!getAdminToken());
+  const [view, setView] = useState<"database" | "squad">("database");
 
   if (!authed) return <Login onSuccess={() => setAuthed(true)} />;
 
   return (
     <main className="min-h-screen bg-mm-paper px-4 py-8 text-mm-black md:px-8">
-      <header className="mx-auto mb-6 flex max-w-7xl items-center justify-between">
-        <h1 className="font-display text-3xl md:text-4xl">ADMIN</h1>
+      <header className="mx-auto mb-6 flex max-w-7xl flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <h1 className="font-display text-3xl md:text-4xl">ADMIN</h1>
+          <div className="flex border-[2px] border-mm-black">
+            <button
+              onClick={() => setView("database")}
+              className={`px-3 py-1.5 font-sticker text-[10px] tracking-[0.15em] ${view === "database" ? "bg-mm-pink text-mm-bone" : "bg-mm-bone text-mm-black"}`}
+            >
+              DATABASE
+            </button>
+            <button
+              onClick={() => setView("squad")}
+              className={`border-l-[2px] border-mm-black px-3 py-1.5 font-sticker text-[10px] tracking-[0.15em] ${view === "squad" ? "bg-mm-pink text-mm-bone" : "bg-mm-bone text-mm-black"}`}
+            >
+              SQUAD LEADERS
+            </button>
+          </div>
+        </div>
         <div className="flex gap-2">
-          <ImportButton />
+          {view === "database" && <ImportButton />}
           <Button
             variant="outline"
             onClick={() => { setAdminToken(null); setAuthed(false); }}
@@ -106,20 +124,27 @@ export default function Admin() {
           </Button>
         </div>
       </header>
-      <Tabs defaultValue="trips" className="mx-auto max-w-7xl">
-        <TabsList className="flex flex-wrap gap-1 rounded-none border-[2px] border-mm-black bg-mm-bone p-1">
+
+      {view === "squad" ? (
+        <div className="mx-auto max-w-7xl">
+          <SquadAdmin />
+        </div>
+      ) : (
+        <Tabs defaultValue="trips" className="mx-auto max-w-7xl">
+          <TabsList className="flex flex-wrap gap-1 rounded-none border-[2px] border-mm-black bg-mm-bone p-1">
+            {TABS.map((t) => (
+              <TabsTrigger key={t.id} value={t.id} className="rounded-none data-[state=active]:bg-mm-pink data-[state=active]:text-mm-bone">
+                {t.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
           {TABS.map((t) => (
-            <TabsTrigger key={t.id} value={t.id} className="rounded-none data-[state=active]:bg-mm-pink data-[state=active]:text-mm-bone">
-              {t.label}
-            </TabsTrigger>
+            <TabsContent key={t.id} value={t.id} className="mt-4">
+              <TableEditor table={t.id} />
+            </TabsContent>
           ))}
-        </TabsList>
-        {TABS.map((t) => (
-          <TabsContent key={t.id} value={t.id} className="mt-4">
-            <TableEditor table={t.id} />
-          </TabsContent>
-        ))}
-      </Tabs>
+        </Tabs>
+      )}
     </main>
   );
 }
