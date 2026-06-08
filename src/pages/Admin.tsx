@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { adminLogin, adminApi, getAdminToken, setAdminToken, importFromAirtable, type AdminTable } from "@/lib/admin";
+import { adminLogin, adminApi, getAdminToken, setAdminToken, type AdminTable } from "@/lib/admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,7 +28,6 @@ const COLUMNS: Record<AdminTable, ColumnDef[]> = {
     { key: "default_price", label: "Default Price", type: "number" },
     { key: "default_strikethrough", label: "Strikethrough", type: "number" },
     { key: "active", label: "Active", type: "boolean" },
-    { key: "hero_video_url", label: "Hero Video URL", type: "text" },
     { key: "video_testimonial_url", label: "Testimonial Video URL", type: "text" },
     { key: "stops", label: "Stops (JSON)", type: "json" },
     { key: "testimonials", label: "Testimonials (JSON)", type: "json" },
@@ -114,7 +113,7 @@ export default function Admin() {
           </div>
         </div>
         <div className="flex gap-2">
-          {view === "database" && <ImportButton />}
+          
           <Button
             variant="outline"
             onClick={() => { setAdminToken(null); setAuthed(false); }}
@@ -191,30 +190,6 @@ function Login({ onSuccess }: { onSuccess: () => void }) {
   );
 }
 
-function ImportButton() {
-  const [busy, setBusy] = useState(false);
-  async function run() {
-    if (!confirm("Pull all current Airtable data into the database? Safe to re-run.")) return;
-    setBusy(true);
-    try {
-      const report = await importFromAirtable();
-      toast.success(`Imported: ${Object.entries(report).map(([k, v]) => `${k}=${v}`).join(", ")}`);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Import failed");
-    } finally {
-      setBusy(false);
-    }
-  }
-  return (
-    <Button
-      onClick={run}
-      disabled={busy}
-      className="rounded-none border-[2px] border-mm-black bg-mm-orange font-display text-mm-black hover:bg-mm-orange"
-    >
-      {busy ? "IMPORTING…" : "IMPORT FROM AIRTABLE"}
-    </Button>
-  );
-}
 
 function TableEditor({ table }: { table: AdminTable }) {
   const cols = COLUMNS[table];
