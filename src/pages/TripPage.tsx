@@ -5,6 +5,7 @@ import { Hero } from "@/components/trip/Hero";
 import { Included } from "@/components/trip/Included";
 import { Route } from "@/components/trip/Route";
 import { IndonesiaItinerary } from "@/components/trip/IndonesiaItinerary";
+import { VietnamItinerary } from "@/components/trip/VietnamItinerary";
 import indoHero from "@/assets/indo-hero.jpg.asset.json";
 
 import { WhosComing } from "@/components/trip/WhosComing";
