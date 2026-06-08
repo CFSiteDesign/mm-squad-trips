@@ -1,6 +1,7 @@
 // Admin overview of all squad leaders and their bookings. Gated by ADMIN_PASSWORD.
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { verifyAdminToken, adminAuthHeaderToken } from "../_shared/admin-auth.ts";
 
 const TIER_HALF = 4;
 const TIER_FREE = 8;
