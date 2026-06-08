@@ -59,6 +59,12 @@ export default function SquadHub() {
               HOW IT WORKS
             </a>
           </div>
+          <p className="mt-4 text-sm text-mm-bone/70">
+            Already a Squad Leader?{" "}
+            <Link to="/squad-leader/login" className="font-display text-mm-lime underline">
+              LOG IN TO YOUR DASHBOARD
+            </Link>
+          </p>
         </div>
       </section>
 
