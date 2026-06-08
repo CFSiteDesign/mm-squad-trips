@@ -27,15 +27,21 @@ Deno.serve(async (req) => {
   const adminPassword = Deno.env.get("ADMIN_PASSWORD");
   if (!url || !key || !adminPassword) return jr({ error: "Backend not configured" }, 503);
 
-  let body: Record<string, string> = {};
-  try {
-    body = await req.json();
-  } catch {
-    return jr({ error: "Invalid JSON" }, 400);
-  }
-  const password = (body.password ?? "").trim();
-  if (!password || password !== adminPassword) {
-    return jr({ error: "Invalid password" }, 401);
+  // Accept either a valid admin token (Bearer) or the admin password in body.
+  const bearer = adminAuthHeaderToken(req);
+  let authed = bearer ? await verifyAdminToken(bearer) : false;
+
+  if (!authed) {
+    let body: Record<string, string> = {};
+    try {
+      body = await req.json();
+    } catch {
+      return jr({ error: "Unauthorized" }, 401);
+    }
+    const password = (body.password ?? "").trim();
+    if (!password || password !== adminPassword) {
+      return jr({ error: "Invalid password" }, 401);
+    }
   }
 
   const supabase = createClient(url, key);
