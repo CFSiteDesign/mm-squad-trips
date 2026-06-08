@@ -70,6 +70,8 @@ export default function TripPage() {
         <IndonesiaItinerary days={trip.days} />
       ) : slug === "vietnam" ? (
         <VietnamItinerary days={trip.days} />
+      ) : slug === "cambodia" ? (
+        <CambodiaItinerary days={trip.days} />
       ) : (
         <Route trip={trip} />
       )}
