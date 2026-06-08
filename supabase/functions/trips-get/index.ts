@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const resolvedDepartures = departures.map((d) => {
+    const resolvedDepartures = tripDepartures.map((d) => {
       const f = d.fields;
       const month = (f["Departure Date"] ?? "").slice(0, 7);
       const pc = priceByMonth.get(month);
