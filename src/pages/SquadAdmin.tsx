@@ -73,7 +73,6 @@ export default function SquadAdmin() {
           <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
             {[
               { label: "LEADERS", value: stats.totalLeaders },
-              { label: "BOOKINGS", value: stats.totalBookings },
               { label: "AT 50% OFF", value: stats.unlockedHalf },
               { label: "FREE TRIP", value: stats.unlockedFree },
             ].map((s) => (
