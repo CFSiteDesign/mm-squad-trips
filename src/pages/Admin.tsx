@@ -26,7 +26,9 @@ type LookupCtx = {
   departure: Record<string, string>;
   discount: Record<string, string>;
   member: Record<string, string>;
+  groupMembers: Record<string, string>; // group_id -> "Alice, Bob, Carol"
 };
+
 
 const COLUMNS: Record<AdminTable, ColumnDef[]> = {
   trips: [
@@ -80,9 +82,18 @@ const COLUMNS: Record<AdminTable, ColumnDef[]> = {
     { key: "group_size", label: "Group Size", readOnly: true },
     { key: "group_id", label: "Group ID", readOnly: true },
     { key: "group_members", label: "Group Members", readOnly: true, compute: (r, ctx) => {
-        const v = r.group_members;
-        if (!Array.isArray(v) || v.length === 0) return "";
-        return v.map((id) => ctx.member[String(id)] ?? String(id).slice(0, 8).toUpperCase()).join(", ");
+        const gid = r.group_id ? String(r.group_id) : "";
+        if (gid && ctx.groupMembers[gid]) return ctx.groupMembers[gid];
+        // Solo or no group: derive from additional_travelers on this row (if any)
+        const add = r.additional_travelers;
+        if (Array.isArray(add) && add.length > 0) {
+          const lead = r.lead_name ? [String(r.lead_name)] : [];
+          const names = add
+            .map((t: Record<string, unknown>) => (t?.name ? String(t.name) : ""))
+            .filter(Boolean);
+          return [...lead, ...names].join(", ");
+        }
+        return "";
       } },
     { key: "friend_names_mentioned", label: "Friend Names", readOnly: true },
     { key: "lead_name", label: "Lead Name", readOnly: true },
@@ -253,6 +264,7 @@ const lookupCache: {
   departure?: Record<string, string>;
   discount?: Record<string, string>;
   member?: Record<string, string>;
+  groupMembers?: Record<string, string>;
 } = {};
 
 function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: number }) {
@@ -267,6 +279,7 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
   const [departureMap, setDepartureMap] = useState<Record<string, string>>(() => lookupCache.departure ?? {});
   const [discountMap, setDiscountMap] = useState<Record<string, string>>(() => lookupCache.discount ?? {});
   const [memberMap, setMemberMap] = useState<Record<string, string>>(() => lookupCache.member ?? {});
+  const [groupMembersMap, setGroupMembersMap] = useState<Record<string, string>>(() => lookupCache.groupMembers ?? {});
   const [loading, setLoading] = useState(() => !tableCache[table]);
   const [editing, setEditing] = useState<Row | null>(null);
   const [creating, setCreating] = useState(false);
@@ -283,11 +296,24 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
           setRows(r);
           if (needsMemberLookup) {
             const m: Record<string, string> = { ...(lookupCache.member ?? {}) };
+            const gm: Record<string, string> = {};
             for (const b of r) {
               if (b.id) m[String(b.id)] = String(b.lead_name ?? String(b.id).slice(0, 8).toUpperCase());
+              // Build group_id -> names list from the leader row (which has additional_travelers)
+              const gid = b.group_id ? String(b.group_id) : "";
+              const add = b.additional_travelers;
+              if (gid && Array.isArray(add) && add.length > 0) {
+                const lead = b.lead_name ? [String(b.lead_name)] : [];
+                const names = add
+                  .map((t: Record<string, unknown>) => (t?.name ? String(t.name) : ""))
+                  .filter(Boolean);
+                gm[gid] = [...lead, ...names].join(", ");
+              }
             }
             lookupCache.member = m;
+            lookupCache.groupMembers = gm;
             setMemberMap(m);
+            setGroupMembersMap(gm);
           }
         }),
       ];
@@ -325,8 +351,8 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
 
 
   const ctx: LookupCtx = useMemo(
-    () => ({ trip: tripMap, departure: departureMap, discount: discountMap, member: memberMap }),
-    [tripMap, departureMap, discountMap, memberMap],
+    () => ({ trip: tripMap, departure: departureMap, discount: discountMap, member: memberMap, groupMembers: groupMembersMap }),
+    [tripMap, departureMap, discountMap, memberMap, groupMembersMap],
   );
 
   useEffect(() => {
