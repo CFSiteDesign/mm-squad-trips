@@ -16,10 +16,17 @@ interface ColumnDef {
   type?: "text" | "number" | "boolean" | "date" | "json" | "textarea";
   readOnly?: boolean;
   hidden?: boolean;
-  lookup?: "trip" | "departure";
-  format?: "date-only" | "ref8";
-  compute?: (row: Row) => unknown;
+  lookup?: "trip" | "departure" | "discount";
+  format?: "date-only" | "ref8" | "travelers";
+  compute?: (row: Row, ctx: LookupCtx) => unknown;
 }
+
+type LookupCtx = {
+  trip: Record<string, string>;
+  departure: Record<string, string>;
+  discount: Record<string, string>;
+  member: Record<string, string>;
+};
 
 const COLUMNS: Record<AdminTable, ColumnDef[]> = {
   trips: [
