@@ -544,7 +544,27 @@ function renderCell(v: unknown, c?: ColumnDef): string {
     }).join(" | ");
   }
   if (typeof v === "boolean") return v ? "✓" : "✗";
-  if (typeof v === "object") return JSON.stringify(v);
+  if (Array.isArray(v)) {
+    if (v.length === 0) return "";
+    if (v.every((x) => typeof x === "string" || typeof x === "number")) return v.join(", ");
+    return v.map((x) => {
+      if (x && typeof x === "object") {
+        const o = x as Record<string, unknown>;
+        return Object.entries(o)
+          .filter(([, val]) => val != null && val !== "")
+          .map(([k, val]) => `${k}: ${val}`)
+          .join(" · ");
+      }
+      return String(x);
+    }).join(" | ");
+  }
+  if (typeof v === "object") {
+    const o = v as Record<string, unknown>;
+    return Object.entries(o)
+      .filter(([, val]) => val != null && val !== "")
+      .map(([k, val]) => `${k}: ${typeof val === "object" ? JSON.stringify(val) : val}`)
+      .join(" · ");
+  }
   return String(v);
 }
 
