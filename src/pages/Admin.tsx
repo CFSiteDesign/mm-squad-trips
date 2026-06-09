@@ -16,10 +16,17 @@ interface ColumnDef {
   type?: "text" | "number" | "boolean" | "date" | "json" | "textarea";
   readOnly?: boolean;
   hidden?: boolean;
-  lookup?: "trip" | "departure";
-  format?: "date-only" | "ref8";
-  compute?: (row: Row) => unknown;
+  lookup?: "trip" | "departure" | "discount";
+  format?: "date-only" | "ref8" | "travelers";
+  compute?: (row: Row, ctx: LookupCtx) => unknown;
 }
+
+type LookupCtx = {
+  trip: Record<string, string>;
+  departure: Record<string, string>;
+  discount: Record<string, string>;
+  member: Record<string, string>;
+};
 
 const COLUMNS: Record<AdminTable, ColumnDef[]> = {
   trips: [
@@ -65,13 +72,18 @@ const COLUMNS: Record<AdminTable, ColumnDef[]> = {
   ],
   bookings: [
     { key: "id", label: "ID", readOnly: true, hidden: true },
-    { key: "booking_ref", label: "Booking Ref", readOnly: true, format: "ref8", compute: (r) => r.id },
+    { key: "booking_ref", label: "Booking Ref", readOnly: true, compute: (r) =>
+        r.group_id ? String(r.group_id) : String(r.id ?? "").slice(0, 8).toUpperCase() },
     { key: "trip_id", label: "Trip", readOnly: true, lookup: "trip" },
     { key: "departure_id", label: "Departure", readOnly: true, lookup: "departure" },
     { key: "booking_type", label: "Booking Type", readOnly: true },
     { key: "group_size", label: "Group Size", readOnly: true },
     { key: "group_id", label: "Group ID", readOnly: true },
-    { key: "group_members", label: "Group Members", readOnly: true, type: "json" },
+    { key: "group_members", label: "Group Members", readOnly: true, compute: (r, ctx) => {
+        const v = r.group_members;
+        if (!Array.isArray(v) || v.length === 0) return "";
+        return v.map((id) => ctx.member[String(id)] ?? String(id).slice(0, 8).toUpperCase()).join(", ");
+      } },
     { key: "friend_names_mentioned", label: "Friend Names", readOnly: true },
     { key: "lead_name", label: "Lead Name", readOnly: true },
     { key: "lead_email", label: "Lead Email", readOnly: true },
@@ -80,10 +92,10 @@ const COLUMNS: Record<AdminTable, ColumnDef[]> = {
     { key: "lead_age", label: "Lead Age", readOnly: true },
     { key: "lead_solo", label: "Solo?", readOnly: true, type: "boolean" },
     { key: "lead_source", label: "Source", readOnly: true },
-    { key: "additional_travelers", label: "Additional Travelers", readOnly: true, type: "json" },
+    { key: "additional_travelers", label: "Additional Travelers", readOnly: true, format: "travelers" },
     { key: "payment_type", label: "Payment Type", readOnly: true },
     { key: "original_price", label: "Original Price", readOnly: true, type: "number" },
-    { key: "discount_code_id", label: "Discount Code", readOnly: true },
+    { key: "discount_code_id", label: "Discount Code", readOnly: true, lookup: "discount" },
     { key: "discount_amount", label: "Discount Amount", readOnly: true, type: "number" },
     { key: "final_price", label: "Final Price", readOnly: true, type: "number" },
     { key: "amount_paid", label: "Amount Paid", readOnly: true, type: "number" },
@@ -236,16 +248,25 @@ function Login({ onSuccess }: { onSuccess: () => void }) {
 
 // Module-level cache: persists across tab switches (and component unmount/remount)
 const tableCache: Partial<Record<AdminTable, Row[]>> = {};
-const lookupCache: { trip?: Record<string, string>; departure?: Record<string, string> } = {};
+const lookupCache: {
+  trip?: Record<string, string>;
+  departure?: Record<string, string>;
+  discount?: Record<string, string>;
+  member?: Record<string, string>;
+} = {};
 
 function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: number }) {
   const cols = COLUMNS[table];
   const visibleCols = useMemo(() => cols.filter((c) => !c.hidden), [cols]);
   const needsTripLookup = useMemo(() => cols.some((c) => c.lookup === "trip"), [cols]);
   const needsDepartureLookup = useMemo(() => cols.some((c) => c.lookup === "departure"), [cols]);
+  const needsDiscountLookup = useMemo(() => cols.some((c) => c.lookup === "discount"), [cols]);
+  const needsMemberLookup = table === "bookings";
   const [rows, setRows] = useState<Row[]>(() => tableCache[table] ?? []);
   const [tripMap, setTripMap] = useState<Record<string, string>>(() => lookupCache.trip ?? {});
   const [departureMap, setDepartureMap] = useState<Record<string, string>>(() => lookupCache.departure ?? {});
+  const [discountMap, setDiscountMap] = useState<Record<string, string>>(() => lookupCache.discount ?? {});
+  const [memberMap, setMemberMap] = useState<Record<string, string>>(() => lookupCache.member ?? {});
   const [loading, setLoading] = useState(() => !tableCache[table]);
   const [editing, setEditing] = useState<Row | null>(null);
   const [creating, setCreating] = useState(false);
@@ -260,6 +281,14 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
         adminApi.list<Row>(table, { orderBy: "created_at", ascending: false, limit: 1000 }).then((r) => {
           tableCache[table] = r;
           setRows(r);
+          if (needsMemberLookup) {
+            const m: Record<string, string> = { ...(lookupCache.member ?? {}) };
+            for (const b of r) {
+              if (b.id) m[String(b.id)] = String(b.lead_name ?? String(b.id).slice(0, 8).toUpperCase());
+            }
+            lookupCache.member = m;
+            setMemberMap(m);
+          }
         }),
       ];
       if (needsTripLookup && (force || !lookupCache.trip)) {
@@ -278,6 +307,14 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
           setDepartureMap(m);
         }));
       }
+      if (needsDiscountLookup && (force || !lookupCache.discount)) {
+        tasks.push(adminApi.list<Row>("discount_codes", { limit: 1000 }).then((ds) => {
+          const m: Record<string, string> = {};
+          for (const d of ds) m[String(d.id)] = String(d.code ?? d.id);
+          lookupCache.discount = m;
+          setDiscountMap(m);
+        }));
+      }
       await Promise.all(tasks);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to load");
@@ -286,13 +323,23 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
     }
   }
 
+
+  const ctx: LookupCtx = useMemo(
+    () => ({ trip: tripMap, departure: departureMap, discount: discountMap, member: memberMap }),
+    [tripMap, departureMap, discountMap, memberMap],
+  );
+
   useEffect(() => {
     // Show cached data instantly; only fetch if no cache yet for this table
     if (tableCache[table]) {
       setRows(tableCache[table]!);
       setLoading(false);
       // Still fetch lookups if missing (no spinner)
-      if ((needsTripLookup && !lookupCache.trip) || (needsDepartureLookup && !lookupCache.departure)) {
+      if (
+        (needsTripLookup && !lookupCache.trip) ||
+        (needsDepartureLookup && !lookupCache.departure) ||
+        (needsDiscountLookup && !lookupCache.discount)
+      ) {
         reload(false);
       }
     } else {
@@ -300,6 +347,7 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
     }
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
   }, [table, refreshKey]);
+
 
   const filtered = useMemo(() => {
     if (!search) return rows;
@@ -323,10 +371,11 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
     const lines = [headers.join(",")];
     for (const r of filtered) {
       lines.push(visibleCols.map((c) => {
-        let v = r[c.key];
+        let v: unknown = c.compute ? c.compute(r, ctx) : r[c.key];
         if (c.lookup === "trip" && v) v = tripMap[String(v)] ?? v;
         else if (c.lookup === "departure" && v) v = departureMap[String(v)] ?? v;
-        const s = v == null ? "" : typeof v === "object" ? JSON.stringify(v) : String(v);
+        else if (c.lookup === "discount" && v) v = discountMap[String(v)] ?? v;
+        const s = renderCell(v, c);
         return `"${s.replace(/"/g, '""')}"`;
       }).join(","));
     }
@@ -336,6 +385,7 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
     a.href = url; a.download = `${table}.csv`; a.click();
     URL.revokeObjectURL(url);
   }
+
 
   const canCreate = table !== "bookings";
 
@@ -387,12 +437,13 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
             ) : filtered.map((r) => (
               <tr key={String(r.id)} className="border-b border-mm-black/10 hover:bg-mm-paper/50">
                 {visibleCols.map((c) => {
-                  const raw = c.compute ? c.compute(r) : r[c.key];
+                  const raw = c.compute ? c.compute(r, ctx) : r[c.key];
                   let val: unknown = raw;
                   if (c.lookup === "trip" && raw) val = tripMap[String(raw)] ?? raw;
                   else if (c.lookup === "departure" && raw) val = departureMap[String(raw)] ?? raw;
+                  else if (c.lookup === "discount" && raw) val = discountMap[String(raw)] ?? raw;
                   return (
-                    <td key={c.key} className="max-w-[260px] truncate px-3 py-2 align-top">
+                    <td key={c.key} className="max-w-[260px] truncate px-3 py-2 align-top" title={typeof val === "string" ? val : undefined}>
                       {renderCell(val, c)}
                     </td>
                   );
@@ -421,11 +472,22 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
 }
 
 function renderCell(v: unknown, c?: ColumnDef): string {
-  if (v == null) return "";
+  if (v == null || v === "") return "";
   if (c?.format === "ref8" && v) return String(v).slice(0, 8).toUpperCase();
   if (c?.format === "date-only" && v) {
     const s = String(v);
     return s.length >= 10 ? s.slice(0, 10) : s;
+  }
+  if (c?.format === "travelers") {
+    if (!Array.isArray(v)) return "";
+    return v.map((t: Record<string, unknown>) => {
+      const parts: string[] = [];
+      if (t?.name) parts.push(String(t.name));
+      if (t?.age != null && t?.age !== "") parts.push(`age ${t.age}`);
+      if (t?.email) parts.push(String(t.email));
+      if (t?.dietary) parts.push(`diet: ${t.dietary}`);
+      return parts.join(" · ");
+    }).join(" | ");
   }
   if (typeof v === "boolean") return v ? "✓" : "✗";
   if (typeof v === "object") return JSON.stringify(v);
