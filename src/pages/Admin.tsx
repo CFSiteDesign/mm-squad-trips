@@ -420,8 +420,13 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
   );
 }
 
-function renderCell(v: unknown): string {
+function renderCell(v: unknown, c?: ColumnDef): string {
   if (v == null) return "";
+  if (c?.format === "ref8" && v) return String(v).slice(0, 8).toUpperCase();
+  if (c?.format === "date-only" && v) {
+    const s = String(v);
+    return s.length >= 10 ? s.slice(0, 10) : s;
+  }
   if (typeof v === "boolean") return v ? "✓" : "✗";
   if (typeof v === "object") return JSON.stringify(v);
   return String(v);
