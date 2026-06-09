@@ -26,7 +26,9 @@ type LookupCtx = {
   departure: Record<string, string>;
   discount: Record<string, string>;
   member: Record<string, string>;
+  groupMembers: Record<string, string>; // group_id -> "Alice, Bob, Carol"
 };
+
 
 const COLUMNS: Record<AdminTable, ColumnDef[]> = {
   trips: [
