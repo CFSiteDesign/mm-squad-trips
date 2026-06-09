@@ -225,45 +225,6 @@ export function BookingFlow({ trip }: { trip: Trip }) {
               </div>
             </FormStep>
 
-            <FormStep n={4} label="GROUP CODE (IF YOU HAVE ONE!)">
-              <p className="mb-3 font-sticker text-[11px] tracking-[0.15em] text-mm-bone/80">
-                GOT A SQUAD LEADER CODE? POP IT IN — IT GETS YOU YOUR DISCOUNT AND ADDS YOU TO THEIR SQUAD.
-              </p>
-              <div className="flex gap-3">
-                <Input
-                  value={discountCode}
-                  onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
-                  placeholder="SQUAD CODE"
-                  disabled={discountLoading}
-                  className="h-12 rounded-none border-[3px] border-mm-black bg-mm-paper text-mm-black uppercase font-display tracking-wide disabled:opacity-50"
-                />
-                <Button
-                  type="button"
-                  onClick={tryDiscount}
-                  disabled={discountLoading || !discountCode.trim()}
-                  className="h-12 rounded-none border-[3px] border-mm-black bg-mm-orange font-display text-mm-black hover:bg-mm-orange shadow-mm-sm disabled:opacity-50"
-                >
-                  {discountLoading ? "CHECKING…" : "APPLY"}
-                </Button>
-              </div>
-              {discountState && (
-                <p className={`mt-3 font-sticker text-[11px] tracking-[0.15em] ${discountState.valid ? "text-mm-lime" : "text-mm-pink"}`}>
-                  {discountState.msg.toUpperCase()}
-                </p>
-              )}
-              <button
-                type="button"
-                onClick={() => setDiscountOpen((o) => !o)}
-                className="mt-4 block font-sticker text-[11px] tracking-[0.15em] text-mm-bone/70 underline-offset-4 hover:underline"
-              >
-                {discountOpen ? "HIDE INFO" : "NO CODE? HERE'S HOW TO GET ONE →"}
-              </button>
-              {discountOpen && (
-                <p className="mt-2 font-sticker text-[11px] leading-relaxed tracking-[0.1em] text-mm-bone/80">
-                  SQUAD LEADERS GET A UNIQUE CODE — IF A FRIEND IS LEADING A SQUAD, ASK FOR THEIRS. OR APPLY TO BE ONE AT /SQUAD-LEADER.
-                </p>
-              )}
-            </FormStep>
 
             <div className="border-mm-thick bg-mm-paper p-4 text-mm-black shadow-mm-lg md:p-6">
               <PaymentSummary trip={trip} selected={selected} groupSize={groupSize} discountAmount={discountState?.amount ?? 0} />
