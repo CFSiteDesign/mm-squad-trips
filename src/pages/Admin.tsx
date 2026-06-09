@@ -34,7 +34,7 @@ const COLUMNS: Record<AdminTable, ColumnDef[]> = {
   ],
   departures: [
     { key: "id", label: "ID", readOnly: true, hidden: true },
-    { key: "trip_id", label: "Trip ID", type: "text" },
+    { key: "trip_id", label: "Trip ID", readOnly: true, hidden: true },
     { key: "departure_code", label: "Code", type: "text" },
     { key: "departure_date", label: "Date", type: "date" },
     { key: "total_spots", label: "Total Spots", type: "number" },
