@@ -195,7 +195,11 @@ function Login({ onSuccess }: { onSuccess: () => void }) {
 function TableEditor({ table }: { table: AdminTable }) {
   const cols = COLUMNS[table];
   const visibleCols = useMemo(() => cols.filter((c) => !c.hidden), [cols]);
+  const needsTripLookup = useMemo(() => cols.some((c) => c.lookup === "trip"), [cols]);
+  const needsDepartureLookup = useMemo(() => cols.some((c) => c.lookup === "departure"), [cols]);
   const [rows, setRows] = useState<Row[]>([]);
+  const [tripMap, setTripMap] = useState<Record<string, string>>({});
+  const [departureMap, setDepartureMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Row | null>(null);
   const [creating, setCreating] = useState(false);
@@ -204,8 +208,24 @@ function TableEditor({ table }: { table: AdminTable }) {
   async function reload() {
     setLoading(true);
     try {
-      const data = await adminApi.list<Row>(table, { orderBy: "created_at", ascending: false, limit: 1000 });
-      setRows(data);
+      const tasks: Promise<unknown>[] = [
+        adminApi.list<Row>(table, { orderBy: "created_at", ascending: false, limit: 1000 }).then(setRows),
+      ];
+      if (needsTripLookup) {
+        tasks.push(adminApi.list<Row>("trips", { limit: 1000 }).then((ts) => {
+          const m: Record<string, string> = {};
+          for (const t of ts) m[String(t.id)] = String(t.code ?? t.name ?? t.id);
+          setTripMap(m);
+        }));
+      }
+      if (needsDepartureLookup) {
+        tasks.push(adminApi.list<Row>("departures", { limit: 1000 }).then((ds) => {
+          const m: Record<string, string> = {};
+          for (const d of ds) m[String(d.id)] = String(d.departure_code ?? d.departure_date ?? d.id);
+          setDepartureMap(m);
+        }));
+      }
+      await Promise.all(tasks);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to load");
     } finally {
