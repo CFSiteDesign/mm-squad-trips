@@ -529,15 +529,25 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
               const prevGid = prev?.group_id ? String(prev.group_id) : "";
               const nextGid = next?.group_id ? String(next.group_id) : "";
               const inGroup = !!gid;
-              const isFirstInGroup = inGroup && prevGid !== gid;
-              const isLastInGroup = inGroup && nextGid !== gid;
+              const isLead = isBookings && String(r.booking_type ?? "").toLowerCase().includes("lead");
+              const isExpanded = inGroup && !!expandedGroups[gid];
+              // Hide non-leader group rows unless their group is expanded
+              if (inGroup && !isLead && !isExpanded) return null;
+              const isFirstInGroup = inGroup && (prevGid !== gid || !isExpanded);
+              const isLastInGroup = inGroup && (nextGid !== gid || !isExpanded);
               const rowClass = [
                 "border-b border-mm-black/10 hover:bg-mm-paper/50",
-                inGroup ? "bg-mm-pink/5" : "",
+                inGroup ? (isLead ? "bg-mm-pink/10" : "bg-mm-pink/5") : "",
                 isFirstInGroup ? "border-t-[3px] border-t-mm-pink" : "",
                 isLastInGroup ? "border-b-[3px] border-b-mm-pink" : "",
               ].filter(Boolean).join(" ");
-              const isLead = isBookings && String(r.booking_type ?? "").toLowerCase().includes("lead");
+              // Count rows in this group for the expand button label
+              let groupCount = 0;
+              if (inGroup && isLead) {
+                for (const row of displayRows) {
+                  if (row.group_id && String(row.group_id) === gid) groupCount++;
+                }
+              }
               return (
                 <tr key={String(r.id)} className={rowClass}>
                   {visibleCols.map((c, ci) => {
@@ -547,11 +557,21 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
                     else if (c.lookup === "departure" && raw) val = departureMap[String(raw)] ?? raw;
                     else if (c.lookup === "discount" && raw) val = discountMap[String(raw)] ?? raw;
                     const display = renderCell(val, c);
-                    // Tag the leader on the booking_type column inside grouped rows
                     const showLeadTag = isBookings && inGroup && c.key === "booking_type" && isLead;
+                    const showExpandBtn = isBookings && inGroup && isLead && ci === 0;
                     return (
                       <td key={c.key} className="max-w-[260px] truncate px-3 py-2 align-top" title={typeof val === "string" ? val : (display || undefined)}>
-                        {ci === 0 && inGroup ? (
+                        {showExpandBtn ? (
+                          <button
+                            onClick={() => setExpandedGroups((s) => ({ ...s, [gid]: !s[gid] }))}
+                            className="mr-2 inline-flex items-center gap-1 rounded-sm border-[1.5px] border-mm-black bg-mm-bone px-1.5 py-0.5 font-sticker text-[9px] tracking-[0.1em] text-mm-black hover:bg-mm-pink hover:text-mm-bone"
+                            aria-expanded={isExpanded}
+                            title={isExpanded ? "Collapse group" : "Expand group"}
+                          >
+                            <span className="inline-block w-2 text-center leading-none">{isExpanded ? "−" : "+"}</span>
+                            <span>{groupCount}</span>
+                          </button>
+                        ) : ci === 0 && inGroup ? (
                           <span className="mr-2 inline-block h-2 w-2 rounded-full bg-mm-pink align-middle" aria-hidden />
                         ) : null}
                         {display}
