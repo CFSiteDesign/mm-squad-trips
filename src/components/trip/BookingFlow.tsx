@@ -225,6 +225,42 @@ export function BookingFlow({ trip }: { trip: Trip }) {
               </div>
             </FormStep>
 
+            <FormStep n={4} label="DISCOUNT CODE (IF YOU HAVE ONE!)">
+              <div className="space-y-2">
+                <div className="flex gap-3">
+                  <Input
+                    value={discountCode}
+                    onChange={(e) => {
+                      setDiscountCode(e.target.value.toUpperCase());
+                      setDiscountState(null);
+                      validatedFor.current = null;
+                    }}
+                    placeholder="DISCOUNT / SQUAD CODE"
+                    className="h-12 flex-1 rounded-none border-[3px] border-mm-black bg-mm-paper text-mm-black uppercase font-display tracking-wide"
+                  />
+                  {discountLoading && (
+                    <span className="self-center font-sticker text-[11px] tracking-[0.15em] text-mm-bone/80">
+                      CHECKING…
+                    </span>
+                  )}
+                </div>
+                {discountState && (
+                  <p
+                    className={`font-sticker text-[11px] tracking-[0.15em] ${
+                      discountState.valid ? "text-mm-lime" : "text-mm-bone/80"
+                    }`}
+                  >
+                    {discountState.msg.toUpperCase()}
+                  </p>
+                )}
+                <p className="text-xs text-mm-bone/80">
+                  Got a squad leader code? Pop it in — it gets you your discount and adds you to their squad.
+                </p>
+              </div>
+            </FormStep>
+
+
+
 
             <div className="border-mm-thick bg-mm-paper p-4 text-mm-black shadow-mm-lg md:p-6">
               <PaymentSummary trip={trip} selected={selected} groupSize={groupSize} discountAmount={discountState?.amount ?? 0} />
