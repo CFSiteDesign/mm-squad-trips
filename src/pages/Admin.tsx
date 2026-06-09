@@ -357,6 +357,31 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
     return rows.filter((r) => JSON.stringify(r).toLowerCase().includes(s));
   }, [rows, search]);
 
+  // Group bookings by group_id for the consolidated view
+  type GroupBlock = { key: string; leader: Row; members: Row[]; isGroup: boolean };
+  const grouped = useMemo<GroupBlock[]>(() => {
+    if (table !== "bookings" || !groupView) return [];
+    const byGroup = new Map<string, Row[]>();
+    const solos: Row[] = [];
+    for (const r of filtered) {
+      const gid = r.group_id ? String(r.group_id) : "";
+      if (!gid) { solos.push(r); continue; }
+      if (!byGroup.has(gid)) byGroup.set(gid, []);
+      byGroup.get(gid)!.push(r);
+    }
+    const blocks: GroupBlock[] = [];
+    for (const [gid, list] of byGroup) {
+      const sorted = [...list].sort((a, b) => String(a.created_at ?? "").localeCompare(String(b.created_at ?? "")));
+      const leader = sorted.find((x) => String(x.booking_type ?? "").toLowerCase().includes("lead")) ?? sorted[0];
+      const members = sorted.filter((x) => x.id !== leader.id);
+      blocks.push({ key: gid, leader, members, isGroup: true });
+    }
+    for (const r of solos) blocks.push({ key: String(r.id), leader: r, members: [], isGroup: false });
+    blocks.sort((a, b) => String(b.leader.created_at ?? "").localeCompare(String(a.leader.created_at ?? "")));
+    return blocks;
+  }, [filtered, table, groupView]);
+
+
   async function handleDelete(id: string) {
     if (!confirm("Delete this row?")) return;
     try {
