@@ -324,13 +324,22 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
   }
 
 
+  const ctx: LookupCtx = useMemo(
+    () => ({ trip: tripMap, departure: departureMap, discount: discountMap, member: memberMap }),
+    [tripMap, departureMap, discountMap, memberMap],
+  );
+
   useEffect(() => {
     // Show cached data instantly; only fetch if no cache yet for this table
     if (tableCache[table]) {
       setRows(tableCache[table]!);
       setLoading(false);
       // Still fetch lookups if missing (no spinner)
-      if ((needsTripLookup && !lookupCache.trip) || (needsDepartureLookup && !lookupCache.departure)) {
+      if (
+        (needsTripLookup && !lookupCache.trip) ||
+        (needsDepartureLookup && !lookupCache.departure) ||
+        (needsDiscountLookup && !lookupCache.discount)
+      ) {
         reload(false);
       }
     } else {
@@ -338,6 +347,7 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
     }
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
   }, [table, refreshKey]);
+
 
   const filtered = useMemo(() => {
     if (!search) return rows;
