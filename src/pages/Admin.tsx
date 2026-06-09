@@ -355,29 +355,28 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
     return rows.filter((r) => JSON.stringify(r).toLowerCase().includes(s));
   }, [rows, search]);
 
-  // Group bookings by group_id for the consolidated view
-  type GroupBlock = { key: string; leader: Row; members: Row[]; isGroup: boolean };
-  const grouped = useMemo<GroupBlock[]>(() => {
-    if (table !== "bookings" || !groupView) return [];
-    const byGroup = new Map<string, Row[]>();
-    const solos: Row[] = [];
-    for (const r of filtered) {
+  // For bookings, keep rows sorted so members of the same group sit together (leader first)
+  const displayRows = useMemo(() => {
+    if (table !== "bookings") return filtered;
+    const groupOrder = new Map<string, number>();
+    filtered.forEach((r, i) => {
       const gid = r.group_id ? String(r.group_id) : "";
-      if (!gid) { solos.push(r); continue; }
-      if (!byGroup.has(gid)) byGroup.set(gid, []);
-      byGroup.get(gid)!.push(r);
-    }
-    const blocks: GroupBlock[] = [];
-    for (const [gid, list] of byGroup) {
-      const sorted = [...list].sort((a, b) => String(a.created_at ?? "").localeCompare(String(b.created_at ?? "")));
-      const leader = sorted.find((x) => String(x.booking_type ?? "").toLowerCase().includes("lead")) ?? sorted[0];
-      const members = sorted.filter((x) => x.id !== leader.id);
-      blocks.push({ key: gid, leader, members, isGroup: true });
-    }
-    for (const r of solos) blocks.push({ key: String(r.id), leader: r, members: [], isGroup: false });
-    blocks.sort((a, b) => String(b.leader.created_at ?? "").localeCompare(String(a.leader.created_at ?? "")));
-    return blocks;
-  }, [filtered, table, groupView]);
+      if (gid && !groupOrder.has(gid)) groupOrder.set(gid, i);
+    });
+    return [...filtered].sort((a, b) => {
+      const ga = a.group_id ? String(a.group_id) : "";
+      const gb = b.group_id ? String(b.group_id) : "";
+      const oa = ga ? groupOrder.get(ga)! : filtered.indexOf(a);
+      const ob = gb ? groupOrder.get(gb)! : filtered.indexOf(b);
+      if (oa !== ob) return oa - ob;
+      // Inside the same group: leader first, then by created_at
+      const la = String(a.booking_type ?? "").toLowerCase().includes("lead") ? 0 : 1;
+      const lb = String(b.booking_type ?? "").toLowerCase().includes("lead") ? 0 : 1;
+      if (la !== lb) return la - lb;
+      return String(a.created_at ?? "").localeCompare(String(b.created_at ?? ""));
+    });
+  }, [filtered, table]);
+
 
 
   async function handleDelete(id: string) {
