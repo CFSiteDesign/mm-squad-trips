@@ -12,7 +12,7 @@ export function clearSquadCache() {
   squadCache = null;
 }
 
-export default function SquadAdmin() {
+export default function SquadAdmin({ refreshKey }: { refreshKey?: number }) {
   const [password, setPassword] = useState("");
   const [data, setData] = useState<SquadAdminData | null>(squadCache);
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +39,7 @@ export default function SquadAdmin() {
       }
     })();
     return () => { cancelled = true; };
-  }, [adminToken]);
+  }, [adminToken, refreshKey]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
