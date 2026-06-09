@@ -603,7 +603,7 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
                     const showLeadTag = isBookings && inGroup && c.key === "booking_type" && isLead;
                     const showExpandBtn = isBookings && inGroup && isLead && ci === 0;
                     return (
-                      <td key={c.key} className="max-w-[260px] truncate px-3 py-2 align-top" title={typeof val === "string" ? val : (display || undefined)}>
+                      <td key={c.key} className={`${c.key === "traveler_info" ? "max-w-[460px] whitespace-normal break-words" : "max-w-[260px] truncate"} px-3 py-2 align-top`} title={typeof val === "string" ? val : (display || undefined)}>
                         {showExpandBtn ? (
                           <button
                             onClick={() => setExpandedGroups((s) => ({ ...s, [gid]: !s[gid] }))}
