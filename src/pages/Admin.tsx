@@ -103,7 +103,42 @@ const COLUMNS: Record<AdminTable, ColumnDef[]> = {
     { key: "lead_age", label: "Lead Age", readOnly: true },
     { key: "lead_solo", label: "Solo?", readOnly: true, type: "boolean" },
     { key: "lead_source", label: "Source", readOnly: true },
-    { key: "additional_travelers", label: "Additional Travelers", readOnly: true, format: "travelers" },
+    { key: "traveler_info", label: "Traveler Info", readOnly: true, compute: (r) => {
+        type T = { role: string; name: string; email: string; age: string; country: string; dietary: string };
+        const travelers: T[] = [];
+        travelers.push({
+          role: String(r.booking_type ?? "Lead"),
+          name: String(r.lead_name ?? ""),
+          email: String(r.lead_email ?? ""),
+          age: r.lead_age != null ? String(r.lead_age) : "",
+          country: String(r.lead_country ?? ""),
+          dietary: "",
+        });
+        const add = r.additional_travelers;
+        if (Array.isArray(add)) {
+          for (const t of add as Record<string, unknown>[]) {
+            travelers.push({
+              role: "Traveler",
+              name: String(t?.name ?? ""),
+              email: String(t?.email ?? ""),
+              age: t?.age != null ? String(t.age) : "",
+              country: "",
+              dietary: String(t?.dietary ?? ""),
+            });
+          }
+        }
+        return travelers
+          .filter((t) => t.name || t.email)
+          .map((t) => {
+            const parts = [t.name];
+            if (t.age) parts.push(`age ${t.age}`);
+            if (t.email) parts.push(t.email);
+            if (t.country) parts.push(t.country);
+            if (t.dietary) parts.push(`diet: ${t.dietary}`);
+            return parts.join(" · ");
+          })
+          .join(" | ");
+      } },
     { key: "payment_type", label: "Payment Type", readOnly: true },
     { key: "original_price", label: "Original Price", readOnly: true, type: "number" },
     { key: "discount_code_id", label: "Discount Code", readOnly: true, lookup: "discount" },
