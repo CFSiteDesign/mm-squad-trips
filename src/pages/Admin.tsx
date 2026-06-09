@@ -328,6 +328,7 @@ const lookupCache: {
   discount?: Record<string, string>;
   member?: Record<string, string>;
   groupMembers?: Record<string, string>;
+  groupLeaders?: Record<string, LeaderInfo>;
 } = {};
 
 function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: number }) {
@@ -343,6 +344,7 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
   const [discountMap, setDiscountMap] = useState<Record<string, string>>(() => lookupCache.discount ?? {});
   const [memberMap, setMemberMap] = useState<Record<string, string>>(() => lookupCache.member ?? {});
   const [groupMembersMap, setGroupMembersMap] = useState<Record<string, string>>(() => lookupCache.groupMembers ?? {});
+  const [groupLeadersMap, setGroupLeadersMap] = useState<Record<string, LeaderInfo>>(() => lookupCache.groupLeaders ?? {});
   const [loading, setLoading] = useState(() => !tableCache[table]);
   const [editing, setEditing] = useState<Row | null>(null);
   const [creating, setCreating] = useState(false);
@@ -361,23 +363,36 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
           if (needsMemberLookup) {
             const m: Record<string, string> = { ...(lookupCache.member ?? {}) };
             const gm: Record<string, string> = {};
+            const gl: Record<string, LeaderInfo> = {};
             for (const b of r) {
               if (b.id) m[String(b.id)] = String(b.lead_name ?? String(b.id).slice(0, 8).toUpperCase());
-              // Build group_id -> names list from the leader row (which has additional_travelers)
               const gid = b.group_id ? String(b.group_id) : "";
               const add = b.additional_travelers;
-              if (gid && Array.isArray(add) && add.length > 0) {
-                const lead = b.lead_name ? [String(b.lead_name)] : [];
-                const names = add
-                  .map((t: Record<string, unknown>) => (t?.name ? String(t.name) : ""))
-                  .filter(Boolean);
-                gm[gid] = [...lead, ...names].join(", ");
+              // Leader rows carry additional_travelers — index by group_id
+              if (gid && Array.isArray(add)) {
+                gl[gid] = {
+                  lead_name: b.lead_name as string | undefined,
+                  lead_email: b.lead_email as string | undefined,
+                  lead_phone: b.lead_phone as string | undefined,
+                  lead_country: b.lead_country as string | undefined,
+                  lead_age: b.lead_age as number | string | null | undefined,
+                  additional_travelers: add as Array<Record<string, unknown>>,
+                };
+                if (add.length > 0) {
+                  const lead = b.lead_name ? [String(b.lead_name)] : [];
+                  const names = add
+                    .map((t: Record<string, unknown>) => (t?.name ? String(t.name) : ""))
+                    .filter(Boolean);
+                  gm[gid] = [...lead, ...names].join(", ");
+                }
               }
             }
             lookupCache.member = m;
             lookupCache.groupMembers = gm;
+            lookupCache.groupLeaders = gl;
             setMemberMap(m);
             setGroupMembersMap(gm);
+            setGroupLeadersMap(gl);
           }
         }),
       ];
@@ -415,8 +430,8 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
 
 
   const ctx: LookupCtx = useMemo(
-    () => ({ trip: tripMap, departure: departureMap, discount: discountMap, member: memberMap, groupMembers: groupMembersMap }),
-    [tripMap, departureMap, discountMap, memberMap, groupMembersMap],
+    () => ({ trip: tripMap, departure: departureMap, discount: discountMap, member: memberMap, groupMembers: groupMembersMap, groupLeaders: groupLeadersMap }),
+    [tripMap, departureMap, discountMap, memberMap, groupMembersMap, groupLeadersMap],
   );
 
   useEffect(() => {
