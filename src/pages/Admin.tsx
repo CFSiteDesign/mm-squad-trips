@@ -472,11 +472,22 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
 }
 
 function renderCell(v: unknown, c?: ColumnDef): string {
-  if (v == null) return "";
+  if (v == null || v === "") return "";
   if (c?.format === "ref8" && v) return String(v).slice(0, 8).toUpperCase();
   if (c?.format === "date-only" && v) {
     const s = String(v);
     return s.length >= 10 ? s.slice(0, 10) : s;
+  }
+  if (c?.format === "travelers") {
+    if (!Array.isArray(v)) return "";
+    return v.map((t: Record<string, unknown>) => {
+      const parts: string[] = [];
+      if (t?.name) parts.push(String(t.name));
+      if (t?.age != null && t?.age !== "") parts.push(`age ${t.age}`);
+      if (t?.email) parts.push(String(t.email));
+      if (t?.dietary) parts.push(`diet: ${t.dietary}`);
+      return parts.join(" · ");
+    }).join(" | ");
   }
   if (typeof v === "boolean") return v ? "✓" : "✗";
   if (typeof v === "object") return JSON.stringify(v);
