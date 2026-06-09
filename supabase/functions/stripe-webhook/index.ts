@@ -61,21 +61,25 @@ function parseTraveler(v: string): Record<string, string> {
   return { name, email, age, dietary };
 }
 
-async function nextGroupId(sb: ReturnType<typeof envClient>, tripCode: string): Promise<string> {
-  const prefix = `GRP-${tripCode}-`;
+async function nextSequencedRef(
+  sb: ReturnType<typeof envClient>,
+  column: "group_id" | "booking_ref",
+  prefix: string,
+): Promise<string> {
   const { data } = await sb
     .from("bookings")
-    .select("group_id")
-    .like("group_id", `${prefix}%`);
+    .select(column)
+    .like(column, `${prefix}%`);
   let max = 0;
   for (const r of data ?? []) {
-    const gid = r.group_id as string | null;
-    if (!gid) continue;
-    const n = parseInt(gid.slice(prefix.length), 10);
+    const v = (r as Record<string, unknown>)[column] as string | null;
+    if (!v) continue;
+    const n = parseInt(v.slice(prefix.length), 10);
     if (Number.isFinite(n) && n > max) max = n;
   }
   return `${prefix}${String(max + 1).padStart(3, "0")}`;
 }
+
 
 async function writeBookings(session: Stripe.Checkout.Session) {
   const sb = envClient();
