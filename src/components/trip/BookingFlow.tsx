@@ -56,26 +56,28 @@ export function BookingFlow({ trip }: { trip: Trip }) {
     setTravelers(Array.from({ length: Math.max(0, n - 1) }, () => ({ ...emptyTraveler })));
   }
 
-  async function tryDiscount() {
-    if (!selected || !discountCode.trim()) return;
+  const validatedFor = useRef<{ depId: string; code: string } | null>(null);
+
+  useEffect(() => {
+    const code = discountCode.trim().toUpperCase();
+    if (!selected || !code || discountLoading) return;
+    if (validatedFor.current?.depId === selected.id && validatedFor.current?.code === code) return;
+
     setDiscountLoading(true);
+    validatedFor.current = { depId: selected.id, code };
     setDiscountState(null);
+
     const subtotal = selected.price * groupSize;
-    try {
-      const result = await validateDiscount({
-        code: discountCode.trim().toUpperCase(),
-        tripSlug: trip.slug,
-        amount: subtotal,
-      });
-      if (result.valid) {
-        setDiscountState({ valid: true, msg: `Applied — ${formatPrice(result.discountAmount ?? 0)} off`, amount: result.discountAmount });
-      } else {
-        setDiscountState({ valid: false, msg: result.reason || "Code does not exist" });
-      }
-    } finally {
-      setDiscountLoading(false);
-    }
-  }
+    validateDiscount({ code, tripSlug: trip.slug, amount: subtotal })
+      .then((result) => {
+        if (result.valid) {
+          setDiscountState({ valid: true, msg: `Applied — ${formatPrice(result.discountAmount ?? 0)} off`, amount: result.discountAmount });
+        } else {
+          setDiscountState({ valid: false, msg: result.reason || "Code does not exist" });
+        }
+      })
+      .finally(() => setDiscountLoading(false));
+  }, [selected, discountCode, discountLoading, groupSize, trip.slug]);
 
   async function submit() {
     if (!selected) return toast.error("Pick a departure first");
