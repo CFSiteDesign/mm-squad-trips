@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { RefreshCw } from "lucide-react";
 import { adminLogin, adminApi, getAdminToken, setAdminToken, type AdminTable } from "@/lib/admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import SquadAdmin from "./SquadAdmin";
+import SquadAdmin, { clearSquadCache } from "./SquadAdmin";
 
 type Row = Record<string, unknown>;
 
@@ -90,8 +91,21 @@ const TABS: { id: AdminTable; label: string }[] = [
 export default function Admin() {
   const [authed, setAuthed] = useState<boolean>(() => !!getAdminToken());
   const [view, setView] = useState<"database" | "squad">("database");
+  const [refreshKey, setRefreshKey] = useState(0);
 
   if (!authed) return <Login onSuccess={() => setAuthed(true)} />;
+
+  function handleRefresh() {
+    // Clear all module-level caches
+    for (const k of Object.keys(tableCache) as AdminTable[]) {
+      delete tableCache[k];
+    }
+    lookupCache.trip = undefined;
+    lookupCache.departure = undefined;
+    clearSquadCache();
+    setRefreshKey((k) => k + 1);
+    toast.success("Data refreshed");
+  }
 
   return (
     <main className="min-h-screen bg-mm-paper px-4 py-8 text-mm-black md:px-8">
@@ -114,7 +128,14 @@ export default function Admin() {
           </div>
         </div>
         <div className="flex gap-2">
-          
+          <Button
+            variant="outline"
+            onClick={handleRefresh}
+            className="rounded-none border-[2px] border-mm-black"
+          >
+            <RefreshCw className="mr-2 h-4 w-4" />
+            REFRESH
+          </Button>
           <Button
             variant="outline"
             onClick={() => { setAdminToken(null); setAuthed(false); }}
@@ -127,7 +148,7 @@ export default function Admin() {
 
       {view === "squad" ? (
         <div className="mx-auto max-w-7xl">
-          <SquadAdmin />
+          <SquadAdmin refreshKey={refreshKey} />
         </div>
       ) : (
         <Tabs defaultValue="trips" className="mx-auto max-w-7xl">
@@ -140,7 +161,7 @@ export default function Admin() {
           </TabsList>
           {TABS.map((t) => (
             <TabsContent key={t.id} value={t.id} className="mt-4">
-              <TableEditor table={t.id} />
+              <TableEditor table={t.id} refreshKey={refreshKey} />
             </TabsContent>
           ))}
         </Tabs>
@@ -196,7 +217,7 @@ function Login({ onSuccess }: { onSuccess: () => void }) {
 const tableCache: Partial<Record<AdminTable, Row[]>> = {};
 const lookupCache: { trip?: Record<string, string>; departure?: Record<string, string> } = {};
 
-function TableEditor({ table }: { table: AdminTable }) {
+function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: number }) {
   const cols = COLUMNS[table];
   const visibleCols = useMemo(() => cols.filter((c) => !c.hidden), [cols]);
   const needsTripLookup = useMemo(() => cols.some((c) => c.lookup === "trip"), [cols]);
@@ -257,7 +278,7 @@ function TableEditor({ table }: { table: AdminTable }) {
       reload(true);
     }
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
-  }, [table]);
+  }, [table, refreshKey]);
 
   const filtered = useMemo(() => {
     if (!search) return rows;
