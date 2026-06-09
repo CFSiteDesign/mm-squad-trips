@@ -72,13 +72,18 @@ const COLUMNS: Record<AdminTable, ColumnDef[]> = {
   ],
   bookings: [
     { key: "id", label: "ID", readOnly: true, hidden: true },
-    { key: "booking_ref", label: "Booking Ref", readOnly: true, format: "ref8", compute: (r) => r.id },
+    { key: "booking_ref", label: "Booking Ref", readOnly: true, compute: (r) =>
+        r.group_id ? String(r.group_id) : String(r.id ?? "").slice(0, 8).toUpperCase() },
     { key: "trip_id", label: "Trip", readOnly: true, lookup: "trip" },
     { key: "departure_id", label: "Departure", readOnly: true, lookup: "departure" },
     { key: "booking_type", label: "Booking Type", readOnly: true },
     { key: "group_size", label: "Group Size", readOnly: true },
     { key: "group_id", label: "Group ID", readOnly: true },
-    { key: "group_members", label: "Group Members", readOnly: true, type: "json" },
+    { key: "group_members", label: "Group Members", readOnly: true, compute: (r, ctx) => {
+        const v = r.group_members;
+        if (!Array.isArray(v) || v.length === 0) return "";
+        return v.map((id) => ctx.member[String(id)] ?? String(id).slice(0, 8).toUpperCase()).join(", ");
+      } },
     { key: "friend_names_mentioned", label: "Friend Names", readOnly: true },
     { key: "lead_name", label: "Lead Name", readOnly: true },
     { key: "lead_email", label: "Lead Email", readOnly: true },
@@ -87,10 +92,10 @@ const COLUMNS: Record<AdminTable, ColumnDef[]> = {
     { key: "lead_age", label: "Lead Age", readOnly: true },
     { key: "lead_solo", label: "Solo?", readOnly: true, type: "boolean" },
     { key: "lead_source", label: "Source", readOnly: true },
-    { key: "additional_travelers", label: "Additional Travelers", readOnly: true, type: "json" },
+    { key: "additional_travelers", label: "Additional Travelers", readOnly: true, format: "travelers" },
     { key: "payment_type", label: "Payment Type", readOnly: true },
     { key: "original_price", label: "Original Price", readOnly: true, type: "number" },
-    { key: "discount_code_id", label: "Discount Code", readOnly: true },
+    { key: "discount_code_id", label: "Discount Code", readOnly: true, lookup: "discount" },
     { key: "discount_amount", label: "Discount Amount", readOnly: true, type: "number" },
     { key: "final_price", label: "Final Price", readOnly: true, type: "number" },
     { key: "amount_paid", label: "Amount Paid", readOnly: true, type: "number" },
