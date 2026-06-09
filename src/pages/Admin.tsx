@@ -371,10 +371,11 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
     const lines = [headers.join(",")];
     for (const r of filtered) {
       lines.push(visibleCols.map((c) => {
-        let v = r[c.key];
+        let v: unknown = c.compute ? c.compute(r, ctx) : r[c.key];
         if (c.lookup === "trip" && v) v = tripMap[String(v)] ?? v;
         else if (c.lookup === "departure" && v) v = departureMap[String(v)] ?? v;
-        const s = v == null ? "" : typeof v === "object" ? JSON.stringify(v) : String(v);
+        else if (c.lookup === "discount" && v) v = discountMap[String(v)] ?? v;
+        const s = renderCell(v, c);
         return `"${s.replace(/"/g, '""')}"`;
       }).join(","));
     }
@@ -384,6 +385,7 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
     a.href = url; a.download = `${table}.csv`; a.click();
     URL.revokeObjectURL(url);
   }
+
 
   const canCreate = table !== "bookings";
 
