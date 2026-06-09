@@ -264,6 +264,7 @@ const lookupCache: {
   departure?: Record<string, string>;
   discount?: Record<string, string>;
   member?: Record<string, string>;
+  groupMembers?: Record<string, string>;
 } = {};
 
 function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: number }) {
