@@ -296,11 +296,24 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
           setRows(r);
           if (needsMemberLookup) {
             const m: Record<string, string> = { ...(lookupCache.member ?? {}) };
+            const gm: Record<string, string> = {};
             for (const b of r) {
               if (b.id) m[String(b.id)] = String(b.lead_name ?? String(b.id).slice(0, 8).toUpperCase());
+              // Build group_id -> names list from the leader row (which has additional_travelers)
+              const gid = b.group_id ? String(b.group_id) : "";
+              const add = b.additional_travelers;
+              if (gid && Array.isArray(add) && add.length > 0) {
+                const lead = b.lead_name ? [String(b.lead_name)] : [];
+                const names = add
+                  .map((t: Record<string, unknown>) => (t?.name ? String(t.name) : ""))
+                  .filter(Boolean);
+                gm[gid] = [...lead, ...names].join(", ");
+              }
             }
             lookupCache.member = m;
+            lookupCache.groupMembers = gm;
             setMemberMap(m);
+            setGroupMembersMap(gm);
           }
         }),
       ];
