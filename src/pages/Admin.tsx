@@ -351,8 +351,8 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
 
 
   const ctx: LookupCtx = useMemo(
-    () => ({ trip: tripMap, departure: departureMap, discount: discountMap, member: memberMap }),
-    [tripMap, departureMap, discountMap, memberMap],
+    () => ({ trip: tripMap, departure: departureMap, discount: discountMap, member: memberMap, groupMembers: groupMembersMap }),
+    [tripMap, departureMap, discountMap, memberMap, groupMembersMap],
   );
 
   useEffect(() => {
