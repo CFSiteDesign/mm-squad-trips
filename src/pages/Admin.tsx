@@ -248,16 +248,25 @@ function Login({ onSuccess }: { onSuccess: () => void }) {
 
 // Module-level cache: persists across tab switches (and component unmount/remount)
 const tableCache: Partial<Record<AdminTable, Row[]>> = {};
-const lookupCache: { trip?: Record<string, string>; departure?: Record<string, string> } = {};
+const lookupCache: {
+  trip?: Record<string, string>;
+  departure?: Record<string, string>;
+  discount?: Record<string, string>;
+  member?: Record<string, string>;
+} = {};
 
 function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: number }) {
   const cols = COLUMNS[table];
   const visibleCols = useMemo(() => cols.filter((c) => !c.hidden), [cols]);
   const needsTripLookup = useMemo(() => cols.some((c) => c.lookup === "trip"), [cols]);
   const needsDepartureLookup = useMemo(() => cols.some((c) => c.lookup === "departure"), [cols]);
+  const needsDiscountLookup = useMemo(() => cols.some((c) => c.lookup === "discount"), [cols]);
+  const needsMemberLookup = table === "bookings";
   const [rows, setRows] = useState<Row[]>(() => tableCache[table] ?? []);
   const [tripMap, setTripMap] = useState<Record<string, string>>(() => lookupCache.trip ?? {});
   const [departureMap, setDepartureMap] = useState<Record<string, string>>(() => lookupCache.departure ?? {});
+  const [discountMap, setDiscountMap] = useState<Record<string, string>>(() => lookupCache.discount ?? {});
+  const [memberMap, setMemberMap] = useState<Record<string, string>>(() => lookupCache.member ?? {});
   const [loading, setLoading] = useState(() => !tableCache[table]);
   const [editing, setEditing] = useState<Row | null>(null);
   const [creating, setCreating] = useState(false);
@@ -272,6 +281,14 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
         adminApi.list<Row>(table, { orderBy: "created_at", ascending: false, limit: 1000 }).then((r) => {
           tableCache[table] = r;
           setRows(r);
+          if (needsMemberLookup) {
+            const m: Record<string, string> = { ...(lookupCache.member ?? {}) };
+            for (const b of r) {
+              if (b.id) m[String(b.id)] = String(b.lead_name ?? String(b.id).slice(0, 8).toUpperCase());
+            }
+            lookupCache.member = m;
+            setMemberMap(m);
+          }
         }),
       ];
       if (needsTripLookup && (force || !lookupCache.trip)) {
@@ -290,6 +307,14 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
           setDepartureMap(m);
         }));
       }
+      if (needsDiscountLookup && (force || !lookupCache.discount)) {
+        tasks.push(adminApi.list<Row>("discount_codes", { limit: 1000 }).then((ds) => {
+          const m: Record<string, string> = {};
+          for (const d of ds) m[String(d.id)] = String(d.code ?? d.id);
+          lookupCache.discount = m;
+          setDiscountMap(m);
+        }));
+      }
       await Promise.all(tasks);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to load");
@@ -297,6 +322,7 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
       setLoading(false);
     }
   }
+
 
   useEffect(() => {
     // Show cached data instantly; only fetch if no cache yet for this table
