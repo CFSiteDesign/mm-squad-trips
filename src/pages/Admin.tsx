@@ -192,36 +192,47 @@ function Login({ onSuccess }: { onSuccess: () => void }) {
 }
 
 
+// Module-level cache: persists across tab switches (and component unmount/remount)
+const tableCache: Partial<Record<AdminTable, Row[]>> = {};
+const lookupCache: { trip?: Record<string, string>; departure?: Record<string, string> } = {};
+
 function TableEditor({ table }: { table: AdminTable }) {
   const cols = COLUMNS[table];
   const visibleCols = useMemo(() => cols.filter((c) => !c.hidden), [cols]);
   const needsTripLookup = useMemo(() => cols.some((c) => c.lookup === "trip"), [cols]);
   const needsDepartureLookup = useMemo(() => cols.some((c) => c.lookup === "departure"), [cols]);
-  const [rows, setRows] = useState<Row[]>([]);
-  const [tripMap, setTripMap] = useState<Record<string, string>>({});
-  const [departureMap, setDepartureMap] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState(true);
+  const [rows, setRows] = useState<Row[]>(() => tableCache[table] ?? []);
+  const [tripMap, setTripMap] = useState<Record<string, string>>(() => lookupCache.trip ?? {});
+  const [departureMap, setDepartureMap] = useState<Record<string, string>>(() => lookupCache.departure ?? {});
+  const [loading, setLoading] = useState(() => !tableCache[table]);
   const [editing, setEditing] = useState<Row | null>(null);
   const [creating, setCreating] = useState(false);
   const [search, setSearch] = useState("");
 
-  async function reload() {
-    setLoading(true);
+  async function reload(force = true) {
+    const hasCached = !!tableCache[table];
+    if (!force && hasCached) return;
+    if (!hasCached) setLoading(true);
     try {
       const tasks: Promise<unknown>[] = [
-        adminApi.list<Row>(table, { orderBy: "created_at", ascending: false, limit: 1000 }).then(setRows),
+        adminApi.list<Row>(table, { orderBy: "created_at", ascending: false, limit: 1000 }).then((r) => {
+          tableCache[table] = r;
+          setRows(r);
+        }),
       ];
-      if (needsTripLookup) {
+      if (needsTripLookup && (force || !lookupCache.trip)) {
         tasks.push(adminApi.list<Row>("trips", { limit: 1000 }).then((ts) => {
           const m: Record<string, string> = {};
           for (const t of ts) m[String(t.id)] = String(t.code ?? t.name ?? t.id);
+          lookupCache.trip = m;
           setTripMap(m);
         }));
       }
-      if (needsDepartureLookup) {
+      if (needsDepartureLookup && (force || !lookupCache.departure)) {
         tasks.push(adminApi.list<Row>("departures", { limit: 1000 }).then((ds) => {
           const m: Record<string, string> = {};
           for (const d of ds) m[String(d.id)] = String(d.departure_code ?? d.departure_date ?? d.id);
+          lookupCache.departure = m;
           setDepartureMap(m);
         }));
       }
@@ -233,7 +244,20 @@ function TableEditor({ table }: { table: AdminTable }) {
     }
   }
 
-  useEffect(() => { reload(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [table]);
+  useEffect(() => {
+    // Show cached data instantly; only fetch if no cache yet for this table
+    if (tableCache[table]) {
+      setRows(tableCache[table]!);
+      setLoading(false);
+      // Still fetch lookups if missing (no spinner)
+      if ((needsTripLookup && !lookupCache.trip) || (needsDepartureLookup && !lookupCache.departure)) {
+        reload(false);
+      }
+    } else {
+      reload(true);
+    }
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, [table]);
 
   const filtered = useMemo(() => {
     if (!search) return rows;
