@@ -425,8 +425,21 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
           onChange={(e) => setSearch(e.target.value)}
           className="h-9 max-w-xs rounded-none border-[2px] border-mm-black bg-mm-paper"
         />
-        <span className="text-xs text-mm-black/60">{filtered.length} row{filtered.length === 1 ? "" : "s"}</span>
+        <span className="text-xs text-mm-black/60">
+          {table === "bookings" && groupView
+            ? `${grouped.length} booking${grouped.length === 1 ? "" : "s"} (${filtered.length} traveler${filtered.length === 1 ? "" : "s"})`
+            : `${filtered.length} row${filtered.length === 1 ? "" : "s"}`}
+        </span>
         <div className="ml-auto flex gap-2">
+          {table === "bookings" && (
+            <Button
+              variant="outline"
+              onClick={() => setGroupView((v) => !v)}
+              className="rounded-none border-[2px] border-mm-black"
+            >
+              {groupView ? "FLAT VIEW" : "GROUP VIEW"}
+            </Button>
+          )}
           <Button variant="outline" onClick={exportCsv} className="rounded-none border-[2px] border-mm-black">
             EXPORT CSV
           </Button>
@@ -443,6 +456,7 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
           )}
         </div>
       </div>
+
 
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
