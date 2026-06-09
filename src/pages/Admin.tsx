@@ -217,7 +217,7 @@ function Login({ onSuccess }: { onSuccess: () => void }) {
 const tableCache: Partial<Record<AdminTable, Row[]>> = {};
 const lookupCache: { trip?: Record<string, string>; departure?: Record<string, string> } = {};
 
-function TableEditor({ table }: { table: AdminTable }) {
+function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: number }) {
   const cols = COLUMNS[table];
   const visibleCols = useMemo(() => cols.filter((c) => !c.hidden), [cols]);
   const needsTripLookup = useMemo(() => cols.some((c) => c.lookup === "trip"), [cols]);
