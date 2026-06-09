@@ -91,8 +91,21 @@ const TABS: { id: AdminTable; label: string }[] = [
 export default function Admin() {
   const [authed, setAuthed] = useState<boolean>(() => !!getAdminToken());
   const [view, setView] = useState<"database" | "squad">("database");
+  const [refreshKey, setRefreshKey] = useState(0);
 
   if (!authed) return <Login onSuccess={() => setAuthed(true)} />;
+
+  function handleRefresh() {
+    // Clear all module-level caches
+    for (const k of Object.keys(tableCache) as AdminTable[]) {
+      delete tableCache[k];
+    }
+    lookupCache.trip = undefined;
+    lookupCache.departure = undefined;
+    clearSquadCache();
+    setRefreshKey((k) => k + 1);
+    toast.success("Data refreshed");
+  }
 
   return (
     <main className="min-h-screen bg-mm-paper px-4 py-8 text-mm-black md:px-8">
@@ -115,7 +128,14 @@ export default function Admin() {
           </div>
         </div>
         <div className="flex gap-2">
-          
+          <Button
+            variant="outline"
+            onClick={handleRefresh}
+            className="rounded-none border-[2px] border-mm-black"
+          >
+            <RefreshCw className="mr-2 h-4 w-4" />
+            REFRESH
+          </Button>
           <Button
             variant="outline"
             onClick={() => { setAdminToken(null); setAuthed(false); }}
@@ -128,7 +148,7 @@ export default function Admin() {
 
       {view === "squad" ? (
         <div className="mx-auto max-w-7xl">
-          <SquadAdmin />
+          <SquadAdmin refreshKey={refreshKey} />
         </div>
       ) : (
         <Tabs defaultValue="trips" className="mx-auto max-w-7xl">
@@ -141,7 +161,7 @@ export default function Admin() {
           </TabsList>
           {TABS.map((t) => (
             <TabsContent key={t.id} value={t.id} className="mt-4">
-              <TableEditor table={t.id} />
+              <TableEditor table={t.id} refreshKey={refreshKey} />
             </TabsContent>
           ))}
         </Tabs>
