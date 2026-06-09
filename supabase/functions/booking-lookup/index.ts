@@ -38,11 +38,14 @@ Deno.serve(async (req) => {
         const sb = createClient(url, key);
         const { data } = await sb
           .from("bookings")
-          .select("id")
+          .select("id, booking_ref, group_id")
           .eq("stripe_session_id", sessionId)
           .order("spot_number", { ascending: true })
           .limit(1);
-        if (data && data[0]) bookingRef = String(data[0].id).slice(0, 8).toUpperCase();
+        if (data && data[0]) {
+          const row = data[0] as { id: string; booking_ref: string | null; group_id: string | null };
+          bookingRef = row.booking_ref ?? row.group_id ?? String(row.id).slice(0, 8).toUpperCase();
+        }
       }
     } catch (e) {
       console.warn("booking-lookup db error", e instanceof Error ? e.message : e);
