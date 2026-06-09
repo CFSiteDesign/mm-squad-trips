@@ -195,19 +195,13 @@ const COLUMNS: Record<AdminTable, ColumnDef[]> = {
         return "";
       } },
     { key: "friend_names_mentioned", label: "Friend Names", readOnly: true },
-    { key: "lead_name", label: "Lead Name", readOnly: true },
-    { key: "lead_email", label: "Lead Email", readOnly: true },
-    { key: "lead_phone", label: "Lead Phone", readOnly: true },
-    { key: "lead_country", label: "Lead Country", readOnly: true },
-    { key: "lead_age", label: "Lead Age", readOnly: true },
+    { key: "lead_name", label: "Lead Name", readOnly: true, compute: (r, ctx) => getTravelerForRow(r, ctx)?.name ?? "" },
+    { key: "lead_email", label: "Lead Email", readOnly: true, compute: (r, ctx) => getTravelerForRow(r, ctx)?.email ?? "" },
+    { key: "lead_phone", label: "Lead Phone", readOnly: true, compute: (r, ctx) => getTravelerForRow(r, ctx)?.phone ?? "" },
+    { key: "lead_country", label: "Lead Country", readOnly: true, compute: (r, ctx) => getTravelerForRow(r, ctx)?.country ?? "" },
+    { key: "lead_age", label: "Lead Age", readOnly: true, compute: (r, ctx) => getTravelerForRow(r, ctx)?.age ?? "" },
     { key: "lead_solo", label: "Solo?", readOnly: true, type: "boolean" },
     { key: "lead_source", label: "Source", readOnly: true },
-    { key: "traveler_info", label: "Traveler Info", readOnly: true, compute: (r, ctx) => {
-        const t = getTravelerForRow(r, ctx);
-        if (!t || (!t.name && !t.email)) return "";
-        // Short summary used for export + tooltip; full details rendered via popover in cell
-        return [t.name, t.age && `age ${t.age}`, t.email].filter(Boolean).join(" · ");
-      } },
 
     { key: "payment_type", label: "Payment Type", readOnly: true },
     { key: "original_price", label: "Original Price", readOnly: true, type: "number" },
