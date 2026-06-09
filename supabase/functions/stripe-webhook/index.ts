@@ -182,6 +182,7 @@ async function writeBookings(session: Stripe.Checkout.Session) {
       departure_id: departureId,
       booking_type: "Group member",
       group_id: groupId,
+      booking_ref: bookingRef,
       group_size: groupSize,
       spot_number: i + 1,
       lead_name: m.lead_name ?? null,
