@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AdminWalkthrough } from "@/components/admin/AdminWalkthrough";
 import SquadAdmin, { clearSquadCache } from "./SquadAdmin";
 
 type Row = Record<string, unknown>;
@@ -188,6 +189,7 @@ export default function Admin() {
 
   return (
     <main className="min-h-screen bg-mm-paper px-4 py-8 text-mm-black md:px-8">
+      <AdminWalkthrough />
       <header className="mx-auto mb-6 flex max-w-7xl flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <h1 className="font-display text-3xl md:text-4xl">ADMIN</h1>
