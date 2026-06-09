@@ -128,8 +128,12 @@ async function writeBookings(session: Stripe.Checkout.Session) {
   const perSpotDiscount = discountAmount / groupSize;
 
   const isSolo = groupSize === 1;
-  const tripCode = (m.trip_code || "").toUpperCase();
-  const groupId = isSolo ? null : await nextGroupId(sb, tripCode);
+  const tripCode = (m.trip_code || "XXX").toUpperCase();
+  const groupId = isSolo ? null : await nextSequencedRef(sb, "group_id", `GRP-${tripCode}-`);
+  const bookingRef = isSolo
+    ? await nextSequencedRef(sb, "booking_ref", `SOL-${tripCode}-`)
+    : groupId!;
+
 
   const additionalTravelers: Record<string, string>[] = [];
   for (let i = 1; i < groupSize; i++) {
