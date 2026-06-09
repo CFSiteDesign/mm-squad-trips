@@ -257,7 +257,9 @@ function TableEditor({ table }: { table: AdminTable }) {
     const lines = [headers.join(",")];
     for (const r of filtered) {
       lines.push(visibleCols.map((c) => {
-        const v = r[c.key];
+        let v = r[c.key];
+        if (c.lookup === "trip" && v) v = tripMap[String(v)] ?? v;
+        else if (c.lookup === "departure" && v) v = departureMap[String(v)] ?? v;
         const s = v == null ? "" : typeof v === "object" ? JSON.stringify(v) : String(v);
         return `"${s.replace(/"/g, '""')}"`;
       }).join(","));
