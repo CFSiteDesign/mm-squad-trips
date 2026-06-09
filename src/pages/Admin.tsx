@@ -278,7 +278,7 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
       reload(true);
     }
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
-  }, [table]);
+  }, [table, refreshKey]);
 
   const filtered = useMemo(() => {
     if (!search) return rows;
