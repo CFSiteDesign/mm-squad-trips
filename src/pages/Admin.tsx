@@ -15,6 +15,7 @@ interface ColumnDef {
   type?: "text" | "number" | "boolean" | "date" | "json" | "textarea";
   readOnly?: boolean;
   hidden?: boolean;
+  lookup?: "trip" | "departure";
 }
 
 const COLUMNS: Record<AdminTable, ColumnDef[]> = {
