@@ -39,7 +39,6 @@ export function BookingFlow({ trip }: { trip: Trip }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [lead, setLead] = useState<LeadFields>(emptyLead);
   const [travelers, setTravelers] = useState<TravelerFields[]>([]);
-  const [discountOpen, setDiscountOpen] = useState(false);
   const [discountCode, setDiscountCode] = useState("");
   const [discountState, setDiscountState] = useState<{ valid: boolean; msg: string; amount?: number } | null>(null);
   const [discountLoading, setDiscountLoading] = useState(false);
