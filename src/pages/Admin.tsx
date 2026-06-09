@@ -279,6 +279,7 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
   const [departureMap, setDepartureMap] = useState<Record<string, string>>(() => lookupCache.departure ?? {});
   const [discountMap, setDiscountMap] = useState<Record<string, string>>(() => lookupCache.discount ?? {});
   const [memberMap, setMemberMap] = useState<Record<string, string>>(() => lookupCache.member ?? {});
+  const [groupMembersMap, setGroupMembersMap] = useState<Record<string, string>>(() => lookupCache.groupMembers ?? {});
   const [loading, setLoading] = useState(() => !tableCache[table]);
   const [editing, setEditing] = useState<Row | null>(null);
   const [creating, setCreating] = useState(false);
