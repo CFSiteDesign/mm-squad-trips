@@ -646,7 +646,7 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
                     const showLeadTag = isBookings && inGroup && c.key === "booking_type" && isLead;
                     const showExpandBtn = isBookings && inGroup && isLead && ci === 0;
                     return (
-                      <td key={c.key} className={`${c.key === "traveler_info" ? "max-w-[460px] whitespace-normal break-words" : "max-w-[260px] truncate"} px-3 py-2 align-top`} title={typeof val === "string" ? val : (display || undefined)}>
+                      <td key={c.key} className="max-w-[240px] truncate px-3 py-2 align-top" title={c.key === "traveler_info" ? undefined : (typeof val === "string" ? val : (display || undefined))}>
                         {showExpandBtn ? (
                           <button
                             onClick={() => setExpandedGroups((s) => ({ ...s, [gid]: !s[gid] }))}
@@ -660,7 +660,11 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
                         ) : ci === 0 && inGroup ? (
                           <span className="mr-2 inline-block h-2 w-2 rounded-full bg-mm-pink align-middle" aria-hidden />
                         ) : null}
-                        {display}
+                        {c.key === "traveler_info" && isBookings ? (
+                          <TravelerInfoCell row={r} ctx={ctx} />
+                        ) : (
+                          display
+                        )}
                         {showLeadTag && (
                           <span className="ml-2 rounded-sm bg-mm-pink px-1.5 py-0.5 font-sticker text-[9px] tracking-[0.1em] text-mm-bone">LEAD</span>
                         )}
