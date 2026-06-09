@@ -17,6 +17,8 @@ interface ColumnDef {
   readOnly?: boolean;
   hidden?: boolean;
   lookup?: "trip" | "departure";
+  format?: "date-only" | "ref8";
+  compute?: (row: Row) => unknown;
 }
 
 const COLUMNS: Record<AdminTable, ColumnDef[]> = {
@@ -63,20 +65,39 @@ const COLUMNS: Record<AdminTable, ColumnDef[]> = {
   ],
   bookings: [
     { key: "id", label: "ID", readOnly: true, hidden: true },
-    { key: "created_at", label: "Created", readOnly: true },
-    { key: "group_id", label: "Group ID", readOnly: true },
-    { key: "group_size", label: "Size", readOnly: true },
-    { key: "spot_number", label: "Spot", readOnly: true },
+    { key: "booking_ref", label: "Booking Ref", readOnly: true, format: "ref8", compute: (r) => r.id },
     { key: "trip_id", label: "Trip", readOnly: true, lookup: "trip" },
     { key: "departure_id", label: "Departure", readOnly: true, lookup: "departure" },
+    { key: "booking_type", label: "Booking Type", readOnly: true },
+    { key: "group_size", label: "Group Size", readOnly: true },
+    { key: "group_id", label: "Group ID", readOnly: true },
+    { key: "group_members", label: "Group Members", readOnly: true, type: "json" },
+    { key: "friend_names_mentioned", label: "Friend Names", readOnly: true },
     { key: "lead_name", label: "Lead Name", readOnly: true },
-    { key: "lead_email", label: "Email", readOnly: true },
-    { key: "lead_phone", label: "Phone", readOnly: true },
-    { key: "payment_type", label: "Pay Type", readOnly: true },
-    { key: "amount_paid", label: "Paid", readOnly: true },
-    { key: "final_price", label: "Total", readOnly: true },
+    { key: "lead_email", label: "Lead Email", readOnly: true },
+    { key: "lead_phone", label: "Lead Phone", readOnly: true },
+    { key: "lead_country", label: "Lead Country", readOnly: true },
+    { key: "lead_age", label: "Lead Age", readOnly: true },
+    { key: "lead_solo", label: "Solo?", readOnly: true, type: "boolean" },
+    { key: "lead_source", label: "Source", readOnly: true },
+    { key: "additional_travelers", label: "Additional Travelers", readOnly: true, type: "json" },
+    { key: "payment_type", label: "Payment Type", readOnly: true },
+    { key: "original_price", label: "Original Price", readOnly: true, type: "number" },
+    { key: "discount_code_id", label: "Discount Code", readOnly: true },
+    { key: "discount_amount", label: "Discount Amount", readOnly: true, type: "number" },
+    { key: "final_price", label: "Final Price", readOnly: true, type: "number" },
+    { key: "amount_paid", label: "Amount Paid", readOnly: true, type: "number" },
+    { key: "balance_due", label: "Balance Due", readOnly: true, compute: (r) => {
+      const fp = Number(r.final_price ?? 0); const ap = Number(r.amount_paid ?? 0);
+      return Math.max(0, fp - ap);
+    } },
     { key: "status", label: "Status", readOnly: true },
-    { key: "stripe_session_id", label: "Stripe Session", readOnly: true },
+    { key: "stripe_session_id", label: "Stripe Session ID", readOnly: true },
+    { key: "utm_source", label: "UTM Source", readOnly: true },
+    { key: "utm_medium", label: "UTM Medium", readOnly: true },
+    { key: "utm_campaign", label: "UTM Campaign", readOnly: true },
+    { key: "utm_content", label: "UTM Content", readOnly: true },
+    { key: "created_at", label: "Created", readOnly: true, format: "date-only" },
   ],
 };
 
@@ -366,13 +387,13 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
             ) : filtered.map((r) => (
               <tr key={String(r.id)} className="border-b border-mm-black/10 hover:bg-mm-paper/50">
                 {visibleCols.map((c) => {
-                  const raw = r[c.key];
+                  const raw = c.compute ? c.compute(r) : r[c.key];
                   let val: unknown = raw;
                   if (c.lookup === "trip" && raw) val = tripMap[String(raw)] ?? raw;
                   else if (c.lookup === "departure" && raw) val = departureMap[String(raw)] ?? raw;
                   return (
                     <td key={c.key} className="max-w-[260px] truncate px-3 py-2 align-top">
-                      {renderCell(val)}
+                      {renderCell(val, c)}
                     </td>
                   );
                 })}
@@ -399,8 +420,13 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
   );
 }
 
-function renderCell(v: unknown): string {
+function renderCell(v: unknown, c?: ColumnDef): string {
   if (v == null) return "";
+  if (c?.format === "ref8" && v) return String(v).slice(0, 8).toUpperCase();
+  if (c?.format === "date-only" && v) {
+    const s = String(v);
+    return s.length >= 10 ? s.slice(0, 10) : s;
+  }
   if (typeof v === "boolean") return v ? "✓" : "✗";
   if (typeof v === "object") return JSON.stringify(v);
   return String(v);
