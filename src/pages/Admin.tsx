@@ -6,8 +6,95 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { AdminWalkthrough } from "@/components/admin/AdminWalkthrough";
 import SquadAdmin, { clearSquadCache } from "./SquadAdmin";
+
+type TravelerInfo = {
+  role: string;
+  name: string;
+  email: string;
+  age: string;
+  country: string;
+  dietary: string;
+  phone: string;
+};
+
+function getTravelerForRow(r: Record<string, unknown>, ctx: LookupCtx): TravelerInfo | null {
+  const bt = String(r.booking_type ?? "");
+  const isMember = bt === "Group member";
+  const gid = r.group_id ? String(r.group_id) : "";
+  const spot = Number(r.spot_number ?? 0);
+
+  if (isMember && gid && ctx.groupLeaders[gid]) {
+    const leader = ctx.groupLeaders[gid];
+    const idx = Math.max(0, spot - 2);
+    const add = Array.isArray(leader.additional_travelers) ? leader.additional_travelers[idx] : null;
+    if (add) {
+      return {
+        role: `Traveler ${spot}`,
+        name: String(add.name ?? ""),
+        email: String(add.email ?? ""),
+        age: add.age != null ? String(add.age) : "",
+        country: String(add.country ?? ""),
+        dietary: String(add.dietary ?? ""),
+        phone: String(add.phone ?? ""),
+      };
+    }
+  }
+
+  return {
+    role: bt || "Lead",
+    name: String(r.lead_name ?? ""),
+    email: String(r.lead_email ?? ""),
+    age: r.lead_age != null ? String(r.lead_age) : "",
+    country: String(r.lead_country ?? ""),
+    dietary: "",
+    phone: String(r.lead_phone ?? ""),
+  };
+}
+
+function TravelerInfoCell({ row, ctx }: { row: Record<string, unknown>; ctx: LookupCtx }) {
+  const t = getTravelerForRow(row, ctx);
+  if (!t || (!t.name && !t.email)) return <span className="text-mm-black/40">—</span>;
+  const fields: Array<[string, string]> = [
+    ["Role", t.role],
+    ["Name", t.name],
+    ["Age", t.age],
+    ["Email", t.email],
+    ["Phone", t.phone],
+    ["Country", t.country],
+    ["Dietary", t.dietary],
+  ].filter(([, v]) => !!v) as Array<[string, string]>;
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button className="text-left underline decoration-dotted underline-offset-2 hover:text-mm-pink">
+          <div className="truncate font-medium">{t.name || t.email}</div>
+          <div className="truncate text-[11px] text-mm-black/60">
+            {[t.role, t.age && `age ${t.age}`].filter(Boolean).join(" · ")}
+          </div>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="start"
+        className="w-72 rounded-none border-[2px] border-mm-black bg-mm-bone p-3 text-mm-black shadow-mm-lg"
+      >
+        <div className="mb-2 font-sticker text-[10px] tracking-[0.15em] text-mm-pink">
+          TRAVELER DETAILS
+        </div>
+        <dl className="grid grid-cols-[80px_1fr] gap-x-3 gap-y-1.5 text-xs">
+          {fields.map(([k, v]) => (
+            <div key={k} className="contents">
+              <dt className="text-mm-black/60">{k}</dt>
+              <dd className="break-words font-medium">{v}</dd>
+            </div>
+          ))}
+        </dl>
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 type Row = Record<string, unknown>;
 
@@ -116,54 +203,10 @@ const COLUMNS: Record<AdminTable, ColumnDef[]> = {
     { key: "lead_solo", label: "Solo?", readOnly: true, type: "boolean" },
     { key: "lead_source", label: "Source", readOnly: true },
     { key: "traveler_info", label: "Traveler Info", readOnly: true, compute: (r, ctx) => {
-        type T = { role: string; name: string; email: string; age: string; country: string; dietary: string; phone: string };
-        const bt = String(r.booking_type ?? "");
-        const isMember = bt === "Group member";
-        const gid = r.group_id ? String(r.group_id) : "";
-        const spot = Number(r.spot_number ?? 0);
-        let t: T | null = null;
-
-        if (isMember && gid && ctx.groupLeaders[gid]) {
-          // Member row: pull individual details from leader's additional_travelers[spot-2]
-          const leader = ctx.groupLeaders[gid];
-          const idx = Math.max(0, spot - 2);
-          const add = Array.isArray(leader.additional_travelers) ? leader.additional_travelers[idx] : null;
-          if (add) {
-            t = {
-              role: `Traveler ${spot}`,
-              name: String(add.name ?? ""),
-              email: String(add.email ?? ""),
-              age: add.age != null ? String(add.age) : "",
-              country: String(add.country ?? ""),
-              dietary: String(add.dietary ?? ""),
-              phone: String(add.phone ?? ""),
-            };
-          }
-        }
-
-        if (!t) {
-          // Solo / Group lead / fallback: use this row's own lead_* fields
-          t = {
-            role: bt || "Lead",
-            name: String(r.lead_name ?? ""),
-            email: String(r.lead_email ?? ""),
-            age: r.lead_age != null ? String(r.lead_age) : "",
-            country: String(r.lead_country ?? ""),
-            dietary: "",
-            phone: String(r.lead_phone ?? ""),
-          };
-        }
-
-        if (!t.name && !t.email) return "";
-        const parts: string[] = [];
-        parts.push(`[${t.role}]`);
-        if (t.name) parts.push(t.name);
-        if (t.age) parts.push(`age ${t.age}`);
-        if (t.email) parts.push(t.email);
-        if (t.phone) parts.push(t.phone);
-        if (t.country) parts.push(t.country);
-        if (t.dietary) parts.push(`diet: ${t.dietary}`);
-        return parts.join(" · ");
+        const t = getTravelerForRow(r, ctx);
+        if (!t || (!t.name && !t.email)) return "";
+        // Short summary used for export + tooltip; full details rendered via popover in cell
+        return [t.name, t.age && `age ${t.age}`, t.email].filter(Boolean).join(" · ");
       } },
 
     { key: "payment_type", label: "Payment Type", readOnly: true },
@@ -603,7 +646,7 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
                     const showLeadTag = isBookings && inGroup && c.key === "booking_type" && isLead;
                     const showExpandBtn = isBookings && inGroup && isLead && ci === 0;
                     return (
-                      <td key={c.key} className={`${c.key === "traveler_info" ? "max-w-[460px] whitespace-normal break-words" : "max-w-[260px] truncate"} px-3 py-2 align-top`} title={typeof val === "string" ? val : (display || undefined)}>
+                      <td key={c.key} className="max-w-[240px] truncate px-3 py-2 align-top" title={c.key === "traveler_info" ? undefined : (typeof val === "string" ? val : (display || undefined))}>
                         {showExpandBtn ? (
                           <button
                             onClick={() => setExpandedGroups((s) => ({ ...s, [gid]: !s[gid] }))}
@@ -617,7 +660,11 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
                         ) : ci === 0 && inGroup ? (
                           <span className="mr-2 inline-block h-2 w-2 rounded-full bg-mm-pink align-middle" aria-hidden />
                         ) : null}
-                        {display}
+                        {c.key === "traveler_info" && isBookings ? (
+                          <TravelerInfoCell row={r} ctx={ctx} />
+                        ) : (
+                          display
+                        )}
                         {showLeadTag && (
                           <span className="ml-2 rounded-sm bg-mm-pink px-1.5 py-0.5 font-sticker text-[9px] tracking-[0.1em] text-mm-bone">LEAD</span>
                         )}
