@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Copy } from "lucide-react";
 import { adminLogin, adminApi, getAdminToken, setAdminToken, type AdminTable } from "@/lib/admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -613,7 +613,18 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
                         ) : ci === 0 && inGroup ? (
                           <span className="mr-2 inline-block h-2 w-2 rounded-full bg-mm-pink align-middle" aria-hidden />
                         ) : null}
-                        {display}
+                        {c.key === "stripe_session_id" && display ? (
+                          <span className="inline-flex items-center gap-1">
+                            <button
+                              onClick={() => { navigator.clipboard.writeText(display); toast.success("Copied to clipboard"); }}
+                              className="inline-flex items-center text-mm-black/60 hover:text-mm-pink"
+                              title="Copy session ID"
+                            >
+                              <Copy size={14} />
+                            </button>
+                            {display}
+                          </span>
+                        ) : display}
                         {showLeadTag && (
                           <span className="ml-2 rounded-sm bg-mm-pink px-1.5 py-0.5 font-sticker text-[9px] tracking-[0.1em] text-mm-bone">LEAD</span>
                         )}
