@@ -61,21 +61,25 @@ function parseTraveler(v: string): Record<string, string> {
   return { name, email, age, dietary };
 }
 
-async function nextGroupId(sb: ReturnType<typeof envClient>, tripCode: string): Promise<string> {
-  const prefix = `GRP-${tripCode}-`;
+async function nextSequencedRef(
+  sb: ReturnType<typeof envClient>,
+  column: "group_id" | "booking_ref",
+  prefix: string,
+): Promise<string> {
   const { data } = await sb
     .from("bookings")
-    .select("group_id")
-    .like("group_id", `${prefix}%`);
+    .select(column)
+    .like(column, `${prefix}%`);
   let max = 0;
   for (const r of data ?? []) {
-    const gid = r.group_id as string | null;
-    if (!gid) continue;
-    const n = parseInt(gid.slice(prefix.length), 10);
+    const v = (r as Record<string, unknown>)[column] as string | null;
+    if (!v) continue;
+    const n = parseInt(v.slice(prefix.length), 10);
     if (Number.isFinite(n) && n > max) max = n;
   }
   return `${prefix}${String(max + 1).padStart(3, "0")}`;
 }
+
 
 async function writeBookings(session: Stripe.Checkout.Session) {
   const sb = envClient();
@@ -124,8 +128,12 @@ async function writeBookings(session: Stripe.Checkout.Session) {
   const perSpotDiscount = discountAmount / groupSize;
 
   const isSolo = groupSize === 1;
-  const tripCode = (m.trip_code || "").toUpperCase();
-  const groupId = isSolo ? null : await nextGroupId(sb, tripCode);
+  const tripCode = (m.trip_code || "XXX").toUpperCase();
+  const groupId = isSolo ? null : await nextSequencedRef(sb, "group_id", `GRP-${tripCode}-`);
+  const bookingRef = isSolo
+    ? await nextSequencedRef(sb, "booking_ref", `SOL-${tripCode}-`)
+    : groupId!;
+
 
   const additionalTravelers: Record<string, string>[] = [];
   for (let i = 1; i < groupSize; i++) {
@@ -142,6 +150,7 @@ async function writeBookings(session: Stripe.Checkout.Session) {
     departure_id: departureId,
     booking_type: isSolo ? "Solo" : "Group lead",
     group_id: groupId,
+    booking_ref: bookingRef,
     group_size: groupSize,
     spot_number: 1,
     friend_names_mentioned: m.friends_mentioned || null,
@@ -173,6 +182,7 @@ async function writeBookings(session: Stripe.Checkout.Session) {
       departure_id: departureId,
       booking_type: "Group member",
       group_id: groupId,
+      booking_ref: bookingRef,
       group_size: groupSize,
       spot_number: i + 1,
       lead_name: m.lead_name ?? null,

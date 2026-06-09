@@ -73,7 +73,7 @@ const COLUMNS: Record<AdminTable, ColumnDef[]> = {
   bookings: [
     { key: "id", label: "ID", readOnly: true, hidden: true },
     { key: "booking_ref", label: "Booking Ref", readOnly: true, compute: (r) =>
-        r.group_id ? String(r.group_id) : String(r.id ?? "").slice(0, 8).toUpperCase() },
+        r.booking_ref ?? r.group_id ?? String(r.id ?? "").slice(0, 8).toUpperCase() },
     { key: "trip_id", label: "Trip", readOnly: true, lookup: "trip" },
     { key: "departure_id", label: "Departure", readOnly: true, lookup: "departure" },
     { key: "booking_type", label: "Booking Type", readOnly: true },
