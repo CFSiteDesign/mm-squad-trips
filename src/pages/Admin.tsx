@@ -6,8 +6,95 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { AdminWalkthrough } from "@/components/admin/AdminWalkthrough";
 import SquadAdmin, { clearSquadCache } from "./SquadAdmin";
+
+type TravelerInfo = {
+  role: string;
+  name: string;
+  email: string;
+  age: string;
+  country: string;
+  dietary: string;
+  phone: string;
+};
+
+function getTravelerForRow(r: Record<string, unknown>, ctx: LookupCtx): TravelerInfo | null {
+  const bt = String(r.booking_type ?? "");
+  const isMember = bt === "Group member";
+  const gid = r.group_id ? String(r.group_id) : "";
+  const spot = Number(r.spot_number ?? 0);
+
+  if (isMember && gid && ctx.groupLeaders[gid]) {
+    const leader = ctx.groupLeaders[gid];
+    const idx = Math.max(0, spot - 2);
+    const add = Array.isArray(leader.additional_travelers) ? leader.additional_travelers[idx] : null;
+    if (add) {
+      return {
+        role: `Traveler ${spot}`,
+        name: String(add.name ?? ""),
+        email: String(add.email ?? ""),
+        age: add.age != null ? String(add.age) : "",
+        country: String(add.country ?? ""),
+        dietary: String(add.dietary ?? ""),
+        phone: String(add.phone ?? ""),
+      };
+    }
+  }
+
+  return {
+    role: bt || "Lead",
+    name: String(r.lead_name ?? ""),
+    email: String(r.lead_email ?? ""),
+    age: r.lead_age != null ? String(r.lead_age) : "",
+    country: String(r.lead_country ?? ""),
+    dietary: "",
+    phone: String(r.lead_phone ?? ""),
+  };
+}
+
+function TravelerInfoCell({ row, ctx }: { row: Record<string, unknown>; ctx: LookupCtx }) {
+  const t = getTravelerForRow(row, ctx);
+  if (!t || (!t.name && !t.email)) return <span className="text-mm-black/40">—</span>;
+  const fields: Array<[string, string]> = [
+    ["Role", t.role],
+    ["Name", t.name],
+    ["Age", t.age],
+    ["Email", t.email],
+    ["Phone", t.phone],
+    ["Country", t.country],
+    ["Dietary", t.dietary],
+  ].filter(([, v]) => !!v) as Array<[string, string]>;
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button className="text-left underline decoration-dotted underline-offset-2 hover:text-mm-pink">
+          <div className="truncate font-medium">{t.name || t.email}</div>
+          <div className="truncate text-[11px] text-mm-black/60">
+            {[t.role, t.age && `age ${t.age}`].filter(Boolean).join(" · ")}
+          </div>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="start"
+        className="w-72 rounded-none border-[2px] border-mm-black bg-mm-bone p-3 text-mm-black shadow-mm-lg"
+      >
+        <div className="mb-2 font-sticker text-[10px] tracking-[0.15em] text-mm-pink">
+          TRAVELER DETAILS
+        </div>
+        <dl className="grid grid-cols-[80px_1fr] gap-x-3 gap-y-1.5 text-xs">
+          {fields.map(([k, v]) => (
+            <div key={k} className="contents">
+              <dt className="text-mm-black/60">{k}</dt>
+              <dd className="break-words font-medium">{v}</dd>
+            </div>
+          ))}
+        </dl>
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 type Row = Record<string, unknown>;
 
