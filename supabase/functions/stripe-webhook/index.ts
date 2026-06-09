@@ -150,6 +150,7 @@ async function writeBookings(session: Stripe.Checkout.Session) {
     departure_id: departureId,
     booking_type: isSolo ? "Solo" : "Group lead",
     group_id: groupId,
+    booking_ref: bookingRef,
     group_size: groupSize,
     spot_number: 1,
     friend_names_mentioned: m.friends_mentioned || null,
