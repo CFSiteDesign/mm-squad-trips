@@ -318,11 +318,17 @@ function TableEditor({ table }: { table: AdminTable }) {
               <tr><td colSpan={visibleCols.length + 1} className="p-6 text-center text-mm-black/60">No rows.</td></tr>
             ) : filtered.map((r) => (
               <tr key={String(r.id)} className="border-b border-mm-black/10 hover:bg-mm-paper/50">
-                {visibleCols.map((c) => (
-                  <td key={c.key} className="max-w-[260px] truncate px-3 py-2 align-top">
-                    {renderCell(r[c.key])}
-                  </td>
-                ))}
+                {visibleCols.map((c) => {
+                  const raw = r[c.key];
+                  let val: unknown = raw;
+                  if (c.lookup === "trip" && raw) val = tripMap[String(raw)] ?? raw;
+                  else if (c.lookup === "departure" && raw) val = departureMap[String(raw)] ?? raw;
+                  return (
+                    <td key={c.key} className="max-w-[260px] truncate px-3 py-2 align-top">
+                      {renderCell(val)}
+                    </td>
+                  );
+                })}
                 <td className="px-3 py-2 text-right">
                   <button onClick={() => setEditing(r)} className="mr-3 underline">edit</button>
                   <button onClick={() => handleDelete(String(r.id))} className="text-red-600 underline">del</button>
