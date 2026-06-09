@@ -311,7 +311,7 @@ function TableEditor({ table }: { table: AdminTable }) {
           <Button variant="outline" onClick={exportCsv} className="rounded-none border-[2px] border-mm-black">
             EXPORT CSV
           </Button>
-          <Button variant="outline" onClick={reload} className="rounded-none border-[2px] border-mm-black">
+          <Button variant="outline" onClick={() => reload(true)} className="rounded-none border-[2px] border-mm-black">
             REFRESH
           </Button>
           {canCreate && (
