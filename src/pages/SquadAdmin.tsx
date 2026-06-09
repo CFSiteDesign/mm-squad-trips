@@ -5,6 +5,9 @@ import { Sticker } from "@/components/brand/Sticker";
 import { getSquadAdmin, type SquadAdminData } from "@/lib/squad";
 import { getAdminToken } from "@/lib/admin";
 
+// Module-level cache persists across view switches (mount/unmount)
+let squadCache: SquadAdminData | null = null;
+
 export default function SquadAdmin() {
   const [password, setPassword] = useState("");
   const [data, setData] = useState<SquadAdminData | null>(null);
