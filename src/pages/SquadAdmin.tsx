@@ -5,9 +5,12 @@ import { Sticker } from "@/components/brand/Sticker";
 import { getSquadAdmin, type SquadAdminData } from "@/lib/squad";
 import { getAdminToken } from "@/lib/admin";
 
+// Module-level cache persists across view switches (mount/unmount)
+let squadCache: SquadAdminData | null = null;
+
 export default function SquadAdmin() {
   const [password, setPassword] = useState("");
-  const [data, setData] = useState<SquadAdminData | null>(null);
+  const [data, setData] = useState<SquadAdminData | null>(squadCache);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -15,13 +18,16 @@ export default function SquadAdmin() {
   const adminToken = getAdminToken();
 
   useEffect(() => {
-    if (!adminToken || data) return;
+    if (!adminToken || squadCache) return;
     let cancelled = false;
     (async () => {
       setLoading(true);
       try {
         const d = await getSquadAdmin({ token: adminToken });
-        if (!cancelled) setData(d);
+        if (!cancelled) {
+          squadCache = d;
+          setData(d);
+        }
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : "Could not load");
       } finally {
@@ -29,7 +35,7 @@ export default function SquadAdmin() {
       }
     })();
     return () => { cancelled = true; };
-  }, [adminToken, data]);
+  }, [adminToken]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
