@@ -22,13 +22,24 @@ interface ColumnDef {
   compute?: (row: Row, ctx: LookupCtx) => unknown;
 }
 
+type LeaderInfo = {
+  lead_name?: string;
+  lead_email?: string;
+  lead_phone?: string;
+  lead_country?: string;
+  lead_age?: number | string | null;
+  additional_travelers?: Array<Record<string, unknown>> | null;
+};
+
 type LookupCtx = {
   trip: Record<string, string>;
   departure: Record<string, string>;
   discount: Record<string, string>;
   member: Record<string, string>;
   groupMembers: Record<string, string>; // group_id -> "Alice, Bob, Carol"
+  groupLeaders: Record<string, LeaderInfo>; // group_id -> leader row data
 };
+
 
 
 const COLUMNS: Record<AdminTable, ColumnDef[]> = {
@@ -104,42 +115,57 @@ const COLUMNS: Record<AdminTable, ColumnDef[]> = {
     { key: "lead_age", label: "Lead Age", readOnly: true },
     { key: "lead_solo", label: "Solo?", readOnly: true, type: "boolean" },
     { key: "lead_source", label: "Source", readOnly: true },
-    { key: "traveler_info", label: "Traveler Info", readOnly: true, compute: (r) => {
-        type T = { role: string; name: string; email: string; age: string; country: string; dietary: string };
-        const travelers: T[] = [];
-        travelers.push({
-          role: String(r.booking_type ?? "Lead"),
-          name: String(r.lead_name ?? ""),
-          email: String(r.lead_email ?? ""),
-          age: r.lead_age != null ? String(r.lead_age) : "",
-          country: String(r.lead_country ?? ""),
-          dietary: "",
-        });
-        const add = r.additional_travelers;
-        if (Array.isArray(add)) {
-          for (const t of add as Record<string, unknown>[]) {
-            travelers.push({
-              role: "Traveler",
-              name: String(t?.name ?? ""),
-              email: String(t?.email ?? ""),
-              age: t?.age != null ? String(t.age) : "",
-              country: "",
-              dietary: String(t?.dietary ?? ""),
-            });
+    { key: "traveler_info", label: "Traveler Info", readOnly: true, compute: (r, ctx) => {
+        type T = { role: string; name: string; email: string; age: string; country: string; dietary: string; phone: string };
+        const bt = String(r.booking_type ?? "");
+        const isMember = bt === "Group member";
+        const gid = r.group_id ? String(r.group_id) : "";
+        const spot = Number(r.spot_number ?? 0);
+        let t: T | null = null;
+
+        if (isMember && gid && ctx.groupLeaders[gid]) {
+          // Member row: pull individual details from leader's additional_travelers[spot-2]
+          const leader = ctx.groupLeaders[gid];
+          const idx = Math.max(0, spot - 2);
+          const add = Array.isArray(leader.additional_travelers) ? leader.additional_travelers[idx] : null;
+          if (add) {
+            t = {
+              role: `Traveler ${spot}`,
+              name: String(add.name ?? ""),
+              email: String(add.email ?? ""),
+              age: add.age != null ? String(add.age) : "",
+              country: String(add.country ?? ""),
+              dietary: String(add.dietary ?? ""),
+              phone: String(add.phone ?? ""),
+            };
           }
         }
-        return travelers
-          .filter((t) => t.name || t.email)
-          .map((t) => {
-            const parts = [t.name];
-            if (t.age) parts.push(`age ${t.age}`);
-            if (t.email) parts.push(t.email);
-            if (t.country) parts.push(t.country);
-            if (t.dietary) parts.push(`diet: ${t.dietary}`);
-            return parts.join(" · ");
-          })
-          .join(" | ");
+
+        if (!t) {
+          // Solo / Group lead / fallback: use this row's own lead_* fields
+          t = {
+            role: bt || "Lead",
+            name: String(r.lead_name ?? ""),
+            email: String(r.lead_email ?? ""),
+            age: r.lead_age != null ? String(r.lead_age) : "",
+            country: String(r.lead_country ?? ""),
+            dietary: "",
+            phone: String(r.lead_phone ?? ""),
+          };
+        }
+
+        if (!t.name && !t.email) return "";
+        const parts: string[] = [];
+        parts.push(`[${t.role}]`);
+        if (t.name) parts.push(t.name);
+        if (t.age) parts.push(`age ${t.age}`);
+        if (t.email) parts.push(t.email);
+        if (t.phone) parts.push(t.phone);
+        if (t.country) parts.push(t.country);
+        if (t.dietary) parts.push(`diet: ${t.dietary}`);
+        return parts.join(" · ");
       } },
+
     { key: "payment_type", label: "Payment Type", readOnly: true },
     { key: "original_price", label: "Original Price", readOnly: true, type: "number" },
     { key: "discount_code_id", label: "Discount Code", readOnly: true, lookup: "discount" },
