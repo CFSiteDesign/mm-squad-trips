@@ -459,6 +459,128 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
 
 
       <div className="overflow-x-auto">
+        {table === "bookings" && groupView ? (
+          <table className="w-full text-sm">
+            <thead className="bg-mm-paper">
+              <tr>
+                <th className="w-8 border-b border-mm-black/30 px-2 py-2" />
+                <th className="border-b border-mm-black/30 px-3 py-2 text-left font-sticker text-[10px] tracking-[0.1em]">BOOKING REF</th>
+                <th className="border-b border-mm-black/30 px-3 py-2 text-left font-sticker text-[10px] tracking-[0.1em]">TRIP</th>
+                <th className="border-b border-mm-black/30 px-3 py-2 text-left font-sticker text-[10px] tracking-[0.1em]">DEPARTURE</th>
+                <th className="border-b border-mm-black/30 px-3 py-2 text-left font-sticker text-[10px] tracking-[0.1em]">LEADER</th>
+                <th className="border-b border-mm-black/30 px-3 py-2 text-left font-sticker text-[10px] tracking-[0.1em]">CONTACT</th>
+                <th className="border-b border-mm-black/30 px-3 py-2 text-left font-sticker text-[10px] tracking-[0.1em]">TRAVELERS</th>
+                <th className="border-b border-mm-black/30 px-3 py-2 text-right font-sticker text-[10px] tracking-[0.1em]">PAID / TOTAL</th>
+                <th className="border-b border-mm-black/30 px-3 py-2 text-left font-sticker text-[10px] tracking-[0.1em]">STATUS</th>
+                <th className="border-b border-mm-black/30 px-3 py-2 text-left font-sticker text-[10px] tracking-[0.1em]">CREATED</th>
+                <th className="border-b border-mm-black/30 px-3 py-2" />
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr><td colSpan={11} className="p-6 text-center text-mm-black/60">Loading…</td></tr>
+              ) : grouped.length === 0 ? (
+                <tr><td colSpan={11} className="p-6 text-center text-mm-black/60">No bookings.</td></tr>
+              ) : grouped.flatMap((g) => {
+                const isOpen = !!expanded[g.key];
+                const allRows = [g.leader, ...g.members];
+                const ref = g.isGroup ? g.key : String(g.leader.id ?? "").slice(0, 8).toUpperCase();
+                const trip = tripMap[String(g.leader.trip_id ?? "")] ?? "";
+                const dep = departureMap[String(g.leader.departure_id ?? "")] ?? "";
+                const totalPaid = allRows.reduce((sum, r) => sum + Number(r.amount_paid ?? 0), 0);
+                const totalFinal = allRows.reduce((sum, r) => sum + Number(r.final_price ?? 0), 0);
+                const travelerCount = allRows.length;
+                const created = String(g.leader.created_at ?? "").slice(0, 10);
+                const rows: React.ReactNode[] = [
+                  <tr key={g.key} className="border-b border-mm-black/10 hover:bg-mm-paper/50">
+                    <td className="px-2 py-2 align-top">
+                      {g.isGroup ? (
+                        <button
+                          onClick={() => setExpanded((s) => ({ ...s, [g.key]: !isOpen }))}
+                          className="font-mono text-sm leading-none"
+                          aria-label={isOpen ? "Collapse" : "Expand"}
+                        >
+                          {isOpen ? "▼" : "▶"}
+                        </button>
+                      ) : null}
+                    </td>
+                    <td className="px-3 py-2 align-top font-mono text-xs">{ref}</td>
+                    <td className="max-w-[160px] truncate px-3 py-2 align-top" title={trip}>{trip}</td>
+                    <td className="max-w-[140px] truncate px-3 py-2 align-top" title={dep}>{dep}</td>
+                    <td className="px-3 py-2 align-top">
+                      <div className="font-medium">{String(g.leader.lead_name ?? "")}</div>
+                      {g.isGroup && (
+                        <div className="text-[10px] uppercase tracking-wider text-mm-black/50">Group lead</div>
+                      )}
+                    </td>
+                    <td className="max-w-[200px] truncate px-3 py-2 align-top text-xs" title={`${g.leader.lead_email ?? ""} · ${g.leader.lead_phone ?? ""}`}>
+                      <div>{String(g.leader.lead_email ?? "")}</div>
+                      <div className="text-mm-black/60">{String(g.leader.lead_phone ?? "")}</div>
+                    </td>
+                    <td className="px-3 py-2 align-top">
+                      {g.isGroup ? `${travelerCount} travelers` : "Solo"}
+                    </td>
+                    <td className="px-3 py-2 text-right align-top font-mono text-xs">
+                      ${totalPaid.toFixed(2)}
+                      <div className="text-mm-black/50">of ${totalFinal.toFixed(2)}</div>
+                    </td>
+                    <td className="px-3 py-2 align-top">{String(g.leader.status ?? "")}</td>
+                    <td className="px-3 py-2 align-top text-xs">{created}</td>
+                    <td className="px-3 py-2 text-right align-top">
+                      <button onClick={() => setEditing(g.leader)} className="mr-3 underline">edit</button>
+                      <button onClick={() => handleDelete(String(g.leader.id))} className="text-red-600 underline">del</button>
+                    </td>
+                  </tr>,
+                ];
+                if (g.isGroup && isOpen) {
+                  rows.push(
+                    <tr key={`${g.key}-members`} className="border-b border-mm-black/10 bg-mm-paper/40">
+                      <td />
+                      <td colSpan={10} className="px-3 py-3">
+                        <div className="mb-2 font-sticker text-[10px] tracking-[0.15em] text-mm-black/70">GROUP MEMBERS ({allRows.length})</div>
+                        <table className="w-full text-xs">
+                          <thead>
+                            <tr className="text-left text-mm-black/60">
+                              <th className="py-1 pr-3">#</th>
+                              <th className="py-1 pr-3">Role</th>
+                              <th className="py-1 pr-3">Name</th>
+                              <th className="py-1 pr-3">Email</th>
+                              <th className="py-1 pr-3">Phone</th>
+                              <th className="py-1 pr-3">Age</th>
+                              <th className="py-1 pr-3">Country</th>
+                              <th className="py-1 pr-3 text-right">Paid</th>
+                              <th className="py-1 pr-3">Status</th>
+                              <th className="py-1 pr-3" />
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {allRows.map((m, idx) => (
+                              <tr key={String(m.id)} className="border-t border-mm-black/10">
+                                <td className="py-1 pr-3 font-mono">{idx + 1}</td>
+                                <td className="py-1 pr-3">{String(m.booking_type ?? "")}</td>
+                                <td className="py-1 pr-3 font-medium">{String(m.lead_name ?? "")}</td>
+                                <td className="py-1 pr-3">{String(m.lead_email ?? "")}</td>
+                                <td className="py-1 pr-3">{String(m.lead_phone ?? "")}</td>
+                                <td className="py-1 pr-3">{m.lead_age != null ? String(m.lead_age) : ""}</td>
+                                <td className="py-1 pr-3">{String(m.lead_country ?? "")}</td>
+                                <td className="py-1 pr-3 text-right font-mono">${Number(m.amount_paid ?? 0).toFixed(2)}</td>
+                                <td className="py-1 pr-3">{String(m.status ?? "")}</td>
+                                <td className="py-1 pr-3 text-right">
+                                  <button onClick={() => setEditing(m)} className="underline">edit</button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </td>
+                    </tr>,
+                  );
+                }
+                return rows;
+              })}
+            </tbody>
+          </table>
+        ) : (
         <table className="w-full text-sm">
           <thead className="bg-mm-paper">
             <tr>
@@ -497,7 +619,9 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
             ))}
           </tbody>
         </table>
+        )}
       </div>
+
 
       {(editing || creating) && (
         <RowEditor
