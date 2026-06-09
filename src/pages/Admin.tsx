@@ -17,6 +17,8 @@ interface ColumnDef {
   readOnly?: boolean;
   hidden?: boolean;
   lookup?: "trip" | "departure";
+  format?: "date-only" | "ref8";
+  compute?: (row: Row) => unknown;
 }
 
 const COLUMNS: Record<AdminTable, ColumnDef[]> = {
