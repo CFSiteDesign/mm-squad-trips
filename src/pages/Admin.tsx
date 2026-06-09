@@ -437,12 +437,13 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
             ) : filtered.map((r) => (
               <tr key={String(r.id)} className="border-b border-mm-black/10 hover:bg-mm-paper/50">
                 {visibleCols.map((c) => {
-                  const raw = c.compute ? c.compute(r) : r[c.key];
+                  const raw = c.compute ? c.compute(r, ctx) : r[c.key];
                   let val: unknown = raw;
                   if (c.lookup === "trip" && raw) val = tripMap[String(raw)] ?? raw;
                   else if (c.lookup === "departure" && raw) val = departureMap[String(raw)] ?? raw;
+                  else if (c.lookup === "discount" && raw) val = discountMap[String(raw)] ?? raw;
                   return (
-                    <td key={c.key} className="max-w-[260px] truncate px-3 py-2 align-top">
+                    <td key={c.key} className="max-w-[260px] truncate px-3 py-2 align-top" title={typeof val === "string" ? val : undefined}>
                       {renderCell(val, c)}
                     </td>
                   );
