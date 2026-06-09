@@ -15,6 +15,7 @@ interface ColumnDef {
   type?: "text" | "number" | "boolean" | "date" | "json" | "textarea";
   readOnly?: boolean;
   hidden?: boolean;
+  lookup?: "trip" | "departure";
 }
 
 const COLUMNS: Record<AdminTable, ColumnDef[]> = {
@@ -43,7 +44,7 @@ const COLUMNS: Record<AdminTable, ColumnDef[]> = {
   ],
   pricing_calendar: [
     { key: "id", label: "ID", readOnly: true, hidden: true },
-    { key: "trip_id", label: "Trip ID", type: "text" },
+    { key: "trip_id", label: "Trip", type: "text", lookup: "trip" },
     { key: "month", label: "Month (YYYY-MM)", type: "text" },
     { key: "price", label: "Price", type: "number" },
     { key: "strikethrough", label: "Strikethrough", type: "number" },
@@ -65,8 +66,8 @@ const COLUMNS: Record<AdminTable, ColumnDef[]> = {
     { key: "group_id", label: "Group ID", readOnly: true },
     { key: "group_size", label: "Size", readOnly: true },
     { key: "spot_number", label: "Spot", readOnly: true },
-    { key: "trip_id", label: "Trip", readOnly: true },
-    { key: "departure_id", label: "Departure", readOnly: true },
+    { key: "trip_id", label: "Trip", readOnly: true, lookup: "trip" },
+    { key: "departure_id", label: "Departure", readOnly: true, lookup: "departure" },
     { key: "lead_name", label: "Lead Name", readOnly: true },
     { key: "lead_email", label: "Email", readOnly: true },
     { key: "lead_phone", label: "Phone", readOnly: true },
@@ -194,7 +195,11 @@ function Login({ onSuccess }: { onSuccess: () => void }) {
 function TableEditor({ table }: { table: AdminTable }) {
   const cols = COLUMNS[table];
   const visibleCols = useMemo(() => cols.filter((c) => !c.hidden), [cols]);
+  const needsTripLookup = useMemo(() => cols.some((c) => c.lookup === "trip"), [cols]);
+  const needsDepartureLookup = useMemo(() => cols.some((c) => c.lookup === "departure"), [cols]);
   const [rows, setRows] = useState<Row[]>([]);
+  const [tripMap, setTripMap] = useState<Record<string, string>>({});
+  const [departureMap, setDepartureMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Row | null>(null);
   const [creating, setCreating] = useState(false);
@@ -203,8 +208,24 @@ function TableEditor({ table }: { table: AdminTable }) {
   async function reload() {
     setLoading(true);
     try {
-      const data = await adminApi.list<Row>(table, { orderBy: "created_at", ascending: false, limit: 1000 });
-      setRows(data);
+      const tasks: Promise<unknown>[] = [
+        adminApi.list<Row>(table, { orderBy: "created_at", ascending: false, limit: 1000 }).then(setRows),
+      ];
+      if (needsTripLookup) {
+        tasks.push(adminApi.list<Row>("trips", { limit: 1000 }).then((ts) => {
+          const m: Record<string, string> = {};
+          for (const t of ts) m[String(t.id)] = String(t.code ?? t.name ?? t.id);
+          setTripMap(m);
+        }));
+      }
+      if (needsDepartureLookup) {
+        tasks.push(adminApi.list<Row>("departures", { limit: 1000 }).then((ds) => {
+          const m: Record<string, string> = {};
+          for (const d of ds) m[String(d.id)] = String(d.departure_code ?? d.departure_date ?? d.id);
+          setDepartureMap(m);
+        }));
+      }
+      await Promise.all(tasks);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to load");
     } finally {
@@ -236,7 +257,9 @@ function TableEditor({ table }: { table: AdminTable }) {
     const lines = [headers.join(",")];
     for (const r of filtered) {
       lines.push(visibleCols.map((c) => {
-        const v = r[c.key];
+        let v = r[c.key];
+        if (c.lookup === "trip" && v) v = tripMap[String(v)] ?? v;
+        else if (c.lookup === "departure" && v) v = departureMap[String(v)] ?? v;
         const s = v == null ? "" : typeof v === "object" ? JSON.stringify(v) : String(v);
         return `"${s.replace(/"/g, '""')}"`;
       }).join(","));
@@ -297,11 +320,17 @@ function TableEditor({ table }: { table: AdminTable }) {
               <tr><td colSpan={visibleCols.length + 1} className="p-6 text-center text-mm-black/60">No rows.</td></tr>
             ) : filtered.map((r) => (
               <tr key={String(r.id)} className="border-b border-mm-black/10 hover:bg-mm-paper/50">
-                {visibleCols.map((c) => (
-                  <td key={c.key} className="max-w-[260px] truncate px-3 py-2 align-top">
-                    {renderCell(r[c.key])}
-                  </td>
-                ))}
+                {visibleCols.map((c) => {
+                  const raw = r[c.key];
+                  let val: unknown = raw;
+                  if (c.lookup === "trip" && raw) val = tripMap[String(raw)] ?? raw;
+                  else if (c.lookup === "departure" && raw) val = departureMap[String(raw)] ?? raw;
+                  return (
+                    <td key={c.key} className="max-w-[260px] truncate px-3 py-2 align-top">
+                      {renderCell(val)}
+                    </td>
+                  );
+                })}
                 <td className="px-3 py-2 text-right">
                   <button onClick={() => setEditing(r)} className="mr-3 underline">edit</button>
                   <button onClick={() => handleDelete(String(r.id))} className="text-red-600 underline">del</button>
