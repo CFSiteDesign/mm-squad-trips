@@ -54,47 +54,6 @@ function getTravelerForRow(r: Record<string, unknown>, ctx: LookupCtx): Traveler
   };
 }
 
-function TravelerInfoCell({ row, ctx }: { row: Record<string, unknown>; ctx: LookupCtx }) {
-  const t = getTravelerForRow(row, ctx);
-  if (!t || (!t.name && !t.email)) return <span className="text-mm-black/40">—</span>;
-  const fields: Array<[string, string]> = [
-    ["Role", t.role],
-    ["Name", t.name],
-    ["Age", t.age],
-    ["Email", t.email],
-    ["Phone", t.phone],
-    ["Country", t.country],
-    ["Dietary", t.dietary],
-  ].filter(([, v]) => !!v) as Array<[string, string]>;
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button className="text-left underline decoration-dotted underline-offset-2 hover:text-mm-pink">
-          <div className="truncate font-medium">{t.name || t.email}</div>
-          <div className="truncate text-[11px] text-mm-black/60">
-            {[t.role, t.age && `age ${t.age}`].filter(Boolean).join(" · ")}
-          </div>
-        </button>
-      </PopoverTrigger>
-      <PopoverContent
-        align="start"
-        className="w-72 rounded-none border-[2px] border-mm-black bg-mm-bone p-3 text-mm-black shadow-mm-lg"
-      >
-        <div className="mb-2 font-sticker text-[10px] tracking-[0.15em] text-mm-pink">
-          TRAVELER DETAILS
-        </div>
-        <dl className="grid grid-cols-[80px_1fr] gap-x-3 gap-y-1.5 text-xs">
-          {fields.map(([k, v]) => (
-            <div key={k} className="contents">
-              <dt className="text-mm-black/60">{k}</dt>
-              <dd className="break-words font-medium">{v}</dd>
-            </div>
-          ))}
-        </dl>
-      </PopoverContent>
-    </Popover>
-  );
-}
 
 type Row = Record<string, unknown>;
 
