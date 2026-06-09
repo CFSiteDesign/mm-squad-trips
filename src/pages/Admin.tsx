@@ -271,6 +271,8 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
   const [editing, setEditing] = useState<Row | null>(null);
   const [creating, setCreating] = useState(false);
   const [search, setSearch] = useState("");
+  const [groupView, setGroupView] = useState(true);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   async function reload(force = true) {
     const hasCached = !!tableCache[table];
