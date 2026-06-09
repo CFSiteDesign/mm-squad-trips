@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
 import { AdminWalkthrough } from "@/components/admin/AdminWalkthrough";
 import SquadAdmin, { clearSquadCache } from "./SquadAdmin";
 
@@ -654,11 +654,7 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
                         ) : ci === 0 && inGroup ? (
                           <span className="mr-2 inline-block h-2 w-2 rounded-full bg-mm-pink align-middle" aria-hidden />
                         ) : null}
-                        {c.key === "traveler_info" && isBookings ? (
-                          <TravelerInfoCell row={r} ctx={ctx} />
-                        ) : (
-                          display
-                        )}
+                        {display}
                         {showLeadTag && (
                           <span className="ml-2 rounded-sm bg-mm-pink px-1.5 py-0.5 font-sticker text-[9px] tracking-[0.1em] text-mm-bone">LEAD</span>
                         )}
