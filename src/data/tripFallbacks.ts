@@ -40,6 +40,7 @@ const DUMMY_TESTIMONIALS = [
 const FALLBACKS: Record<string, Trip> = {
   indonesia: {
     ...BASE,
+    testimonials: DUMMY_TESTIMONIALS,
     id: "placeholder-indonesia",
     code: "IND",
     name: "Indonesia",
@@ -58,6 +59,7 @@ const FALLBACKS: Record<string, Trip> = {
   },
   cambodia: {
     ...BASE,
+    testimonials: DUMMY_TESTIMONIALS,
     id: "placeholder-cambodia",
     code: "CAM",
     name: "Cambodia",
@@ -76,6 +78,7 @@ const FALLBACKS: Record<string, Trip> = {
   },
   vietnam: {
     ...BASE,
+    testimonials: DUMMY_TESTIMONIALS,
     id: "placeholder-vietnam",
     code: "VIE",
     name: "Vietnam",
