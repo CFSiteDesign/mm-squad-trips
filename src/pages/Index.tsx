@@ -22,31 +22,7 @@ import { SquadCTA } from "@/components/trip/SquadCTA";
 import heroImg from "@/assets/heroallin.png";
 import allInLogo from "@/assets/all-in-logo.png.asset.json";
 
-type Filter = "ALL" | "Indonesia" | "Cambodia" | "Vietnam";
-
-type TripCard = {
-  slug: string;
-  country: Filter;
-  name: string;
-  sub: string;
-  route: string;
-  days: number;
-  price: number;
-  accent: "orange" | "lime" | "pink" | "cyan";
-};
-
-const TRIPS: TripCard[] = [
-  { slug: "indonesia", country: "Indonesia", name: "Indonesia",  sub: "Island hopping",  route: "Bali → Gili T → Lombok → Uluwatu",                days: 12, price: 700, accent: "orange" },
-  { slug: "cambodia",  country: "Cambodia",  name: "Cambodia",   sub: "Coast to coast",  route: "Phnom Penh → Siem Reap → Koh Rong → Koh Sdach",   days: 14, price: 650, accent: "lime"   },
-  { slug: "vietnam",   country: "Vietnam",   name: "Vietnam",    sub: "North loop",      route: "Hanoi → Ha Giang → Cao Bang → Halong → Hanoi",    days: 10, price: 750, accent: "pink"   },
-];
-
-const ACCENT_BG: Record<TripCard["accent"], string> = {
-  orange: "bg-mm-orange",
-  lime: "bg-mm-lime",
-  pink: "bg-mm-pink",
-  cyan: "bg-mm-cyan",
-};
+import { TRIPS, ACCENT_BG, type Filter } from "@/data/trips";
 
 const INCLUDED_TABS: { name: string; items: { icon: any; title: string; desc: string }[] }[] = [
   {
