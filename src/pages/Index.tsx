@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import {
   Building2,
   PartyPopper,
-  Bed,
   Sparkles,
   Lock,
   Globe2,
@@ -55,7 +54,6 @@ const INCLUDED_TABS: { name: string; items: { icon: any; title: string; desc: st
     items: [
       { icon: Building2, title: "Best hostels on the route", desc: "Real Mad Monkey beds every single night. No mystery dorms." },
       { icon: PartyPopper, title: "Hostel activities", desc: "Party nights, games evenings, pool hangs — built in." },
-      { icon: Bed, title: "Room options", desc: "Pick the dorm or private that actually works for you." },
     ],
   },
   {
