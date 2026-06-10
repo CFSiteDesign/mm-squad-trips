@@ -161,6 +161,9 @@ export function Hero({ trip, heroImageUrl }: { trip: Trip; heroImageUrl?: string
 
         <div className="relative z-10 mr-auto flex min-h-[100svh] max-w-6xl flex-col justify-between px-8 pt-24 pb-16 md:pt-40 md:pb-16 lg:pl-20">
           <div>
+            <p className="mb-3 font-display text-3xl tracking-[0.12em] text-mm-lime lg:text-5xl">
+              {trip.name.toUpperCase()}
+            </p>
             <h1 className="font-display text-[clamp(4rem,12vw,9rem)] leading-[0.88] text-mm-bone">
               <span className="block">SOLO TRAVELLER?</span>
               <span className="block whitespace-nowrap text-mm-pink">NOT FOR</span>
