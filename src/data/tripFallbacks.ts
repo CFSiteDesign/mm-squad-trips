@@ -3,9 +3,39 @@
 import type { Trip } from "@/types/trip";
 
 const BASE = {
-  testimonials: [],
   videoTestimonialUrl: "",
 };
+
+const DUMMY_TESTIMONIALS = [
+  {
+    name: "Jake",
+    age: 26,
+    country: "UK",
+    photo: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&crop=face",
+    quote: "Best trip of my life. Made mates for life and the itinerary was unreal.",
+  },
+  {
+    name: "Sophie",
+    age: 24,
+    country: "Australia",
+    photo: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=face",
+    quote: "I came solo and left with a squad. The hosts made everything so easy.",
+  },
+  {
+    name: "Liam",
+    age: 28,
+    country: "Ireland",
+    photo: "https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100&h=100&fit=crop&crop=face",
+    quote: "Non-stop laughs, epic spots, and zero stress. Already booked my next one.",
+  },
+  {
+    name: "Emma",
+    age: 25,
+    country: "Canada",
+    photo: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&h=100&fit=crop&crop=face",
+    quote: "Mad Monkey knows how to show you a good time. Highly recommend!",
+  },
+];
 
 const FALLBACKS: Record<string, Trip> = {
   indonesia: {
