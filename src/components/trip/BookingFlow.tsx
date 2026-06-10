@@ -255,9 +255,6 @@ export function BookingFlow({ trip }: { trip: Trip }) {
                     {discountState.msg.toUpperCase()}
                   </p>
                 )}
-                <p className="text-xs text-mm-bone/80">
-                  Got a squad leader code? Pop it in — it gets you your discount and adds you to their squad.
-                </p>
               </div>
             </FormStep>
 
