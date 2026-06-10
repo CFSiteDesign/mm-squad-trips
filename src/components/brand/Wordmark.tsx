@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/mad-monkey-logo.webp";
 
@@ -15,7 +16,7 @@ export function Wordmark({
 
   return (
     <div
-      className={cn("pointer-events-none select-none", className)}
+      className={cn("select-none", className)}
       style={{ width, height: size }}
     >
       <img
@@ -32,9 +33,12 @@ export function Wordmark({
 
 export function PinnedWordmark() {
   return (
-    <div className="pointer-events-none absolute left-4 top-3 z-40 md:left-8 md:top-4">
+    <Link
+      to="/"
+      className="absolute left-4 top-3 z-40 md:left-8 md:top-4"
+    >
       <Wordmark size={30} className="md:hidden" />
       <Wordmark size={52} className="hidden md:block" />
-    </div>
+    </Link>
   );
 }
