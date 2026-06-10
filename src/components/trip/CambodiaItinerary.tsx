@@ -63,7 +63,7 @@ const STOPS: Stop[] = [
       "Koh Sdach Loop: e-bike the island, beers, and sunset",
       "Sunset Boat Cruise + Pub Quiz",
       "Kayak hire on crystal-clear water (1 hour rental)",
-      "Farewell dinner ($10 F+B required)",
+      "Farewell dinner",
     ],
   },
 ];
