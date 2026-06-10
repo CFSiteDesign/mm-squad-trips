@@ -16,7 +16,7 @@ export function Wordmark({
 
   return (
     <div
-      className={cn("pointer-events-none select-none", className)}
+      className={cn("select-none", className)}
       style={{ width, height: size }}
     >
       <img
