@@ -15,6 +15,7 @@ import { BookingFlow } from "@/components/trip/BookingFlow";
 import { FAQ } from "@/components/trip/FAQ";
 import { SiteFooter } from "@/components/trip/SiteFooter";
 import { SquadCTA } from "@/components/trip/SquadCTA";
+import { TripCrossSell } from "@/components/trip/TripCrossSell";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sticker } from "@/components/brand/Sticker";
 import { PinnedWordmark } from "@/components/brand/Wordmark";
@@ -87,6 +88,7 @@ export default function TripPage() {
       <BookingFlow trip={trip} />
       <FAQ />
       <SquadCTA />
+      <TripCrossSell currentSlug={slug} />
       <div className="h-1 bg-mm-bone/20" />
       <SiteFooter />
     </main>
