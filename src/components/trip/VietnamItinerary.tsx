@@ -83,8 +83,8 @@ const STOPS: Stop[] = [
     highlights: [
       "Professional cooking class in beautiful Hoi An",
       "Spin through the palms on the TikTok-famous coconut boats",
-      "Ba Na Hills and the 'Hands of God' Golden Bridge",
-      "Explore the mountain-top French Village",
+      "Visit the 'Hands of God' Golden Bridge",
+      "Explore the mountain top French Village Ba Na Hills",
       "Cycle through serene rice paddies",
       "Final night Hot Pot feast and a last round of Happy Water",
     ],
