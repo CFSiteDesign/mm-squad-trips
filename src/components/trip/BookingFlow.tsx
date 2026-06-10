@@ -237,7 +237,7 @@ export function BookingFlow({ trip }: { trip: Trip }) {
                       setDiscountState(null);
                       validatedFor.current = null;
                     }}
-                    placeholder="DISCOUNT / SQUAD CODE"
+                    placeholder="DISCOUNT CODE"
                     className="h-12 flex-1 rounded-none border-[3px] border-mm-black bg-mm-paper text-mm-black uppercase font-display tracking-wide"
                   />
                   {discountLoading && (
