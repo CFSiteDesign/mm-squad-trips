@@ -133,6 +133,8 @@ export function BookingFlow({ trip }: { trip: Trip }) {
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <Link
               to={`/squad-leader/register?trip=${encodeURIComponent(trip.slug)}`}
+              target="_blank"
+              rel="noopener noreferrer"
               className="flex flex-col border-[3px] border-mm-black bg-mm-paper p-4 text-left text-mm-black shadow-mm-sm transition hover:-translate-x-[2px] hover:-translate-y-[2px]"
             >
               <span className="font-display text-lg">START A SQUAD</span>
