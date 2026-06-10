@@ -129,7 +129,7 @@ export function BookingFlow({ trip }: { trip: Trip }) {
 
         {/* Squad booking choice */}
         <div className="space-y-3">
-          <p className="font-sticker text-xs tracking-[0.15em] text-mm-bone/80">BOOKING WITH A SQUAD?</p>
+          <p className="font-sticker text-sm tracking-[0.15em] text-mm-bone/80">BOOKING WITH A SQUAD?</p>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <Link
               to={`/squad-leader/register?trip=${encodeURIComponent(trip.slug)}`}
