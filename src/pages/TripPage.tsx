@@ -88,6 +88,7 @@ export default function TripPage() {
       <BookingFlow trip={trip} />
       <FAQ />
       <SquadCTA />
+      <TripCrossSell currentSlug={slug} />
       <div className="h-1 bg-mm-bone/20" />
       <SiteFooter />
     </main>
