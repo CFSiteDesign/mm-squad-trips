@@ -176,6 +176,10 @@ export function BookingFlow({ trip }: { trip: Trip }) {
           )}
         </div>
 
+        <p className="font-sticker text-xs tracking-[0.15em] text-mm-bone/80">
+          NO SQUAD? NO STRESS — YOU CAN STILL BOOK SOLO OR WITH YOUR CREW BELOW.
+        </p>
+
         {/* Step 1: spots */}
         <FormStep n={1} label="HOW MANY SPOTS?">
           <Select value={String(groupSize)} onValueChange={(v) => changeGroup(Number(v))}>
