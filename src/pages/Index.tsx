@@ -308,7 +308,7 @@ export default function Index() {
                 <div className="mt-4 font-display text-xl leading-tight text-mm-black md:text-2xl">
                   {b.title}
                 </div>
-                <p className="mt-2 text-sm leading-snug text-mm-black/75">{b.desc}</p>
+                <p className="mt-2 text-base leading-snug text-mm-black/75">{b.desc}</p>
               </li>
             ))}
           </ul>
