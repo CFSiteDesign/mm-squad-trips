@@ -86,6 +86,9 @@ export function Hero({ trip, heroImageUrl }: { trip: Trip; heroImageUrl?: string
         {/* Foreground content */}
         <div className="relative z-10 flex flex-col px-5 pt-[9rem] pb-24">
           <div>
+            <p className="mb-2 font-display text-2xl tracking-[0.12em] text-mm-lime">
+              {trip.name.toUpperCase()}
+            </p>
             <h1 className="font-display text-[clamp(2.75rem,13vw,4.25rem)] leading-[0.9] text-mm-bone">
               <span className="block">SOLO TRAVELLER?</span>
               <span className="block whitespace-nowrap text-mm-pink">NOT FOR</span>
