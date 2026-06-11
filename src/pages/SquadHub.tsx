@@ -10,10 +10,6 @@ const STEPS = [
   { n: 4, t: "EARN YOUR SPOT", d: "Hit 8 bookings and your trip is on us." },
 ];
 
-const TIERS = [
-  { off: "50% OFF", who: "4 friends booked", note: "Half-price trip, on us", highlight: false },
-  { off: "100% FREE", who: "8 friends booked", note: "The whole trip is on us", highlight: true },
-];
 
 const FAQS = [
   { q: "What if I get fewer than 4 bookings?", a: "No discount applies, but you'll still travel at the standard price with the squad you brought along." },
@@ -85,34 +81,6 @@ export default function SquadHub() {
         </div>
       </section>
 
-      {/* Tiers */}
-      <section className="bg-mm-lime px-5 py-16 md:px-8 md:py-24">
-        <div className="mx-auto max-w-4xl text-center">
-          <h2 className="font-display text-4xl text-mm-black md:text-6xl">CASCADING REWARDS</h2>
-          <p className="mt-3 font-sticker text-xs tracking-[0.18em] text-mm-black/70">
-            THE MORE FRIENDS YOU BRING, THE BIGGER THE PERK
-          </p>
-          <div className="mt-10 grid gap-5 md:grid-cols-2">
-            {TIERS.map((t) => (
-              <div
-                key={t.off}
-                className={`relative border-[3px] border-mm-black p-8 shadow-mm ${
-                  t.highlight ? "bg-mm-pink text-mm-bone" : "bg-mm-paper text-mm-black"
-                }`}
-              >
-                {t.highlight && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 border-[3px] border-mm-black bg-mm-orange px-3 py-1 font-sticker text-[10px] tracking-[0.15em] text-mm-black">
-                    MOST EPIC
-                  </span>
-                )}
-                <div className="font-display text-6xl">{t.off}</div>
-                <div className={`mt-4 font-display text-lg ${t.highlight ? "text-mm-bone" : ""}`}>{t.who}</div>
-                <div className={`mt-1 text-sm ${t.highlight ? "text-mm-bone/80" : "text-mm-black/70"}`}>{t.note}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* FAQ */}
       <section className="bg-mm-paper px-5 py-16 md:px-8 md:py-24">
