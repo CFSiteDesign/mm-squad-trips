@@ -10,10 +10,6 @@ const STEPS = [
   { n: 4, t: "EARN YOUR SPOT", d: "Hit 8 bookings and your trip is on us." },
 ];
 
-const TIERS = [
-  { off: "50% OFF", who: "4 friends booked", note: "Half-price trip, on us", highlight: false },
-  { off: "100% FREE", who: "8 friends booked", note: "The whole trip is on us", highlight: true },
-];
 
 const FAQS = [
   { q: "What if I get fewer than 4 bookings?", a: "No discount applies, but you'll still travel at the standard price with the squad you brought along." },
