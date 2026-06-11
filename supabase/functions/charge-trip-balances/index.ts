@@ -13,6 +13,15 @@ const RETRY_DAYS = 2;
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
+  // Shared-secret guard. If CRON_SECRET is configured, require it (the daily
+  // cron must send `x-cron-secret: <CRON_SECRET>`). This charges real cards, so
+  // it must not be triggerable with just the public anon key. Enforce-if-set so
+  // deploying before the secret exists doesn't lock out a legitimate test call.
+  const cronSecret = Deno.env.get("CRON_SECRET");
+  if (cronSecret && req.headers.get("x-cron-secret") !== cronSecret) {
+    return new Response("forbidden", { status: 403, headers: corsHeaders });
+  }
+
   const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
   const sbUrl = Deno.env.get("SUPABASE_URL");
   const sbKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -79,6 +88,11 @@ Deno.serve(async (req) => {
           trip_id: String(row.trip_id ?? ""),
           departure_id: String(row.departure_id ?? ""),
         },
+      }, {
+        // Idempotency: if this run double-fires (or a charge succeeds but the DB
+        // update fails and the cron re-picks it within Stripe's 24h key window),
+        // Stripe returns the same PaymentIntent instead of charging twice.
+        idempotencyKey: `balance:${sessionId}`,
       });
 
       await sb.from("bookings").update({
@@ -91,7 +105,6 @@ Deno.serve(async (req) => {
       }).eq("stripe_session_id", sessionId);
 
       // Also bump amount_paid per spot to include the balance
-      await sb.rpc; // no-op — we update amount_paid below explicitly
       const { data: rows } = await sb.from("bookings")
         .select("id,amount_paid,balance_amount")
         .eq("stripe_session_id", sessionId);
