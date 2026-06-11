@@ -46,7 +46,7 @@ const STOPS: Stop[] = [
     num: "03",
     location: "Koh Rong",
     nights: "3 nights",
-    imageColor: "bg-mm-lime",
+    image: kohRongImg.url,
     tag: "ISLAND VIBES & RAVES",
     highlights: [
       "BuvaSea ferry to Koh Rong",
