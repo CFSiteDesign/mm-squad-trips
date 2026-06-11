@@ -204,7 +204,6 @@ export function Hero({ trip, heroImageUrl }: { trip: Trip; heroImageUrl?: string
         </div>
       </div>
 
-      <PinnedWordmark />
     </section>
   );
 }
