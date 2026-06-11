@@ -60,7 +60,7 @@ const STOPS: Stop[] = [
     num: "04",
     location: "Koh Sdach",
     nights: "3 nights",
-    imageColor: "bg-mm-orange",
+    image: kohSdachImg.url,
     tag: "WELLNESS & ADVENTURE",
     highlights: [
       "Hour boat to Koh Sdach Mad Monkey — spa amenities and Wellness Challenge",
