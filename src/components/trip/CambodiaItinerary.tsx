@@ -18,7 +18,7 @@ const STOPS: Stop[] = [
     num: "01",
     location: "Phnom Penh",
     nights: "3 nights",
-    imageColor: "bg-mm-pink",
+    image: phnomImg.url,
     tag: "WELCOME & HISTORY",
     highlights: [
       "Khmer family welcome dinner — meet the team",
