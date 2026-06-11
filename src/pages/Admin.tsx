@@ -663,17 +663,16 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
                           <span className="mr-2 inline-block h-2 w-2 rounded-full bg-mm-pink align-middle" aria-hidden />
                         ) : null}
                         {c.key === "stripe_session_id" && display ? (
-                          <span className="inline-flex items-center gap-1">
-                            <button
-                              onClick={() => { navigator.clipboard.writeText(display); toast.success("Copied to clipboard"); }}
-                              className="inline-flex items-center text-mm-black/60 hover:text-mm-pink"
-                              title="Copy session ID"
-                            >
-                              <Copy size={14} />
-                            </button>
-                            {display}
-                          </span>
+                          <button
+                            onClick={() => { navigator.clipboard.writeText(display); toast.success("Copied session ID"); }}
+                            className="inline-flex items-center text-mm-black/60 hover:text-mm-pink"
+                            title={`Copy session ID (${display})`}
+                            aria-label="Copy Stripe session ID"
+                          >
+                            <Copy size={14} />
+                          </button>
                         ) : display}
+
                         {showLeadTag && (
                           <span className="ml-2 rounded-sm bg-mm-pink px-1.5 py-0.5 font-sticker text-[9px] tracking-[0.1em] text-mm-bone">LEAD</span>
                         )}
