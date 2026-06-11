@@ -91,17 +91,18 @@ export function CambodiaItinerary({ days }: { days: number }) {
               key={s.num}
               className="grid gap-5 md:grid-cols-[1.1fr_1fr] md:items-center md:gap-10"
             >
-              {/* Image placeholder */}
+              {/* Image */}
               <div
                 className={`relative overflow-hidden border-[3px] border-mm-bone ${
                   i % 2 === 1 ? "md:order-2" : ""
                 }`}
               >
-                <div className={`aspect-[4/3] w-full ${s.imageColor} flex items-center justify-center`}>
-                  <span className="font-display text-2xl text-mm-black md:text-4xl">
-                    {s.location.toUpperCase()}
-                  </span>
-                </div>
+                <img
+                  src={s.image}
+                  alt={s.location}
+                  loading="lazy"
+                  className="aspect-[4/3] w-full object-cover"
+                />
                 <div className="absolute left-3 top-3">
                   <Sticker color={i % 2 === 0 ? "pink" : "yellow"} rotate={-6}>
                     STOP {s.num}
