@@ -443,6 +443,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      normalize_cron_secret: { Args: { _value: string }; Returns: string }
       recompute_departure_spots: {
         Args: { _departure_id: string }
         Returns: undefined
