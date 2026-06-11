@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useParams } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { fetchTrip } from "@/lib/api";
 import { getTripFallback } from "@/data/tripFallbacks";
 import { Hero } from "@/components/trip/Hero";
@@ -25,7 +25,7 @@ function getSetupHint(_message: string, slug: string) {
 
 
 export default function TripPage() {
-  const { slug = "" } = useParams();
+  const slug = useLocation().pathname.replace(/^\/+/, "").split("/")[0] ?? "";
   const fallback = getTripFallback(slug);
 
   const { data: trip, isLoading, error } = useQuery({
