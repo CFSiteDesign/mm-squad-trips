@@ -143,11 +143,9 @@ const COLUMNS: Record<AdminTable, ColumnDef[]> = {
     { key: "departure_id", label: "Departure", tooltip: "Which departure date was selected", readOnly: true, lookup: "departure" },
     { key: "booking_type", label: "Booking Type", tooltip: "Lead traveler or group member", readOnly: true },
     { key: "group_size", label: "Group Size", tooltip: "Total number of people in this booking group", readOnly: true },
-    { key: "group_id", label: "Group ID", tooltip: "Internal ID linking travelers in the same group", readOnly: true },
     { key: "group_members", label: "Group Members", tooltip: "Names of all travelers in this group", readOnly: true, compute: (r, ctx) => {
         const gid = r.group_id ? String(r.group_id) : "";
         if (gid && ctx.groupMembers[gid]) return ctx.groupMembers[gid];
-        // Solo or no group: derive from additional_travelers on this row (if any)
         const add = r.additional_travelers;
         if (Array.isArray(add) && add.length > 0) {
           const lead = r.lead_name ? [String(r.lead_name)] : [];
@@ -158,17 +156,14 @@ const COLUMNS: Record<AdminTable, ColumnDef[]> = {
         }
         return "";
       } },
-    { key: "friend_names_mentioned", label: "Friend Names", tooltip: "Friends mentioned during booking for roommate pairing", readOnly: true },
     { key: "lead_name", label: "Lead Name", tooltip: "Full name of the primary traveler", readOnly: true, compute: (r, ctx) => getTravelerForRow(r, ctx)?.name ?? "" },
     { key: "lead_email", label: "Lead Email", tooltip: "Email address of the primary traveler", readOnly: true, compute: (r, ctx) => getTravelerForRow(r, ctx)?.email ?? "" },
     { key: "lead_phone", label: "Lead Phone", tooltip: "Phone number of the primary traveler", readOnly: true, compute: (r, ctx) => getTravelerForRow(r, ctx)?.phone ?? "" },
     { key: "lead_country", label: "Lead Country", tooltip: "Country the primary traveler is from", readOnly: true, compute: (r, ctx) => getTravelerForRow(r, ctx)?.country ?? "" },
     { key: "lead_age", label: "Lead Age", tooltip: "Age of the primary traveler", readOnly: true, compute: (r, ctx) => getTravelerForRow(r, ctx)?.age ?? "" },
-    { key: "lead_solo", label: "Solo?", tooltip: "Whether the traveler is joining solo (no roommate preference)", readOnly: true, type: "boolean" },
     { key: "lead_source", label: "Source", tooltip: "How the traveler found the trip (e.g. Instagram, Google)", readOnly: true },
 
     { key: "payment_type", label: "Payment Type", tooltip: "Full payment or deposit booking", readOnly: true },
-    { key: "original_price", label: "Original Price", tooltip: "Trip price before any discount was applied", readOnly: true, type: "number" },
     { key: "discount_code_id", label: "Discount Code", tooltip: "Code used to reduce the price, if any", readOnly: true, lookup: "discount" },
     { key: "discount_amount", label: "Discount Amount", tooltip: "Total dollar amount saved with the discount code", readOnly: true, type: "number" },
     { key: "final_price", label: "Final Price", tooltip: "Price after discount, before any payments", readOnly: true, type: "number" },
@@ -177,17 +172,47 @@ const COLUMNS: Record<AdminTable, ColumnDef[]> = {
       const fp = Number(r.final_price ?? 0); const ap = Number(r.amount_paid ?? 0);
       return Math.max(0, fp - ap);
     } },
-    { key: "balance_status", label: "Balance Status", tooltip: "Current state of the balance payment (e.g. scheduled, paid, failed)", readOnly: true },
+    // Combined Balance cell: status + (error when failed). Synthetic — excluded from CSV
+    // because raw balance_status and balance_last_error are exported as their own columns.
+    { key: "balance_combined", label: "Balance", tooltip: "Automated balance charge status. Shows the failure reason when a charge fails.", readOnly: true, hideInCsv: true, compute: (r) => {
+      const st = r.balance_status ? String(r.balance_status) : "";
+      if (!st) return "";
+      if (st === "failed") {
+        const err = r.balance_last_error ? String(r.balance_last_error) : "";
+        return err ? `failed — ${err}` : "failed";
+      }
+      return st;
+    } },
     { key: "balance_due_date", label: "Balance Due Date", tooltip: "Date the remaining balance must be paid by", readOnly: true, format: "date-only" },
-    { key: "card_on_file", label: "Card on File", tooltip: "Whether a saved payment method exists for automatic charging", readOnly: true, compute: (r) => !!r.stripe_payment_method_id },
+    { key: "card_on_file", label: "Card on File", tooltip: "Whether a saved payment method exists for automatic charging", readOnly: true, hideInCsv: true, compute: (r) => !!r.stripe_payment_method_id },
     { key: "status", label: "Status", tooltip: "Overall booking status (e.g. Confirmed, Cancelled)", readOnly: true },
     { key: "stripe_session_id", label: "Stripe Session ID", tooltip: "Stripe Checkout session ID for this payment", readOnly: true },
-    { key: "utm_source", label: "UTM Source", tooltip: "Marketing traffic source (e.g. instagram, newsletter)", readOnly: true },
-    { key: "utm_medium", label: "UTM Medium", tooltip: "Marketing medium (e.g. post, story, email)", readOnly: true },
-    { key: "utm_campaign", label: "UTM Campaign", tooltip: "Name of the marketing campaign that drove this booking", readOnly: true },
-    { key: "utm_content", label: "UTM Content", tooltip: "Specific content or ad variant that was clicked", readOnly: true },
     { key: "created_at", label: "Created", tooltip: "Date and time this booking was first created", readOnly: true, format: "date-only" },
+
+    // ===== Columns below are hidden from the on-screen table but included in CSV export =====
+    { key: "balance_status", label: "Balance Status (raw)", readOnly: true, hideInTable: true },
+    { key: "balance_last_error", label: "Balance Last Error", readOnly: true, hideInTable: true },
+    { key: "balance_amount", label: "Balance Amount", readOnly: true, hideInTable: true, type: "number" },
+    { key: "balance_attempts", label: "Balance Attempts", readOnly: true, hideInTable: true, type: "number" },
+    { key: "balance_next_attempt_at", label: "Balance Next Attempt At", readOnly: true, hideInTable: true },
+    { key: "balance_charged_at", label: "Balance Charged At", readOnly: true, hideInTable: true },
+    { key: "group_id", label: "Group ID", readOnly: true, hideInTable: true },
+    { key: "spot_number", label: "Spot Number", readOnly: true, hideInTable: true, type: "number" },
+    { key: "original_price", label: "Original Price", readOnly: true, hideInTable: true, type: "number" },
+    { key: "lead_solo", label: "Solo?", readOnly: true, hideInTable: true, type: "boolean" },
+    { key: "friend_names_mentioned", label: "Friend Names", readOnly: true, hideInTable: true },
+    { key: "utm_source", label: "UTM Source", readOnly: true, hideInTable: true },
+    { key: "utm_medium", label: "UTM Medium", readOnly: true, hideInTable: true },
+    { key: "utm_campaign", label: "UTM Campaign", readOnly: true, hideInTable: true },
+    { key: "utm_content", label: "UTM Content", readOnly: true, hideInTable: true },
+    { key: "stripe_customer_id", label: "Stripe Customer ID", readOnly: true, hideInTable: true },
+    { key: "stripe_payment_method_id", label: "Stripe Payment Method ID", readOnly: true, hideInTable: true },
+    { key: "stripe_payment_intent_id", label: "Stripe Payment Intent ID", readOnly: true, hideInTable: true },
+    { key: "stripe_balance_payment_intent_id", label: "Stripe Balance Payment Intent ID", readOnly: true, hideInTable: true },
+    { key: "additional_travelers", label: "Additional Travelers", readOnly: true, hideInTable: true },
+    { key: "updated_at", label: "Updated", readOnly: true, hideInTable: true },
   ],
+
 };
 
 const TABS: { id: AdminTable; label: string }[] = [
