@@ -1,8 +1,8 @@
 import { Sticker } from "@/components/brand/Sticker";
-import uluwatuImg from "@/assets/indo-uluwatu.png.asset.json";
-import lembonganImg from "@/assets/indo-lembongan.png.asset.json";
-import giliImg from "@/assets/indo-hero.jpg.asset.json";
-import lombokImg from "@/assets/indo-lombok.png.asset.json";
+import uluwatuImg from "@/assets/indo-uluwatu-new.jpg.asset.json";
+import lembonganImg from "@/assets/indo-lembongan-new.jpg.asset.json";
+import giliImg from "@/assets/indo-gili-new.jpg.asset.json";
+import lombokImg from "@/assets/indo-kuta-new.jpg.asset.json";
 
 type Stop = {
   num: string;
