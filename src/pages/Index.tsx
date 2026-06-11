@@ -115,7 +115,7 @@ export default function Index() {
             <div>
               <h1 className="font-display text-[clamp(2.75rem,13vw,4.25rem)] leading-[0.9] text-mm-bone">
                 ALL IN<br />
-                <span className="text-mm-lime">GROUP TRIPS</span><br />
+                <span className="text-mm-lime">TRIPS</span><br />
                 <span className="text-mm-orange">BY MAD</span> MONKEY.
               </h1>
 
@@ -156,7 +156,7 @@ export default function Index() {
               <h1 className="font-display text-[clamp(4rem,12vw,9rem)] leading-[0.88] text-mm-bone">
 
                 ALL IN<br />
-                <span className="whitespace-nowrap text-mm-lime">GROUP TRIPS</span><br />
+                <span className="whitespace-nowrap text-mm-lime">TRIPS</span><br />
                 <span className="text-mm-orange">BY MAD</span> MONKEY.
               </h1>
               <p className="mt-7 max-w-xl text-lg leading-snug text-mm-bone/85">
