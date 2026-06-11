@@ -15,7 +15,6 @@ import {
   ArrowRight,
   MapPin,
 } from "lucide-react";
-import { PinnedWordmark } from "@/components/brand/Wordmark";
 import { Sticker, Starburst } from "@/components/brand/Sticker";
 import { SiteFooter } from "@/components/trip/SiteFooter";
 import { SquadCTA } from "@/components/trip/SquadCTA";
