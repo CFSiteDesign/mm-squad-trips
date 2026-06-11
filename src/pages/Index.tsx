@@ -84,7 +84,7 @@ export default function Index() {
 
           {/* ALL IN logo — top right */}
           <div className="pointer-events-none absolute right-3 top-[5rem] z-30">
-            <img src={allInLogo.url} alt="ALL IN" className="h-24 w-auto" />
+            <img src={allInLogo.url} alt="ALL IN" className="h-16 w-auto" />
           </div>
 
           {/* Foreground content */}
