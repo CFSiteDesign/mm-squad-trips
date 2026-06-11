@@ -10,8 +10,8 @@ export function Navbar() {
     <header className="fixed left-0 right-0 top-0 z-50 bg-mm-black/95 backdrop-blur-sm">
       <div className="flex h-14 items-center justify-between px-4 md:h-16 md:px-8">
         <Link to="/" className="flex items-center gap-3">
-          <Wordmark size={28} className="md:hidden" />
-          <Wordmark size={44} className="hidden md:block" />
+          <Wordmark size={24} className="md:hidden" />
+          <Wordmark size={36} className="hidden md:block" />
         </Link>
 
         <nav className="flex items-center gap-4 md:gap-6">
