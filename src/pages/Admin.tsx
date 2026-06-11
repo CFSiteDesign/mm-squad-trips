@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 
 import { AdminWalkthrough } from "@/components/admin/AdminWalkthrough";
 import SquadAdmin, { clearSquadCache } from "./SquadAdmin";
@@ -60,6 +61,7 @@ type Row = Record<string, unknown>;
 interface ColumnDef {
   key: string;
   label: string;
+  tooltip?: string;
   type?: "text" | "number" | "boolean" | "date" | "json" | "textarea";
   readOnly?: boolean;
   hidden?: boolean;
@@ -91,55 +93,55 @@ type LookupCtx = {
 const COLUMNS: Record<AdminTable, ColumnDef[]> = {
   trips: [
     { key: "id", label: "ID", readOnly: true, hidden: true },
-    { key: "code", label: "Code", type: "text" },
-    { key: "name", label: "Name", type: "text" },
-    { key: "slug", label: "Slug", type: "text" },
-    { key: "days", label: "Days", type: "number" },
-    { key: "activity_count", label: "Activities", type: "number" },
-    { key: "default_price", label: "Default Price", type: "number" },
-    { key: "default_strikethrough", label: "Strikethrough", type: "number" },
-    { key: "active", label: "Active", type: "boolean" },
-    { key: "video_testimonial_url", label: "Testimonial Video URL", type: "text" },
-    { key: "stops", label: "Stops (JSON)", type: "json" },
-    { key: "testimonials", label: "Testimonials (JSON)", type: "json" },
+    { key: "code", label: "Code", tooltip: "Unique trip code used in URLs and references", type: "text" },
+    { key: "name", label: "Name", tooltip: "Display name of the trip shown to customers", type: "text" },
+    { key: "slug", label: "Slug", tooltip: "URL-friendly identifier for the trip page", type: "text" },
+    { key: "days", label: "Days", tooltip: "Number of days the trip lasts", type: "number" },
+    { key: "activity_count", label: "Activities", tooltip: "Total number of activities included in the trip", type: "number" },
+    { key: "default_price", label: "Default Price", tooltip: "Standard trip price before any discounts or calendar pricing", type: "number" },
+    { key: "default_strikethrough", label: "Strikethrough", tooltip: "Original price shown with a strikethrough to indicate a discount", type: "number" },
+    { key: "active", label: "Active", tooltip: "Whether this trip is visible and bookable on the site", type: "boolean" },
+    { key: "video_testimonial_url", label: "Testimonial Video URL", tooltip: "URL to a testimonial video for this trip", type: "text" },
+    { key: "stops", label: "Stops (JSON)", tooltip: "Itinerary stops and locations in JSON format", type: "json" },
+    { key: "testimonials", label: "Testimonials (JSON)", tooltip: "Customer testimonials in JSON format", type: "json" },
   ],
   departures: [
     { key: "id", label: "ID", readOnly: true, hidden: true },
     { key: "trip_id", label: "Trip ID", readOnly: true, hidden: true },
-    { key: "departure_code", label: "Code", type: "text" },
-    { key: "departure_date", label: "Date", type: "date" },
-    { key: "total_spots", label: "Total Spots", type: "number" },
-    { key: "spots_remaining", label: "Spots Remaining", type: "number", readOnly: true },
-    { key: "bookable", label: "Bookable", type: "boolean" },
+    { key: "departure_code", label: "Code", tooltip: "Unique code for this departure date", type: "text" },
+    { key: "departure_date", label: "Date", tooltip: "The scheduled departure date for this trip run", type: "date" },
+    { key: "total_spots", label: "Total Spots", tooltip: "Maximum number of travelers for this departure", type: "number" },
+    { key: "spots_remaining", label: "Spots Remaining", tooltip: "Automatically calculated open spots left", type: "number", readOnly: true },
+    { key: "bookable", label: "Bookable", tooltip: "Whether customers can currently book this departure", type: "boolean" },
   ],
   pricing_calendar: [
     { key: "id", label: "ID", readOnly: true, hidden: true },
-    { key: "trip_id", label: "Trip", type: "text", lookup: "trip" },
-    { key: "month", label: "Month (YYYY-MM)", type: "text" },
-    { key: "price", label: "Price", type: "number" },
-    { key: "strikethrough", label: "Strikethrough", type: "number" },
-    { key: "active", label: "Active", type: "boolean" },
+    { key: "trip_id", label: "Trip", tooltip: "Which trip this pricing applies to", type: "text", lookup: "trip" },
+    { key: "month", label: "Month (YYYY-MM)", tooltip: "Month this pricing is valid for, e.g. 2026-07", type: "text" },
+    { key: "price", label: "Price", tooltip: "Trip price for this specific month", type: "number" },
+    { key: "strikethrough", label: "Strikethrough", tooltip: "Original price shown with a strikethrough for this month", type: "number" },
+    { key: "active", label: "Active", tooltip: "Whether this monthly pricing is currently enabled", type: "boolean" },
   ],
   discount_codes: [
     { key: "id", label: "ID", readOnly: true, hidden: true },
-    { key: "code", label: "Code", type: "text" },
-    { key: "discount_amount", label: "Discount ($)", type: "number" },
-    { key: "active", label: "Active", type: "boolean" },
-    { key: "usage_limit", label: "Usage Limit", type: "number" },
-    { key: "used_count", label: "Used Count", type: "number", readOnly: true },
-    { key: "expiry_date", label: "Expiry", type: "date" },
-    { key: "applicable_to", label: "Applicable To (JSON array)", type: "json" },
+    { key: "code", label: "Code", tooltip: "The discount code customers enter at checkout", type: "text" },
+    { key: "discount_amount", label: "Discount ($)", tooltip: "Fixed dollar amount subtracted from the trip price", type: "number" },
+    { key: "active", label: "Active", tooltip: "Whether this code can currently be used", type: "boolean" },
+    { key: "usage_limit", label: "Usage Limit", tooltip: "Maximum number of times this code can be redeemed", type: "number" },
+    { key: "used_count", label: "Used Count", tooltip: "How many times this code has already been used", type: "number", readOnly: true },
+    { key: "expiry_date", label: "Expiry", tooltip: "Date after which the code can no longer be used", type: "date" },
+    { key: "applicable_to", label: "Applicable To (JSON array)", tooltip: "List of trip codes this discount can be applied to", type: "json" },
   ],
   bookings: [
     { key: "id", label: "ID", readOnly: true, hidden: true },
-    { key: "booking_ref", label: "Booking Ref", readOnly: true, compute: (r) =>
+    { key: "booking_ref", label: "Booking Ref", tooltip: "Short reference code for this booking", readOnly: true, compute: (r) =>
         r.booking_ref ?? r.group_id ?? String(r.id ?? "").slice(0, 8).toUpperCase() },
-    { key: "trip_id", label: "Trip", readOnly: true, lookup: "trip" },
-    { key: "departure_id", label: "Departure", readOnly: true, lookup: "departure" },
-    { key: "booking_type", label: "Booking Type", readOnly: true },
-    { key: "group_size", label: "Group Size", readOnly: true },
-    { key: "group_id", label: "Group ID", readOnly: true },
-    { key: "group_members", label: "Group Members", readOnly: true, compute: (r, ctx) => {
+    { key: "trip_id", label: "Trip", tooltip: "Which trip was booked", readOnly: true, lookup: "trip" },
+    { key: "departure_id", label: "Departure", tooltip: "Which departure date was selected", readOnly: true, lookup: "departure" },
+    { key: "booking_type", label: "Booking Type", tooltip: "Lead traveler or group member", readOnly: true },
+    { key: "group_size", label: "Group Size", tooltip: "Total number of people in this booking group", readOnly: true },
+    { key: "group_id", label: "Group ID", tooltip: "Internal ID linking travelers in the same group", readOnly: true },
+    { key: "group_members", label: "Group Members", tooltip: "Names of all travelers in this group", readOnly: true, compute: (r, ctx) => {
         const gid = r.group_id ? String(r.group_id) : "";
         if (gid && ctx.groupMembers[gid]) return ctx.groupMembers[gid];
         // Solo or no group: derive from additional_travelers on this row (if any)
@@ -153,35 +155,35 @@ const COLUMNS: Record<AdminTable, ColumnDef[]> = {
         }
         return "";
       } },
-    { key: "friend_names_mentioned", label: "Friend Names", readOnly: true },
-    { key: "lead_name", label: "Lead Name", readOnly: true, compute: (r, ctx) => getTravelerForRow(r, ctx)?.name ?? "" },
-    { key: "lead_email", label: "Lead Email", readOnly: true, compute: (r, ctx) => getTravelerForRow(r, ctx)?.email ?? "" },
-    { key: "lead_phone", label: "Lead Phone", readOnly: true, compute: (r, ctx) => getTravelerForRow(r, ctx)?.phone ?? "" },
-    { key: "lead_country", label: "Lead Country", readOnly: true, compute: (r, ctx) => getTravelerForRow(r, ctx)?.country ?? "" },
-    { key: "lead_age", label: "Lead Age", readOnly: true, compute: (r, ctx) => getTravelerForRow(r, ctx)?.age ?? "" },
-    { key: "lead_solo", label: "Solo?", readOnly: true, type: "boolean" },
-    { key: "lead_source", label: "Source", readOnly: true },
+    { key: "friend_names_mentioned", label: "Friend Names", tooltip: "Friends mentioned during booking for roommate pairing", readOnly: true },
+    { key: "lead_name", label: "Lead Name", tooltip: "Full name of the primary traveler", readOnly: true, compute: (r, ctx) => getTravelerForRow(r, ctx)?.name ?? "" },
+    { key: "lead_email", label: "Lead Email", tooltip: "Email address of the primary traveler", readOnly: true, compute: (r, ctx) => getTravelerForRow(r, ctx)?.email ?? "" },
+    { key: "lead_phone", label: "Lead Phone", tooltip: "Phone number of the primary traveler", readOnly: true, compute: (r, ctx) => getTravelerForRow(r, ctx)?.phone ?? "" },
+    { key: "lead_country", label: "Lead Country", tooltip: "Country the primary traveler is from", readOnly: true, compute: (r, ctx) => getTravelerForRow(r, ctx)?.country ?? "" },
+    { key: "lead_age", label: "Lead Age", tooltip: "Age of the primary traveler", readOnly: true, compute: (r, ctx) => getTravelerForRow(r, ctx)?.age ?? "" },
+    { key: "lead_solo", label: "Solo?", tooltip: "Whether the traveler is joining solo (no roommate preference)", readOnly: true, type: "boolean" },
+    { key: "lead_source", label: "Source", tooltip: "How the traveler found the trip (e.g. Instagram, Google)", readOnly: true },
 
-    { key: "payment_type", label: "Payment Type", readOnly: true },
-    { key: "original_price", label: "Original Price", readOnly: true, type: "number" },
-    { key: "discount_code_id", label: "Discount Code", readOnly: true, lookup: "discount" },
-    { key: "discount_amount", label: "Discount Amount", readOnly: true, type: "number" },
-    { key: "final_price", label: "Final Price", readOnly: true, type: "number" },
-    { key: "amount_paid", label: "Amount Paid", readOnly: true, type: "number" },
-    { key: "balance_due", label: "Balance Due", readOnly: true, compute: (r) => {
+    { key: "payment_type", label: "Payment Type", tooltip: "Full payment or deposit booking", readOnly: true },
+    { key: "original_price", label: "Original Price", tooltip: "Trip price before any discount was applied", readOnly: true, type: "number" },
+    { key: "discount_code_id", label: "Discount Code", tooltip: "Code used to reduce the price, if any", readOnly: true, lookup: "discount" },
+    { key: "discount_amount", label: "Discount Amount", tooltip: "Total dollar amount saved with the discount code", readOnly: true, type: "number" },
+    { key: "final_price", label: "Final Price", tooltip: "Price after discount, before any payments", readOnly: true, type: "number" },
+    { key: "amount_paid", label: "Amount Paid", tooltip: "Total money collected so far for this booking", readOnly: true, type: "number" },
+    { key: "balance_due", label: "Balance Due", tooltip: "Remaining amount still owed by the traveler", readOnly: true, compute: (r) => {
       const fp = Number(r.final_price ?? 0); const ap = Number(r.amount_paid ?? 0);
       return Math.max(0, fp - ap);
     } },
-    { key: "balance_status", label: "Balance Status", readOnly: true },
-    { key: "balance_due_date", label: "Balance Due Date", readOnly: true, format: "date-only" },
-    { key: "card_on_file", label: "Card on File", readOnly: true, compute: (r) => !!r.stripe_payment_method_id },
-    { key: "status", label: "Status", readOnly: true },
-    { key: "stripe_session_id", label: "Stripe Session ID", readOnly: true },
-    { key: "utm_source", label: "UTM Source", readOnly: true },
-    { key: "utm_medium", label: "UTM Medium", readOnly: true },
-    { key: "utm_campaign", label: "UTM Campaign", readOnly: true },
-    { key: "utm_content", label: "UTM Content", readOnly: true },
-    { key: "created_at", label: "Created", readOnly: true, format: "date-only" },
+    { key: "balance_status", label: "Balance Status", tooltip: "Current state of the balance payment (e.g. scheduled, paid, failed)", readOnly: true },
+    { key: "balance_due_date", label: "Balance Due Date", tooltip: "Date the remaining balance must be paid by", readOnly: true, format: "date-only" },
+    { key: "card_on_file", label: "Card on File", tooltip: "Whether a saved payment method exists for automatic charging", readOnly: true, compute: (r) => !!r.stripe_payment_method_id },
+    { key: "status", label: "Status", tooltip: "Overall booking status (e.g. Confirmed, Cancelled)", readOnly: true },
+    { key: "stripe_session_id", label: "Stripe Session ID", tooltip: "Stripe Checkout session ID for this payment", readOnly: true },
+    { key: "utm_source", label: "UTM Source", tooltip: "Marketing traffic source (e.g. instagram, newsletter)", readOnly: true },
+    { key: "utm_medium", label: "UTM Medium", tooltip: "Marketing medium (e.g. post, story, email)", readOnly: true },
+    { key: "utm_campaign", label: "UTM Campaign", tooltip: "Name of the marketing campaign that drove this booking", readOnly: true },
+    { key: "utm_content", label: "UTM Content", tooltip: "Specific content or ad variant that was clicked", readOnly: true },
+    { key: "created_at", label: "Created", tooltip: "Date and time this booking was first created", readOnly: true, format: "date-only" },
   ],
 };
 
@@ -213,66 +215,68 @@ export default function Admin() {
   }
 
   return (
-    <main className="min-h-screen bg-mm-paper px-4 py-8 text-mm-black md:px-8">
-      <AdminWalkthrough />
-      <header className="mx-auto mb-6 flex max-w-7xl flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <h1 className="font-display text-3xl md:text-4xl">ADMIN</h1>
-          <div className="flex border-[2px] border-mm-black">
-            <button
-              onClick={() => setView("database")}
-              className={`px-3 py-1.5 font-sticker text-[10px] tracking-[0.15em] ${view === "database" ? "bg-mm-pink text-mm-bone" : "bg-mm-bone text-mm-black"}`}
-            >
-              DATABASE
-            </button>
-            <button
-              onClick={() => setView("squad")}
-              className={`border-l-[2px] border-mm-black px-3 py-1.5 font-sticker text-[10px] tracking-[0.15em] ${view === "squad" ? "bg-mm-pink text-mm-bone" : "bg-mm-bone text-mm-black"}`}
-            >
-              SQUAD LEADERS
-            </button>
+    <TooltipProvider delayDuration={300}>
+      <main className="min-h-screen bg-mm-paper px-4 py-8 text-mm-black md:px-8">
+        <AdminWalkthrough />
+        <header className="mx-auto mb-6 flex max-w-7xl flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <h1 className="font-display text-3xl md:text-4xl">ADMIN</h1>
+            <div className="flex border-[2px] border-mm-black">
+              <button
+                onClick={() => setView("database")}
+                className={`px-3 py-1.5 font-sticker text-[10px] tracking-[0.15em] ${view === "database" ? "bg-mm-pink text-mm-bone" : "bg-mm-bone text-mm-black"}`}
+              >
+                DATABASE
+              </button>
+              <button
+                onClick={() => setView("squad")}
+                className={`border-l-[2px] border-mm-black px-3 py-1.5 font-sticker text-[10px] tracking-[0.15em] ${view === "squad" ? "bg-mm-pink text-mm-bone" : "bg-mm-bone text-mm-black"}`}
+              >
+                SQUAD LEADERS
+              </button>
+            </div>
           </div>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={handleRefresh}
-            className="rounded-none border-[2px] border-mm-black"
-          >
-            <RefreshCw className="mr-2 h-4 w-4" />
-            REFRESH
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => { setAdminToken(null); setAuthed(false); }}
-            className="rounded-none border-[2px] border-mm-black"
-          >
-            LOG OUT
-          </Button>
-        </div>
-      </header>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handleRefresh}
+              className="rounded-none border-[2px] border-mm-black"
+            >
+              <RefreshCw className="mr-2 h-4 w-4" />
+              REFRESH
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => { setAdminToken(null); setAuthed(false); }}
+              className="rounded-none border-[2px] border-mm-black"
+            >
+              LOG OUT
+            </Button>
+          </div>
+        </header>
 
-      {view === "squad" ? (
-        <div className="mx-auto max-w-7xl">
-          <SquadAdmin refreshKey={refreshKey} />
-        </div>
-      ) : (
-        <Tabs defaultValue="trips" className="mx-auto max-w-7xl">
-          <TabsList className="flex flex-wrap gap-1 rounded-none border-[2px] border-mm-black bg-mm-bone p-1">
+        {view === "squad" ? (
+          <div className="mx-auto max-w-7xl">
+            <SquadAdmin refreshKey={refreshKey} />
+          </div>
+        ) : (
+          <Tabs defaultValue="trips" className="mx-auto max-w-7xl">
+            <TabsList className="flex flex-wrap gap-1 rounded-none border-[2px] border-mm-black bg-mm-bone p-1">
+              {TABS.map((t) => (
+                <TabsTrigger key={t.id} value={t.id} className="rounded-none data-[state=active]:bg-mm-pink data-[state=active]:text-mm-bone">
+                  {t.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
             {TABS.map((t) => (
-              <TabsTrigger key={t.id} value={t.id} className="rounded-none data-[state=active]:bg-mm-pink data-[state=active]:text-mm-bone">
-                {t.label}
-              </TabsTrigger>
+              <TabsContent key={t.id} value={t.id} className="mt-4">
+                <TableEditor table={t.id} refreshKey={refreshKey} />
+              </TabsContent>
             ))}
-          </TabsList>
-          {TABS.map((t) => (
-            <TabsContent key={t.id} value={t.id} className="mt-4">
-              <TableEditor table={t.id} refreshKey={refreshKey} />
-            </TabsContent>
-          ))}
-        </Tabs>
-      )}
-    </main>
+          </Tabs>
+        )}
+      </main>
+    </TooltipProvider>
   );
 }
 
@@ -552,7 +556,18 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
             <tr>
               {visibleCols.map((c) => (
                 <th key={c.key} className="border-b border-mm-black/30 px-3 py-2 text-left font-sticker text-[10px] tracking-[0.1em]">
-                  {c.label}
+                  {c.tooltip ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="cursor-help underline decoration-mm-black/30 decoration-dotted underline-offset-2">
+                          {c.label}
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-xs bg-mm-black text-mm-bone border-mm-black">
+                        <p className="text-xs">{c.tooltip}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  ) : c.label}
                 </th>
               ))}
               <th className="border-b border-mm-black/30 px-3 py-2" />
