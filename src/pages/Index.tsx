@@ -76,8 +76,6 @@ export default function Index() {
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-mm-black text-mm-bone">
-      <PinnedWordmark />
-
       {/* ============ HERO ============ */}
       <section className="relative isolate w-full overflow-hidden border-b-[4px] border-mm-bone bg-mm-black text-mm-bone">
         {/* Become a Squad Leader CTA — top right */}
