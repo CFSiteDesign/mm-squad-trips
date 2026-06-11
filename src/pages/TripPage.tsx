@@ -9,6 +9,7 @@ import { IndonesiaItinerary } from "@/components/trip/IndonesiaItinerary";
 import { VietnamItinerary } from "@/components/trip/VietnamItinerary";
 import { CambodiaItinerary } from "@/components/trip/CambodiaItinerary";
 import indoHero from "@/assets/indo-hero.jpg.asset.json";
+import khHero from "@/assets/kh-hero.png.asset.json";
 
 import { WhosComing } from "@/components/trip/WhosComing";
 import { BookingFlow } from "@/components/trip/BookingFlow";
