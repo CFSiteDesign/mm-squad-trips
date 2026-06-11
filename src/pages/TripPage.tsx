@@ -49,7 +49,6 @@ export default function TripPage() {
             {getSetupHint(message, slug)}
           </p>
         </div>
-        <PinnedWordmark />
       </div>
     );
   }
