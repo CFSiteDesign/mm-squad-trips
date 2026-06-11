@@ -1,33 +1,37 @@
 import { Star } from "lucide-react";
+import miaImg from "@/assets/mia.jpg.asset.json";
+import willImg from "@/assets/will.jpg.asset.json";
+import astonImg from "@/assets/aston.jpg.asset.json";
+import sofiaImg from "@/assets/sofia.jpg.asset.json";
 
 const TESTIMONIALS = [
   {
-    name: "Megan",
-    age: 26,
-    country: "UK",
-    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=face",
-    quote: "Made friends I'll travel with for the next decade.",
+    name: "Mia",
+    handle: "mia.fryx",
+    trip: "Mad Monkey Trip",
+    avatar: miaImg.url,
+    quote: "I met 15 amazing girls who will be friends for life. There is no going back once you do a monkey trip — also every hostel had this crazy view!",
   },
   {
-    name: "Lukas",
-    age: 24,
-    country: "Germany",
-    avatar: "https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100&h=100&fit=crop&crop=face",
-    quote: "Came solo, left with 19 mates.",
+    name: "Will",
+    handle: "willroth01",
+    trip: "Cambodia",
+    avatar: willImg.url,
+    quote: "Mad monkey trips are mad. The biggest jokes I had the whole time — doing it again next week in Cambodia too.",
   },
   {
-    name: "Ava",
-    age: 29,
-    country: "Australia",
-    avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&h=100&fit=crop&crop=face",
-    quote: "Best two weeks of my year. Hands down.",
+    name: "Aston",
+    handle: "astonsweetman",
+    trip: "Ha Giang Loop",
+    avatar: astonImg.url,
+    quote: "I had an amazing experience on the Ha Giang Loop group tour. My driver was incredibly kind and professional. I felt safe every second, which let me fully relax and enjoy the journey.",
   },
   {
-    name: "Jules",
-    age: 23,
-    country: "Canada",
-    avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&crop=face",
-    quote: "Zero awkwardness. Everyone's solo, everyone's keen.",
+    name: "Sofia",
+    handle: "sofia_joon772",
+    trip: "Vietnam",
+    avatar: sofiaImg.url,
+    quote: "Booked the Vietnam tour solo and was so nervous, but I'd met half the group within an hour. Ended up with 15 new friends and a chat that still hasn't gone quiet. They even surprised us with an upgrade on the last day. If you're thinking of doing it solo — just book it. 10/10.",
   },
 ];
 
@@ -42,9 +46,12 @@ export function Testimonials() {
 
         <div className="mt-10 grid gap-6 md:mt-12 md:grid-cols-2 lg:grid-cols-4">
           {TESTIMONIALS.map((r) => (
-            <div
-              key={r.name}
-              className="block border-[3px] border-mm-black bg-mm-paper p-5 shadow-mm"
+            <a
+              key={r.handle}
+              href={`https://www.instagram.com/${r.handle}/`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group block border-[3px] border-mm-black bg-mm-paper p-5 shadow-mm transition-transform hover:-translate-y-1"
             >
               <div className="flex gap-1 text-mm-pink">
                 {Array.from({ length: 5 }).map((_, j) => (
@@ -60,11 +67,11 @@ export function Testimonials() {
                   className="h-10 w-10 rounded-full border-[3px] border-mm-black bg-mm-lime object-cover"
                 />
                 <div>
-                  <div className="font-sticker text-[11px] tracking-[0.12em] text-mm-black">{r.name}</div>
-                  <div className="text-xs text-mm-black/65">{r.age} · {r.country}</div>
+                  <div className="font-sticker text-[11px] tracking-[0.12em] text-mm-black group-hover:underline">@{r.handle}</div>
+                  <div className="text-xs text-mm-black/65">{r.trip}</div>
                 </div>
               </div>
-            </div>
+            </a>
           ))}
         </div>
       </div>
