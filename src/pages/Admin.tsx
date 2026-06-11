@@ -556,7 +556,18 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
             <tr>
               {visibleCols.map((c) => (
                 <th key={c.key} className="border-b border-mm-black/30 px-3 py-2 text-left font-sticker text-[10px] tracking-[0.1em]">
-                  {c.label}
+                  {c.tooltip ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="cursor-help underline decoration-mm-black/30 decoration-dotted underline-offset-2">
+                          {c.label}
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-xs bg-mm-black text-mm-bone border-mm-black">
+                        <p className="text-xs">{c.tooltip}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  ) : c.label}
                 </th>
               ))}
               <th className="border-b border-mm-black/30 px-3 py-2" />
