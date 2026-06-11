@@ -1,5 +1,6 @@
 import { Sticker } from "@/components/brand/Sticker";
 import hanoiImg from "@/assets/vn-hanoi.jpg.asset.json";
+import hanoi2Img from "@/assets/vn-hanoi2.jpg.asset.json";
 import lanhaImg from "@/assets/vn-lanha.jpg.asset.json";
 import hagiangImg from "@/assets/vn-hagiang.jpg.asset.json";
 import ninhbinhImg from "@/assets/vn-ninhbinh.jpg.asset.json";
@@ -44,7 +45,7 @@ const STOPS: Stop[] = [
     num: "03",
     location: "Hanoi",
     nights: "1 night",
-    image: hanoiImg.url,
+    image: hanoi2Img.url,
     tag: "THE WHITE PARTY",
     highlights: [
       "Return from the bay for the iconic Mad Monkey White Party",
