@@ -1,10 +1,14 @@
 import { Sticker } from "@/components/brand/Sticker";
+import phnomImg from "@/assets/kh-phnom.jpg.asset.json";
+import siemImg from "@/assets/kh-siemreap.jpg.asset.json";
+import kohRongImg from "@/assets/kh-kohrong.jpg.asset.json";
+import kohSdachImg from "@/assets/kh-kohsdach.png.asset.json";
 
 type Stop = {
   num: string;
   location: string;
   nights: string;
-  imageColor: string;
+  image: string;
   tag: string;
   highlights: string[];
 };
@@ -14,7 +18,7 @@ const STOPS: Stop[] = [
     num: "01",
     location: "Phnom Penh",
     nights: "3 nights",
-    imageColor: "bg-mm-pink",
+    image: phnomImg.url,
     tag: "WELCOME & HISTORY",
     highlights: [
       "Khmer family welcome dinner — meet the team",
@@ -28,7 +32,7 @@ const STOPS: Stop[] = [
     num: "02",
     location: "Siem Reap",
     nights: "3 nights",
-    imageColor: "bg-mm-cyan",
+    image: siemImg.url,
     tag: "TEMPLES & NIGHTLIFE",
     highlights: [
       "Bus from Phnom Penh — make your own pizza night",
@@ -42,7 +46,7 @@ const STOPS: Stop[] = [
     num: "03",
     location: "Koh Rong",
     nights: "3 nights",
-    imageColor: "bg-mm-lime",
+    image: kohRongImg.url,
     tag: "ISLAND VIBES & RAVES",
     highlights: [
       "BuvaSea ferry to Koh Rong",
@@ -56,7 +60,7 @@ const STOPS: Stop[] = [
     num: "04",
     location: "Koh Sdach",
     nights: "3 nights",
-    imageColor: "bg-mm-orange",
+    image: kohSdachImg.url,
     tag: "WELLNESS & ADVENTURE",
     highlights: [
       "Hour boat to Koh Sdach Mad Monkey — spa amenities and Wellness Challenge",
@@ -87,17 +91,18 @@ export function CambodiaItinerary({ days }: { days: number }) {
               key={s.num}
               className="grid gap-5 md:grid-cols-[1.1fr_1fr] md:items-center md:gap-10"
             >
-              {/* Image placeholder */}
+              {/* Image */}
               <div
                 className={`relative overflow-hidden border-[3px] border-mm-bone ${
                   i % 2 === 1 ? "md:order-2" : ""
                 }`}
               >
-                <div className={`aspect-[4/3] w-full ${s.imageColor} flex items-center justify-center`}>
-                  <span className="font-display text-2xl text-mm-black md:text-4xl">
-                    {s.location.toUpperCase()}
-                  </span>
-                </div>
+                <img
+                  src={s.image}
+                  alt={s.location}
+                  loading="lazy"
+                  className="aspect-[4/3] w-full object-cover"
+                />
                 <div className="absolute left-3 top-3">
                   <Sticker color={i % 2 === 0 ? "pink" : "yellow"} rotate={-6}>
                     STOP {s.num}
