@@ -81,7 +81,7 @@ const FALLBACKS: Record<string, Trip> = {
     testimonials: DUMMY_TESTIMONIALS,
     id: "placeholder-vietnam",
     code: "VIE",
-    name: "Vietnam",
+    name: "Vietnam North Loop",
     slug: "vietnam",
     days: 10,
     stops: [
