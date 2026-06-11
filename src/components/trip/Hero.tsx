@@ -2,7 +2,6 @@ import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { formatPrice, allDeparturesUnder60Days } from "@/lib/trip-helpers";
 import type { Trip } from "@/types/trip";
-import { PinnedWordmark } from "@/components/brand/Wordmark";
 import { Sticker, Starburst } from "@/components/brand/Sticker";
 
 export function Hero({ trip, heroImageUrl }: { trip: Trip; heroImageUrl?: string }) {
