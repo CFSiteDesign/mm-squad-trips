@@ -48,14 +48,3 @@ export const adminApi = {
     call<{ ok: true }>({ table, op: "delete", id }),
 };
 
-export async function importFromAirtable(): Promise<Record<string, number | string>> {
-  const token = getAdminToken();
-  if (!token) throw new Error("Not authenticated");
-  const { data, error } = await supabase.functions.invoke("admin-import-airtable", {
-    body: {},
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (error) throw new Error(error.message);
-  if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
-  return (data as { report: Record<string, number | string> }).report;
-}

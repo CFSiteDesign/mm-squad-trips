@@ -20,15 +20,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Sticker } from "@/components/brand/Sticker";
 import { PinnedWordmark } from "@/components/brand/Wordmark";
 
-function getSetupHint(message: string, slug: string) {
-  if (message.includes('Airtable GET Trips [404]')) {
-    return `Airtable is connected, but the base does not yet contain a "Trips" table. Verify table names: Trips, Pricing Calendar, Departures, Bookings, Discount Codes, Waitlist.`;
-  }
-  if (message.includes('Trip not found')) {
-    return `Airtable is reachable, but no active trip row has URL Slug "${slug}".`;
-  }
-  return `Operator check: verify the Airtable base and that slug "${slug}" exists in Trips.`;
+function getSetupHint(_message: string, slug: string) {
+  return `Operator check: verify that slug "${slug}" exists in the Trips table and is marked active.`;
 }
+
 
 export default function TripPage() {
   const { slug = "" } = useParams();
@@ -41,9 +36,9 @@ export default function TripPage() {
     placeholderData: fallback,
   });
 
-  // Only show error state when there's no fallback to render. With a fallback,
-  // the page renders normally and Airtable just hydrates departures in the background.
+  // Only show the error state when there's no fallback to render.
   if (error && !fallback) {
+
     const message = error instanceof Error ? error.message : "Could not reach the trip data.";
     return (
       <div className="relative min-h-screen bg-mm-black px-6 py-24 text-mm-bone">
