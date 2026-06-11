@@ -18,6 +18,13 @@ export type Database = {
         Row: {
           additional_travelers: Json | null
           amount_paid: number | null
+          balance_amount: number | null
+          balance_attempts: number
+          balance_charged_at: string | null
+          balance_due_date: string | null
+          balance_last_error: string | null
+          balance_next_attempt_at: string | null
+          balance_status: string | null
           booking_ref: string | null
           booking_type: string | null
           created_at: string
@@ -41,6 +48,10 @@ export type Database = {
           payment_type: string | null
           spot_number: number
           status: string
+          stripe_balance_payment_intent_id: string | null
+          stripe_customer_id: string | null
+          stripe_payment_intent_id: string | null
+          stripe_payment_method_id: string | null
           stripe_session_id: string
           trip_id: string | null
           updated_at: string
@@ -52,6 +63,13 @@ export type Database = {
         Insert: {
           additional_travelers?: Json | null
           amount_paid?: number | null
+          balance_amount?: number | null
+          balance_attempts?: number
+          balance_charged_at?: string | null
+          balance_due_date?: string | null
+          balance_last_error?: string | null
+          balance_next_attempt_at?: string | null
+          balance_status?: string | null
           booking_ref?: string | null
           booking_type?: string | null
           created_at?: string
@@ -75,6 +93,10 @@ export type Database = {
           payment_type?: string | null
           spot_number?: number
           status?: string
+          stripe_balance_payment_intent_id?: string | null
+          stripe_customer_id?: string | null
+          stripe_payment_intent_id?: string | null
+          stripe_payment_method_id?: string | null
           stripe_session_id: string
           trip_id?: string | null
           updated_at?: string
@@ -86,6 +108,13 @@ export type Database = {
         Update: {
           additional_travelers?: Json | null
           amount_paid?: number | null
+          balance_amount?: number | null
+          balance_attempts?: number
+          balance_charged_at?: string | null
+          balance_due_date?: string | null
+          balance_last_error?: string | null
+          balance_next_attempt_at?: string | null
+          balance_status?: string | null
           booking_ref?: string | null
           booking_type?: string | null
           created_at?: string
@@ -109,6 +138,10 @@ export type Database = {
           payment_type?: string | null
           spot_number?: number
           status?: string
+          stripe_balance_payment_intent_id?: string | null
+          stripe_customer_id?: string | null
+          stripe_payment_intent_id?: string | null
+          stripe_payment_method_id?: string | null
           stripe_session_id?: string
           trip_id?: string | null
           updated_at?: string
