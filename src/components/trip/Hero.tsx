@@ -54,14 +54,6 @@ export function Hero({ trip, heroImageUrl }: { trip: Trip; heroImageUrl?: string
 
   return (
     <section className="relative isolate w-full overflow-hidden border-b-[4px] border-mm-bone bg-mm-black text-mm-bone">
-      {/* Top-right: Become a Squad Leader CTA */}
-      <Link
-        to="/squad-leader"
-        className="absolute right-4 top-4 z-40 inline-flex items-center border-[3px] border-mm-bone bg-mm-pink px-3 py-1.5 font-display text-[10px] text-mm-bone shadow-mm transition-transform hover:-translate-x-[2px] hover:-translate-y-[2px] md:right-8 md:top-8 md:px-4 md:py-2 md:text-sm"
-      >
-        BECOME A SQUAD LEADER →
-      </Link>
-
       {/* ============ MOBILE ============ */}
       <div className="relative w-full md:hidden">
         <div className="absolute inset-0 z-0">{BackgroundMedia}</div>
