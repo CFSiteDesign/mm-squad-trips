@@ -1,10 +1,14 @@
 import { Sticker } from "@/components/brand/Sticker";
+import phnomImg from "@/assets/kh-phnom.jpg.asset.json";
+import siemImg from "@/assets/kh-siemreap.jpg.asset.json";
+import kohRongImg from "@/assets/kh-kohrong.jpg.asset.json";
+import kohSdachImg from "@/assets/kh-kohsdach.png.asset.json";
 
 type Stop = {
   num: string;
   location: string;
   nights: string;
-  imageColor: string;
+  image: string;
   tag: string;
   highlights: string[];
 };
