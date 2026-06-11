@@ -465,8 +465,9 @@ function PaymentSummary({
         <div className="my-2 h-[3px] bg-mm-black" />
         <Row k={pay.type === "deposit" ? "Deposit today" : "Pay today"} v={formatPrice(pay.amount - (pay.type === "full" ? discountAmount : 0))} bold />
         {pay.type === "deposit" && (
-          <Row k="Balance due 60 days before departure" v={formatPrice(subtotal - pay.amount)} muted />
+          <Row k="Balance auto-charged to your card 7 days before departure" v={formatPrice(subtotal - pay.amount - discountAmount)} muted />
         )}
+
       </dl>
     </div>
   );
