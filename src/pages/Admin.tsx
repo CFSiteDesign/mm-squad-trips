@@ -65,10 +65,13 @@ interface ColumnDef {
   type?: "text" | "number" | "boolean" | "date" | "json" | "textarea";
   readOnly?: boolean;
   hidden?: boolean;
+  hideInTable?: boolean; // hidden from on-screen table but still included in CSV export
+  hideInCsv?: boolean; // synthetic/derived column — exclude from CSV
   lookup?: "trip" | "departure" | "discount";
   format?: "date-only" | "ref8" | "travelers";
   compute?: (row: Row, ctx: LookupCtx) => unknown;
 }
+
 
 type LeaderInfo = {
   lead_name?: string;
