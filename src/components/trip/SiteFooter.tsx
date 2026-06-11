@@ -1,4 +1,4 @@
-import { MessageCircle } from "lucide-react";
+// Footer component
 import { Wordmark } from "@/components/brand/Wordmark";
 
 export function SiteFooter() {
