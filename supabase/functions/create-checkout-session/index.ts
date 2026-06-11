@@ -225,10 +225,24 @@ Deno.serve(async (req) => {
       payment_intent_data: {
         metadata,
         description: `${trip.name} × ${groupSize} · ${depDate}`,
+        ...(isDeposit ? { setup_future_usage: "off_session" as const } : {}),
       },
+      ...(isDeposit
+        ? {
+            custom_text: {
+              submit: {
+                message:
+                  `You're paying a $${DEPOSIT_PER_SPOT * groupSize} deposit today. ` +
+                  `The remaining balance of $${(fullDue - amountToday).toFixed(0)} will be automatically charged to this card 7 days before departure (${depDate}). ` +
+                  `If the charge fails we'll retry every 2 days and email you.`,
+              },
+            },
+          }
+        : {}),
       success_url: `${origin}/booking-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/${tripSlug}?cancelled=1#booking`,
     });
+
 
     return new Response(JSON.stringify({ url: session.url }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },

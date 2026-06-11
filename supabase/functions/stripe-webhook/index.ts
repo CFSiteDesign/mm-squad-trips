@@ -216,6 +216,53 @@ async function writeBookings(session: Stripe.Checkout.Session) {
     }
   }
 
+  // Card-on-file + balance schedule for deposit bookings
+  if (paymentType === "Deposit") {
+    try {
+      const stripeKey = Deno.env.get("STRIPE_SECRET_KEY")!;
+      const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+      const full = await stripe.checkout.sessions.retrieve(sessionId, {
+        expand: ["payment_intent", "payment_intent.payment_method"],
+      });
+      const pi = full.payment_intent as Stripe.PaymentIntent | null;
+      const customerId = (typeof full.customer === "string" ? full.customer : full.customer?.id) ?? null;
+      const pmId =
+        (typeof pi?.payment_method === "string" ? pi?.payment_method : pi?.payment_method?.id) ??
+        null;
+      const piId = pi?.id ?? null;
+
+      const depDateIso = m.departure_date as string;
+      // Balance due 7 days before departure (UTC)
+      const due = new Date(depDateIso + "T00:00:00Z");
+      due.setUTCDate(due.getUTCDate() - 7);
+      const balanceDueDate = due.toISOString().slice(0, 10);
+      const balancePerSpot = Math.max(0, perSpotFinal - perSpotPaid);
+
+      const nowIso = new Date().toISOString();
+      const nextAttempt = new Date(due);
+      // first attempt at the due date at 14:00 UTC
+      nextAttempt.setUTCHours(14, 0, 0, 0);
+
+      const { error: updErr } = await sb
+        .from("bookings")
+        .update({
+          stripe_customer_id: customerId,
+          stripe_payment_method_id: pmId,
+          stripe_payment_intent_id: piId,
+          balance_amount: Math.round(balancePerSpot * 100) / 100,
+          balance_due_date: balanceDueDate,
+          balance_status: balancePerSpot > 0 && pmId ? "scheduled" : "not_required",
+          balance_next_attempt_at: balancePerSpot > 0 && pmId ? nextAttempt.toISOString() : null,
+        })
+        .eq("stripe_session_id", sessionId);
+      if (updErr) console.warn("balance schedule update failed:", updErr.message);
+      else console.log(`Scheduled balance ${balancePerSpot} per spot for ${sessionId}, due ${balanceDueDate}`);
+    } catch (e) {
+      console.warn("balance setup failed:", e instanceof Error ? e.message : e);
+    }
+  }
+
+
   // Squad leader credit
   if (m.discount_code) {
     try {
