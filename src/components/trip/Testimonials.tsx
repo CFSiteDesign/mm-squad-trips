@@ -42,12 +42,9 @@ export function Testimonials() {
 
         <div className="mt-10 grid gap-6 md:mt-12 md:grid-cols-2 lg:grid-cols-4">
           {TESTIMONIALS.map((r) => (
-            <a
-              key={r.handle}
-              href={`https://www.instagram.com/${r.handle}/`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group block border-[3px] border-mm-black bg-mm-paper p-5 shadow-mm transition-transform hover:-translate-y-1"
+            <div
+              key={r.name}
+              className="block border-[3px] border-mm-black bg-mm-paper p-5 shadow-mm"
             >
               <div className="flex gap-1 text-mm-pink">
                 {Array.from({ length: 5 }).map((_, j) => (
@@ -63,11 +60,11 @@ export function Testimonials() {
                   className="h-10 w-10 rounded-full border-[3px] border-mm-black bg-mm-lime object-cover"
                 />
                 <div>
-                  <div className="font-sticker text-[11px] tracking-[0.12em] text-mm-black group-hover:underline">@{r.handle}</div>
-                  <div className="text-xs text-mm-black/65">{r.trip}</div>
+                  <div className="font-sticker text-[11px] tracking-[0.12em] text-mm-black">{r.name}</div>
+                  <div className="text-xs text-mm-black/65">{r.age} · {r.country}</div>
                 </div>
               </div>
-            </a>
+            </div>
           ))}
         </div>
       </div>
