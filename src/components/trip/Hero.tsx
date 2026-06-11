@@ -58,13 +58,6 @@ export function Hero({ trip, heroImageUrl }: { trip: Trip; heroImageUrl?: string
       <div className="relative w-full md:hidden">
         <div className="absolute inset-0 z-0">{BackgroundMedia}</div>
 
-        {/* ALL · IN sticker */}
-        <div className="pointer-events-none absolute left-4 top-[5.2rem] z-30">
-          <Sticker color="yellow" rotate={-7} className="px-2.5 py-1 text-[11px]">
-            ALL · IN
-          </Sticker>
-        </div>
-
         {/* Starburst */}
         <div className="pointer-events-none absolute right-3 top-[5rem] z-30">
           <Starburst size={92} color="pink" rotate={-12}>
@@ -133,13 +126,6 @@ export function Hero({ trip, heroImageUrl }: { trip: Trip; heroImageUrl?: string
       {/* ============ DESKTOP ============ */}
       <div className="relative hidden min-h-[100svh] w-full md:block">
         <div className="absolute inset-0 z-0">{BackgroundMedia}</div>
-
-        {/* ALL · IN sticker */}
-        <div className="pointer-events-none absolute left-8 top-28 z-30">
-          <Sticker color="yellow" rotate={-7} className="px-3 py-1.5 text-xs">
-            ALL · IN
-          </Sticker>
-        </div>
 
         {/* Starburst */}
         <div className="pointer-events-none absolute right-8 top-20 z-20 origin-top-right scale-[0.78] lg:right-16 lg:top-20 lg:scale-100">
