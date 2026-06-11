@@ -296,9 +296,15 @@ export default function Index() {
             WHAT TRAVELLERS<br /><span className="text-mm-bone">ARE SAYING.</span>
           </h2>
 
-          <div className="mt-10 grid gap-6 md:mt-12 md:grid-cols-3">
+          <div className="mt-10 grid gap-6 md:mt-12 md:grid-cols-2 lg:grid-cols-4">
             {TESTIMONIALS.map((r) => (
-              <div key={r.name} className="border-[3px] border-mm-black bg-mm-paper p-5 shadow-mm">
+              <a
+                key={r.handle}
+                href={`https://www.instagram.com/${r.handle}/`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group block border-[3px] border-mm-black bg-mm-paper p-5 shadow-mm transition-transform hover:-translate-y-1"
+              >
                 <div className="flex gap-1 text-mm-pink">
                   {Array.from({ length: 5 }).map((_, j) => (
                     <Star key={j} className="h-4 w-4 fill-current" />
@@ -306,15 +312,18 @@ export default function Index() {
                 </div>
                 <p className="mt-4 text-[15px] leading-snug text-mm-black">"{r.quote}"</p>
                 <div className="mt-5 flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center border-[3px] border-mm-black bg-mm-lime font-display text-sm text-mm-black">
-                    {r.name.charAt(0)}
-                  </div>
+                  <img
+                    src={`https://unavatar.io/instagram/${r.handle}`}
+                    alt={r.name}
+                    loading="lazy"
+                    className="h-10 w-10 border-[3px] border-mm-black bg-mm-lime object-cover"
+                  />
                   <div>
-                    <div className="font-sticker text-[11px] tracking-[0.12em] text-mm-black">{r.name}</div>
+                    <div className="font-sticker text-[11px] tracking-[0.12em] text-mm-black group-hover:underline">@{r.handle}</div>
                     <div className="text-xs text-mm-black/65">{r.trip}</div>
                   </div>
                 </div>
-              </div>
+              </a>
             ))}
           </div>
         </div>
