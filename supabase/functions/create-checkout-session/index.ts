@@ -3,14 +3,14 @@
 // - Re-checks Bookable? and Spots Remaining >= groupSize
 // - Resolves price: month override → trip default
 // - Applies validated discount code (full price only — not deposits)
-// - 60-day rule: $99/spot deposit if departure ≥60 days out, else pay in full
+// - 7-day rule: $99/spot deposit if departure ≥7 days out, else pay in full
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const DEPOSIT_PER_SPOT = 99;
-const DEPOSIT_THRESHOLD_DAYS = 60;
-const HIDE_WITHIN_DAYS = 7;
+const DEPOSIT_THRESHOLD_DAYS = 7;
+const HIDE_WITHIN_DAYS = 0;
 
 const SLUG_TO_LABEL: Record<string, string> = {
   indonesia: "Indonesia",
