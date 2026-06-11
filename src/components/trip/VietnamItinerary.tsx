@@ -1,10 +1,15 @@
 import { Sticker } from "@/components/brand/Sticker";
+import hanoiImg from "@/assets/vn-hanoi.jpg.asset.json";
+import lanhaImg from "@/assets/vn-lanha.jpg.asset.json";
+import hagiangImg from "@/assets/vn-hagiang.jpg.asset.json";
+import ninhbinhImg from "@/assets/vn-ninhbinh.jpg.asset.json";
+import hoianImg from "@/assets/vn-hoian.jpg.asset.json";
 
 type Stop = {
   num: string;
   location: string;
   nights: string;
-  imageColor: string;
+  image: string;
   tag: string;
   highlights: string[];
 };
@@ -14,7 +19,7 @@ const STOPS: Stop[] = [
     num: "01",
     location: "Hanoi",
     nights: "2 nights",
-    imageColor: "bg-mm-pink",
+    image: hanoiImg.url,
     tag: "OLD QUARTER & HIDDEN ALLEYS",
     highlights: [
       "Touch down in the chaos of the Old Quarter",
@@ -27,7 +32,7 @@ const STOPS: Stop[] = [
     num: "02",
     location: "Lan Ha Bay",
     nights: "1 night",
-    imageColor: "bg-mm-cyan",
+    image: lanhaImg.url,
     tag: "LIMESTONE PARADISE",
     highlights: [
       "Trade city streets for turquoise water and sun-drenched decks",
@@ -39,7 +44,7 @@ const STOPS: Stop[] = [
     num: "03",
     location: "Hanoi",
     nights: "1 night",
-    imageColor: "bg-mm-lime",
+    image: hanoiImg.url,
     tag: "THE WHITE PARTY",
     highlights: [
       "Return from the bay for the iconic Mad Monkey White Party",
@@ -51,7 +56,7 @@ const STOPS: Stop[] = [
     num: "04",
     location: "Ha Giang Loop",
     nights: "5 nights",
-    imageColor: "bg-mm-orange",
+    image: hagiangImg.url,
     tag: "MOUNTAIN ADVENTURE",
     highlights: [
       "Basecamp at the foot of the loop — poolside beers and mountain views",
@@ -66,7 +71,7 @@ const STOPS: Stop[] = [
     num: "05",
     location: "Ninh Binh",
     nights: "1 night",
-    imageColor: "bg-mm-yellow",
+    image: ninhbinhImg.url,
     tag: "HA LONG ON LAND",
     highlights: [
       "Explore caves and rafts in 'Ha Long Bay on Land'",
@@ -78,7 +83,7 @@ const STOPS: Stop[] = [
     num: "06",
     location: "Hoi An & Da Nang",
     nights: "3 nights",
-    imageColor: "bg-mm-purple",
+    image: hoianImg.url,
     tag: "LANTERNS & GOLDEN BRIDGES",
     highlights: [
       "Professional cooking class in beautiful Hoi An",
@@ -116,11 +121,12 @@ export function VietnamItinerary({ days }: { days: number }) {
                   i % 2 === 1 ? "md:order-2" : ""
                 }`}
               >
-                <div className={`aspect-[4/3] w-full ${s.imageColor} flex items-center justify-center`}>
-                  <span className="font-display text-2xl text-mm-black md:text-4xl">
-                    {s.location.toUpperCase()}
-                  </span>
-                </div>
+                <img
+                  src={s.image}
+                  alt={s.location}
+                  loading="lazy"
+                  className="aspect-[4/3] w-full object-cover"
+                />
                 <div className="absolute left-3 top-3">
                   <Sticker color={i % 2 === 0 ? "pink" : "yellow"} rotate={-6}>
                     STOP {s.num}
