@@ -43,7 +43,7 @@ const FALLBACKS: Record<string, Trip> = {
     testimonials: DUMMY_TESTIMONIALS,
     id: "placeholder-indonesia",
     code: "IND",
-    name: "Indonesia",
+    name: "Indonesia Island Hopping",
     slug: "indonesia",
     days: 12,
     stops: [
@@ -62,7 +62,7 @@ const FALLBACKS: Record<string, Trip> = {
     testimonials: DUMMY_TESTIMONIALS,
     id: "placeholder-cambodia",
     code: "CAM",
-    name: "Cambodia",
+    name: "Cambodia Coast to Coast",
     slug: "cambodia",
     days: 14,
     stops: [
@@ -81,7 +81,7 @@ const FALLBACKS: Record<string, Trip> = {
     testimonials: DUMMY_TESTIMONIALS,
     id: "placeholder-vietnam",
     code: "VIE",
-    name: "Vietnam",
+    name: "Vietnam North Loop",
     slug: "vietnam",
     days: 10,
     stops: [
