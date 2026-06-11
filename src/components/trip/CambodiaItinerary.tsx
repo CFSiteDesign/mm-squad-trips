@@ -32,7 +32,7 @@ const STOPS: Stop[] = [
     num: "02",
     location: "Siem Reap",
     nights: "3 nights",
-    imageColor: "bg-mm-cyan",
+    image: siemImg.url,
     tag: "TEMPLES & NIGHTLIFE",
     highlights: [
       "Bus from Phnom Penh — make your own pizza night",
