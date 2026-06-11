@@ -172,6 +172,9 @@ const COLUMNS: Record<AdminTable, ColumnDef[]> = {
       const fp = Number(r.final_price ?? 0); const ap = Number(r.amount_paid ?? 0);
       return Math.max(0, fp - ap);
     } },
+    { key: "balance_status", label: "Balance Status", readOnly: true },
+    { key: "balance_due_date", label: "Balance Due Date", readOnly: true, format: "date-only" },
+    { key: "card_on_file", label: "Card on File", readOnly: true, compute: (r) => !!r.stripe_payment_method_id },
     { key: "status", label: "Status", readOnly: true },
     { key: "stripe_session_id", label: "Stripe Session ID", readOnly: true },
     { key: "utm_source", label: "UTM Source", readOnly: true },
