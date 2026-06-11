@@ -115,7 +115,7 @@ export default function Index() {
             <div>
               <h1 className="font-display text-[clamp(2.75rem,13vw,4.25rem)] leading-[0.9] text-mm-bone">
                 ALL IN<br />
-                <span className="text-mm-lime">GROUP TRIPS</span><br />
+                <span className="text-mm-lime">TRIPS</span><br />
                 <span className="text-mm-orange">BY MAD</span> MONKEY.
               </h1>
 
