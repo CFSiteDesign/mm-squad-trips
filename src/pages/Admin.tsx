@@ -364,7 +364,9 @@ const lookupCache: {
 
 function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: number }) {
   const cols = COLUMNS[table];
-  const visibleCols = useMemo(() => cols.filter((c) => !c.hidden), [cols]);
+  const visibleCols = useMemo(() => cols.filter((c) => !c.hidden && !c.hideInTable), [cols]);
+  const csvCols = useMemo(() => cols.filter((c) => !c.hidden && !c.hideInCsv), [cols]);
+
   const needsTripLookup = useMemo(() => cols.some((c) => c.lookup === "trip"), [cols]);
   const needsDepartureLookup = useMemo(() => cols.some((c) => c.lookup === "departure"), [cols]);
   const needsDiscountLookup = useMemo(() => cols.some((c) => c.lookup === "discount"), [cols]);
