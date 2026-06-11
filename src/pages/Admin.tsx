@@ -529,10 +529,11 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
   }
 
   function exportCsv() {
-    const headers = visibleCols.map((c) => c.label);
+    const headers = csvCols.map((c) => c.label);
     const lines = [headers.join(",")];
     for (const r of filtered) {
-      lines.push(visibleCols.map((c) => {
+      lines.push(csvCols.map((c) => {
+
         let v: unknown = c.compute ? c.compute(r, ctx) : r[c.key];
         if (c.lookup === "trip" && v) v = tripMap[String(v)] ?? v;
         else if (c.lookup === "departure" && v) v = departureMap[String(v)] ?? v;
