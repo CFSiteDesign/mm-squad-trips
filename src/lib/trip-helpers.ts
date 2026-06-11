@@ -1,8 +1,10 @@
 import type { Departure } from "@/types/trip";
 
 export const DEPOSIT_PER_SPOT = 99;
-export const DEPOSIT_THRESHOLD_DAYS = 60;
-export const HIDE_WITHIN_DAYS = 7;
+// Trips departing in fewer than this many days require full payment (no deposit).
+export const DEPOSIT_THRESHOLD_DAYS = 7;
+// Trips departing in fewer than this many days are hidden from online booking.
+export const HIDE_WITHIN_DAYS = 0;
 
 export function daysUntil(dateIso: string): number {
   const today = new Date();
