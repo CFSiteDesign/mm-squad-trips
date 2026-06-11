@@ -1,0 +1,6 @@
+UPDATE public.trips SET testimonials = '[
+  {"name":"Mia","age":24,"country":"UK","photo":"/__l5e/assets-v1/d87df913-cec5-4a0e-8bbd-47d28e5f5db4/mia.jpg","quote":"I met 15 amazing girls who will be friends for life. There is no going back once you do a monkey trip — also every hostel had this crazy view!"},
+  {"name":"Will","age":26,"country":"UK","photo":"/__l5e/assets-v1/30246828-7b06-426e-b50f-afa83b51f6d5/will.jpg","quote":"Mad monkey trips are mad. The biggest jokes I had the whole time — doing it again next week in Cambodia too."},
+  {"name":"Aston","age":25,"country":"Australia","photo":"/__l5e/assets-v1/484e6859-a9f6-4564-be23-6bf38776301f/aston.jpg","quote":"I had an amazing experience on the Ha Giang Loop group tour. My driver was incredibly kind and professional. I felt safe every second."},
+  {"name":"Sofia","age":23,"country":"Ireland","photo":"/__l5e/assets-v1/cfc00b4c-acc2-4be6-a1fe-f8db366c1b6c/sofia.jpg","quote":"Booked the Vietnam tour solo and was so nervous, but I''d met half the group within an hour. If you''re thinking of doing it solo — just book it. 10/10."}
+]'::jsonb;

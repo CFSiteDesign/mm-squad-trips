@@ -8,32 +8,32 @@ const BASE = {
 
 const DUMMY_TESTIMONIALS = [
   {
-    name: "Megan",
+    name: "Mia",
+    age: 24,
+    country: "UK",
+    photo: "/__l5e/assets-v1/d87df913-cec5-4a0e-8bbd-47d28e5f5db4/mia.jpg",
+    quote: "I met 15 amazing girls who will be friends for life. There is no going back once you do a monkey trip — also every hostel had this crazy view!",
+  },
+  {
+    name: "Will",
     age: 26,
     country: "UK",
-    photo: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=face",
-    quote: "Made friends I'll travel with for the next decade.",
+    photo: "/__l5e/assets-v1/30246828-7b06-426e-b50f-afa83b51f6d5/will.jpg",
+    quote: "Mad monkey trips are mad. The biggest jokes I had the whole time — doing it again next week in Cambodia too.",
   },
   {
-    name: "Lukas",
-    age: 24,
-    country: "Germany",
-    photo: "https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100&h=100&fit=crop&crop=face",
-    quote: "Came solo, left with 19 mates.",
-  },
-  {
-    name: "Ava",
-    age: 29,
+    name: "Aston",
+    age: 25,
     country: "Australia",
-    photo: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&h=100&fit=crop&crop=face",
-    quote: "Best two weeks of my year. Hands down.",
+    photo: "/__l5e/assets-v1/484e6859-a9f6-4564-be23-6bf38776301f/aston.jpg",
+    quote: "I had an amazing experience on the Ha Giang Loop group tour. My driver was incredibly kind and professional. I felt safe every second.",
   },
   {
-    name: "Jules",
+    name: "Sofia",
     age: 23,
-    country: "Canada",
-    photo: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&crop=face",
-    quote: "Zero awkwardness. Everyone's solo, everyone's keen.",
+    country: "Ireland",
+    photo: "/__l5e/assets-v1/cfc00b4c-acc2-4be6-a1fe-f8db366c1b6c/sofia.jpg",
+    quote: "Booked the Vietnam tour solo and was so nervous, but I'd met half the group within an hour. If you're thinking of doing it solo — just book it. 10/10.",
   },
 ];
 
