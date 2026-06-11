@@ -89,12 +89,6 @@ export default function Index() {
           BECOME A SQUAD LEADER →
         </Link>
 
-        {/* ALL · IN sticker (both layouts) */}
-        <div className="pointer-events-none absolute left-4 top-[5.2rem] z-30 md:left-8 md:top-28">
-          <Sticker color="yellow" rotate={-7} className="px-2.5 py-1 text-[11px] md:px-3 md:py-1.5 md:text-xs">
-            ALL · IN
-          </Sticker>
-        </div>
 
         {/* MOBILE: full-bleed hero image, text overlaid — mirrors desktop layout */}
         <div className="relative w-full md:hidden">
