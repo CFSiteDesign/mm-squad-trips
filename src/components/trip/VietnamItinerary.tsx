@@ -1,10 +1,15 @@
 import { Sticker } from "@/components/brand/Sticker";
+import hanoiImg from "@/assets/vn-hanoi.jpg.asset.json";
+import lanhaImg from "@/assets/vn-lanha.jpg.asset.json";
+import hagiangImg from "@/assets/vn-hagiang.jpg.asset.json";
+import ninhbinhImg from "@/assets/vn-ninhbinh.jpg.asset.json";
+import hoianImg from "@/assets/vn-hoian.jpg.asset.json";
 
 type Stop = {
   num: string;
   location: string;
   nights: string;
-  imageColor: string;
+  image: string;
   tag: string;
   highlights: string[];
 };
