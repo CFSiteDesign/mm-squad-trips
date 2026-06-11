@@ -15,7 +15,6 @@ import {
   ArrowRight,
   MapPin,
 } from "lucide-react";
-import { PinnedWordmark } from "@/components/brand/Wordmark";
 import { Sticker, Starburst } from "@/components/brand/Sticker";
 import { SiteFooter } from "@/components/trip/SiteFooter";
 import { SquadCTA } from "@/components/trip/SquadCTA";
@@ -77,19 +76,8 @@ export default function Index() {
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-mm-black text-mm-bone">
-      <PinnedWordmark />
-
       {/* ============ HERO ============ */}
       <section className="relative isolate w-full overflow-hidden border-b-[4px] border-mm-bone bg-mm-black text-mm-bone">
-        {/* Become a Squad Leader CTA — top right */}
-        <Link
-          to="/squad-leader"
-          className="absolute right-4 top-4 z-40 inline-flex items-center border-[3px] border-mm-bone bg-mm-pink px-3 py-1.5 font-display text-[10px] text-mm-bone shadow-mm transition-transform hover:-translate-x-[2px] hover:-translate-y-[2px] md:right-8 md:top-8 md:px-4 md:py-2 md:text-sm"
-        >
-          BECOME A SQUAD LEADER →
-        </Link>
-
-
         {/* MOBILE: full-bleed hero image, text overlaid — mirrors desktop layout */}
         <div className="relative w-full md:hidden">
           {/* Background image + overlays */}

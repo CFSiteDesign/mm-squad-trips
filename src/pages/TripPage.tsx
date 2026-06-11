@@ -18,7 +18,6 @@ import { SquadCTA } from "@/components/trip/SquadCTA";
 import { TripCrossSell } from "@/components/trip/TripCrossSell";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sticker } from "@/components/brand/Sticker";
-import { PinnedWordmark } from "@/components/brand/Wordmark";
 
 function getSetupHint(_message: string, slug: string) {
   return `Operator check: verify that slug "${slug}" exists in the Trips table and is marked active.`;
@@ -50,7 +49,6 @@ export default function TripPage() {
             {getSetupHint(message, slug)}
           </p>
         </div>
-        <PinnedWordmark />
       </div>
     );
   }
