@@ -84,7 +84,7 @@ export default function Index() {
 
           {/* ALL IN logo — top right */}
           <div className="pointer-events-none absolute right-3 top-[5rem] z-30">
-            <img src={allInLogo.url} alt="ALL IN" className="h-16 w-auto" />
+            <img src={allInLogo.url} alt="ALL IN" className="h-12 w-auto" />
           </div>
 
           {/* Foreground content */}
@@ -121,7 +121,7 @@ export default function Index() {
             <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.80)_0%,rgba(0,0,0,0.65)_40%,rgba(0,0,0,0.25)_65%,transparent_100%)]" />
           </div>
 
-          <div className="pointer-events-none absolute right-8 top-20 z-20 origin-top-right scale-[0.78] lg:right-16 lg:top-20 lg:scale-100">
+          <div className="pointer-events-none absolute right-8 top-20 z-20 origin-top-right scale-[0.60] lg:right-16 lg:top-20 lg:scale-[0.80]">
             <img src={allInLogo.url} alt="ALL IN" className="h-44 w-auto lg:h-56" />
           </div>
 
