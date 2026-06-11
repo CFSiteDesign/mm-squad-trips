@@ -60,6 +60,7 @@ type Row = Record<string, unknown>;
 interface ColumnDef {
   key: string;
   label: string;
+  tooltip?: string;
   type?: "text" | "number" | "boolean" | "date" | "json" | "textarea";
   readOnly?: boolean;
   hidden?: boolean;
