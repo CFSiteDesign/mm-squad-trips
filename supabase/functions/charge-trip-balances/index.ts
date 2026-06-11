@@ -9,18 +9,13 @@ import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const RETRY_DAYS = 2;
+const normalizeCronSecret = (value: string | null) => {
+  const trimmed = value?.trim() ?? "";
+  return /^[0-9a-fA-F]{64}$/.test(trimmed) ? trimmed.toLowerCase() : trimmed;
+};
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-
-  // Shared-secret guard. If CRON_SECRET is configured, require it (the daily
-  // cron must send `x-cron-secret: <CRON_SECRET>`). This charges real cards, so
-  // it must not be triggerable with just the public anon key. Enforce-if-set so
-  // deploying before the secret exists doesn't lock out a legitimate test call.
-  const cronSecret = Deno.env.get("CRON_SECRET");
-  if (cronSecret && req.headers.get("x-cron-secret") !== cronSecret) {
-    return new Response("forbidden", { status: 403, headers: corsHeaders });
-  }
 
   const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
   const sbUrl = Deno.env.get("SUPABASE_URL");
@@ -30,6 +25,27 @@ Deno.serve(async (req) => {
   }
   const sb = createClient(sbUrl, sbKey);
   const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+
+  // Shared-secret guard. Read the expected value from the same Vault-backed
+  // database helper the scheduled job uses so there is only one source of truth.
+  const rawProvidedCronSecret = req.headers.get("x-cron-secret");
+  const providedCronSecret = normalizeCronSecret(rawProvidedCronSecret);
+  const { data: vaultCronSecret, error: vaultCronSecretError } = await sb.rpc("get_cron_secret");
+
+  if (vaultCronSecretError) {
+    console.error("cron secret lookup failed:", vaultCronSecretError.message);
+    return new Response("cron secret unavailable", { status: 503, headers: corsHeaders });
+  }
+
+  const cronSecret = normalizeCronSecret(typeof vaultCronSecret === "string" ? vaultCronSecret : null);
+  if (cronSecret && providedCronSecret !== cronSecret) {
+    console.warn("cron secret mismatch", {
+      headerLength: rawProvidedCronSecret?.length ?? 0,
+      headerNormalizedLength: providedCronSecret.length,
+      vaultNormalizedLength: cronSecret.length,
+    });
+    return new Response("forbidden", { status: 403, headers: corsHeaders });
+  }
 
   const nowIso = new Date().toISOString();
   const today = nowIso.slice(0, 10);
