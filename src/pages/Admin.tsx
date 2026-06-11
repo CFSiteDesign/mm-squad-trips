@@ -215,66 +215,68 @@ export default function Admin() {
   }
 
   return (
-    <main className="min-h-screen bg-mm-paper px-4 py-8 text-mm-black md:px-8">
-      <AdminWalkthrough />
-      <header className="mx-auto mb-6 flex max-w-7xl flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <h1 className="font-display text-3xl md:text-4xl">ADMIN</h1>
-          <div className="flex border-[2px] border-mm-black">
-            <button
-              onClick={() => setView("database")}
-              className={`px-3 py-1.5 font-sticker text-[10px] tracking-[0.15em] ${view === "database" ? "bg-mm-pink text-mm-bone" : "bg-mm-bone text-mm-black"}`}
-            >
-              DATABASE
-            </button>
-            <button
-              onClick={() => setView("squad")}
-              className={`border-l-[2px] border-mm-black px-3 py-1.5 font-sticker text-[10px] tracking-[0.15em] ${view === "squad" ? "bg-mm-pink text-mm-bone" : "bg-mm-bone text-mm-black"}`}
-            >
-              SQUAD LEADERS
-            </button>
+    <TooltipProvider delayDuration={300}>
+      <main className="min-h-screen bg-mm-paper px-4 py-8 text-mm-black md:px-8">
+        <AdminWalkthrough />
+        <header className="mx-auto mb-6 flex max-w-7xl flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <h1 className="font-display text-3xl md:text-4xl">ADMIN</h1>
+            <div className="flex border-[2px] border-mm-black">
+              <button
+                onClick={() => setView("database")}
+                className={`px-3 py-1.5 font-sticker text-[10px] tracking-[0.15em] ${view === "database" ? "bg-mm-pink text-mm-bone" : "bg-mm-bone text-mm-black"}`}
+              >
+                DATABASE
+              </button>
+              <button
+                onClick={() => setView("squad")}
+                className={`border-l-[2px] border-mm-black px-3 py-1.5 font-sticker text-[10px] tracking-[0.15em] ${view === "squad" ? "bg-mm-pink text-mm-bone" : "bg-mm-bone text-mm-black"}`}
+              >
+                SQUAD LEADERS
+              </button>
+            </div>
           </div>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={handleRefresh}
-            className="rounded-none border-[2px] border-mm-black"
-          >
-            <RefreshCw className="mr-2 h-4 w-4" />
-            REFRESH
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => { setAdminToken(null); setAuthed(false); }}
-            className="rounded-none border-[2px] border-mm-black"
-          >
-            LOG OUT
-          </Button>
-        </div>
-      </header>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handleRefresh}
+              className="rounded-none border-[2px] border-mm-black"
+            >
+              <RefreshCw className="mr-2 h-4 w-4" />
+              REFRESH
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => { setAdminToken(null); setAuthed(false); }}
+              className="rounded-none border-[2px] border-mm-black"
+            >
+              LOG OUT
+            </Button>
+          </div>
+        </header>
 
-      {view === "squad" ? (
-        <div className="mx-auto max-w-7xl">
-          <SquadAdmin refreshKey={refreshKey} />
-        </div>
-      ) : (
-        <Tabs defaultValue="trips" className="mx-auto max-w-7xl">
-          <TabsList className="flex flex-wrap gap-1 rounded-none border-[2px] border-mm-black bg-mm-bone p-1">
+        {view === "squad" ? (
+          <div className="mx-auto max-w-7xl">
+            <SquadAdmin refreshKey={refreshKey} />
+          </div>
+        ) : (
+          <Tabs defaultValue="trips" className="mx-auto max-w-7xl">
+            <TabsList className="flex flex-wrap gap-1 rounded-none border-[2px] border-mm-black bg-mm-bone p-1">
+              {TABS.map((t) => (
+                <TabsTrigger key={t.id} value={t.id} className="rounded-none data-[state=active]:bg-mm-pink data-[state=active]:text-mm-bone">
+                  {t.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
             {TABS.map((t) => (
-              <TabsTrigger key={t.id} value={t.id} className="rounded-none data-[state=active]:bg-mm-pink data-[state=active]:text-mm-bone">
-                {t.label}
-              </TabsTrigger>
+              <TabsContent key={t.id} value={t.id} className="mt-4">
+                <TableEditor table={t.id} refreshKey={refreshKey} />
+              </TabsContent>
             ))}
-          </TabsList>
-          {TABS.map((t) => (
-            <TabsContent key={t.id} value={t.id} className="mt-4">
-              <TableEditor table={t.id} refreshKey={refreshKey} />
-            </TabsContent>
-          ))}
-        </Tabs>
-      )}
-    </main>
+          </Tabs>
+        )}
+      </main>
+    </TooltipProvider>
   );
 }
 
