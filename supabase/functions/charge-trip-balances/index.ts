@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
   }
 
   const cronSecret = normalizeCronSecret(typeof vaultCronSecret === "string" ? vaultCronSecret : null);
-  if (cronSecret && providedCronSecret !== cronSecret) {
+  if (!cronSecret || providedCronSecret !== cronSecret) {
     console.warn("cron secret mismatch", {
       headerLength: rawProvidedCronSecret?.length ?? 0,
       headerNormalizedLength: providedCronSecret.length,
