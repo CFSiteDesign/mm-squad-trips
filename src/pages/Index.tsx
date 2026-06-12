@@ -125,7 +125,7 @@ export default function Index() {
             <img src={allInLogo} alt="ALL IN" className="h-44 w-auto lg:h-56" />
           </div>
 
-          <div className="relative z-10 mr-auto flex max-w-6xl flex-col justify-center px-8 pt-20 pb-16 lg:pt-40 lg:pl-20">
+          <div className="relative z-10 mr-auto flex max-w-6xl flex-col justify-center px-8 pt-20 pb-24 lg:pt-40 lg:pl-20">
             <div>
               <h1 className="font-display text-[clamp(4rem,12vw,9rem)] leading-[0.88] text-mm-bone">
 
