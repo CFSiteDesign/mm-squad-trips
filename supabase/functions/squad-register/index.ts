@@ -43,11 +43,20 @@ Deno.serve(async (req) => {
   // so they don't get a duplicate-error wall.
   const { data: existing } = await supabase
     .from("squad_leaders")
-    .select("code, access_token")
+    .select("name, code, access_token")
     .eq("email", email)
     .maybeSingle();
   if (existing) {
-    return jr({ code: existing.code, accessToken: existing.access_token, returning: true });
+    // Never return access_token/code to an arbitrary caller — re-send the
+    // dashboard link to the registered email address instead.
+    const { subject, html } = squadCreatedEmail({
+      leaderName: (existing.name ?? "").split(" ")[0] || existing.name || "there",
+      squadName: `${existing.name ?? "your"}'s squad`,
+      squadCode: existing.code,
+      dashboardUrl: `${APP_URL}/squad-leader/dashboard?token=${encodeURIComponent(existing.access_token)}`,
+    });
+    sendEmail({ to: email, subject, html }).catch((e) => console.warn("squad-created resend failed", e));
+    return jr({ returning: true });
   }
 
   // Try a handful of times in case of unique-violation on code.

@@ -10,15 +10,15 @@ export interface SquadRegisterInput {
   reason?: string;
 }
 export interface SquadRegisterResult {
-  code: string;
-  accessToken: string;
+  code?: string;
+  accessToken?: string;
   returning?: boolean;
 }
 
 export async function registerSquadLeader(input: SquadRegisterInput): Promise<SquadRegisterResult> {
   const { data, error } = await supabase.functions.invoke("squad-register", { body: input });
   if (error) throw new Error(error.message);
-  if (!data?.code) throw new Error(data?.error || "Could not register");
+  if (!data || (data.error && !data.returning)) throw new Error(data?.error || "Could not register");
   return data as SquadRegisterResult;
 }
 
