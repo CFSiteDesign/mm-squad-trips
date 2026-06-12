@@ -71,6 +71,9 @@ export default function SquadLogin() {
             {submitting ? "LOGGING IN…" : "GO TO MY DASHBOARD →"}
           </Button>
           <p className="pt-2 text-center text-xs text-mm-black/70">
+            <Link to="/squad-leader/forgot-password" className="underline font-display">FORGOT PASSWORD?</Link>
+          </p>
+          <p className="text-center text-xs text-mm-black/70">
             Don't have a code yet?{" "}
             <Link to="/squad-leader/register" className="underline font-display">BECOME A SQUAD LEADER</Link>
           </p>
