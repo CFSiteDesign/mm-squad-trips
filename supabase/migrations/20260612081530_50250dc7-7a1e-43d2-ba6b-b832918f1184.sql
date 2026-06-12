@@ -1,0 +1,1 @@
+DELETE FROM public.bookings WHERE id = '2d20733b-a909-4288-9aa1-5fa24b1ac8dd';
