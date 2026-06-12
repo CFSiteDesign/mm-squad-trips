@@ -7,6 +7,13 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import {
+  APP_URL,
+  bookingConfirmationEmail,
+  sendEmail,
+  squadMemberJoinedEmail,
+  squadMilestoneEmail,
+} from "../_shared/email.ts";
 
 function envClient() {
   const url = Deno.env.get("SUPABASE_URL");
