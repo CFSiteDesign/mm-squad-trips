@@ -85,7 +85,6 @@ export function bookingConfirmationEmail(v: {
   tripName: string;
   departureDate: string;
   spots: number | string;
-  squadCode: string;
   amount: string;
   bookingRef: string;
   bookingUrl: string;
@@ -101,7 +100,6 @@ export function bookingConfirmationEmail(v: {
 <tr><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a"><strong>Trip</strong></td><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a">{{tripName}}</td></tr>
 <tr><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a"><strong>Departure</strong></td><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a">{{departureDate}}</td></tr>
 <tr><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a"><strong>Spots</strong></td><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a">{{spots}}</td></tr>
-<tr><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a"><strong>Squad</strong></td><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a">{{squadCode}}</td></tr>
 <tr><td style="padding:10px 14px"><strong>Paid</strong></td><td style="padding:10px 14px">{{amount}}</td></tr>
 </table>
 <p style="margin:0 0 20px 0">Booking ref: <strong>{{bookingRef}}</strong></p>
