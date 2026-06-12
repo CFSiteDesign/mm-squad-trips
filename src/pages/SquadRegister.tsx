@@ -50,9 +50,13 @@ export default function SquadRegister() {
     if (!f.name || !f.email || !f.phone) return toast.error("Fill in the required fields");
     setSubmitting(true);
     try {
-      const { accessToken, code } = await registerSquadLeader(f);
+      const res = await registerSquadLeader(f);
+      if (res.returning || !res.accessToken || !res.code) {
+        toast.success("You're already registered — we've emailed your dashboard link to " + f.email);
+        return;
+      }
       window.scrollTo({ top: 0, behavior: "auto" });
-      setSuccess({ code, accessToken, name: f.name });
+      setSuccess({ code: res.code, accessToken: res.accessToken, name: f.name });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not register");
     } finally {
