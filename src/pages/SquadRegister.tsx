@@ -97,22 +97,6 @@ export default function SquadRegister() {
             </button>
           </div>
 
-          <div className="mt-6 border-mm-thick bg-mm-paper p-6 shadow-mm md:p-8">
-            <Sticker color="orange" rotate={3}>TEMPLATES</Sticker>
-            <h2 className="mt-3 font-display text-2xl md:text-3xl">GRAB YOUR SQUAD KIT</h2>
-            <p className="mt-2 text-sm text-mm-black/70">
-              We've put together story stickers, captions, posters and a few cheeky DM scripts
-              to help you rally the crew. All in one Google Drive folder.
-            </p>
-            <a
-              href={TEMPLATES_DRIVE_URL}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-4 inline-flex items-center gap-2 border-[3px] border-mm-black bg-mm-orange px-5 py-3 font-display text-mm-black shadow-mm-sm"
-            >
-              <Download className="h-4 w-4" /> DOWNLOAD TEMPLATES
-            </a>
-          </div>
 
           <div className="mt-8 flex flex-wrap gap-3">
             <Button
