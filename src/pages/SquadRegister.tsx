@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
-import { Check, Copy, Download } from "lucide-react";
+import { Check, Copy } from "lucide-react";
 import { Sticker } from "@/components/brand/Sticker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
