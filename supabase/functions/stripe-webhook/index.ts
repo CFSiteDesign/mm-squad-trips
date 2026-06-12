@@ -362,7 +362,6 @@ async function writeBookings(session: Stripe.Checkout.Session) {
         tripName: (m.trip_name as string) || (m.trip_slug as string) || "",
         departureDate: (m.departure_date as string) || "",
         spots: groupSize,
-        squadCode: (m.discount_code as string) || "—",
         amount: `$${amountPaidTotal.toFixed(2)} ${(session.currency || "usd").toUpperCase()}`,
         bookingRef,
         bookingUrl: `${APP_URL}/booking-success?session_id=${encodeURIComponent(sessionId)}`,
