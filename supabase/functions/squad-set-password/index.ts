@@ -2,6 +2,7 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { hashPassword } from "../_shared/password.ts";
+import { APP_URL, sendEmail, squadPasswordSetEmail } from "../_shared/email.ts";
 
 function jr(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -34,7 +35,7 @@ Deno.serve(async (req) => {
   const supabase = createClient(url, key);
   const { data: leader, error: lErr } = await supabase
     .from("squad_leaders")
-    .select("id")
+    .select("id, name, email, code")
     .eq("access_token", token)
     .maybeSingle();
   if (lErr) return jr({ error: lErr.message }, 500);
@@ -46,6 +47,18 @@ Deno.serve(async (req) => {
     .update({ password_hash })
     .eq("id", leader.id);
   if (uErr) return jr({ error: uErr.message }, 500);
+
+  if (leader.email) {
+    const { subject, html } = squadPasswordSetEmail({
+      leaderName: (leader.name as string | null)?.split(" ")[0] || (leader.name as string) || "there",
+      squadName: `${leader.name ?? "your"} squad`,
+      squadCode: leader.code as string,
+      loginUrl: `${APP_URL}/squad/login`,
+    });
+    sendEmail({ to: leader.email as string, subject, html }).catch((e) =>
+      console.warn("squad-password-set email failed", e),
+    );
+  }
 
   return jr({ ok: true });
 });

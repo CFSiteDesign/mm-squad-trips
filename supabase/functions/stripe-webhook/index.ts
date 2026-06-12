@@ -7,6 +7,13 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import {
+  APP_URL,
+  bookingConfirmationEmail,
+  sendEmail,
+  squadMemberJoinedEmail,
+  squadMilestoneEmail,
+} from "../_shared/email.ts";
 
 function envClient() {
   const url = Deno.env.get("SUPABASE_URL");
@@ -283,9 +290,88 @@ async function writeBookings(session: Stripe.Checkout.Session) {
         if (sErr && !`${sErr.message}`.toLowerCase().includes("duplicate")) {
           console.warn("squad_bookings insert failed:", sErr.message);
         }
+
+        // Notify the squad leader (member-joined + milestone if applicable)
+        try {
+          const { data: full } = await sb
+            .from("squad_leaders")
+            .select("id, name, email, code")
+            .eq("id", leader.id)
+            .maybeSingle();
+          const { count } = await sb
+            .from("squad_bookings")
+            .select("id", { count: "exact", head: true })
+            .eq("squad_leader_id", leader.id);
+          const bookingsCount = count ?? 0;
+          const dashboardUrl = `${APP_URL}/squad/login`;
+          if (full?.email) {
+            const leaderFirst = (full.name as string | null)?.split(" ")[0] || "captain";
+            const nextRewardObj =
+              bookingsCount < 4
+                ? { at: 4, text: "50% off your trip" }
+                : bookingsCount < 8
+                  ? { at: 8, text: "a free trip" }
+                  : { at: bookingsCount, text: "the next perk" };
+            const joined = squadMemberJoinedEmail({
+              leaderName: leaderFirst,
+              memberName: (m.lead_name as string) || "A new booker",
+              tripName: (m.trip_name as string) || "their trip",
+              bookingsCount,
+              toNextMilestone: String(Math.max(0, nextRewardObj.at - bookingsCount)),
+              nextReward: nextRewardObj.text,
+              dashboardUrl,
+            });
+            sendEmail({ to: full.email as string, subject: joined.subject, html: joined.html }).catch(
+              (e) => console.warn("squad-member-joined email failed", e),
+            );
+            if (bookingsCount === 4 || bookingsCount === 8) {
+              const milestone = squadMilestoneEmail({
+                leaderName: leaderFirst,
+                squadCode: (full.code as string) ?? "",
+                bookingsCount,
+                milestoneHeadline: bookingsCount === 8 ? "Free trip unlocked" : "50% off unlocked",
+                rewardText:
+                  bookingsCount === 8 ? "Your trip is on the house" : "Your trip is half price",
+                nextStepText:
+                  bookingsCount === 8
+                    ? "We'll be in touch to lock in your free trip."
+                    : "Keep going — 4 more bookings unlocks a free trip.",
+                dashboardUrl,
+              });
+              sendEmail({ to: full.email as string, subject: milestone.subject, html: milestone.html })
+                .catch((e) => console.warn("squad-milestone email failed", e));
+            }
+          }
+        } catch (e) {
+          console.warn("squad notify failed:", e instanceof Error ? e.message : e);
+        }
       }
     } catch (e) {
       console.warn("Squad credit failed:", e instanceof Error ? e.message : e);
     }
+  }
+
+  // Booking confirmation to the lead booker
+  try {
+    if (m.lead_email) {
+      const country = (m.trip_name as string)?.split(/[—\-:]/)[0]?.trim() || (m.trip_slug as string) || "your trip";
+      const firstName = ((m.lead_name as string) || "").split(" ")[0] || "traveler";
+      const { subject, html } = bookingConfirmationEmail({
+        firstName,
+        tripCountry: country,
+        tripName: (m.trip_name as string) || (m.trip_slug as string) || "",
+        departureDate: (m.departure_date as string) || "",
+        spots: groupSize,
+        squadCode: (m.discount_code as string) || "—",
+        amount: `$${amountPaidTotal.toFixed(2)} ${(session.currency || "usd").toUpperCase()}`,
+        bookingRef,
+        bookingUrl: `${APP_URL}/booking-success?session_id=${encodeURIComponent(sessionId)}`,
+      });
+      sendEmail({ to: m.lead_email as string, subject, html }).catch((e) =>
+        console.warn("booking-confirmation email failed", e),
+      );
+    }
+  } catch (e) {
+    console.warn("booking confirmation email build failed:", e instanceof Error ? e.message : e);
   }
 }
