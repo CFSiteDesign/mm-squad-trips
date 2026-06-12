@@ -7,6 +7,19 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { APP_URL, balanceFailedEmail, balancePaidEmail, sendEmail } from "../_shared/email.ts";
+
+function fmtUsd(n: number): string {
+  return `$${n.toFixed(2)} USD`;
+}
+function fmtDate(d: string | null | undefined): string {
+  if (!d) return "";
+  try {
+    return new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" });
+  } catch {
+    return d;
+  }
+}
 
 const RETRY_DAYS = 2;
 const normalizeCronSecret = (value: string | null) => {
@@ -53,7 +66,7 @@ Deno.serve(async (req) => {
   // Get all lead rows that are due
   const { data: due, error } = await sb
     .from("bookings")
-    .select("id,stripe_session_id,stripe_customer_id,stripe_payment_method_id,balance_amount,balance_attempts,balance_due_date,group_size,lead_email,lead_name,trip_id,departure_id,departures(departure_date)")
+    .select("id,stripe_session_id,stripe_customer_id,stripe_payment_method_id,balance_amount,balance_attempts,balance_due_date,group_size,lead_email,lead_name,trip_id,departure_id,booking_ref,trips(name),departures(departure_date)")
     .in("balance_status", ["scheduled", "failed"])
     .eq("spot_number", 1)
     .lte("balance_next_attempt_at", nowIso);
@@ -131,6 +144,27 @@ Deno.serve(async (req) => {
 
       results.push({ sessionId, charged: totalCents });
       console.log(`✓ charged ${totalCents} for ${sessionId} (pi ${pi.id})`);
+
+      // Receipt email to the lead booker
+      if (row.lead_email) {
+        const tripName = (row.trips as { name?: string } | null)?.name ?? "your trip";
+        const chargedAmount = totalCents / 100;
+        const perSpotFinal = Number(row.balance_amount) + Number((rows ?? [])[0]?.amount_paid ?? 0);
+        const totalPaid = perSpotFinal * Number(row.group_size);
+        const { subject, html } = balancePaidEmail({
+          firstName: ((row.lead_name as string | null) ?? "").split(" ")[0] || "traveler",
+          tripName,
+          departureDate: fmtDate(depDate),
+          spots: row.group_size as number,
+          amountCharged: fmtUsd(chargedAmount),
+          totalPaid: fmtUsd(totalPaid),
+          bookingRef: (row.booking_ref as string) || sessionId,
+          bookingUrl: `${APP_URL}/booking-success?session_id=${encodeURIComponent(sessionId)}`,
+        });
+        sendEmail({ to: row.lead_email as string, subject, html }).catch((e) =>
+          console.warn("balance-paid email failed", e),
+        );
+      }
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       const attempts = Number(row.balance_attempts ?? 0) + 1;
@@ -147,6 +181,24 @@ Deno.serve(async (req) => {
 
       results.push({ sessionId, error: msg, attempts, nextAttempt: next.toISOString() });
       console.warn(`✗ charge failed for ${sessionId}: ${msg} (attempt ${attempts}, retry ${next.toISOString()})`);
+
+      // Notify the lead booker so they can update their card
+      if (row.lead_email) {
+        const tripName = (row.trips as { name?: string } | null)?.name ?? "your trip";
+        const totalDue = (totalCents / 100);
+        const { subject, html } = balanceFailedEmail({
+          firstName: ((row.lead_name as string | null) ?? "").split(" ")[0] || "traveler",
+          tripName,
+          departureDate: fmtDate(depDate),
+          amountDue: fmtUsd(totalDue),
+          attempts,
+          nextAttemptDate: fmtDate(next.toISOString()),
+          bookingRef: (row.booking_ref as string) || sessionId,
+        });
+        sendEmail({ to: row.lead_email as string, subject, html }).catch((e) =>
+          console.warn("balance-failed email failed", e),
+        );
+      }
     }
   }
 
