@@ -226,3 +226,64 @@ export function squadPasswordSetEmail(v: {
   );
   return { subject: "Password locked in 🔒", html: shell("Password set", inner) };
 }
+
+export function balancePaidEmail(v: {
+  firstName: string;
+  tripName: string;
+  departureDate: string;
+  spots: number | string;
+  amountCharged: string;
+  totalPaid: string;
+  bookingRef: string;
+  bookingUrl: string;
+}): { subject: string; html: string } {
+  const inner = render(
+    `<tr><td style="padding:16px 24px 8px 24px">
+<h1 style="margin:0;font-size:28px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em">FINAL PAYMENT CONFIRMED ✅</h1>
+</td></tr>
+<tr><td style="padding:0 24px 16px 24px;font-size:16px;line-height:1.5">
+<p style="margin:0 0 12px 0">Hey {{firstName}},</p>
+<p style="margin:0 0 16px 0">We've just collected the final balance for your trip — you're 100% paid up. Time to pack 🎒</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #0a0a0a;margin:0 0 16px 0">
+<tr><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a"><strong>Trip</strong></td><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a">{{tripName}}</td></tr>
+<tr><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a"><strong>Departure</strong></td><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a">{{departureDate}}</td></tr>
+<tr><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a"><strong>Spots</strong></td><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a">{{spots}}</td></tr>
+<tr><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a"><strong>Charged today</strong></td><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a">{{amountCharged}}</td></tr>
+<tr><td style="padding:10px 14px"><strong>Total paid</strong></td><td style="padding:10px 14px">{{totalPaid}}</td></tr>
+</table>
+<p style="margin:0 0 20px 0">Booking ref: <strong>{{bookingRef}}</strong></p>
+<a href="{{bookingUrl}}" style="display:inline-block;background:#ff6600;color:#0a0a0a;font-weight:900;text-transform:uppercase;padding:14px 22px;border:2px solid #0a0a0a;text-decoration:none">View booking</a>
+</td></tr>`,
+    v as Record<string, string>,
+  );
+  return { subject: "Final payment confirmed — you're all paid up ✅", html: shell("Final payment receipt", inner) };
+}
+
+export function balanceFailedEmail(v: {
+  firstName: string;
+  tripName: string;
+  departureDate: string;
+  amountDue: string;
+  attempts: number;
+  nextAttemptDate: string;
+  bookingRef: string;
+}): { subject: string; html: string } {
+  const inner = render(
+    `<tr><td style="padding:16px 24px 8px 24px">
+<h1 style="margin:0;font-size:28px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em">CARD DIDN'T GO THROUGH ⚠️</h1>
+</td></tr>
+<tr><td style="padding:0 24px 16px 24px;font-size:16px;line-height:1.5">
+<p style="margin:0 0 12px 0">Hey {{firstName}},</p>
+<p style="margin:0 0 12px 0">We tried to charge the final balance for <strong>{{tripName}}</strong> ({{departureDate}}) and your card declined.</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #0a0a0a;margin:0 0 16px 0">
+<tr><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a"><strong>Amount due</strong></td><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a">{{amountDue}}</td></tr>
+<tr><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a"><strong>Attempt</strong></td><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a">{{attempts}}</td></tr>
+<tr><td style="padding:10px 14px"><strong>Next retry</strong></td><td style="padding:10px 14px">{{nextAttemptDate}}</td></tr>
+</table>
+<p style="margin:0 0 16px 0">We'll retry automatically in 2 days. If you'd like to update the card on file or settle this manually before then, just reply to this email and we'll send you a new payment link.</p>
+<p style="margin:0;font-size:13px;color:#555">Booking ref: <strong>{{bookingRef}}</strong></p>
+</td></tr>`,
+    v as Record<string, string>,
+  );
+  return { subject: `Action needed: final payment for ${v.tripName} declined`, html: shell("Final payment failed", inner) };
+}
