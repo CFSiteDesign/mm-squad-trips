@@ -114,7 +114,7 @@ export default function Index() {
         </div>
 
         {/* DESKTOP: full-bleed media background + overlaid content */}
-        <div className="relative hidden min-h-[100svh] w-full md:block">
+        <div className="relative hidden w-full md:block">
           <div className="absolute inset-0 z-0">
             <img src={heroImg} alt="Mad Monkey squad on the beach at sunset" className="absolute inset-0 h-full w-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-b from-mm-black/75 via-mm-black/25 to-mm-black/90" />
@@ -125,7 +125,7 @@ export default function Index() {
             <img src={allInLogo} alt="ALL IN" className="h-44 w-auto lg:h-56" />
           </div>
 
-          <div className="relative z-10 mr-auto flex min-h-[100svh] max-w-6xl flex-col justify-center px-8 pt-20 pb-16 lg:justify-between lg:pt-40 lg:pl-20">
+          <div className="relative z-10 mr-auto flex max-w-6xl flex-col justify-center px-8 pt-20 pb-16 lg:pt-40 lg:pl-20">
             <div>
               <h1 className="font-display text-[clamp(4rem,12vw,9rem)] leading-[0.88] text-mm-bone">
 
