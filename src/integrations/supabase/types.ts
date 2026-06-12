@@ -353,6 +353,8 @@ export type Database = {
           preferred_month: string | null
           preferred_trip_slug: string | null
           reason: string | null
+          reset_token: string | null
+          reset_token_expires_at: string | null
         }
         Insert: {
           access_token?: string
@@ -367,6 +369,8 @@ export type Database = {
           preferred_month?: string | null
           preferred_trip_slug?: string | null
           reason?: string | null
+          reset_token?: string | null
+          reset_token_expires_at?: string | null
         }
         Update: {
           access_token?: string
@@ -381,6 +385,8 @@ export type Database = {
           preferred_month?: string | null
           preferred_trip_slug?: string | null
           reason?: string | null
+          reset_token?: string | null
+          reset_token_expires_at?: string | null
         }
         Relationships: []
       }
