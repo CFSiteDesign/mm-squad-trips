@@ -160,6 +160,19 @@ export default function Index() {
         </div>
       </div>
 
+      {/* ============ WHAT MAKES US DIFFERENT ============ */}
+      <section className="relative bg-mm-black px-5 py-16 text-mm-bone md:px-8 md:py-24">
+        <div className="mx-auto max-w-6xl">
+          <span className="font-sticker text-[11px] tracking-[0.24em] text-mm-bone/80">THE ALL IN DIFFERENCE</span>
+          <h2 className="mt-3 max-w-4xl font-display text-[2.5rem] leading-[0.92] text-mm-bone md:text-6xl">
+            WHAT MAKES US<br /><span className="text-mm-lime">DIFFERENT?</span>
+          </h2>
+          <p className="mt-5 max-w-2xl text-[15px] leading-snug text-mm-bone/85 md:text-lg">
+            Every trip includes our iconic community event, rooted in the location — a Khmer BBQ over locally caught fish, or a jungle party where your group and our local team celebrate side by side.
+          </p>
+        </div>
+      </section>
+
       {/* ============ DESTINATIONS ============ */}
       <section id="destinations" className="relative bg-mm-blue px-5 py-16 text-mm-bone md:px-8 md:py-24">
         <div className="mx-auto max-w-6xl">
