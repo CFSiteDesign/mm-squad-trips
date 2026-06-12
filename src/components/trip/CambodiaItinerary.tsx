@@ -1,8 +1,8 @@
 import { Sticker } from "@/components/brand/Sticker";
-import phnomImg from "@/assets/kh-phnom.jpg.asset.json";
-import siemImg from "@/assets/kh-siemreap.jpg.asset.json";
-import kohRongImg from "@/assets/kh-kohrong.jpg.asset.json";
-import kohSdachImg from "@/assets/kh-kohsdach.png.asset.json";
+import phnomImg from "@/assets/kh-phnom.jpg";
+import siemImg from "@/assets/kh-siemreap.jpg";
+import kohRongImg from "@/assets/kh-kohrong.jpg";
+import kohSdachImg from "@/assets/kh-kohsdach.png";
 
 type Stop = {
   num: string;
@@ -18,7 +18,7 @@ const STOPS: Stop[] = [
     num: "01",
     location: "Phnom Penh",
     nights: "3 nights",
-    image: phnomImg.url,
+    image: phnomImg,
     tag: "WELCOME & HISTORY",
     highlights: [
       "Khmer family welcome dinner — meet the team",
@@ -32,7 +32,7 @@ const STOPS: Stop[] = [
     num: "02",
     location: "Siem Reap",
     nights: "3 nights",
-    image: siemImg.url,
+    image: siemImg,
     tag: "TEMPLES & NIGHTLIFE",
     highlights: [
       "Bus from Phnom Penh — make your own pizza night",
@@ -46,7 +46,7 @@ const STOPS: Stop[] = [
     num: "03",
     location: "Koh Rong",
     nights: "3 nights",
-    image: kohRongImg.url,
+    image: kohRongImg,
     tag: "ISLAND VIBES & RAVES",
     highlights: [
       "BuvaSea ferry to Koh Rong",
@@ -60,7 +60,7 @@ const STOPS: Stop[] = [
     num: "04",
     location: "Koh Sdach",
     nights: "3 nights",
-    image: kohSdachImg.url,
+    image: kohSdachImg,
     tag: "WELLNESS & ADVENTURE",
     highlights: [
       "Hour boat to Koh Sdach Mad Monkey — spa amenities and Wellness Challenge",

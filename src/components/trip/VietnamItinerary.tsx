@@ -1,10 +1,10 @@
 import { Sticker } from "@/components/brand/Sticker";
-import hanoiImg from "@/assets/vn-hanoi.jpg.asset.json";
-import hanoi2Img from "@/assets/vn-hanoi2.jpg.asset.json";
-import lanhaImg from "@/assets/vn-lanha.jpg.asset.json";
-import hagiangImg from "@/assets/vn-hagiang.jpg.asset.json";
-import ninhbinhImg from "@/assets/vn-ninhbinh.jpg.asset.json";
-import hoianImg from "@/assets/vn-hoian.jpg.asset.json";
+import hanoiImg from "@/assets/vn-hanoi.jpg";
+import hanoi2Img from "@/assets/vn-hanoi2.jpg";
+import lanhaImg from "@/assets/vn-lanha.jpg";
+import hagiangImg from "@/assets/vn-hagiang.jpg";
+import ninhbinhImg from "@/assets/vn-ninhbinh.jpg";
+import hoianImg from "@/assets/vn-hoian.jpg";
 
 type Stop = {
   num: string;
@@ -20,7 +20,7 @@ const STOPS: Stop[] = [
     num: "01",
     location: "Hanoi",
     nights: "2 nights",
-    image: hanoiImg.url,
+    image: hanoiImg,
     tag: "OLD QUARTER & HIDDEN ALLEYS",
     highlights: [
       "Touch down in the chaos of the Old Quarter",
@@ -33,7 +33,7 @@ const STOPS: Stop[] = [
     num: "02",
     location: "Lan Ha Bay",
     nights: "1 night",
-    image: lanhaImg.url,
+    image: lanhaImg,
     tag: "LIMESTONE PARADISE",
     highlights: [
       "Trade city streets for turquoise water and sun-drenched decks",
@@ -45,7 +45,7 @@ const STOPS: Stop[] = [
     num: "03",
     location: "Hanoi",
     nights: "1 night",
-    image: hanoi2Img.url,
+    image: hanoi2Img,
     tag: "THE WHITE PARTY",
     highlights: [
       "Return from the bay for the iconic Mad Monkey White Party",
@@ -57,7 +57,7 @@ const STOPS: Stop[] = [
     num: "04",
     location: "Ha Giang Loop",
     nights: "5 nights",
-    image: hagiangImg.url,
+    image: hagiangImg,
     tag: "MOUNTAIN ADVENTURE",
     highlights: [
       "Basecamp at the foot of the loop — poolside beers and mountain views",
@@ -72,7 +72,7 @@ const STOPS: Stop[] = [
     num: "05",
     location: "Ninh Binh",
     nights: "1 night",
-    image: ninhbinhImg.url,
+    image: ninhbinhImg,
     tag: "HA LONG ON LAND",
     highlights: [
       "Explore caves and rafts in 'Ha Long Bay on Land'",
@@ -84,7 +84,7 @@ const STOPS: Stop[] = [
     num: "06",
     location: "Hoi An & Da Nang",
     nights: "3 nights",
-    image: hoianImg.url,
+    image: hoianImg,
     tag: "LANTERNS & GOLDEN BRIDGES",
     highlights: [
       "Professional cooking class in beautiful Hoi An",

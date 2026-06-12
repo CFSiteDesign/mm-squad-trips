@@ -8,9 +8,9 @@ import { Route } from "@/components/trip/Route";
 import { IndonesiaItinerary } from "@/components/trip/IndonesiaItinerary";
 import { VietnamItinerary } from "@/components/trip/VietnamItinerary";
 import { CambodiaItinerary } from "@/components/trip/CambodiaItinerary";
-import indoHero from "@/assets/indo-hero.jpg.asset.json";
-import khHero from "@/assets/kh-hero.png.asset.json";
-import vnHero from "@/assets/vn-hero.jpg.asset.json";
+import indoHero from "@/assets/indo-hero.jpg";
+import khHero from "@/assets/kh-hero.png";
+import vnHero from "@/assets/vn-hero.jpg";
 
 import { WhosComing } from "@/components/trip/WhosComing";
 import { BookingFlow } from "@/components/trip/BookingFlow";
@@ -69,7 +69,7 @@ export default function TripPage() {
 
   return (
     <main>
-      <Hero trip={trip} heroImageUrl={slug === "indonesia" ? indoHero.url : slug === "cambodia" ? khHero.url : slug === "vietnam" ? vnHero.url : undefined} />
+      <Hero trip={trip} heroImageUrl={slug === "indonesia" ? indoHero : slug === "cambodia" ? khHero : slug === "vietnam" ? vnHero : undefined} />
       <Included trip={trip} />
       {slug === "indonesia" ? (
         <IndonesiaItinerary days={trip.days} />
