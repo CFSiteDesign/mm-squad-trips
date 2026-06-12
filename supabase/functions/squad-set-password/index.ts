@@ -2,6 +2,7 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { hashPassword } from "../_shared/password.ts";
+import { APP_URL, sendEmail, squadPasswordSetEmail } from "../_shared/email.ts";
 
 function jr(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
