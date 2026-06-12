@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Check, Copy, Download, Share2, X } from "lucide-react";
+import { Check, Copy, Share2, X } from "lucide-react";
 import { Sticker } from "@/components/brand/Sticker";
 import { getSquadDashboard, type SquadDashboardData } from "@/lib/squad";
-import { TEMPLATES_DRIVE_URL } from "@/lib/squadConstants";
 
 
 export default function SquadDashboard() {
