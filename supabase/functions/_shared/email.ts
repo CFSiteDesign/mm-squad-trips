@@ -32,7 +32,7 @@ export async function sendEmail({ to, subject, html, replyTo }: SendArgs): Promi
         to: Array.isArray(to) ? to : [to],
         subject,
         html,
-        reply_to: replyTo,
+        reply_to: replyTo ?? EMAIL_REPLY_TO,
       }),
     });
     if (!res.ok) {
