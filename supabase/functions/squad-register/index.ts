@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
         leaderName: name.split(" ")[0] || name,
         squadName: `${name}'s squad`,
         squadCode: data.code,
-        dashboardUrl: `${APP_URL}/squad/dashboard?token=${encodeURIComponent(data.access_token)}`,
+        dashboardUrl: `${APP_URL}/squad-leader/dashboard?token=${encodeURIComponent(data.access_token)}`,
       });
       sendEmail({ to: email, subject, html }).catch((e) => console.warn("squad-created email failed", e));
       return jr({ code: data.code, accessToken: data.access_token, returning: false });

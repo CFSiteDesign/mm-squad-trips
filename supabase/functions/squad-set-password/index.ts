@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
       leaderName: (leader.name as string | null)?.split(" ")[0] || (leader.name as string) || "there",
       squadName: `${leader.name ?? "your"} squad`,
       squadCode: leader.code as string,
-      loginUrl: `${APP_URL}/squad/login`,
+      loginUrl: `${APP_URL}/squad-leader/login`,
     });
     sendEmail({ to: leader.email as string, subject, html }).catch((e) =>
       console.warn("squad-password-set email failed", e),
