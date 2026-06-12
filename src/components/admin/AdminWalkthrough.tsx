@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 
-const STORAGE_KEY = "admin_walkthrough_dismissed_v1";
+const STORAGE_KEY = "admin_walkthrough_dismissed_v2";
 
 type Step = {
   title: string;
@@ -12,27 +12,31 @@ type Step = {
 const STEPS: Step[] = [
   {
     title: "Welcome to the Admin Panel",
-    body: "Quick tour of how to manage trips, bookings and squad leaders. You can skip this anytime.",
+    body: "Quick tour of how to manage trips, bookings and squad leaders. Skip anytime — tick \"Don't show again\" to stop it reopening.",
   },
   {
-    title: "Database vs Squad Leaders",
-    body: "Toggle in the top-left. DATABASE shows all raw tables (trips, bookings, etc.). SQUAD LEADERS shows the per-trip leader management view.",
+    title: "Two top-level views",
+    body: "Top-left toggle: DATABASE shows the raw tables (Trips, Departures, Pricing, Discounts, Bookings). SQUAD LEADERS shows the per-trip squad view with leaders and their booked members.",
   },
   {
     title: "Tabs = Tables",
-    body: "Each tab is a database table. Click TRIPS, BOOKINGS, DEPARTURES, etc. to inspect, edit or add rows.",
+    body: "In DATABASE view, each tab is one table. TRIPS / DEPARTURES / PRICING / DISCOUNTS are fully editable (add, edit, delete). BOOKINGS is read-only with CSV export.",
+  },
+  {
+    title: "Editing rows",
+    body: "Click a row to open the side panel and edit it. Use ADD at the top of a tab to create a new row. Hover any column header for a tooltip explaining the field. Read-only fields (spots remaining, used count, balances) are calculated automatically.",
   },
   {
     title: "Bookings & Groups",
-    body: "Group bookings collapse into a single LEAD row. Click the [ + N ] button to expand and see every group member with their full traveller info.",
+    body: "Group bookings collapse into one LEAD row. Click the [ + N ] button to expand and see every group member with full traveller info. The Balance column shows the automated final-payment status — including the failure reason if a charge failed.",
   },
   {
     title: "Booking References",
-    body: "GRP-{TRIP}-NNN = group booking · SOL-{TRIP}-NNN = solo booking. Numbered per trip in the order they were created.",
+    body: "GRP-{TRIP}-NNN = group booking · SOL-{TRIP}-NNN = solo booking, numbered per trip in creation order. The CSV export contains every field, including columns hidden from the on-screen table (UTM, Stripe IDs, raw balance fields, etc.).",
   },
   {
     title: "Refresh & Log Out",
-    body: "Top-right: REFRESH re-fetches all cached data. LOG OUT clears your admin session. That's it — happy admin-ing!",
+    body: "Top-right: REFRESH re-fetches all cached data (use after editing elsewhere or after a webhook fires). LOG OUT clears your admin session. That's it — happy admin-ing!",
   },
 ];
 
