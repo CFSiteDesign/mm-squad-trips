@@ -7,6 +7,19 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { APP_URL, balanceFailedEmail, balancePaidEmail, sendEmail } from "../_shared/email.ts";
+
+function fmtUsd(n: number): string {
+  return `$${n.toFixed(2)} USD`;
+}
+function fmtDate(d: string | null | undefined): string {
+  if (!d) return "";
+  try {
+    return new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" });
+  } catch {
+    return d;
+  }
+}
 
 const RETRY_DAYS = 2;
 const normalizeCronSecret = (value: string | null) => {
