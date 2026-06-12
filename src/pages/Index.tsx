@@ -18,7 +18,7 @@ import { Sticker, Starburst } from "@/components/brand/Sticker";
 import { SiteFooter } from "@/components/trip/SiteFooter";
 import { SquadCTA } from "@/components/trip/SquadCTA";
 import heroImg from "@/assets/heroallin.png";
-import allInLogo from "@/assets/all-in-logo.png.asset.json";
+import allInLogo from "@/assets/all-in-logo.png";
 
 import { TRIPS, ACCENT_BG, type Filter } from "@/data/trips";
 
@@ -84,7 +84,7 @@ export default function Index() {
 
           {/* ALL IN logo — top right */}
           <div className="pointer-events-none absolute right-3 top-[5rem] z-30">
-            <img src={allInLogo.url} alt="ALL IN" className="h-12 w-auto" />
+            <img src={allInLogo} alt="ALL IN" className="h-12 w-auto" />
           </div>
 
           {/* Foreground content */}
@@ -122,7 +122,7 @@ export default function Index() {
           </div>
 
           <div className="pointer-events-none absolute right-8 top-20 z-20 origin-top-right scale-[0.60] lg:right-16 lg:top-20 lg:scale-[0.80]">
-            <img src={allInLogo.url} alt="ALL IN" className="h-44 w-auto lg:h-56" />
+            <img src={allInLogo} alt="ALL IN" className="h-44 w-auto lg:h-56" />
           </div>
 
           <div className="relative z-10 mr-auto flex min-h-[100svh] max-w-6xl flex-col justify-center px-8 pt-20 pb-16 lg:justify-between lg:pt-40 lg:pl-20">
