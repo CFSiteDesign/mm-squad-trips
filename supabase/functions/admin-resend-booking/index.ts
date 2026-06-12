@@ -15,7 +15,10 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
     const token = adminAuthHeaderToken(req);
-    if (!(await verifyAdminToken(token))) return jr({ error: "Unauthorized" }, 401);
+    const rawAuth = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "").trim();
+    const svc = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    const okAdmin = await verifyAdminToken(token);
+    if (!okAdmin && !(svc && rawAuth === svc)) return jr({ error: "Unauthorized" }, 401);
 
     const url = Deno.env.get("SUPABASE_URL");
     const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
