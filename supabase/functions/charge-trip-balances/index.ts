@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
   // Get all lead rows that are due
   const { data: due, error } = await sb
     .from("bookings")
-    .select("id,stripe_session_id,stripe_customer_id,stripe_payment_method_id,balance_amount,balance_attempts,balance_due_date,group_size,lead_email,lead_name,trip_id,departure_id,departures(departure_date)")
+    .select("id,stripe_session_id,stripe_customer_id,stripe_payment_method_id,balance_amount,balance_attempts,balance_due_date,group_size,lead_email,lead_name,trip_id,departure_id,booking_ref,trips(name),departures(departure_date)")
     .in("balance_status", ["scheduled", "failed"])
     .eq("spot_number", 1)
     .lte("balance_next_attempt_at", nowIso);
