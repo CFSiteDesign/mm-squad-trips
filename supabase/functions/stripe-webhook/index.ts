@@ -303,7 +303,7 @@ async function writeBookings(session: Stripe.Checkout.Session) {
             .select("id", { count: "exact", head: true })
             .eq("squad_leader_id", leader.id);
           const bookingsCount = count ?? 0;
-          const dashboardUrl = `${APP_URL}/squad/login`;
+          const dashboardUrl = `${APP_URL}/squad-leader/login`;
           if (full?.email) {
             const leaderFirst = (full.name as string | null)?.split(" ")[0] || "captain";
             const nextRewardObj =

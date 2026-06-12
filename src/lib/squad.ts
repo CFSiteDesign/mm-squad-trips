@@ -97,3 +97,19 @@ export async function loginSquadLeader(code: string, password: string): Promise<
   if (!data?.accessToken) throw new Error(data?.error || "Invalid squad code or password");
   return data.accessToken as string;
 }
+
+export async function requestSquadPasswordReset(email: string): Promise<void> {
+  const { data, error } = await supabase.functions.invoke("squad-password-reset", {
+    body: { email },
+  });
+  if (error) throw new Error(error.message);
+  if (!data?.ok) throw new Error(data?.error || "Could not send reset email");
+}
+
+export async function confirmSquadPasswordReset(token: string, password: string): Promise<void> {
+  const { data, error } = await supabase.functions.invoke("squad-password-reset-confirm", {
+    body: { token, password },
+  });
+  if (error) throw new Error(error.message);
+  if (!data?.ok) throw new Error(data?.error || "Could not reset password");
+}
