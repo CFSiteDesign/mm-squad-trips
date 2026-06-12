@@ -69,6 +69,13 @@ Deno.serve(async (req) => {
       .select("code, access_token")
       .single();
     if (!error && data) {
+      const { subject, html } = squadCreatedEmail({
+        leaderName: name.split(" ")[0] || name,
+        squadName: `${name}'s squad`,
+        squadCode: data.code,
+        dashboardUrl: `${APP_URL}/squad/dashboard?token=${encodeURIComponent(data.access_token)}`,
+      });
+      sendEmail({ to: email, subject, html }).catch((e) => console.warn("squad-created email failed", e));
       return jr({ code: data.code, accessToken: data.access_token, returning: false });
     }
     // Unique violation on code → retry; other errors → surface
