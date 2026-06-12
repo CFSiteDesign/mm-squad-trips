@@ -114,7 +114,7 @@ export default function Index() {
         </div>
 
         {/* DESKTOP: full-bleed media background + overlaid content */}
-        <div className="relative hidden min-h-[100svh] w-full md:block">
+        <div className="relative hidden w-full md:block">
           <div className="absolute inset-0 z-0">
             <img src={heroImg} alt="Mad Monkey squad on the beach at sunset" className="absolute inset-0 h-full w-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-b from-mm-black/75 via-mm-black/25 to-mm-black/90" />
