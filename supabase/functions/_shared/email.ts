@@ -44,10 +44,19 @@ export async function sendEmail({ to, subject, html, replyTo }: SendArgs): Promi
   }
 }
 
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function render(tpl: string, vars: Record<string, string | number | undefined | null>): string {
   return tpl.replace(/\{\{(\w+)\}\}/g, (_, k) => {
     const v = vars[k];
-    return v === undefined || v === null ? "" : String(v);
+    return v === undefined || v === null ? "" : escapeHtml(String(v));
   });
 }
 
