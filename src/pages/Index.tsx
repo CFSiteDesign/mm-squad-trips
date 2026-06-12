@@ -18,7 +18,7 @@ import { Sticker, Starburst } from "@/components/brand/Sticker";
 import { SiteFooter } from "@/components/trip/SiteFooter";
 import { SquadCTA } from "@/components/trip/SquadCTA";
 import heroImg from "@/assets/heroallin.png";
-import allInLogo from "@/assets/all-in-logo.png.asset.json";
+import allInLogo from "@/assets/all-in-logo.png";
 
 import { TRIPS, ACCENT_BG, type Filter } from "@/data/trips";
 
