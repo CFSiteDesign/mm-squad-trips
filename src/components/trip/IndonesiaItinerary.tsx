@@ -1,8 +1,8 @@
 import { Sticker } from "@/components/brand/Sticker";
-import uluwatuImg from "@/assets/indo-uluwatu-new.jpg.asset.json";
-import lembonganImg from "@/assets/indo-lembongan-new.jpg.asset.json";
-import giliImg from "@/assets/indo-gili-new.jpg.asset.json";
-import lombokImg from "@/assets/indo-kuta-new.jpg.asset.json";
+import uluwatuImg from "@/assets/indo-uluwatu-new.jpg";
+import lembonganImg from "@/assets/indo-lembongan-new.jpg";
+import giliImg from "@/assets/indo-gili-new.jpg";
+import lombokImg from "@/assets/indo-kuta-new.jpg";
 
 type Stop = {
   num: string;
@@ -18,7 +18,7 @@ const STOPS: Stop[] = [
     num: "01",
     location: "Uluwatu",
     nights: "2 nights",
-    image: uluwatuImg.url,
+    image: uluwatuImg,
     tag: "CLIFFS & SUNSETS",
     highlights: [
       "Land in Bali, transfer straight to Mad Monkey Uluwatu",
@@ -32,7 +32,7 @@ const STOPS: Stop[] = [
     num: "02",
     location: "Nusa Lembongan",
     nights: "3 nights",
-    image: lembonganImg.url,
+    image: lembonganImg,
     tag: "ISLAND LIFE",
     highlights: [
       "Fast boat from Sanur to our clifftop hostel",
@@ -46,7 +46,7 @@ const STOPS: Stop[] = [
     num: "03",
     location: "Gili T",
     nights: "3 nights",
-    image: giliImg.url,
+    image: giliImg,
     tag: "PARTY ISLAND",
     highlights: [
       "Early boat over, check into Mad Monkey Gili T",
@@ -61,7 +61,7 @@ const STOPS: Stop[] = [
     num: "04",
     location: "Kuta Lombok",
     nights: "4 nights",
-    image: lombokImg.url,
+    image: lombokImg,
     tag: "SURF CAMP",
     highlights: [
       "Brekkie, then waves around 9–10AM — new beach each day",
