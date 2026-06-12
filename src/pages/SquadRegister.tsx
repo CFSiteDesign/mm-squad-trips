@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { registerSquadLeader, setSquadPassword } from "@/lib/squad";
-import { TEMPLATES_DRIVE_URL } from "@/lib/squadConstants";
+
 
 export default function SquadRegister() {
   const navigate = useNavigate();
