@@ -60,7 +60,7 @@ const INCLUDED_TABS: { name: string; items: { icon: any; title: string; desc: st
   },
 ];
 
-import { Testimonials } from "@/components/trip/Testimonials";
+
 
 const TICKER = "ALL IN  ·  53,000+ IN THE CREW  ·  $99 HOLDS YOUR SPOT  ·  REAL MAD MONKEY HOSTELS  ·  SOLO? NOT FOR LONG  ·  ";
 
@@ -274,8 +274,6 @@ export default function Index() {
           </ul>
         </div>
       </section>
-
-      <Testimonials />
 
       {/* ============ SQUAD LEADER CTA ============ */}
       <SquadCTA />
