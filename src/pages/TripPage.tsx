@@ -18,7 +18,7 @@ import { FAQ } from "@/components/trip/FAQ";
 import { SiteFooter } from "@/components/trip/SiteFooter";
 import { SquadCTA } from "@/components/trip/SquadCTA";
 import { TripCrossSell } from "@/components/trip/TripCrossSell";
-import { Testimonials } from "@/components/trip/Testimonials";
+
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sticker } from "@/components/brand/Sticker";
 
