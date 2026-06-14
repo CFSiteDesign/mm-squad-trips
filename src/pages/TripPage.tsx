@@ -80,7 +80,7 @@ export default function TripPage() {
       ) : (
         <Route trip={trip} />
       )}
-      <Testimonials />
+      
       <WhosComing trip={trip} />
       <BookingFlow trip={trip} />
       <FAQ />
