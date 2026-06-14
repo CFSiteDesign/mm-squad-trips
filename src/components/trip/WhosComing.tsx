@@ -44,7 +44,7 @@ export function WhosComing({ trip }: { trip: Trip }) {
         <Sticker color="pink" rotate={-3}>WHO&apos;S COMING</Sticker>
         <h2 className="mt-4 font-display text-[2.5rem] leading-[0.92] md:mt-6 md:text-7xl lg:text-8xl">
           YOUR<br />
-          <span className="text-mm-pink">NEW CREW.</span>
+          <span className="text-white">NEW CREW.</span>
         </h2>
 
         <div className="mt-6 flex flex-wrap gap-3">
