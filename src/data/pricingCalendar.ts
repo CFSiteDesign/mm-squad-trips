@@ -23,13 +23,13 @@ const PRICING: Record<string, SlugPricing> = {
     "2026-12": { price: 700, strikethrough: 1050 },
   },
   vietnam: {
-    "2026-06": { price: 750, strikethrough: 1200 },
-    "2026-07": { price: 800, strikethrough: 1200 },
-    "2026-08": { price: 800, strikethrough: 1200 },
-    "2026-09": { price: 750, strikethrough: 1200 },
-    "2026-10": { price: 700, strikethrough: 1200 },
-    "2026-11": { price: 700, strikethrough: 1200 },
-    "2026-12": { price: 800, strikethrough: 1200 },
+    "2026-06": { price: 850, strikethrough: 1200 },
+    "2026-07": { price: 850, strikethrough: 1200 },
+    "2026-08": { price: 850, strikethrough: 1200 },
+    "2026-09": { price: 850, strikethrough: 1200 },
+    "2026-10": { price: 850, strikethrough: 1200 },
+    "2026-11": { price: 850, strikethrough: 1200 },
+    "2026-12": { price: 850, strikethrough: 1200 },
   },
 };
 

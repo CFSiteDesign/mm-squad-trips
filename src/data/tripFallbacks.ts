@@ -87,7 +87,7 @@ const FALLBACKS: Record<string, Trip> = {
     code: "VIE",
     name: "Vietnam North Loop",
     slug: "vietnam",
-    days: 10,
+    days: 14,
     stops: [
       { name: "Hanoi", nights: 3, description: "", photos: [], activities: [] },
       { name: "Ha Long Bay", nights: 2, description: "", photos: [], activities: [] },
@@ -96,7 +96,7 @@ const FALLBACKS: Record<string, Trip> = {
     ],
     activityCount: 9,
     heroVideoUrl: "",
-    defaultPrice: 750,
+    defaultPrice: 850,
     defaultStrikethrough: 1200,
     departures: [],
   },
