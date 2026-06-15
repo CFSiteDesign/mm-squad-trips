@@ -12,6 +12,12 @@ const DEPOSIT_PER_SPOT = 99;
 const DEPOSIT_THRESHOLD_DAYS = 7;
 const HIDE_WITHIN_DAYS = 0;
 
+// Booking cutoff per trip (mirrors src/lib/trip-helpers.ts):
+// Vietnam departs Wed → must be >=1 day out. Others depart Mon → must be >=3 days out.
+function bookingCutoffDays(slug: string): number {
+  return slug === "vietnam" ? 1 : 3;
+}
+
 const SLUG_TO_LABEL: Record<string, string> = {
   indonesia: "Indonesia",
   cambodia: "Cambodia",
