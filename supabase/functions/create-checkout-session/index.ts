@@ -12,6 +12,12 @@ const DEPOSIT_PER_SPOT = 99;
 const DEPOSIT_THRESHOLD_DAYS = 7;
 const HIDE_WITHIN_DAYS = 0;
 
+// Booking cutoff per trip (mirrors src/lib/trip-helpers.ts):
+// Vietnam departs Wed → must be >=1 day out. Others depart Mon → must be >=3 days out.
+function bookingCutoffDays(slug: string): number {
+  return slug === "vietnam" ? 1 : 3;
+}
+
 const SLUG_TO_LABEL: Record<string, string> = {
   indonesia: "Indonesia",
   cambodia: "Cambodia",
@@ -87,7 +93,13 @@ Deno.serve(async (req) => {
     if (spotsRemaining < groupSize) {
       return err(`Only ${spotsRemaining} spot${spotsRemaining === 1 ? "" : "s"} left`);
     }
-    if (daysUntil(depDate) < HIDE_WITHIN_DAYS) return err("This departure is too close to book online");
+    const cutoff = bookingCutoffDays(tripSlug);
+    if (daysUntil(depDate) < cutoff) {
+      const msg = tripSlug === "vietnam"
+        ? "Bookings for this departure closed after Tuesday — please pick a later date."
+        : "Bookings for this departure closed after the Friday before — please pick a later date.";
+      return err(msg);
+    }
 
     // 3. Pricing override
     const month = depDate.slice(0, 7);
