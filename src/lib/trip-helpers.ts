@@ -6,6 +6,13 @@ export const DEPOSIT_THRESHOLD_DAYS = 7;
 // Trips departing in fewer than this many days are hidden from online booking.
 export const HIDE_WITHIN_DAYS = 0;
 
+// Booking cutoff per trip:
+// - Vietnam departs Wednesday; bookings close after Tuesday (must be >=1 day out).
+// - Indonesia/Cambodia depart Monday; bookings close after the Friday before (must be >=3 days out).
+export function bookingCutoffDays(slug: string): number {
+  return slug === "vietnam" ? 1 : 3;
+}
+
 export function daysUntil(dateIso: string): number {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
