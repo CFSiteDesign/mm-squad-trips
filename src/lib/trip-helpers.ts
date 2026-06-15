@@ -54,12 +54,13 @@ export function spotBadge(n: number): SpotBadge {
   return { label: `Open · ${n} spots`, tone: "green" };
 }
 
-export function visibleDepartures(deps: Departure[], requestedSpots: number): Departure[] {
+export function visibleDepartures(deps: Departure[], requestedSpots: number, slug?: string): Departure[] {
+  const cutoff = slug ? bookingCutoffDays(slug) : HIDE_WITHIN_DAYS;
   return deps.filter(
     (d) =>
       d.bookable &&
       d.spotsRemaining >= requestedSpots &&
-      daysUntil(d.date) >= HIDE_WITHIN_DAYS,
+      daysUntil(d.date) >= cutoff,
   );
 }
 
