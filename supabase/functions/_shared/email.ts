@@ -72,7 +72,7 @@ function shell(title: string, bodyInner: string): string {
 </td></tr>
 ${bodyInner}
 <tr><td style="padding:16px 24px 24px 24px;font-size:12px;color:#444;border-top:1px solid #eee">
-Mad Monkey Hostels — Squad Trips · Questions? hello@madmonkeyhostels.com
+Mad Monkey Hostels — Squad Trips · Questions? cs@madmonkeyhostels.com
 </td></tr>
 </table></td></tr></table></body></html>`;
 }
