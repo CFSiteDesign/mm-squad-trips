@@ -1,4 +1,4 @@
-import { Bed, Bus, Coffee, Compass, HeadphonesIcon, MapPin, PartyPopper, Moon } from "lucide-react";
+import { Bed, Bus, Compass, HeadphonesIcon, MapPin, PartyPopper, Moon } from "lucide-react";
 import type { Trip } from "@/types/trip";
 import { Sticker } from "@/components/brand/Sticker";
 
