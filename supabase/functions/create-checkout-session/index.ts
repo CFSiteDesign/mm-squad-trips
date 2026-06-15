@@ -93,7 +93,13 @@ Deno.serve(async (req) => {
     if (spotsRemaining < groupSize) {
       return err(`Only ${spotsRemaining} spot${spotsRemaining === 1 ? "" : "s"} left`);
     }
-    if (daysUntil(depDate) < HIDE_WITHIN_DAYS) return err("This departure is too close to book online");
+    const cutoff = bookingCutoffDays(tripSlug);
+    if (daysUntil(depDate) < cutoff) {
+      const msg = tripSlug === "vietnam"
+        ? "Bookings for this departure closed after Tuesday — please pick a later date."
+        : "Bookings for this departure closed after the Friday before — please pick a later date.";
+      return err(msg);
+    }
 
     // 3. Pricing override
     const month = depDate.slice(0, 7);
