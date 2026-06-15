@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
       leaderName: (existing.name ?? "").split(" ")[0] || existing.name || "there",
       squadName: `${existing.name ?? "your"}'s squad`,
       squadCode: existing.code,
-      dashboardUrl: `${APP_URL}/squad-leader/dashboard?token=${encodeURIComponent(existing.access_token)}`,
+      dashboardUrl: `https://madmonkeyhostels.com/all-in-trips/squad-leader/dashboard?token=${encodeURIComponent(existing.access_token)}`,
     });
     sendEmail({ to: email, subject, html }).catch((e) => console.warn("squad-created resend failed", e));
     return jr({ returning: true });
