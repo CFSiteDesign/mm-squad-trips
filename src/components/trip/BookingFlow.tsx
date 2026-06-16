@@ -198,7 +198,7 @@ export function BookingFlow({ trip }: { trip: Trip }) {
 
         {/* Step 2: departure */}
         <FormStep n={2} label="PICK YOUR DEPARTURE">
-          {visible.length === 0 ? (
+          {visible.length === 0 && closed.length === 0 ? (
             <p className="mt-2 font-sticker text-xs tracking-[0.15em] text-mm-bone/80">
               NO DEPARTURES WITH {groupSize} SPOT{groupSize > 1 ? "S" : ""} RIGHT NOW.
             </p>
@@ -212,6 +212,9 @@ export function BookingFlow({ trip }: { trip: Trip }) {
                   selected={selectedId === d.id}
                   onSelect={() => setSelectedId(d.id)}
                 />
+              ))}
+              {closed.map((d) => (
+                <ClosedDepartureCard key={d.id} dep={d} />
               ))}
             </div>
           )}
