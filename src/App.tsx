@@ -58,6 +58,7 @@ const App = () => (
           <Route path="/vietnam" element={<TripPage />} />
           <Route path="/cambodia" element={<TripPage />} />
           <Route path="/indonesia" element={<TripPage />} />
+          <Route path="/testcard" element={<TestCard />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
