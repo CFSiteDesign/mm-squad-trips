@@ -14,6 +14,7 @@ import {
   paymentLine,
   spotBadge,
   visibleDepartures,
+  closedDepartures,
 } from "@/lib/trip-helpers";
 import { SpotBadge } from "./SpotBadge";
 import type { Trip, Departure } from "@/types/trip";
