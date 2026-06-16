@@ -329,7 +329,7 @@ function DepartureCard({
   );
 }
 
-function ClosedDepartureCard({ dep }: { dep: Departure }) {
+export function ClosedDepartureCard({ dep }: { dep: Departure }) {
   return (
     <div className="flex w-[240px] shrink-0 snap-start flex-col border-[3px] border-mm-black/30 bg-mm-paper/60 p-4 text-left md:w-auto">
       <span className="font-display text-lg text-mm-black/60">{formatDateLong(dep.date).toUpperCase()}</span>
