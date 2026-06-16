@@ -329,6 +329,24 @@ function DepartureCard({
   );
 }
 
+function ClosedDepartureCard({ dep }: { dep: Departure }) {
+  return (
+    <div className="flex w-[240px] shrink-0 snap-start flex-col border-[3px] border-mm-black/30 bg-mm-paper/60 p-4 text-left md:w-auto">
+      <span className="font-display text-lg text-mm-black/60">{formatDateLong(dep.date).toUpperCase()}</span>
+      <span className="mt-3 self-start font-sticker text-[11px] tracking-[0.12em] text-mm-black/50">
+        BOOKING CLOSED
+      </span>
+      <span className="mt-3 text-[11px] font-medium text-mm-black/50">{freeArrivalNightLine(dep.date)}</span>
+      <p className="mt-3 font-sticker text-[10px] tracking-[0.1em] text-mm-black/60 leading-relaxed">
+        You've missed the deadline for securing your spot, please reach out to customer service and we will do our best to confirm your booking!{" "}
+        <a href="mailto:cs@madmonkeyhostels.com" className="underline decoration-mm-black/40 hover:text-mm-black">
+          cs@madmonkeyhostels.com
+        </a>
+      </p>
+    </div>
+  );
+}
+
 function LeadForm({
   value, onChange, groupSize,
 }: { value: LeadFields; onChange: (v: LeadFields) => void; groupSize: number }) {
