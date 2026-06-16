@@ -16,7 +16,7 @@ import SquadForgotPassword from "./pages/SquadForgotPassword";
 import SquadResetPassword from "./pages/SquadResetPassword";
 // SquadAdmin is now embedded inside Admin at /admin
 import Admin from "./pages/Admin";
-import TestCard from "./pages/TestCard";
+
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -59,7 +59,7 @@ const App = () => (
           <Route path="/vietnam" element={<TripPage />} />
           <Route path="/cambodia" element={<TripPage />} />
           <Route path="/indonesia" element={<TripPage />} />
-          <Route path="/testcard" element={<TestCard />} />
+          
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
