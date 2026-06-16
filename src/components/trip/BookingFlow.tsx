@@ -48,6 +48,7 @@ export function BookingFlow({ trip }: { trip: Trip }) {
   const [joinCode, setJoinCode] = useState("");
 
   const visible = useMemo(() => visibleDepartures(trip.departures, groupSize, trip.slug), [trip.departures, groupSize, trip.slug]);
+  const closed = useMemo(() => closedDepartures(trip.departures, trip.slug), [trip.departures, trip.slug]);
   const selected = visible.find((d) => d.id === selectedId) ?? null;
 
   function changeGroup(n: number) {
