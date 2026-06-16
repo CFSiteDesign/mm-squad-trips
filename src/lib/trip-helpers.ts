@@ -64,6 +64,16 @@ export function visibleDepartures(deps: Departure[], requestedSpots: number, slu
   );
 }
 
+export function closedDepartures(deps: Departure[], slug?: string): Departure[] {
+  const cutoff = slug ? bookingCutoffDays(slug) : HIDE_WITHIN_DAYS;
+  return deps.filter(
+    (d) =>
+      d.bookable &&
+      daysUntil(d.date) > 0 &&
+      daysUntil(d.date) < cutoff,
+  );
+}
+
 export function paymentLine(dateIso: string, groupSize: number, price: number) {
   if (isDepositEligible(dateIso)) {
     return {
