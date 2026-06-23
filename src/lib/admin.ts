@@ -30,7 +30,21 @@ async function call<T = unknown>(body: Record<string, unknown>): Promise<T> {
     body,
     headers: { Authorization: `Bearer ${token}` },
   });
-  if (error) throw new Error(error.message);
+  if (error) {
+    const ctx = (error as Error & { context?: Response | string }).context;
+    let detail: string | undefined;
+    if (ctx && typeof (ctx as Response).text === "function") {
+      try {
+        const text = await (ctx as Response).text();
+        try { detail = (JSON.parse(text) as { error?: string }).error; }
+        catch { detail = text; }
+      } catch { /* ignore */ }
+    } else if (typeof ctx === "string") {
+      try { detail = (JSON.parse(ctx) as { error?: string }).error ?? ctx; }
+      catch { detail = ctx; }
+    }
+    throw new Error(detail || error.message);
+  }
   if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
   return data as T;
 }
