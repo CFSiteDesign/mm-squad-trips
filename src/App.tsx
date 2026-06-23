@@ -37,6 +37,12 @@ function ScrollToTop() {
   return null;
 }
 
+function ConditionalNavbar() {
+  const { pathname } = useLocation();
+  if (pathname.startsWith("/admin")) return null;
+  return <Navbar />;
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
