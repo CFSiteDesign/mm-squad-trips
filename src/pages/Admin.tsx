@@ -772,6 +772,15 @@ function RowEditor({ table, row, isNew, onClose, onSaved }: {
         }
         out[c.key] = v;
       }
+      if (table === "discount_codes") {
+        if (typeof out.code === "string") out.code = out.code.trim().toUpperCase();
+        if (out.applicable_to == null || (Array.isArray(out.applicable_to) && out.applicable_to.length === 0)) {
+          out.applicable_to = ["All"];
+        }
+        if (out.discount_amount == null) out.discount_amount = 0;
+        if (out.active == null) out.active = true;
+        delete out.used_count;
+      }
       if (isNew) await adminApi.create(table, out);
       else await adminApi.update(table, String(row.id), out);
       toast.success("Saved");
