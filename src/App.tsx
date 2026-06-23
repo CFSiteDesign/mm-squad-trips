@@ -43,7 +43,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Navbar />
+        <ConditionalNavbar />
         <ScrollToTop />
         <Routes>
           <Route path="/" element={<Index />} />
