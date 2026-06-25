@@ -12,7 +12,6 @@ import indoHero from "@/assets/indo-hero.jpg";
 import khHero from "@/assets/kh-hero.png";
 import vnHero from "@/assets/vn-hero.jpg";
 
-import { WhosComing } from "@/components/trip/WhosComing";
 import { BookingFlow } from "@/components/trip/BookingFlow";
 import { FAQ } from "@/components/trip/FAQ";
 import { SiteFooter } from "@/components/trip/SiteFooter";
@@ -22,13 +21,17 @@ import { TripCrossSell } from "@/components/trip/TripCrossSell";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sticker } from "@/components/brand/Sticker";
 
+const TRIP_SLUGS = ["vietnam", "indonesia", "cambodia"];
+
 function getSetupHint(_message: string, slug: string) {
   return `Operator check: verify that slug "${slug}" exists in the Trips table and is marked active.`;
 }
 
-
 export default function TripPage() {
-  const slug = useLocation().pathname.replace(/^\/+/, "").split("/")[0] ?? "";
+  const pathname = useLocation().pathname;
+  const segments = pathname.replace(/^\/+/, "").split("/").filter(Boolean);
+  const slug = segments.find((s) => TRIP_SLUGS.includes(s)) ?? segments[0] ?? "";
+
   const fallback = getTripFallback(slug);
 
   const { data: trip, isLoading, error } = useQuery({
@@ -38,9 +41,7 @@ export default function TripPage() {
     placeholderData: fallback,
   });
 
-  // Only show the error state when there's no fallback to render.
   if (error && !fallback) {
-
     const message = error instanceof Error ? error.message : "Could not reach the trip data.";
     return (
       <div className="relative min-h-screen bg-mm-black px-6 py-24 text-mm-bone">
@@ -80,8 +81,7 @@ export default function TripPage() {
       ) : (
         <Route trip={trip} />
       )}
-      
-      <WhosComing trip={trip} />
+
       <BookingFlow trip={trip} />
       <FAQ />
       <SquadCTA />
