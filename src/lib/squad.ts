@@ -8,17 +8,21 @@ export interface SquadRegisterInput {
   preferred_trip_slug?: string;
   preferred_month?: string;
   reason?: string;
+  is_student?: boolean;
+  university?: string;
+  society?: string;
 }
 export interface SquadRegisterResult {
   code?: string;
   accessToken?: string;
   returning?: boolean;
+  pending?: boolean;
 }
 
 export async function registerSquadLeader(input: SquadRegisterInput): Promise<SquadRegisterResult> {
   const { data, error } = await supabase.functions.invoke("squad-register", { body: input });
   if (error) throw new Error(error.message);
-  if (!data || (data.error && !data.returning)) throw new Error(data?.error || "Could not register");
+  if (!data || (data.error && !data.returning && !data.pending)) throw new Error(data?.error || "Could not register");
   return data as SquadRegisterResult;
 }
 
@@ -37,6 +41,7 @@ export interface SquadDashboardData {
     code: string;
     preferredTripSlug: string | null;
     preferredMonth: string | null;
+    isStudent?: boolean;
   };
   bookings: SquadBooking[];
   count: number;
@@ -62,13 +67,17 @@ export interface SquadAdminLeader {
   reason: string | null;
   createdAt: string;
   accessToken: string;
+  isStudent: boolean;
+  status: "pending" | "approved" | "rejected";
+  university: string | null;
+  society: string | null;
   count: number;
   tier: string;
   bookings: (SquadBooking & { squad_leader_id: string })[];
 }
 export interface SquadAdminData {
   leaders: SquadAdminLeader[];
-  stats: { totalLeaders: number; totalBookings: number; unlockedHalf: number; unlockedFree: number };
+  stats: { totalLeaders: number; totalBookings: number; unlockedHalf: number; unlockedFree: number; pendingStudents?: number };
 }
 export async function getSquadAdmin(passwordOrToken: { password?: string; token?: string }): Promise<SquadAdminData> {
   const { password, token } = passwordOrToken;
@@ -79,6 +88,15 @@ export async function getSquadAdmin(passwordOrToken: { password?: string; token?
   if (error) throw new Error(error.message);
   if (!data?.leaders) throw new Error(data?.error || "Could not load admin");
   return data as SquadAdminData;
+}
+
+export async function setStudentLeaderStatus(args: { token: string; id: string; action: "approve" | "reject" }): Promise<void> {
+  const { data, error } = await supabase.functions.invoke("squad-admin", {
+    body: { action: args.action, id: args.id },
+    headers: { Authorization: `Bearer ${args.token}` },
+  });
+  if (error) throw new Error(error.message);
+  if (!data?.ok) throw new Error(data?.error || "Could not update");
 }
 
 export async function setSquadPassword(accessToken: string, password: string): Promise<void> {
