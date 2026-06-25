@@ -4,6 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const TIER_HALF = 4;
 const TIER_FREE = 8;
+const STUDENT_GOAL = 10;
 
 function jr(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -12,7 +13,18 @@ function jr(body: unknown, status = 200) {
   });
 }
 
-function computeTier(count: number) {
+function computeTier(count: number, isStudent: boolean) {
+  if (isStudent) {
+    if (count >= STUDENT_GOAL) {
+      return { discountPct: 0, nextLine: "2 FREE SPOTS unlocked 🔥 Email Hayley to book them in.", progress: 100 };
+    }
+    const more = STUDENT_GOAL - count;
+    return {
+      discountPct: 0,
+      nextLine: `${more} more booking${more === 1 ? "" : "s"} to unlock 2 FREE squad leader spots`,
+      progress: (count / STUDENT_GOAL) * 100,
+    };
+  }
   if (count >= TIER_FREE) {
     return { discountPct: 100, nextLine: "Trip unlocked. You're going for FREE 🔥", progress: 100 };
   }
@@ -52,7 +64,7 @@ Deno.serve(async (req) => {
 
   const { data: leader, error: lErr } = await supabase
     .from("squad_leaders")
-    .select("id, name, email, code, preferred_trip_slug, preferred_month, created_at")
+    .select("id, name, email, code, preferred_trip_slug, preferred_month, created_at, is_student")
     .eq("access_token", token)
     .maybeSingle();
   if (lErr) return jr({ error: lErr.message }, 500);
@@ -66,6 +78,7 @@ Deno.serve(async (req) => {
   if (bErr) return jr({ error: bErr.message }, 500);
 
   const count = bookings?.length ?? 0;
+  const isStudent = !!leader.is_student;
   return jr({
     leader: {
       name: leader.name,
@@ -73,9 +86,10 @@ Deno.serve(async (req) => {
       code: leader.code,
       preferredTripSlug: leader.preferred_trip_slug,
       preferredMonth: leader.preferred_month,
+      isStudent,
     },
     bookings: bookings ?? [],
     count,
-    tier: computeTier(count),
+    tier: computeTier(count, isStudent),
   });
 });

@@ -47,6 +47,8 @@ export default function SquadDashboard() {
 
   const { leader, bookings, count, tier } = data;
   const code = leader.code;
+  const isStudent = !!leader.isStudent;
+  const goal = isStudent ? 10 : 8;
 
   function copy() {
     navigator.clipboard?.writeText(code);
@@ -88,11 +90,11 @@ export default function SquadDashboard() {
         <div className="mx-auto max-w-5xl">
           <div className="flex items-end justify-between">
             <h2 className="font-display text-3xl md:text-5xl">YOUR SQUAD SO FAR</h2>
-            <div className="font-sticker text-xs tracking-[0.15em] text-mm-black/70">{count}/8 BOOKED</div>
+            <div className="font-sticker text-xs tracking-[0.15em] text-mm-black/70">{count}/{goal} BOOKED</div>
           </div>
 
-          <div className="mt-8 grid grid-cols-4 gap-3 sm:grid-cols-8">
-            {Array.from({ length: 8 }).map((_, i) => {
+          <div className={`mt-8 grid gap-3 ${isStudent ? "grid-cols-5 sm:grid-cols-10" : "grid-cols-4 sm:grid-cols-8"}`}>
+            {Array.from({ length: goal }).map((_, i) => {
               const b = bookings[i];
               return (
                 <div
@@ -120,10 +122,13 @@ export default function SquadDashboard() {
             <div className="font-display text-base">{tier.nextLine}</div>
             <div className="relative mt-4 h-3 border-[2px] border-mm-black bg-mm-bone">
               <div className="absolute inset-y-0 left-0 bg-mm-pink" style={{ width: `${tier.progress}%` }} />
-              {[
-                { pos: 50, label: "50% OFF", unlocked: count >= 4 },
-                { pos: 100, label: "FREE TRIP", unlocked: count >= 8 },
-              ].map((m) => (
+              {(isStudent
+                ? [{ pos: 100, label: "2 FREE SPOTS", unlocked: count >= 10 }]
+                : [
+                    { pos: 50, label: "50% OFF", unlocked: count >= 4 },
+                    { pos: 100, label: "FREE TRIP", unlocked: count >= 8 },
+                  ]
+              ).map((m) => (
                 <div key={m.label} className="absolute -top-1 -translate-x-1/2" style={{ left: `${m.pos}%` }}>
                   <div
                     className={`h-5 w-5 border-[2px] border-mm-black ${

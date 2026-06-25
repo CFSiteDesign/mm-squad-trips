@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
 import { TRIPS, ACCENT_BG } from "@/data/trips";
+import { useSiteVariant, tripPath } from "@/hooks/use-site-variant";
 
 export function TripCrossSell({ currentSlug }: { currentSlug?: string }) {
+  const variant = useSiteVariant();
   const others = TRIPS.filter((t) => t.slug !== currentSlug);
 
   return (
@@ -19,7 +21,7 @@ export function TripCrossSell({ currentSlug }: { currentSlug?: string }) {
           {others.map((t) => (
             <li key={t.slug}>
               <Link
-                to={`/${t.slug}`}
+                to={tripPath(t.slug, variant)}
                 className="group relative block h-full border-[4px] border-mm-bone bg-mm-bone p-5 text-mm-black shadow-mm transition-transform hover:-translate-x-[4px] hover:-translate-y-[4px] md:p-6"
               >
                 <div className="flex items-start justify-end gap-3">

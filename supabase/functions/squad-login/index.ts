@@ -31,12 +31,15 @@ Deno.serve(async (req) => {
   const supabase = createClient(url, key);
   const { data: leader, error } = await supabase
     .from("squad_leaders")
-    .select("id, access_token, password_hash")
+    .select("id, access_token, password_hash, status")
     .eq("code", code)
     .maybeSingle();
   if (error) return jr({ error: error.message }, 500);
   if (!leader || !leader.password_hash) {
     return jr({ error: "Invalid squad code or password" }, 401);
+  }
+  if (leader.status && leader.status !== "approved") {
+    return jr({ error: "Your application is still being reviewed" }, 403);
   }
 
   const ok = await verifyPassword(password, leader.password_hash);

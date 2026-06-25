@@ -74,9 +74,9 @@ export function Hero({ trip, heroImageUrl }: { trip: Trip; heroImageUrl?: string
               {trip.name.toUpperCase()}
             </p>
             <h1 className="font-display text-[clamp(2.75rem,13vw,4.25rem)] leading-[0.9] text-mm-bone">
-              <span className="block">SOLO TRAVELLER?</span>
-              <span className="block whitespace-nowrap text-mm-pink">NOT FOR</span>
-              <span className="block text-mm-lime">LONG.</span>
+              <span className="block">YOUR GROUP</span>
+              <span className="block whitespace-nowrap text-mm-pink">TRIP,</span>
+              <span className="block text-mm-lime">SORTED.</span>
             </h1>
 
             <p className="mt-5 max-w-[260px] text-[14px] leading-snug text-mm-bone/85">
@@ -142,9 +142,9 @@ export function Hero({ trip, heroImageUrl }: { trip: Trip; heroImageUrl?: string
               {trip.name.toUpperCase()}
             </p>
             <h1 className="font-display text-[clamp(4rem,12vw,9rem)] leading-[0.88] text-mm-bone">
-              <span className="block">SOLO TRAVELLER?</span>
-              <span className="block whitespace-nowrap text-mm-pink">NOT FOR</span>
-              <span className="block text-mm-lime">LONG.</span>
+              <span className="block">YOUR GROUP</span>
+              <span className="block whitespace-nowrap text-mm-pink">TRIP,</span>
+              <span className="block text-mm-lime">SORTED.</span>
             </h1>
             <p className="mt-7 max-w-xl text-lg leading-snug text-mm-bone/85">
               {trip.days} days · {trip.stops.length} stops · {trip.activityCount} activities · One crew

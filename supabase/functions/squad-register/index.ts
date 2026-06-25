@@ -11,7 +11,6 @@ function jr(body: unknown, status = 200) {
 }
 
 function randomCode(): string {
-  // 5-digit numeric code, 10000–99999 (no leading zero so it's always 5 chars).
   const buf = new Uint32Array(1);
   crypto.getRandomValues(buf);
   return String(10000 + (buf[0] % 90000));
@@ -24,43 +23,47 @@ Deno.serve(async (req) => {
   const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   if (!url || !key) return jr({ error: "Backend not configured" }, 503);
 
-  let body: Record<string, string> = {};
+  let body: Record<string, unknown> = {};
   try {
     body = await req.json();
   } catch {
     return jr({ error: "Invalid JSON" }, 400);
   }
 
-  const name = (body.name ?? "").trim();
-  const email = (body.email ?? "").trim().toLowerCase();
-  const phone = (body.phone ?? "").trim();
+  const str = (v: unknown) => (typeof v === "string" ? v.trim() : "");
+  const name = str(body.name);
+  const email = str(body.email).toLowerCase();
+  const phone = str(body.phone);
+  const isStudent = body.is_student === true;
+  const university = str(body.university);
+  const society = str(body.society);
+
   if (!name || !email || !phone) return jr({ error: "Name, email and phone are required" }, 400);
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return jr({ error: "Invalid email" }, 400);
+  if (isStudent && !university) return jr({ error: "University is required for student applications" }, 400);
 
   const supabase = createClient(url, key);
 
-  // If they've already registered with this email, return their existing code/token
-  // so they don't get a duplicate-error wall.
+  // Existing email → resend dashboard link (only if approved); else just say pending.
   const { data: existing } = await supabase
     .from("squad_leaders")
-    .select("name, code, access_token")
+    .select("name, code, access_token, status, is_student")
     .eq("email", email)
     .maybeSingle();
   if (existing) {
-    // Never return access_token/code to an arbitrary caller — re-send the
-    // dashboard link to the registered email address instead.
+    if (existing.status === "pending") {
+      return jr({ returning: true, pending: true });
+    }
     const { subject, html } = squadCreatedEmail({
       leaderName: (existing.name ?? "").split(" ")[0] || existing.name || "there",
       squadName: `${existing.name ?? "your"}'s squad`,
       squadCode: existing.code,
-      dashboardUrl: `https://madmonkeyhostels.com/all-in-trips/squad-leader/dashboard?token=${encodeURIComponent(existing.access_token)}`,
+      dashboardUrl: `${APP_URL}/squad-leader/dashboard?token=${encodeURIComponent(existing.access_token)}`,
     });
     sendEmail({ to: email, subject, html }).catch((e) => console.warn("squad-created resend failed", e));
     return jr({ returning: true });
   }
 
-  // Try a handful of times in case of unique-violation on code.
-  // Retry on the (very unlikely) chance the 5-digit code collides.
   for (let attempt = 0; attempt < 20; attempt++) {
     const code = randomCode();
     const { data, error } = await supabase
@@ -69,25 +72,32 @@ Deno.serve(async (req) => {
         name,
         email,
         phone,
-        instagram: body.instagram?.trim() || null,
-        preferred_trip_slug: body.preferred_trip_slug?.trim() || null,
-        preferred_month: body.preferred_month?.trim() || null,
-        reason: body.reason?.trim() || null,
+        instagram: str(body.instagram) || null,
+        preferred_trip_slug: str(body.preferred_trip_slug) || null,
+        preferred_month: str(body.preferred_month) || null,
+        reason: str(body.reason) || null,
         code,
+        is_student: isStudent,
+        status: isStudent ? "pending" : "approved",
+        university: university || null,
+        society: society || null,
       })
-      .select("code, access_token")
+      .select("code, access_token, status")
       .single();
     if (!error && data) {
-      const { subject, html } = squadCreatedEmail({
-        leaderName: name.split(" ")[0] || name,
-        squadName: `${name}'s squad`,
-        squadCode: data.code,
-        dashboardUrl: `https://madmonkeyhostels.com/all-in-trips/squad-leader/dashboard?token=${encodeURIComponent(data.access_token)}`,
-      });
-      sendEmail({ to: email, subject, html }).catch((e) => console.warn("squad-created email failed", e));
-      return jr({ code: data.code, accessToken: data.access_token, returning: false });
+      if (data.status === "approved") {
+        const { subject, html } = squadCreatedEmail({
+          leaderName: name.split(" ")[0] || name,
+          squadName: `${name}'s squad`,
+          squadCode: data.code,
+          dashboardUrl: `${APP_URL}/squad-leader/dashboard?token=${encodeURIComponent(data.access_token)}`,
+        });
+        sendEmail({ to: email, subject, html }).catch((e) => console.warn("squad-created email failed", e));
+        return jr({ code: data.code, accessToken: data.access_token, returning: false });
+      }
+      // Pending student — don't reveal code/token; Hayley approves first.
+      return jr({ returning: false, pending: true });
     }
-    // Unique violation on code → retry; other errors → surface
     if (error && !`${error.message}`.toLowerCase().includes("squad_leaders_code_key")) {
       console.error("squad-register insert failed", error);
       return jr({ error: error.message }, 500);
