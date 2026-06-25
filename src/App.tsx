@@ -6,15 +6,17 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import Index from "./pages/Index";
+import StudentIndex from "./pages/StudentIndex";
 import TripPage from "./pages/TripPage";
 import BookingSuccess from "./pages/BookingSuccess";
 import SquadHub from "./pages/SquadHub";
+import StudentSquadHub from "./pages/StudentSquadHub";
 import SquadRegister from "./pages/SquadRegister";
+import StudentSquadRegister from "./pages/StudentSquadRegister";
 import SquadDashboard from "./pages/SquadDashboard";
 import SquadLogin from "./pages/SquadLogin";
 import SquadForgotPassword from "./pages/SquadForgotPassword";
 import SquadResetPassword from "./pages/SquadResetPassword";
-// SquadAdmin is now embedded inside Admin at /admin
 import Admin from "./pages/Admin";
 
 import NotFound from "./pages/NotFound";
@@ -60,12 +62,23 @@ const App = () => (
           <Route path="/squad-leader/forgot-password" element={<SquadForgotPassword />} />
           <Route path="/squad-leader/reset-password" element={<SquadResetPassword />} />
           <Route path="/squad-leader/dashboard" element={<SquadDashboard />} />
-          {/* /squad-leader/admin merged into /admin */}
           <Route path="/admin" element={<Admin />} />
           <Route path="/vietnam" element={<TripPage />} />
           <Route path="/cambodia" element={<TripPage />} />
           <Route path="/indonesia" element={<TripPage />} />
-          
+
+          {/* Student variant */}
+          <Route path="/students" element={<StudentIndex />} />
+          <Route path="/students/vietnam" element={<TripPage />} />
+          <Route path="/students/cambodia" element={<TripPage />} />
+          <Route path="/students/indonesia" element={<TripPage />} />
+          <Route path="/students/squad-leader" element={<StudentSquadHub />} />
+          <Route path="/students/squad-leader/register" element={<StudentSquadRegister />} />
+          <Route path="/students/squad-leader/login" element={<SquadLogin />} />
+          <Route path="/students/squad-leader/forgot-password" element={<SquadForgotPassword />} />
+          <Route path="/students/squad-leader/reset-password" element={<SquadResetPassword />} />
+          <Route path="/students/squad-leader/dashboard" element={<SquadDashboard />} />
+
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
