@@ -41,7 +41,7 @@ function ScrollToTop() {
 
 function ConditionalNavbar() {
   const { pathname } = useLocation();
-  if (pathname.startsWith("/admin")) return null;
+  if (pathname.startsWith("/admin") || pathname.startsWith("/students/admin")) return null;
   return <Navbar />;
 }
 
