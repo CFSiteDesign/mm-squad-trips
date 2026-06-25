@@ -9,8 +9,10 @@ export function Included({ trip }: { trip: Trip }) {
     { icon: Bus, label: "ALL DOMESTIC TRANSPORT" },
     { icon: Compass, label: `${trip.activityCount} activities` },
     { icon: HeadphonesIcon, label: "24/7 local crew support" },
-    { icon: PartyPopper, label: "Welcome night drinks" },
+    { icon: PartyPopper, label: "Loads of free drinks" },
     { icon: Moon, label: "Free pre-trip night. Arrive Sunday before. First night on us." },
+    { icon: Bed, label: "Daily breakfast (except when travelling overnight)" },
+    { icon: Compass, label: "Lunch + dinner included in some experiences" },
   ];
 
   return (
@@ -42,7 +44,7 @@ export function Included({ trip }: { trip: Trip }) {
         <div className="mt-6 border-mm-thick bg-mm-black p-4 text-sm shadow-mm md:mt-10 md:p-6">
           <p className="font-sticker text-[11px] tracking-[0.18em] text-mm-lime md:text-xs md:tracking-[0.22em]">NOT INCLUDED</p>
           <p className="mt-2 text-[13px] font-semibold leading-snug text-mm-bone md:mt-3 md:text-base">
-            Flights · Lunch + dinner · Optional add-ons · Travel insurance
+            Flights · Additional food + drink · Optional add-ons · Travel insurance
           </p>
         </div>
       </div>
