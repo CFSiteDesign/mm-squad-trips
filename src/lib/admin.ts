@@ -62,3 +62,36 @@ export const adminApi = {
     call<{ ok: true }>({ table, op: "delete", id }),
 };
 
+export async function addCompBooking(values: {
+  trip_id: string;
+  departure_id: string;
+  lead_name: string;
+  lead_email: string;
+  lead_phone?: string;
+  lead_country?: string;
+  lead_age?: string | number | null;
+  notes?: string;
+}) {
+  const token = getAdminToken();
+  if (!token) throw new Error("Not authenticated");
+  const { data, error } = await supabase.functions.invoke("admin-add-comp-booking", {
+    body: values,
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (error) {
+    const ctx = (error as Error & { context?: Response | string }).context;
+    let detail: string | undefined;
+    if (ctx && typeof (ctx as Response).text === "function") {
+      try {
+        const text = await (ctx as Response).text();
+        try { detail = (JSON.parse(text) as { error?: string }).error; }
+        catch { detail = text; }
+      } catch { /* ignore */ }
+    }
+    throw new Error(detail || error.message);
+  }
+  if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
+  return (data as { row: Record<string, unknown> }).row;
+}
+
+
