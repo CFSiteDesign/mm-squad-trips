@@ -1,8 +1,9 @@
 import { Fragment, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 import { ExternalLink, Lock } from "lucide-react";
 import { Sticker } from "@/components/brand/Sticker";
-import { getSquadAdmin, type SquadAdminData } from "@/lib/squad";
+import { getSquadAdmin, setStudentLeaderStatus, type SquadAdminData } from "@/lib/squad";
 import { getAdminToken } from "@/lib/admin";
 
 // Module-level cache persists across view switches (mount/unmount)
@@ -12,14 +13,29 @@ export function clearSquadCache() {
   squadCache = null;
 }
 
+type FilterKey = "all" | "students" | "pending";
+
 export default function SquadAdmin({ refreshKey }: { refreshKey?: number }) {
   const [password, setPassword] = useState("");
   const [data, setData] = useState<SquadAdminData | null>(squadCache);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [filter, setFilter] = useState<FilterKey>("all");
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   const adminToken = getAdminToken();
+
+  async function reload() {
+    if (!adminToken) return;
+    try {
+      const d = await getSquadAdmin({ token: adminToken });
+      squadCache = d;
+      setData(d);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not load");
+    }
+  }
 
   useEffect(() => {
     if (!adminToken || squadCache) return;
@@ -55,6 +71,21 @@ export default function SquadAdmin({ refreshKey }: { refreshKey?: number }) {
     }
   }
 
+  async function moderate(id: string, action: "approve" | "reject") {
+    if (!adminToken) return;
+    setBusyId(id);
+    try {
+      await setStudentLeaderStatus({ token: adminToken, id, action });
+      toast.success(action === "approve" ? "Approved — welcome email sent" : "Application rejected");
+      squadCache = null;
+      await reload();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Action failed");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   if (!data && adminToken) {
     return (
       <main className="grid min-h-screen place-items-center bg-mm-paper p-6 text-mm-black">
@@ -68,10 +99,7 @@ export default function SquadAdmin({ refreshKey }: { refreshKey?: number }) {
   if (!data) {
     return (
       <main className="grid min-h-screen place-items-center bg-mm-paper p-6 text-mm-black">
-        <form
-          onSubmit={submit}
-          className="w-full max-w-sm border-mm-thick bg-mm-bone p-6 shadow-mm"
-        >
+        <form onSubmit={submit} className="w-full max-w-sm border-mm-thick bg-mm-bone p-6 shadow-mm">
           <Sticker color="pink" rotate={-3}>ADMIN</Sticker>
           <h1 className="mt-3 font-display text-2xl">SQUAD LEADER ADMIN</h1>
           <p className="mt-2 text-sm text-mm-black/70">Enter the admin password to view all squad codes and bookings.</p>
@@ -103,6 +131,11 @@ export default function SquadAdmin({ refreshKey }: { refreshKey?: number }) {
   }
 
   const { leaders, stats } = data;
+  const filtered = leaders.filter((l) => {
+    if (filter === "students") return l.isStudent;
+    if (filter === "pending") return l.isStudent && l.status === "pending";
+    return true;
+  });
 
   return (
     <main className="min-h-screen bg-mm-paper text-mm-black">
@@ -115,6 +148,7 @@ export default function SquadAdmin({ refreshKey }: { refreshKey?: number }) {
               { label: "LEADERS", value: stats.totalLeaders },
               { label: "AT 50% OFF", value: stats.unlockedHalf },
               { label: "FREE TRIP", value: stats.unlockedFree },
+              { label: "PENDING STUDENTS", value: stats.pendingStudents ?? 0 },
             ].map((s) => (
               <div key={s.label} className="border-[3px] border-mm-bone bg-mm-bone/10 p-4">
                 <div className="font-sticker text-[10px] tracking-[0.15em] text-mm-bone/70">{s.label}</div>
@@ -125,39 +159,86 @@ export default function SquadAdmin({ refreshKey }: { refreshKey?: number }) {
         </div>
       </section>
 
-      <section className="px-5 py-10 md:px-8">
+      <section className="px-5 py-6 md:px-8">
+        <div className="mx-auto flex max-w-6xl flex-wrap gap-2">
+          {([
+            { k: "all", l: "All" },
+            { k: "students", l: "Students" },
+            { k: "pending", l: "Pending student applications" },
+          ] as { k: FilterKey; l: string }[]).map((f) => (
+            <button
+              key={f.k}
+              onClick={() => setFilter(f.k)}
+              className={`border-[3px] border-mm-black px-4 py-2 font-sticker text-[10px] tracking-[0.15em] ${
+                filter === f.k ? "bg-mm-pink text-mm-bone shadow-mm-sm" : "bg-mm-bone"
+              }`}
+            >
+              {f.l.toUpperCase()}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="px-5 pb-10 md:px-8">
         <div className="mx-auto max-w-6xl">
-          {leaders.length === 0 ? (
+          {filtered.length === 0 ? (
             <div className="border-mm-thick bg-mm-bone p-8 text-center text-sm text-mm-black/70 shadow-mm-sm">
-              No squad leaders yet.
+              No leaders to show.
             </div>
           ) : (
             <div className="overflow-x-auto border-mm-thick bg-mm-bone shadow-mm">
-              <table className="w-full min-w-[900px] text-sm">
+              <table className="w-full min-w-[1000px] text-sm">
                 <thead className="bg-mm-paper text-left">
                   <tr>
-                    {["Code", "Leader", "Contact", "Trip / Month", "Group", "Tier", "Signed up", ""].map((h) => (
+                    {["Code", "Leader", "Contact", "Type / Status", "Trip / Month", "Group", "Tier", ""].map((h) => (
                       <th key={h} className="px-3 py-3 font-sticker text-[10px] tracking-[0.15em]">{h.toUpperCase()}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {leaders.map((l) => {
+                  {filtered.map((l) => {
                     const open = expanded === l.id;
+                    const isPending = l.isStudent && l.status === "pending";
                     const dashUrl = `/squad-leader/dashboard?token=${l.accessToken}`;
+                    const goal = l.isStudent ? 10 : 8;
                     return (
                       <Fragment key={l.id}>
                         <tr className="border-t-[2px] border-mm-black/10 align-top">
-                          <td className="px-3 py-3 font-display tracking-[0.08em]">{l.code}</td>
+                          <td className="px-3 py-3 font-display tracking-[0.08em]">{isPending ? "—" : l.code}</td>
                           <td className="px-3 py-3">
                             <div className="font-display">{l.name}</div>
                             {l.instagram && (
                               <div className="text-xs text-mm-black/60">@{l.instagram.replace(/^@/, "")}</div>
                             )}
+                            {l.isStudent && (
+                              <div className="text-xs text-mm-black/60">
+                                {l.university}{l.society ? ` · ${l.society}` : ""}
+                              </div>
+                            )}
                           </td>
                           <td className="px-3 py-3 text-xs">
                             <div>{l.email}</div>
                             <div className="text-mm-black/60">{l.phone}</div>
+                          </td>
+                          <td className="px-3 py-3">
+                            <div className="flex flex-col gap-1">
+                              {l.isStudent && (
+                                <span className="inline-flex w-fit items-center border-[2px] border-mm-black bg-mm-lime px-2 py-0.5 font-sticker text-[10px] tracking-[0.12em]">
+                                  STUDENT
+                                </span>
+                              )}
+                              <span
+                                className={`inline-flex w-fit items-center border-[2px] border-mm-black px-2 py-0.5 font-sticker text-[10px] tracking-[0.12em] ${
+                                  l.status === "pending"
+                                    ? "bg-mm-orange"
+                                    : l.status === "rejected"
+                                    ? "bg-mm-black text-mm-bone"
+                                    : "bg-mm-paper"
+                                }`}
+                              >
+                                {l.status.toUpperCase()}
+                              </span>
+                            </div>
                           </td>
                           <td className="px-3 py-3 text-xs capitalize">
                             <div>{l.preferredTripSlug ?? "—"}</div>
@@ -165,13 +246,13 @@ export default function SquadAdmin({ refreshKey }: { refreshKey?: number }) {
                           </td>
                           <td className="px-3 py-3">
                             <span className="inline-flex items-center border-[2px] border-mm-black bg-mm-lime px-2 py-1 font-display text-xs">
-                              {l.count}/8
+                              {l.count}/{goal}
                             </span>
                           </td>
                           <td className="px-3 py-3">
                             <span
                               className={`inline-flex items-center border-[2px] border-mm-black px-2 py-1 font-display text-xs ${
-                                l.tier === "FREE TRIP"
+                                l.tier === "FREE TRIP" || l.tier === "2 FREE SPOTS"
                                   ? "bg-mm-pink text-mm-bone"
                                   : l.tier === "50% OFF"
                                   ? "bg-mm-orange"
@@ -181,25 +262,41 @@ export default function SquadAdmin({ refreshKey }: { refreshKey?: number }) {
                               {l.tier}
                             </span>
                           </td>
-                          <td className="px-3 py-3 text-xs text-mm-black/60">
-                            {new Date(l.createdAt).toLocaleDateString()}
-                          </td>
                           <td className="px-3 py-3">
-                            <div className="flex items-center gap-2">
+                            <div className="flex flex-wrap items-center gap-2">
+                              {isPending ? (
+                                <>
+                                  <button
+                                    onClick={() => moderate(l.id, "approve")}
+                                    disabled={busyId === l.id}
+                                    className="border-[2px] border-mm-black bg-mm-lime px-2 py-1 font-sticker text-[10px] tracking-[0.15em] disabled:opacity-60"
+                                  >
+                                    APPROVE
+                                  </button>
+                                  <button
+                                    onClick={() => moderate(l.id, "reject")}
+                                    disabled={busyId === l.id}
+                                    className="border-[2px] border-mm-black bg-mm-paper px-2 py-1 font-sticker text-[10px] tracking-[0.15em] disabled:opacity-60"
+                                  >
+                                    REJECT
+                                  </button>
+                                </>
+                              ) : (
+                                <a
+                                  href={dashUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="inline-flex items-center gap-1 border-[2px] border-mm-black bg-mm-bone px-2 py-1 font-sticker text-[10px] tracking-[0.15em]"
+                                >
+                                  DASH <ExternalLink className="h-3 w-3" />
+                                </a>
+                              )}
                               <button
                                 onClick={() => setExpanded(open ? null : l.id)}
                                 className="border-[2px] border-mm-black bg-mm-paper px-2 py-1 font-sticker text-[10px] tracking-[0.15em]"
                               >
                                 {open ? "HIDE" : "DETAILS"}
                               </button>
-                              <a
-                                href={dashUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="inline-flex items-center gap-1 border-[2px] border-mm-black bg-mm-bone px-2 py-1 font-sticker text-[10px] tracking-[0.15em]"
-                              >
-                                DASH <ExternalLink className="h-3 w-3" />
-                              </a>
                             </div>
                           </td>
                         </tr>
