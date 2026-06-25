@@ -78,6 +78,7 @@ const App = () => (
           <Route path="/students/squad-leader/forgot-password" element={<SquadForgotPassword />} />
           <Route path="/students/squad-leader/reset-password" element={<SquadResetPassword />} />
           <Route path="/students/squad-leader/dashboard" element={<SquadDashboard />} />
+          <Route path="/students/admin" element={<Admin />} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>
