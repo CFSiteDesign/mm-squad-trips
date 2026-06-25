@@ -94,7 +94,6 @@ export default function StudentSquadHub() {
 
       <section className="bg-mm-pink px-5 py-16 text-mm-bone md:px-8 md:py-24">
         <div className="mx-auto max-w-3xl text-center">
-          <h2 className="font-display text-4xl md:text-6xl">READY TO ROUND UP THE SQUAD?</h2>
           <Link
             to="/students/squad-leader/register"
             className="mt-8 inline-flex border-[3px] border-mm-bone bg-mm-black px-8 py-4 font-display text-mm-bone shadow-mm transition-transform hover:-translate-x-[2px] hover:-translate-y-[2px]"
