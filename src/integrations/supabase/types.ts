@@ -347,6 +347,7 @@ export type Database = {
           email: string
           id: string
           instagram: string | null
+          is_student: boolean
           name: string
           password_hash: string | null
           phone: string
@@ -355,6 +356,9 @@ export type Database = {
           reason: string | null
           reset_token: string | null
           reset_token_expires_at: string | null
+          society: string | null
+          status: string
+          university: string | null
         }
         Insert: {
           access_token?: string
@@ -363,6 +367,7 @@ export type Database = {
           email: string
           id?: string
           instagram?: string | null
+          is_student?: boolean
           name: string
           password_hash?: string | null
           phone: string
@@ -371,6 +376,9 @@ export type Database = {
           reason?: string | null
           reset_token?: string | null
           reset_token_expires_at?: string | null
+          society?: string | null
+          status?: string
+          university?: string | null
         }
         Update: {
           access_token?: string
@@ -379,6 +387,7 @@ export type Database = {
           email?: string
           id?: string
           instagram?: string | null
+          is_student?: boolean
           name?: string
           password_hash?: string | null
           phone?: string
@@ -387,6 +396,9 @@ export type Database = {
           reason?: string | null
           reset_token?: string | null
           reset_token_expires_at?: string | null
+          society?: string | null
+          status?: string
+          university?: string | null
         }
         Relationships: []
       }
