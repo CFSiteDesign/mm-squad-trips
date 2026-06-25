@@ -710,6 +710,13 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
           onSaved={() => { setEditing(null); setCreating(false); reload(); }}
         />
       )}
+
+      {compOpen && (
+        <CompBookingDialog
+          onClose={() => setCompOpen(false)}
+          onSaved={() => { setCompOpen(false); reload(true); }}
+        />
+      )}
     </div>
   );
 }
