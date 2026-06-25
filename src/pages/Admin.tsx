@@ -570,6 +570,14 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
           <Button variant="outline" onClick={() => reload(true)} className="rounded-none border-[2px] border-mm-black">
             REFRESH
           </Button>
+          {table === "bookings" && (
+            <Button
+              onClick={() => setCompOpen(true)}
+              className="rounded-none border-[2px] border-mm-black bg-mm-lime text-mm-black hover:bg-mm-lime"
+            >
+              + ADD COMP
+            </Button>
+          )}
           {canCreate && (
             <Button
               onClick={() => setCreating(true)}
