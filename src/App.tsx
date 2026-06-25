@@ -41,7 +41,7 @@ function ScrollToTop() {
 
 function ConditionalNavbar() {
   const { pathname } = useLocation();
-  if (pathname.startsWith("/admin")) return null;
+  if (pathname.startsWith("/admin") || pathname.startsWith("/students/admin")) return null;
   return <Navbar />;
 }
 
@@ -78,6 +78,7 @@ const App = () => (
           <Route path="/students/squad-leader/forgot-password" element={<SquadForgotPassword />} />
           <Route path="/students/squad-leader/reset-password" element={<SquadResetPassword />} />
           <Route path="/students/squad-leader/dashboard" element={<SquadDashboard />} />
+          <Route path="/students/admin" element={<Admin />} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>
