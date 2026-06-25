@@ -870,3 +870,164 @@ function RowEditor({ table, row, isNew, onClose, onSaved }: {
     </div>
   );
 }
+
+function CompBookingDialog({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
+  const [trips, setTrips] = useState<Row[]>([]);
+  const [departures, setDepartures] = useState<Row[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    trip_id: "",
+    departure_id: "",
+    lead_name: "",
+    lead_email: "",
+    lead_phone: "",
+    lead_country: "",
+    lead_age: "",
+    notes: "",
+  });
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const [ts, ds] = await Promise.all([
+          adminApi.list<Row>("trips", { limit: 1000 }),
+          adminApi.list<Row>("departures", { limit: 1000 }),
+        ]);
+        setTrips(ts);
+        setDepartures(ds);
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Failed to load");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const today = new Date().toISOString().slice(0, 10);
+  const tripDepartures = useMemo(() => {
+    return departures
+      .filter((d) => !form.trip_id || String(d.trip_id) === form.trip_id)
+      .filter((d) => String(d.departure_date ?? "") >= today)
+      .sort((a, b) => String(a.departure_date ?? "").localeCompare(String(b.departure_date ?? "")));
+  }, [departures, form.trip_id, today]);
+
+  function set<K extends keyof typeof form>(k: K, v: string) {
+    setForm((s) => ({ ...s, [k]: v, ...(k === "trip_id" ? { departure_id: "" } : {}) }));
+  }
+
+  async function submit() {
+    if (!form.trip_id || !form.departure_id || !form.lead_name.trim() || !form.lead_email.trim()) {
+      toast.error("Trip, departure, name and email are required");
+      return;
+    }
+    setSaving(true);
+    try {
+      await addCompBooking({
+        trip_id: form.trip_id,
+        departure_id: form.departure_id,
+        lead_name: form.lead_name.trim(),
+        lead_email: form.lead_email.trim(),
+        lead_phone: form.lead_phone.trim() || undefined,
+        lead_country: form.lead_country.trim() || undefined,
+        lead_age: form.lead_age.trim() || null,
+        notes: form.notes.trim() || undefined,
+      });
+      toast.success("Comp booking added");
+      onSaved();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to add comp booking");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-mm-black/60 p-4">
+      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto border-[3px] border-mm-black bg-mm-paper p-5 shadow-mm-lg">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="font-display text-2xl">ADD COMP BOOKING</h2>
+          <button onClick={onClose} className="text-mm-black/60 hover:text-mm-black">✕</button>
+        </div>
+        <p className="mb-4 text-xs text-mm-black/70">
+          Adds a free, confirmed booking ($0). Skips Stripe entirely. Counts against the departure's spots remaining.
+        </p>
+        {loading ? (
+          <div className="py-8 text-center text-mm-black/60">Loading…</div>
+        ) : (
+          <div className="space-y-3">
+            <div>
+              <Label className="font-sticker text-[10px] tracking-[0.15em]">TRIP</Label>
+              <select
+                value={form.trip_id}
+                onChange={(e) => set("trip_id", e.target.value)}
+                className="mt-1 h-10 w-full rounded-none border-[2px] border-mm-black bg-mm-paper px-2"
+              >
+                <option value="">— select trip —</option>
+                {trips.map((t) => (
+                  <option key={String(t.id)} value={String(t.id)}>
+                    {String(t.name ?? t.code ?? t.id)}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <Label className="font-sticker text-[10px] tracking-[0.15em]">DEPARTURE</Label>
+              <select
+                value={form.departure_id}
+                onChange={(e) => set("departure_id", e.target.value)}
+                disabled={!form.trip_id}
+                className="mt-1 h-10 w-full rounded-none border-[2px] border-mm-black bg-mm-paper px-2 disabled:opacity-50"
+              >
+                <option value="">— select departure —</option>
+                {tripDepartures.map((d) => (
+                  <option key={String(d.id)} value={String(d.id)}>
+                    {String(d.departure_date ?? "")} {d.departure_code ? `· ${d.departure_code}` : ""} · {d.spots_remaining ?? "?"} spots left
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="col-span-2">
+                <Label className="font-sticker text-[10px] tracking-[0.15em]">NAME</Label>
+                <Input value={form.lead_name} onChange={(e) => set("lead_name", e.target.value)} className="mt-1 h-10 rounded-none border-[2px] border-mm-black bg-mm-paper" />
+              </div>
+              <div className="col-span-2">
+                <Label className="font-sticker text-[10px] tracking-[0.15em]">EMAIL</Label>
+                <Input type="email" value={form.lead_email} onChange={(e) => set("lead_email", e.target.value)} className="mt-1 h-10 rounded-none border-[2px] border-mm-black bg-mm-paper" />
+              </div>
+              <div>
+                <Label className="font-sticker text-[10px] tracking-[0.15em]">PHONE</Label>
+                <Input value={form.lead_phone} onChange={(e) => set("lead_phone", e.target.value)} className="mt-1 h-10 rounded-none border-[2px] border-mm-black bg-mm-paper" />
+              </div>
+              <div>
+                <Label className="font-sticker text-[10px] tracking-[0.15em]">COUNTRY</Label>
+                <Input value={form.lead_country} onChange={(e) => set("lead_country", e.target.value)} className="mt-1 h-10 rounded-none border-[2px] border-mm-black bg-mm-paper" />
+              </div>
+              <div>
+                <Label className="font-sticker text-[10px] tracking-[0.15em]">AGE</Label>
+                <Input type="number" value={form.lead_age} onChange={(e) => set("lead_age", e.target.value)} className="mt-1 h-10 rounded-none border-[2px] border-mm-black bg-mm-paper" />
+              </div>
+              <div className="col-span-2">
+                <Label className="font-sticker text-[10px] tracking-[0.15em]">NOTES (OPTIONAL)</Label>
+                <Input value={form.notes} onChange={(e) => set("notes", e.target.value)} placeholder="e.g. influencer, giveaway winner" className="mt-1 h-10 rounded-none border-[2px] border-mm-black bg-mm-paper" />
+              </div>
+            </div>
+          </div>
+        )}
+        <div className="mt-5 flex justify-end gap-2">
+          <Button variant="outline" onClick={onClose} className="rounded-none border-[2px] border-mm-black">CANCEL</Button>
+          <Button
+            onClick={submit}
+            disabled={saving || loading}
+            className="rounded-none border-[2px] border-mm-black bg-mm-lime text-mm-black hover:bg-mm-lime"
+          >
+            {saving ? "ADDING…" : "ADD COMP BOOKING"}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
