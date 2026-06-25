@@ -983,7 +983,7 @@ function CompBookingDialog({ onClose, onSaved }: { onClose: () => void; onSaved:
                 <option value="">— select departure —</option>
                 {tripDepartures.map((d) => (
                   <option key={String(d.id)} value={String(d.id)}>
-                    {String(d.departure_date ?? "")} {d.departure_code ? `· ${d.departure_code}` : ""} · {d.spots_remaining ?? "?"} spots left
+                    {String(d.departure_date ?? "")} {d.departure_code ? `· ${String(d.departure_code)}` : ""} · {String(d.spots_remaining ?? "?")} spots left
                   </option>
                 ))}
               </select>
