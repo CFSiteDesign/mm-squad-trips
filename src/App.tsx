@@ -18,6 +18,7 @@ import SquadLogin from "./pages/SquadLogin";
 import SquadForgotPassword from "./pages/SquadForgotPassword";
 import SquadResetPassword from "./pages/SquadResetPassword";
 import Admin from "./pages/Admin";
+import PayBalance from "./pages/PayBalance";
 
 import NotFound from "./pages/NotFound";
 
