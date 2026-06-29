@@ -100,25 +100,164 @@ export function bookingConfirmationEmail(v: {
 }): { subject: string; html: string } {
   const inner = render(
     `<tr><td style="padding:16px 24px 8px 24px">
-<h1 style="margin:0;font-size:28px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em">YOU'RE GOING TO {{tripCountry}} 🌴</h1>
+<h1 style="margin:0;font-size:28px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em">DEPOSIT IN. SPOT LOCKED 🔒</h1>
 </td></tr>
 <tr><td style="padding:0 24px 16px 24px;font-size:16px;line-height:1.5">
 <p style="margin:0 0 12px 0">Hey {{firstName}},</p>
-<p style="margin:0 0 16px 0">Booking locked in. Here's the rundown:</p>
+<p style="margin:0 0 16px 0">Your deposit for <strong>{{tripName}}</strong> is in. Here's the rundown:</p>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #0a0a0a;margin:0 0 16px 0">
 <tr><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a"><strong>Trip</strong></td><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a">{{tripName}}</td></tr>
 <tr><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a"><strong>Departure</strong></td><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a">{{departureDate}}</td></tr>
 <tr><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a"><strong>Spots</strong></td><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a">{{spots}}</td></tr>
-<tr><td style="padding:10px 14px"><strong>Paid</strong></td><td style="padding:10px 14px">{{amount}}</td></tr>
+<tr><td style="padding:10px 14px"><strong>Deposit paid</strong></td><td style="padding:10px 14px">{{amount}}</td></tr>
 </table>
+
+<div style="margin:18px 0;padding:16px;border:2px solid #0a0a0a;background:#ffc000">
+<div style="font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px">⚠️ Hold off on flights</div>
+<p style="margin:0;font-size:14px;line-height:1.5"><strong>Don't book your flights yet.</strong> Wait for the official "Trip Confirmed" email from us before locking in dates. Trips only confirm once we hit our 5-booking minimum.</p>
+</div>
+
+<p style="margin:0 0 12px 0"><strong>What happens next:</strong></p>
+<ul style="margin:0 0 16px 18px;padding:0;font-size:14px;line-height:1.6">
+<li>As soon as your departure hits 5 bookings, we'll email you the green light to book flights + the link to settle the balance.</li>
+<li>If we're already inside the 30-day window before departure, we'll be in touch then either way with final details.</li>
+<li>Balance is due 7 days before departure — you'll get a reminder, but you can pay it whenever once the trip is confirmed.</li>
+</ul>
+
 <p style="margin:0 0 20px 0">Booking ref: <strong>{{bookingRef}}</strong></p>
 <a href="{{bookingUrl}}" style="display:inline-block;background:#ff6600;color:#0a0a0a;font-weight:900;text-transform:uppercase;padding:14px 22px;border:2px solid #0a0a0a;text-decoration:none">View booking</a>
 </td></tr>`,
     v as Record<string, string>,
   );
   return {
-    subject: `You're going to ${v.tripCountry} 🌴`,
-    html: shell("You're going!", inner),
+    subject: `Deposit in for ${v.tripCountry} 🔒 — hold off on flights`,
+    html: shell("Deposit in", inner),
+  };
+}
+
+export function tripConfirmedEmail(v: {
+  firstName: string;
+  tripCountry: string;
+  tripName: string;
+  departureDate: string;
+  spots: number | string;
+  balanceAmount: string;
+  balanceDueDate: string;
+  payBalanceUrl: string;
+  bookingRef: string;
+  bookingUrl: string;
+}): { subject: string; html: string } {
+  const inner = render(
+    `<tr><td style="padding:16px 24px 8px 24px">
+<h1 style="margin:0;font-size:28px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em">TRIP CONFIRMED ✅ BOOK YOUR FLIGHTS</h1>
+</td></tr>
+<tr><td style="padding:0 24px 16px 24px;font-size:16px;line-height:1.5">
+<p style="margin:0 0 12px 0">Hey {{firstName}},</p>
+<p style="margin:0 0 12px 0">Big news — <strong>{{tripName}}</strong> on <strong>{{departureDate}}</strong> is officially <strong>CONFIRMED</strong>. We hit the booking minimum and it's a go.</p>
+
+<div style="margin:18px 0;padding:16px;border:2px solid #0a0a0a;background:#ccff01">
+<div style="font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px">✈️ Green light on flights</div>
+<p style="margin:0;font-size:14px;line-height:1.5">You're cleared to book. Aim to arrive the day before departure (your free pre-trip night). Reach out if you'd like a hand with anything.</p>
+</div>
+
+<p style="margin:0 0 12px 0"><strong>Balance to settle:</strong></p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #0a0a0a;margin:0 0 16px 0">
+<tr><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a"><strong>Spots</strong></td><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a">{{spots}}</td></tr>
+<tr><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a"><strong>Balance</strong></td><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a">{{balanceAmount}}</td></tr>
+<tr><td style="padding:10px 14px"><strong>Due by</strong></td><td style="padding:10px 14px">{{balanceDueDate}} (7 days before departure)</td></tr>
+</table>
+
+<p style="margin:0 0 12px 0">Pay it anytime from now. Heads up: if you don't, we'll auto-charge the card on file 7 days before departure.</p>
+
+<p style="margin:18px 0"><a href="{{payBalanceUrl}}" style="display:inline-block;background:#ff6600;color:#0a0a0a;font-weight:900;text-transform:uppercase;padding:14px 22px;border:2px solid #0a0a0a;text-decoration:none">Pay balance now</a></p>
+
+<p style="margin:0 0 20px 0;font-size:13px;color:#555">Booking ref: <strong>{{bookingRef}}</strong> · <a href="{{bookingUrl}}" style="color:#0a0a0a">View booking</a></p>
+</td></tr>`,
+    v as Record<string, string>,
+  );
+  return {
+    subject: `${v.tripCountry} is CONFIRMED ✅ — book your flights`,
+    html: shell("Trip confirmed", inner),
+  };
+}
+
+export function balanceReminderEmail(v: {
+  firstName: string;
+  tripCountry: string;
+  tripName: string;
+  departureDate: string;
+  balanceAmount: string;
+  payBalanceUrl: string;
+  bookingRef: string;
+  finalDetailsHtml: string;
+  whatsappUrl: string;
+}): { subject: string; html: string } {
+  const inner = render(
+    `<tr><td style="padding:16px 24px 8px 24px">
+<h1 style="margin:0;font-size:28px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em">7 DAYS TO {{tripCountry}} 🎒</h1>
+</td></tr>
+<tr><td style="padding:0 24px 16px 24px;font-size:16px;line-height:1.5">
+<p style="margin:0 0 12px 0">Hey {{firstName}},</p>
+<p style="margin:0 0 12px 0">One week. <strong>{{tripName}}</strong> kicks off on <strong>{{departureDate}}</strong> and the countdown is on 🚨</p>
+
+<div style="margin:18px 0;padding:16px;border:2px solid #0a0a0a;background:#ffc000">
+<div style="font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px">💳 Balance still outstanding</div>
+<p style="margin:0 0 12px 0;font-size:14px;line-height:1.5">Balance of <strong>{{balanceAmount}}</strong> is due now. Settle it before we auto-charge your card on file:</p>
+<p style="margin:0"><a href="{{payBalanceUrl}}" style="display:inline-block;background:#0a0a0a;color:#ccff01;font-weight:900;text-transform:uppercase;padding:12px 18px;border:2px solid #0a0a0a;text-decoration:none">Pay balance</a></p>
+</div>
+
+${"{{finalDetailsHtml}}"}
+
+<div style="margin:18px 0;padding:14px;border:2px dashed #0a0a0a;background:#f5efe2">
+<div style="font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px">📱 Property WhatsApp</div>
+<p style="margin:0 0 10px 0;font-size:14px;line-height:1.5">Save this — direct line to the property crew. Use it for arrival timing, transfers or any "I'm running late" moments.</p>
+<a href="{{whatsappUrl}}" style="display:inline-block;background:#25d366;color:#ffffff;font-weight:900;text-transform:uppercase;padding:10px 16px;border:2px solid #0a0a0a;text-decoration:none">Open WhatsApp</a>
+</div>
+
+<p style="margin:0 0 20px 0;font-size:13px;color:#555">Booking ref: <strong>{{bookingRef}}</strong></p>
+</td></tr>`,
+    { ...v } as Record<string, string>,
+  )
+    // finalDetailsHtml is raw HTML, intentionally not escaped (controlled server-side per trip slug)
+    .replace("{{finalDetailsHtml}}", v.finalDetailsHtml);
+  return {
+    subject: `7 days to ${v.tripCountry} 🎒 — balance + final details`,
+    html: shell("7 days to go", inner),
+  };
+}
+
+export function tripCountdownEmail(v: {
+  firstName: string;
+  tripCountry: string;
+  tripName: string;
+  departureDate: string;
+  bookingRef: string;
+  finalDetailsHtml: string;
+  whatsappUrl: string;
+}): { subject: string; html: string } {
+  const inner = render(
+    `<tr><td style="padding:16px 24px 8px 24px">
+<h1 style="margin:0;font-size:28px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em">7 DAYS TO {{tripCountry}} 🎒</h1>
+</td></tr>
+<tr><td style="padding:0 24px 16px 24px;font-size:16px;line-height:1.5">
+<p style="margin:0 0 12px 0">Hey {{firstName}},</p>
+<p style="margin:0 0 12px 0">One week until <strong>{{tripName}}</strong> on <strong>{{departureDate}}</strong>. You're paid in full — all that's left is packing 🎒</p>
+
+${"{{finalDetailsHtml}}"}
+
+<div style="margin:18px 0;padding:14px;border:2px dashed #0a0a0a;background:#f5efe2">
+<div style="font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px">📱 Property WhatsApp</div>
+<p style="margin:0 0 10px 0;font-size:14px;line-height:1.5">Save this — direct line to the property crew. Use it for arrival timing, transfers or any "I'm running late" moments.</p>
+<a href="{{whatsappUrl}}" style="display:inline-block;background:#25d366;color:#ffffff;font-weight:900;text-transform:uppercase;padding:10px 16px;border:2px solid #0a0a0a;text-decoration:none">Open WhatsApp</a>
+</div>
+
+<p style="margin:0 0 20px 0;font-size:13px;color:#555">Booking ref: <strong>{{bookingRef}}</strong></p>
+</td></tr>`,
+    { ...v } as Record<string, string>,
+  ).replace("{{finalDetailsHtml}}", v.finalDetailsHtml);
+  return {
+    subject: `7 days to ${v.tripCountry} 🎒 — final details inside`,
+    html: shell("7 days to go", inner),
   };
 }
 

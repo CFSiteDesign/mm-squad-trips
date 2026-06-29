@@ -18,6 +18,7 @@ import SquadLogin from "./pages/SquadLogin";
 import SquadForgotPassword from "./pages/SquadForgotPassword";
 import SquadResetPassword from "./pages/SquadResetPassword";
 import Admin from "./pages/Admin";
+import PayBalance from "./pages/PayBalance";
 
 import NotFound from "./pages/NotFound";
 
@@ -56,6 +57,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/booking-success" element={<BookingSuccess />} />
+          <Route path="/pay-balance" element={<PayBalance />} />
           <Route path="/squad-leader" element={<SquadHub />} />
           <Route path="/squad-leader/register" element={<SquadRegister />} />
           <Route path="/squad-leader/login" element={<SquadLogin />} />

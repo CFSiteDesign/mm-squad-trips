@@ -49,7 +49,12 @@ Deno.serve(async (req) => {
   try {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
-      await writeBookings(session);
+      const kind = (session.metadata as Record<string, string> | null)?.kind;
+      if (kind === "balance") {
+        await markBalancePaid(session);
+      } else {
+        await writeBookings(session);
+      }
     } else {
       console.log("Ignoring event type:", event.type);
     }
@@ -397,4 +402,51 @@ async function writeBookings(session: Stripe.Checkout.Session) {
   } catch (e) {
     console.warn("booking confirmation email build failed:", e instanceof Error ? e.message : e);
   }
+}
+
+// Handles checkout.session.completed for the balance-payment-link flow:
+// guests pay their outstanding balance manually via the link from the
+// "Trip Confirmed" or 7-day reminder emails.
+async function markBalancePaid(session: Stripe.Checkout.Session) {
+  const sb = envClient();
+  const m = (session.metadata as Record<string, string> | null) ?? {};
+  const originalSessionId = m.original_session_id;
+  const bookingRef = m.booking_ref;
+  if (!originalSessionId && !bookingRef) {
+    console.warn("balance webhook missing identifiers", session.id);
+    return;
+  }
+
+  const baseSelect = sb
+    .from("bookings")
+    .select("id,amount_paid,balance_amount,balance_status");
+  const { data: rows } = originalSessionId
+    ? await baseSelect.eq("stripe_session_id", originalSessionId)
+    : await baseSelect.eq("booking_ref", bookingRef);
+  if (!rows?.length) {
+    console.warn("balance webhook: no bookings matched", { originalSessionId, bookingRef });
+    return;
+  }
+
+  const updates = {
+    balance_status: "charged",
+    balance_charged_at: new Date().toISOString(),
+    balance_last_error: null,
+    balance_next_attempt_at: null,
+    stripe_balance_payment_intent_id: session.payment_intent as string,
+    payment_type: "Full",
+  };
+  if (originalSessionId) {
+    await sb.from("bookings").update(updates).eq("stripe_session_id", originalSessionId);
+  } else {
+    await sb.from("bookings").update(updates).eq("booking_ref", bookingRef);
+  }
+
+  // Roll the per-spot amount_paid forward
+  for (const r of rows) {
+    const paid = Number(r.amount_paid ?? 0) + Number(r.balance_amount ?? 0);
+    await sb.from("bookings").update({ amount_paid: Math.round(paid * 100) / 100 }).eq("id", r.id);
+  }
+
+  console.log(`✓ balance link paid for ${originalSessionId ?? bookingRef}`);
 }
