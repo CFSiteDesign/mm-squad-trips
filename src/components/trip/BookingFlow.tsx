@@ -37,6 +37,8 @@ const emptyLead: LeadFields = {
 const emptyTraveler: TravelerFields = { firstName: "", lastName: "", email: "", age: "", dietary: "" };
 
 export function BookingFlow({ trip }: { trip: Trip }) {
+  const variant = useSiteVariant();
+  const isStudent = variant === "student";
   const [groupSize, setGroupSize] = useState(1);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [lead, setLead] = useState<LeadFields>(emptyLead);
