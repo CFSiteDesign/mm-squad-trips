@@ -49,7 +49,12 @@ Deno.serve(async (req) => {
   try {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
-      await writeBookings(session);
+      const kind = (session.metadata as Record<string, string> | null)?.kind;
+      if (kind === "balance") {
+        await markBalancePaid(session);
+      } else {
+        await writeBookings(session);
+      }
     } else {
       console.log("Ignoring event type:", event.type);
     }
