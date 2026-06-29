@@ -1,105 +1,71 @@
-# Student All In Trips — Plan
+# Booking lifecycle: Confirmation → Trip Confirmed → 7-Day Reminder
 
-A "student" variant of the site that reuses the existing trips, booking, and squad leader system, but with different copy, different squad rewards (2 free spots @ 10 bookings), extra signup fields, and Hayley-approved applications before a code goes live.
+## Stage 1 — Deposit confirmation (immediate, on Stripe webhook)
 
----
+Rewrite `bookingConfirmationEmail` so it:
 
-## 1. New `/students` homepage
+- Confirms the trip + departure date + spots + amount paid.
+- Tells the guest **not to book flights yet** — wait until the trip is officially "Confirmed".
+- Explains: we confirm trips once we hit a 5-booking minimum, and we'll be in touch **30 days before departure or sooner once confirmed**.
+- Keeps booking ref + "View booking" button.
 
-New route `/students` rendering a `StudentIndex` page (clone of `Index.tsx` with copy swapped):
+Internal ops notification (already shipped) stays as-is.
 
-- H1: **ALL IN STUDENT TRIPS BY MAD MONKEY**
-- Sub: *That trip you've been talking about all year? Let's make it happen. You bring the crew, we'll handle the planning, logistics and bookings.*
-- Ticker: `2 FREE SPOTS FOR SQUAD LEADERS · $99 HOLDS YOUR SPOT · …`
-- Trip cards link to `/students/vietnam`, `/students/indonesia`, `/students/cambodia` (same `TripPage`, just a `variant="student"` flag — see §3).
-- Footer block (above SiteFooter or replacing SquadCTA):
-  - **WANT 2 FREE SPOTS? BRING YOUR SQUAD**
-  - *Apply to be a Mad Monkey Student Squad Leader. You bring the crew. We'll handle the rest.*
-  - Button → `/students/squad-leader`
+## Stage 2 — Trip becomes "Confirmed"
 
-## 2. Student squad leader pages
+### Data model
 
-New routes mirroring the existing squad-leader flow, all rendering student-variant components:
+Add to `departures`:
+- `status` text — `pending` (default) or `confirmed`
+- `confirmed_at` timestamptz
+- `min_bookings_to_confirm` int default `5`
 
-- `/students/squad-leader` — student hub
-  - Hero: **WANT 2 FREE SPOTS? BRING YOUR SQUAD** + same blurb as footer.
-  - How it works (renumber to match user's list):
-    1. Apply / register
-    2. Pick your trip — choose any departure date
-    3. Send your code to the rest of your squad
-    4. Hit 10 bookings and get 2 extra spots on us
-  - FAQs: remove *"What if I get fewer than 4 bookings?"*, add **"What if less than 10 people book?"** (answer: no free spots, but you still travel at standard price with your crew).
-- `/students/squad-leader/register` — student application form
-  - Add **University** (required) and **Society** (optional).
-  - Remove **"Why do you want to lead a squad?"** (`reason`).
-  - Rewards copy: remove 4 @ 50% off; show **"2 free squad leader spots when 10 people book"**.
-  - On submit: creates a `squad_leaders` row with `is_student = true`, `status = 'pending'`. No code is issued or emailed yet.
-  - Success screen: *"Application received — Hayley will review and email you once approved."*
-- `/students/squad-leader/login`, `/forgot-password`, `/reset-password`, `/dashboard` — same components, just routed under `/students` so links stay in the student section. Login is blocked until `status = 'approved'` (error: "Your application is still being reviewed").
+Trigger logic (extends existing `recompute_departure_spots`):
+- When confirmed booking count reaches `min_bookings_to_confirm` and `status = 'pending'`, set `status = 'confirmed'` and `confirmed_at = now()`.
+- Insert a row into a new `departure_events` queue table (`event_type = 'confirmed'`, processed flag) so an edge function can pick it up and send emails. This avoids sending email from inside a DB trigger.
 
-## 3. Trip pages — copy changes (apply to all `TripPage` variants, not just student)
+### New edge function `process-departure-events` (cron, every 5 min)
 
-Per user, these go on the existing country pages too:
+For each unprocessed `confirmed` event:
+1. Load all confirmed bookings on that departure.
+2. For each lead booker, send a `tripConfirmedEmail`:
+   - "Your trip is officially CONFIRMED — book your flights."
+   - Departure date, arrival city, recommended arrival window.
+   - **Balance payment link** (Stripe-hosted) — due 7 days before departure, payable anytime now.
+   - Booking ref + dashboard link.
+3. Mark the event processed.
 
-- "Solo traveller, not for long" → **"Your group trip, sorted"** (in `Hero.tsx`).
-- Remove **WHO'S COMING?** section (drop `<WhosComing />` from `TripPage.tsx`).
-- Rename "Your new crew" → **"What travellers are saying"** (in `Testimonials.tsx`).
+### Balance payment link
 
-`TripPage` accepts an optional `variant: "student"` prop; when student:
-- Trip cross-sell + footer CTAs route to `/students/...` equivalents.
-- "Become a Squad Leader" CTA → `/students/squad-leader`.
+Extend `create-checkout-session` (or add `create-balance-payment-link`) to mint a Stripe Checkout session for the outstanding balance per booking group, keyed by booking ref so the existing `stripe-webhook` can credit it and mark `balance_paid_at`.
 
-## 4. Backend changes
+This replaces the auto-charge path in `charge-trip-balances` for trips where the guest pays via link. **Question for you below.**
 
-Single migration adds to `squad_leaders`:
+## Stage 3 — 7 days before departure
 
-- `is_student boolean not null default false`
-- `status text not null default 'approved'` — values: `pending | approved | rejected` (validation trigger, not CHECK).
-- `university text`, `society text`
-- `reason` stays nullable (already is).
+Extend the existing `charge-trip-balances` cron (or split into a sibling `send-departure-reminders` cron — cleaner):
 
-Edge functions:
+For every confirmed booking whose departure is exactly 7 days away:
+- If balance still outstanding → `balanceReminderEmail` with payment link + countdown.
+- If balance paid → `tripCountdownEmail` (hype, no payment ask).
+- Both include **trip-specific final details**, picked by `trip_slug`:
+  - Vietnam: meeting point, what to pack, weather, WhatsApp link.
+  - Indonesia: same shape, Indonesia-specific.
+  - Cambodia: same shape, Cambodia-specific.
+- WhatsApp link per trip stored in a small `trip_meta` JSON in `trips` table (or hard-coded constants in `_shared/trip-details.ts` for now — swap to DB later when you send the links).
 
-- `squad-register` — accept `is_student`, `university`, `society`; when `is_student` is true, set `status = 'pending'`, skip welcome email, return a "pending review" response.
-- `squad-login` — reject login if `status <> 'approved'`.
-- `squad-admin` (admin list/detail) — surface `is_student`, `status`, `university`, `society`.
-- New `squad-approve` action inside `squad-admin` (token-gated like other admin endpoints): sets `status` to `approved` or `rejected`, issues the squad code on approval, and sends the welcome / set-password email.
+## Admin
 
-Admin UI (`/admin` → Squad Leaders tab):
+- Admin dashboard gets a `Status` column on departures (Pending / Confirmed) and a manual **"Mark confirmed"** button so you can override (e.g. for comp groups under 5).
+- Hayley keeps existing ops email; add a `tripConfirmedOpsEmail` so ops also gets notified when each departure flips to confirmed.
 
-- Filter chip: **Student applications (pending)**.
-- New columns: University, Society, Student?, Status.
-- Approve / Reject buttons on pending student rows.
+## Questions before I build
 
-## 5. Rewards math
+1. **"5 bookings in the 30 days before departure"** — does this mean a departure can only flip to `Confirmed` once we're inside the 30-day window? Or: confirm as soon as 5 bookings exist, even if that's 90 days out? I'd default to **confirm immediately at 5 bookings** (better guest experience, lets them book flights early), but say the word if you want it gated to T-30.
+2. **"Takeover structure/timeframe"** — I don't have that reference. Got a doc / Notion link / paste of the cadence you want me to follow?
+3. **Balance collection** — today the cron `charge-trip-balances` auto-charges the saved card 7 days before departure. Do you want to:
+   - (a) **Replace** auto-charge with a payment link (guest pays manually), or
+   - (b) **Keep** auto-charge as the default and only use the link as an "I want to pay now" option in the confirmation email?
+4. **WhatsApp links** — send when ready; I'll stub placeholders per trip until then.
 
-Existing system gives 50% off at 4 and free at 8. Student leaders use a different ladder:
-
-- Single milestone: **10 bookings → 2 free spots**.
-- `SquadDashboard` (when leader `is_student`) shows a single progress bar to 10 with "2 FREE SPOTS" unlocked at 10, replacing the 50%/free ladder.
-- Redemption: free-spot booking is created via the existing **+ ADD COMP** admin flow (Hayley uses it after the leader requests their 2 spots). No automatic checkout discount needed for v1.
-
-## 6. Out of scope (v1)
-
-- Automated student-ID verification — Hayley approves manually.
-- Self-service redemption of the 2 free spots — handled via admin comp booking.
-- Student-only pricing on trip pages — pricing stays identical.
-
-## Technical notes
-
-- New files:
-  - `src/pages/StudentIndex.tsx`, `src/pages/StudentSquadHub.tsx`, `src/pages/StudentSquadRegister.tsx`
-  - Optional: small `useSiteVariant()` hook reading `useLocation()` for `/students` prefix so shared components (footer, navbar, cross-sell) link to the right routes.
-- Reused as-is (with `variant` prop): `TripPage`, `SquadLogin`, `SquadDashboard`, `SquadForgotPassword`, `SquadResetPassword`.
-- Routes added in `App.tsx`:
-  ```
-  /students
-  /students/:country  (vietnam|indonesia|cambodia → TripPage variant="student")
-  /students/squad-leader, /register, /login, /forgot-password, /reset-password, /dashboard
-  ```
-- DB migration includes `GRANT`s for new columns are automatic (column-level grants follow table grants).
-- Edge functions touched: `squad-register`, `squad-login`, `squad-admin`. Validate all new fields with zod.
-
----
-
-Want me to build this as specified, or tweak anything (e.g., should student trips have different prices/itineraries, or should approved students get an auto-emailed welcome with their code)?
+Once you answer 1–3 I'll ship the migration, the three email templates, the events queue, and the cron.
