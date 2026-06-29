@@ -21,6 +21,7 @@ import type { Trip, Departure } from "@/types/trip";
 import { createCheckoutSession, validateDiscount } from "@/lib/api";
 import { Sticker } from "@/components/brand/Sticker";
 import { COUNTRIES } from "@/lib/countries";
+import { useSiteVariant, squadPath } from "@/hooks/use-site-variant";
 
 const SOURCES = ["TikTok", "Instagram", "Friend", "Other"] as const;
 
@@ -36,6 +37,8 @@ const emptyLead: LeadFields = {
 const emptyTraveler: TravelerFields = { firstName: "", lastName: "", email: "", age: "", dietary: "" };
 
 export function BookingFlow({ trip }: { trip: Trip }) {
+  const variant = useSiteVariant();
+  const isStudent = variant === "student";
   const [groupSize, setGroupSize] = useState(1);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [lead, setLead] = useState<LeadFields>(emptyLead);
@@ -134,13 +137,19 @@ export function BookingFlow({ trip }: { trip: Trip }) {
           <p className="font-sticker text-sm tracking-[0.15em] text-mm-bone/80">BOOKING WITH A SQUAD?</p>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <Link
-              to={`/squad-leader/register?trip=${encodeURIComponent(trip.slug)}`}
+              to={isStudent
+                ? `${squadPath("register", variant)}?trip=${encodeURIComponent(trip.slug)}`
+                : `/squad-leader/register?trip=${encodeURIComponent(trip.slug)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="flex flex-col border-[3px] border-mm-black bg-mm-paper p-4 text-left text-mm-black shadow-mm-sm transition hover:-translate-x-[2px] hover:-translate-y-[2px]"
             >
               <span className="font-display text-lg">START A SQUAD</span>
-              <span className="mt-1 text-xs text-mm-black/70">Lead your crew — 50% off at 4 bookings, free trip at 8.</span>
+              <span className="mt-1 text-xs text-mm-black/70">
+                {isStudent
+                  ? "Groups of 10+ get 2 free organiser spots."
+                  : "Lead your crew — 50% off at 4 bookings, free trip at 8."}
+              </span>
             </Link>
             <button
               type="button"
@@ -150,7 +159,11 @@ export function BookingFlow({ trip }: { trip: Trip }) {
               }`}
             >
               <span className="font-display text-lg">JOIN A SQUAD</span>
-              <span className="mt-1 text-xs text-mm-black/70">Have a squad code? Enter it for good vibes.</span>
+              <span className="mt-1 text-xs text-mm-black/70">
+                {isStudent
+                  ? "Have a squad code? Enter to join the group."
+                  : "Have a squad code? Enter it for good vibes."}
+              </span>
             </button>
           </div>
           {joinMode && (

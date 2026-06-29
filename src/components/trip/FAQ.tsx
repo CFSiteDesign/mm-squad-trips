@@ -1,7 +1,8 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Sticker } from "@/components/brand/Sticker";
+import { useSiteVariant } from "@/hooks/use-site-variant";
 
-const FAQS = [
+const DEFAULT_FAQS = [
   { q: "Will I be the only solo person?", a: "Definitely not. 82% of our guests come solo. The whole product is designed for it." },
   { q: "What's the age range?", a: "Most guests are 23–31. Nobody under 18, nobody over 39 on these specific trips." },
   { q: "Is this like Contiki?", a: "No coach buses. No 60-person mega-groups. Max 20 people, real backpacker hostels, free time built in." },
@@ -12,7 +13,20 @@ const FAQS = [
   { q: "Do I need travel insurance?", a: "Yes — it's a hard requirement. Cheap and easy with SafetyWing or World Nomads." },
 ];
 
+const STUDENT_FAQS = [
+  { q: "What if I'm not part of a society?", a: "No worries! This offer is open to any group of students." },
+  { q: "What's the age range?", a: "Most guests are 23–31. Nobody under 18, nobody over 39 on these specific trips." },
+  { q: "Is this like Contiki?", a: "No coach buses. No 60-person mega-groups. Max 20 people, real backpacker hostels, free time built in." },
+  { q: "What if less than 10 people book?", a: "If your squad doesn't hit 10 by the deadline, we'll be in touch with options — switch to a different departure, roll your deposit over, or get a full refund. Nobody loses out." },
+  { q: "What happens after I pay the deposit?", a: "You get an email with your booking reference. You'll receive another email once the minimum number of people have booked and your trip is confirmed. Then it's time to book your flights and pay the balance. The balance is due 7 days before departure — we'll send you a reminder." },
+  { q: "When is the balance due?", a: "7 days before departure. We'll email you a reminder with a payment link." },
+  { q: "What's your refund policy?", a: "Deposit is non-refundable. Full balance refundable up to 60 days before departure, 50% up to 30 days, none after that." },
+  { q: "Do I need travel insurance?", a: "Yes — it's a hard requirement. Cheap and easy with SafetyWing or World Nomads." },
+];
+
 export function FAQ() {
+  const variant = useSiteVariant();
+  const FAQS = variant === "student" ? STUDENT_FAQS : DEFAULT_FAQS;
   return (
     <section className="bg-mm-orange px-5 py-12 text-mm-black md:px-8 md:py-24">
       <div className="mx-auto max-w-3xl md:max-w-5xl">
