@@ -80,7 +80,9 @@ export function Hero({ trip, heroImageUrl }: { trip: Trip; heroImageUrl?: string
             </h1>
 
             <p className="mt-5 max-w-[260px] text-[14px] leading-snug text-mm-bone/85">
-              {trip.days} days · {trip.stops.length} stops · {trip.activityCount} activities · One crew
+              {trip.slug === "vietnam"
+                ? `${trip.days}D ${trip.days - 1}N · ${trip.stops.length} stops · One unforgettable trip`
+                : `${trip.days} days · ${trip.stops.length} stops · ${trip.activityCount} activities · One crew`}
             </p>
 
             <div className="mt-5 flex flex-wrap items-center gap-3">
