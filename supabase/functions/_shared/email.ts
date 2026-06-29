@@ -7,6 +7,15 @@ export const APP_URL = "https://mm-squad-trips.lovable.app";
 export const SQUAD_LOGIN_URL = `${APP_URL}/squad-leader/login`;
 export const SQUAD_DASHBOARD_PATH = "/squad-leader/dashboard";
 
+// Internal ops team — gets a copy of every new booking
+export const OPS_NOTIFY_EMAILS = [
+  "reden@madmonkeyhostels.com",
+  "adel@madmonkeyhostels.com",
+  "hayley@madmonkeyhostels.com",
+  "cai@madmonkeyhostels.com",
+  "lexie@madmonkeyhostels.com",
+];
+
 type SendArgs = {
   to: string | string[];
   subject: string;
@@ -110,6 +119,52 @@ export function bookingConfirmationEmail(v: {
   return {
     subject: `You're going to ${v.tripCountry} 🌴`,
     html: shell("You're going!", inner),
+  };
+}
+
+export function bookingOpsNotificationEmail(v: {
+  leadName: string;
+  leadEmail: string;
+  leadPhone?: string;
+  tripName: string;
+  departureDate: string;
+  spots: number | string;
+  amount: string;
+  bookingRef: string;
+  squadCode?: string;
+  discountCode?: string;
+  bookingUrl: string;
+}): { subject: string; html: string } {
+  const inner = render(
+    `<tr><td style="padding:16px 24px 8px 24px">
+<h1 style="margin:0;font-size:24px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em">NEW BOOKING 🎒</h1>
+</td></tr>
+<tr><td style="padding:0 24px 16px 24px;font-size:15px;line-height:1.5">
+<p style="margin:0 0 12px 0"><strong>{{leadName}}</strong> just booked <strong>{{tripName}}</strong>.</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #0a0a0a;margin:0 0 16px 0">
+<tr><td style="padding:8px 12px;border-bottom:1px solid #0a0a0a"><strong>Lead</strong></td><td style="padding:8px 12px;border-bottom:1px solid #0a0a0a">{{leadName}}</td></tr>
+<tr><td style="padding:8px 12px;border-bottom:1px solid #0a0a0a"><strong>Email</strong></td><td style="padding:8px 12px;border-bottom:1px solid #0a0a0a">{{leadEmail}}</td></tr>
+<tr><td style="padding:8px 12px;border-bottom:1px solid #0a0a0a"><strong>Phone</strong></td><td style="padding:8px 12px;border-bottom:1px solid #0a0a0a">{{leadPhone}}</td></tr>
+<tr><td style="padding:8px 12px;border-bottom:1px solid #0a0a0a"><strong>Trip</strong></td><td style="padding:8px 12px;border-bottom:1px solid #0a0a0a">{{tripName}}</td></tr>
+<tr><td style="padding:8px 12px;border-bottom:1px solid #0a0a0a"><strong>Departure</strong></td><td style="padding:8px 12px;border-bottom:1px solid #0a0a0a">{{departureDate}}</td></tr>
+<tr><td style="padding:8px 12px;border-bottom:1px solid #0a0a0a"><strong>Spots</strong></td><td style="padding:8px 12px;border-bottom:1px solid #0a0a0a">{{spots}}</td></tr>
+<tr><td style="padding:8px 12px;border-bottom:1px solid #0a0a0a"><strong>Paid</strong></td><td style="padding:8px 12px;border-bottom:1px solid #0a0a0a">{{amount}}</td></tr>
+<tr><td style="padding:8px 12px;border-bottom:1px solid #0a0a0a"><strong>Squad code</strong></td><td style="padding:8px 12px;border-bottom:1px solid #0a0a0a">{{squadCode}}</td></tr>
+<tr><td style="padding:8px 12px;border-bottom:1px solid #0a0a0a"><strong>Discount</strong></td><td style="padding:8px 12px;border-bottom:1px solid #0a0a0a">{{discountCode}}</td></tr>
+<tr><td style="padding:8px 12px"><strong>Ref</strong></td><td style="padding:8px 12px">{{bookingRef}}</td></tr>
+</table>
+<a href="{{bookingUrl}}" style="display:inline-block;background:#0a0a0a;color:#ccff01;font-weight:900;text-transform:uppercase;padding:12px 18px;border:2px solid #0a0a0a;text-decoration:none">View in admin</a>
+</td></tr>`,
+    {
+      ...v,
+      leadPhone: v.leadPhone || "—",
+      squadCode: v.squadCode || "—",
+      discountCode: v.discountCode || "—",
+    } as Record<string, string>,
+  );
+  return {
+    subject: `New booking: ${v.leadName} — ${v.tripName} (${v.spots} spot${String(v.spots) === "1" ? "" : "s"})`,
+    html: shell("New booking", inner),
   };
 }
 

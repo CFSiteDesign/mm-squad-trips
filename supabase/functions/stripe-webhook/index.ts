@@ -10,6 +10,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import {
   APP_URL,
   bookingConfirmationEmail,
+  bookingOpsNotificationEmail,
+  OPS_NOTIFY_EMAILS,
   sendEmail,
   squadMemberJoinedEmail,
   squadMilestoneEmail,
@@ -369,6 +371,28 @@ async function writeBookings(session: Stripe.Checkout.Session) {
       sendEmail({ to: m.lead_email as string, subject, html }).catch((e) =>
         console.warn("booking-confirmation email failed", e),
       );
+
+      // Ops team notification — single email to the internal crew
+      try {
+        const ops = bookingOpsNotificationEmail({
+          leadName: (m.lead_name as string) || "Unknown",
+          leadEmail: (m.lead_email as string) || "",
+          leadPhone: (m.lead_phone as string) || undefined,
+          tripName: (m.trip_name as string) || (m.trip_slug as string) || "",
+          departureDate: (m.departure_date as string) || "",
+          spots: groupSize,
+          amount: `$${amountPaidTotal.toFixed(2)} ${(session.currency || "usd").toUpperCase()}`,
+          bookingRef,
+          squadCode: (m.squad_code as string) || undefined,
+          discountCode: (m.discount_code as string) || undefined,
+          bookingUrl: `${APP_URL}/admin`,
+        });
+        sendEmail({ to: OPS_NOTIFY_EMAILS, subject: ops.subject, html: ops.html }).catch((e) =>
+          console.warn("booking ops email failed", e),
+        );
+      } catch (e) {
+        console.warn("ops notify build failed:", e instanceof Error ? e.message : e);
+      }
     }
   } catch (e) {
     console.warn("booking confirmation email build failed:", e instanceof Error ? e.message : e);
