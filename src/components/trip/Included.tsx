@@ -7,7 +7,7 @@ export function Included({ trip }: { trip: Trip }) {
 
   const items = isVietnam
     ? [
-        { icon: MapPin, label: `${trip.days} days, ${trip.stops.length} destinations` },
+        { icon: MapPin, label: "14 DAYS, 5 DESTINATIONS" },
         { icon: Bus, label: "All domestic transport" },
         { icon: HeadphonesIcon, label: "24/7 local crew" },
         { icon: Moon, label: "Free pre-trip night. Arrive Sunday before. First night on us." },
