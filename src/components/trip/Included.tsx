@@ -1,19 +1,36 @@
-import { Bed, Bus, Compass, HeadphonesIcon, MapPin, PartyPopper, Moon } from "lucide-react";
+import { Bed, Bus, Compass, HeadphonesIcon, MapPin, PartyPopper, Moon, Utensils } from "lucide-react";
 import type { Trip } from "@/types/trip";
 import { Sticker } from "@/components/brand/Sticker";
 
 export function Included({ trip }: { trip: Trip }) {
-  const items = [
-    { icon: MapPin, label: `${trip.days} days, ${trip.stops.length} destinations` },
-    { icon: Bed, label: "Beds in Mad Monkey hostels every night" },
-    { icon: Bus, label: "ALL DOMESTIC TRANSPORT" },
-    { icon: Compass, label: `${trip.activityCount} activities` },
-    { icon: HeadphonesIcon, label: "24/7 local crew support" },
-    { icon: PartyPopper, label: "Loads of free drinks" },
-    { icon: Moon, label: "Free pre-trip night. Arrive Sunday before. First night on us." },
-    { icon: Bed, label: "Daily breakfast (except when travelling overnight)" },
-    { icon: Compass, label: "Lunch + dinner included in some experiences" },
-  ];
+  const isVietnam = trip.slug === "vietnam";
+
+  const items = isVietnam
+    ? [
+        { icon: MapPin, label: `${trip.days} days, ${trip.stops.length} destinations` },
+        { icon: Bus, label: "All domestic transport" },
+        { icon: HeadphonesIcon, label: "24/7 local crew" },
+        { icon: Moon, label: "Free pre-trip night. Arrive Sunday before. First night on us." },
+        { icon: Utensils, label: "12 breakfasts, 9 lunches, 6 dinners" },
+        { icon: PartyPopper, label: "Loads of free-flow beer, happy water + shots throughout" },
+        { icon: Compass, label: "All activities included in the itinerary" },
+        { icon: Bed, label: "Dorm beds at Mad Monkey + local homestays" },
+      ]
+    : [
+        { icon: MapPin, label: `${trip.days} days, ${trip.stops.length} destinations` },
+        { icon: Bed, label: "Beds in Mad Monkey hostels every night" },
+        { icon: Bus, label: "ALL DOMESTIC TRANSPORT" },
+        { icon: Compass, label: `${trip.activityCount} activities` },
+        { icon: HeadphonesIcon, label: "24/7 local crew support" },
+        { icon: PartyPopper, label: "Loads of free drinks" },
+        { icon: Moon, label: "Free pre-trip night. Arrive Sunday before. First night on us." },
+        { icon: Bed, label: "Daily breakfast (except when travelling overnight)" },
+        { icon: Compass, label: "Lunch + dinner included in some experiences" },
+      ];
+
+  const notIncluded = isVietnam
+    ? "Flights · Additional food, drink + personal expenses · Upgrades + optional add-ons · Insurance"
+    : "Flights · Additional food + drink · Optional add-ons · Travel insurance";
 
   return (
     <section id="included" className="relative bg-mm-bone px-5 py-12 text-mm-black md:px-8 md:py-24">
@@ -44,7 +61,7 @@ export function Included({ trip }: { trip: Trip }) {
         <div className="mt-6 border-mm-thick bg-mm-black p-4 text-sm shadow-mm md:mt-10 md:p-6">
           <p className="font-sticker text-[11px] tracking-[0.18em] text-mm-lime md:text-xs md:tracking-[0.22em]">NOT INCLUDED</p>
           <p className="mt-2 text-[13px] font-semibold leading-snug text-mm-bone md:mt-3 md:text-base">
-            Flights · Additional food + drink · Optional add-ons · Travel insurance
+            {notIncluded}
           </p>
         </div>
       </div>
