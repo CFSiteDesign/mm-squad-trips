@@ -21,6 +21,7 @@ import type { Trip, Departure } from "@/types/trip";
 import { createCheckoutSession, validateDiscount } from "@/lib/api";
 import { Sticker } from "@/components/brand/Sticker";
 import { COUNTRIES } from "@/lib/countries";
+import { useSiteVariant, squadPath } from "@/hooks/use-site-variant";
 
 const SOURCES = ["TikTok", "Instagram", "Friend", "Other"] as const;
 
