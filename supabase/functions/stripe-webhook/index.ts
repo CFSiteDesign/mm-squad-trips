@@ -417,37 +417,30 @@ async function markBalancePaid(session: Stripe.Checkout.Session) {
     return;
   }
 
-  const matcher = originalSessionId
-    ? sb.from("bookings").select("id,amount_paid,balance_amount,balance_status").eq("stripe_session_id", originalSessionId)
-    : sb.from("bookings").select("id,amount_paid,balance_amount,balance_status").eq("booking_ref", bookingRef);
-  const { data: rows } = await matcher;
+  const baseSelect = sb
+    .from("bookings")
+    .select("id,amount_paid,balance_amount,balance_status");
+  const { data: rows } = originalSessionId
+    ? await baseSelect.eq("stripe_session_id", originalSessionId)
+    : await baseSelect.eq("booking_ref", bookingRef);
   if (!rows?.length) {
     console.warn("balance webhook: no bookings matched", { originalSessionId, bookingRef });
     return;
   }
 
-  const updateBase = originalSessionId
-    ? sb.from("bookings").update({}).eq("stripe_session_id", originalSessionId)
-    : sb.from("bookings").update({}).eq("booking_ref", bookingRef);
-
-  // Mark all rows in the group paid
-  await (originalSessionId
-    ? sb.from("bookings").update({
-        balance_status: "charged",
-        balance_charged_at: new Date().toISOString(),
-        balance_last_error: null,
-        balance_next_attempt_at: null,
-        stripe_balance_payment_intent_id: session.payment_intent as string,
-        payment_type: "Full",
-      }).eq("stripe_session_id", originalSessionId)
-    : sb.from("bookings").update({
-        balance_status: "charged",
-        balance_charged_at: new Date().toISOString(),
-        balance_last_error: null,
-        balance_next_attempt_at: null,
-        stripe_balance_payment_intent_id: session.payment_intent as string,
-        payment_type: "Full",
-      }).eq("booking_ref", bookingRef));
+  const updates = {
+    balance_status: "charged",
+    balance_charged_at: new Date().toISOString(),
+    balance_last_error: null,
+    balance_next_attempt_at: null,
+    stripe_balance_payment_intent_id: session.payment_intent as string,
+    payment_type: "Full",
+  };
+  if (originalSessionId) {
+    await sb.from("bookings").update(updates).eq("stripe_session_id", originalSessionId);
+  } else {
+    await sb.from("bookings").update(updates).eq("booking_ref", bookingRef);
+  }
 
   // Roll the per-spot amount_paid forward
   for (const r of rows) {
@@ -456,6 +449,4 @@ async function markBalancePaid(session: Stripe.Checkout.Session) {
   }
 
   console.log(`✓ balance link paid for ${originalSessionId ?? bookingRef}`);
-  // Suppress unused-binding lint for updateBase scaffold
-  void updateBase;
 }
