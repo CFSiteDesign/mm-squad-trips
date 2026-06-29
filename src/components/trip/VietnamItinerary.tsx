@@ -1,3 +1,4 @@
+import { useLocation } from "react-router-dom";
 import { Sticker } from "@/components/brand/Sticker";
 import hanoiImg from "@/assets/vn-hanoi.jpg";
 import hanoi2Img from "@/assets/vn-hanoi2.jpg";
@@ -129,7 +130,67 @@ const DAYS: Day[] = [
   },
 ];
 
+type Stop = {
+  index: number;
+  name: string;
+  nights: string;
+  image: string;
+  body: string;
+  meals: string;
+};
+
+const STOPS: Stop[] = [
+  {
+    index: 1,
+    name: "Hanoi",
+    nights: "2 nights",
+    image: hanoiImg,
+    body:
+      "Land in the capital and dive straight into the chaos. Welcome drinks at the hostel, then out into the Old Quarter for bia hoi, street food and karaoke down Hanoi's famous beer street. Day two it's Hoan Kiem Lake, St. Joseph's Cathedral, egg coffee and Train Street as the carriages rattle past your cup, with a music quiz and pub crawl waiting if you've still got legs.",
+    meals: "1 dinner, 1 breakfast",
+  },
+  {
+    index: 2,
+    name: "Lan Ha Bay",
+    nights: "1 night on the boat",
+    image: lanhaImg,
+    body:
+      "Out to Halong's quieter, wilder neighbour for two days on the water. Swimming straight off the boat, tubing, beach volleyball, then a sunset boat party as the limestone karsts turn gold. Sleep on board anchored in the middle of the bay, kayak through hidden lagoons at sunrise, then roll back to Hanoi for the White Party — two hours of free-flow beer and live DJs.",
+    meals: "2 breakfasts, 2 lunches, 1 dinner",
+  },
+  {
+    index: 3,
+    name: "Ha Giang Loop",
+    nights: "4 nights",
+    image: hagiangImg,
+    body:
+      "The big one. Four days riding the most ridiculous roads in Southeast Asia with your own Easy Rider. Cliffside passes, hidden waterfalls and the legendary Ma Pi Leng above the Nho Que canyon. Family-style dinners in Du Gia, happy water and karaoke with the crew, a football match that gets gloriously chaotic, and the top of Vietnam at Lung Cu Flag Tower looking over into China. Back to Hanoi late on night four.",
+    meals: "4 breakfasts, 4 lunches, 4 dinners",
+  },
+  {
+    index: 4,
+    name: "Ninh Binh",
+    nights: "Day trip + sleeper bus",
+    image: ninhbinhImg,
+    body:
+      "Halong Bay on land. Glide through Tam Coc on a sampan, cycle the rice-paddy backroads, then row through the three river caves of Hang Ca, Hang Hai and Hang Ba. Around 5:30pm you board the VIP cabin sleeper bus south to Hoi An, with stops for snacks, dinner and a leg stretch on the way.",
+    meals: "1 breakfast, 1 lunch",
+  },
+  {
+    index: 5,
+    name: "Hoi An",
+    nights: "3 nights",
+    image: hoianImg,
+    body:
+      "Roll in early and ease in poolside before the sunset pool party kicks off with free beer, happy-hour cocktails, all-you-can-eat BBQ and live DJs. Cycle tour through the old town for a lantern-making workshop, the Japanese Bridge and a tailor stop, then a cooking class in the coconut mangroves and a sunset river cruise with five free drinks in hand. Nearest airport for onward travel is Danang.",
+    meals: "3 breakfasts, 2 lunches, 1 dinner",
+  },
+];
+
 export function VietnamItinerary({ days }: { days: number }) {
+  const { pathname } = useLocation();
+  const isStudent = pathname.startsWith("/students");
+
   return (
     <section className="relative bg-mm-black px-5 py-12 text-mm-bone md:px-8 md:py-24">
       <div className="mx-auto max-w-3xl md:max-w-5xl">
@@ -142,47 +203,91 @@ export function VietnamItinerary({ days }: { days: number }) {
           HANOI → LAN HA BAY → HA GIANG LOOP → NINH BINH → HOI AN
         </p>
 
-        <ol className="mt-10 space-y-10 md:mt-16 md:space-y-14">
-          {DAYS.map((d, i) => (
-            <li
-              key={d.day}
-              className="grid gap-5 md:grid-cols-[1.1fr_1fr] md:items-center md:gap-10"
-            >
-              <div
-                className={`relative overflow-hidden border-[3px] border-mm-bone ${
-                  i % 2 === 1 ? "md:order-2" : ""
-                }`}
+        {isStudent ? (
+          <ol className="mt-10 space-y-10 md:mt-16 md:space-y-14">
+            {DAYS.map((d, i) => (
+              <li
+                key={d.day}
+                className="grid gap-5 md:grid-cols-[1.1fr_1fr] md:items-center md:gap-10"
               >
-                <img
-                  src={d.image}
-                  alt={d.title}
-                  loading="lazy"
-                  className="aspect-[4/3] w-full object-cover"
-                />
-                <div className="absolute left-3 top-3">
-                  <Sticker color={i % 2 === 0 ? "pink" : "yellow"} rotate={-6}>
-                    DAY {String(d.day).padStart(2, "0")}
-                  </Sticker>
+                <div
+                  className={`relative overflow-hidden border-[3px] border-mm-bone ${
+                    i % 2 === 1 ? "md:order-2" : ""
+                  }`}
+                >
+                  <img
+                    src={d.image}
+                    alt={d.title}
+                    loading="lazy"
+                    className="aspect-[4/3] w-full object-cover"
+                  />
+                  <div className="absolute left-3 top-3">
+                    <Sticker color={i % 2 === 0 ? "pink" : "yellow"} rotate={-6}>
+                      DAY {String(d.day).padStart(2, "0")}
+                    </Sticker>
+                  </div>
                 </div>
-              </div>
 
-              <div>
-                <p className="font-sticker text-[10px] tracking-[0.22em] text-mm-lime md:text-[11px]">
-                  DAY {d.day}
-                </p>
-                <h3 className="mt-2 font-display text-3xl leading-[1.02] text-mm-bone md:text-5xl">
-                  {d.title.toUpperCase()}
-                </h3>
-                <p className="mt-4 text-[13.5px] leading-relaxed text-mm-bone/90 md:text-[15px]">
-                  {d.body}
-                </p>
-                <p className="mt-4 inline-block border-[3px] border-mm-bone/40 px-3 py-1 font-sticker text-[10px] tracking-[0.18em] text-mm-lime md:text-[11px]">
-                  MEALS: {d.meals.toUpperCase()}
-                </p>
-              </div>
-            </li>
-          ))}
-        </ol>
+                <div>
+                  <p className="font-sticker text-[10px] tracking-[0.22em] text-mm-lime md:text-[11px]">
+                    DAY {d.day}
+                  </p>
+                  <h3 className="mt-2 font-display text-3xl leading-[1.02] text-mm-bone md:text-5xl">
+                    {d.title.toUpperCase()}
+                  </h3>
+                  <p className="mt-4 text-[13.5px] leading-relaxed text-mm-bone/90 md:text-[15px]">
+                    {d.body}
+                  </p>
+                  <p className="mt-4 inline-block border-[3px] border-mm-bone/40 px-3 py-1 font-sticker text-[10px] tracking-[0.18em] text-mm-lime md:text-[11px]">
+                    MEALS: {d.meals.toUpperCase()}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <ol className="mt-10 space-y-10 md:mt-16 md:space-y-14">
+            {STOPS.map((s, i) => (
+              <li
+                key={s.index}
+                className="grid gap-5 md:grid-cols-[1.1fr_1fr] md:items-center md:gap-10"
+              >
+                <div
+                  className={`relative overflow-hidden border-[3px] border-mm-bone ${
+                    i % 2 === 1 ? "md:order-2" : ""
+                  }`}
+                >
+                  <img
+                    src={s.image}
+                    alt={s.name}
+                    loading="lazy"
+                    className="aspect-[4/3] w-full object-cover"
+                  />
+                  <div className="absolute left-3 top-3">
+                    <Sticker color={i % 2 === 0 ? "pink" : "yellow"} rotate={-6}>
+                      STOP {String(s.index).padStart(2, "0")}
+                    </Sticker>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="font-sticker text-[10px] tracking-[0.22em] text-mm-lime md:text-[11px]">
+                    STOP {s.index} · {s.nights.toUpperCase()}
+                  </p>
+                  <h3 className="mt-2 font-display text-3xl leading-[1.02] text-mm-bone md:text-5xl">
+                    {s.name.toUpperCase()}
+                  </h3>
+                  <p className="mt-4 text-[13.5px] leading-relaxed text-mm-bone/90 md:text-[15px]">
+                    {s.body}
+                  </p>
+                  <p className="mt-4 inline-block border-[3px] border-mm-bone/40 px-3 py-1 font-sticker text-[10px] tracking-[0.18em] text-mm-lime md:text-[11px]">
+                    MEALS: {s.meals.toUpperCase()}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        )}
       </div>
     </section>
   );
