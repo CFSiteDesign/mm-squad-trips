@@ -46,6 +46,7 @@ export type Database = {
           lead_source: string | null
           original_price: number | null
           payment_type: string | null
+          reminder_7d_sent_at: string | null
           spot_number: number
           status: string
           stripe_balance_payment_intent_id: string | null
@@ -53,6 +54,7 @@ export type Database = {
           stripe_payment_intent_id: string | null
           stripe_payment_method_id: string | null
           stripe_session_id: string
+          trip_confirmed_notified_at: string | null
           trip_id: string | null
           updated_at: string
           utm_campaign: string | null
@@ -91,6 +93,7 @@ export type Database = {
           lead_source?: string | null
           original_price?: number | null
           payment_type?: string | null
+          reminder_7d_sent_at?: string | null
           spot_number?: number
           status?: string
           stripe_balance_payment_intent_id?: string | null
@@ -98,6 +101,7 @@ export type Database = {
           stripe_payment_intent_id?: string | null
           stripe_payment_method_id?: string | null
           stripe_session_id: string
+          trip_confirmed_notified_at?: string | null
           trip_id?: string | null
           updated_at?: string
           utm_campaign?: string | null
@@ -136,6 +140,7 @@ export type Database = {
           lead_source?: string | null
           original_price?: number | null
           payment_type?: string | null
+          reminder_7d_sent_at?: string | null
           spot_number?: number
           status?: string
           stripe_balance_payment_intent_id?: string | null
@@ -143,6 +148,7 @@ export type Database = {
           stripe_payment_intent_id?: string | null
           stripe_payment_method_id?: string | null
           stripe_session_id?: string
+          trip_confirmed_notified_at?: string | null
           trip_id?: string | null
           updated_at?: string
           utm_campaign?: string | null
@@ -174,36 +180,80 @@ export type Database = {
           },
         ]
       }
+      departure_events: {
+        Row: {
+          created_at: string
+          departure_id: string
+          event_type: string
+          id: string
+          payload: Json
+          processed_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          departure_id: string
+          event_type: string
+          id?: string
+          payload?: Json
+          processed_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          departure_id?: string
+          event_type?: string
+          id?: string
+          payload?: Json
+          processed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "departure_events_departure_id_fkey"
+            columns: ["departure_id"]
+            isOneToOne: false
+            referencedRelation: "departures"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       departures: {
         Row: {
           bookable: boolean
+          confirmed_at: string | null
           created_at: string
           departure_code: string | null
           departure_date: string
           id: string
+          min_bookings_to_confirm: number
           spots_remaining: number
+          status: string
           total_spots: number
           trip_id: string
           updated_at: string
         }
         Insert: {
           bookable?: boolean
+          confirmed_at?: string | null
           created_at?: string
           departure_code?: string | null
           departure_date: string
           id?: string
+          min_bookings_to_confirm?: number
           spots_remaining?: number
+          status?: string
           total_spots?: number
           trip_id: string
           updated_at?: string
         }
         Update: {
           bookable?: boolean
+          confirmed_at?: string | null
           created_at?: string
           departure_code?: string | null
           departure_date?: string
           id?: string
+          min_bookings_to_confirm?: number
           spots_remaining?: number
+          status?: string
           total_spots?: number
           trip_id?: string
           updated_at?: string
@@ -464,6 +514,10 @@ export type Database = {
       get_cron_secret: { Args: never; Returns: string }
       normalize_cron_secret: { Args: { _value: string }; Returns: string }
       recompute_departure_spots: {
+        Args: { _departure_id: string }
+        Returns: undefined
+      }
+      recompute_departure_status: {
         Args: { _departure_id: string }
         Returns: undefined
       }
