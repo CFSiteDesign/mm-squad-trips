@@ -7,6 +7,15 @@ export const APP_URL = "https://mm-squad-trips.lovable.app";
 export const SQUAD_LOGIN_URL = `${APP_URL}/squad-leader/login`;
 export const SQUAD_DASHBOARD_PATH = "/squad-leader/dashboard";
 
+// Internal ops team — gets a copy of every new booking
+export const OPS_NOTIFY_EMAILS = [
+  "reden@madmonkeyhostels.com",
+  "adel@madmonkeyhostels.com",
+  "hayley@madmonkeyhostels.com",
+  "cai@madmonkeyhostels.com",
+  "lexie@madmonkeyhostels.com",
+];
+
 type SendArgs = {
   to: string | string[];
   subject: string;
