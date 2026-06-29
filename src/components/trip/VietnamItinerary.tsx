@@ -6,94 +6,126 @@ import hagiangImg from "@/assets/vn-hagiang.jpg";
 import ninhbinhImg from "@/assets/vn-ninhbinh.jpg";
 import hoianImg from "@/assets/vn-hoian.jpg";
 
-type Stop = {
-  num: string;
-  location: string;
-  nights: string;
+type Day = {
+  day: number;
+  title: string;
   image: string;
-  tag: string;
-  highlights: string[];
+  body: string;
+  meals: string;
 };
 
-const STOPS: Stop[] = [
+const DAYS: Day[] = [
   {
-    num: "01",
-    location: "Hanoi",
-    nights: "2 nights",
+    day: 1,
+    title: "Welcome to Hanoi",
     image: hanoiImg,
-    tag: "OLD QUARTER & HIDDEN ALLEYS",
-    highlights: [
-      "Touch down in the chaos of the Old Quarter",
-      "Bia Hoi and 'Happy Water' at a street-side haunt",
-      "Walking tour to secret shopping spots and landmarks",
-      "Free beer at 18:30 in the hostel to relaunch the party",
-    ],
+    body:
+      "Land in Hanoi, drop your bag and the day's yours until the evening. Then it kicks off. A welcome drink at the hostel to meet the crew, before we pour out into the Old Quarter for bia hoi and street food. By the end of the night you'll know everyone's name. Still got legs? There's karaoke and a pub crawl down Hanoi's famous beer street.",
+    meals: "Dinner",
   },
   {
-    num: "02",
-    location: "Lan Ha Bay",
-    nights: "1 night",
-    image: lanhaImg,
-    tag: "LIMESTONE PARADISE",
-    highlights: [
-      "Trade city streets for turquoise water and sun-drenched decks",
-      "Exclusive Mad Monkey floating party — nowhere else like it",
-      "Overnight on the bay surrounded by karst peaks",
-    ],
-  },
-  {
-    num: "03",
-    location: "Hanoi",
-    nights: "1 night",
+    day: 2,
+    title: "Hanoi on foot",
     image: hanoi2Img,
-    tag: "THE WHITE PARTY",
-    highlights: [
-      "Return from the bay for the iconic Mad Monkey White Party",
-      "Two hours of free-flow Halida and house mixers",
-      "Live DJ and a massive pub crawl to cement the squad bond",
-    ],
+    body:
+      "Get under the skin of the city with our local crew leading the way. Hoan Kiem Lake, St. Joseph's Cathedral, a proper egg coffee, and a finish at Train Street as the carriages rattle past inches from your cup. The rest of the day is open. Jump on the music quiz and pub crawl, or take the evening to roam Hanoi at your own pace.",
+    meals: "Breakfast",
   },
   {
-    num: "04",
-    location: "Ha Giang Loop",
-    nights: "5 nights",
+    day: 3,
+    title: "Lan Ha Bay",
+    image: lanhaImg,
+    body:
+      "Out the door at 8am and onto the water at Lan Ha Bay, Halong's quieter, wilder neighbour. Days are for swimming straight off the boat, tubing and beach volleyball. Come sunset the boat party starts and the limestone towers turn gold. Tonight you're sleeping on board, anchored in the middle of the bay.",
+    meals: "Breakfast, Lunch, Dinner",
+  },
+  {
+    day: 4,
+    title: "Lan Ha Bay + the White Party",
+    image: lanhaImg,
+    body:
+      "Wake up on the water, breakfast on deck, then out in the kayaks through hidden lagoons. Local lunch, then we roll back to Hanoi for the White Party. Two hours of free-flow beer and live DJs. Still standing at midnight? Beer street is a stumble away.",
+    meals: "Breakfast, Lunch",
+  },
+  {
+    day: 5,
+    title: "Into the mountains",
     image: hagiangImg,
-    tag: "MOUNTAIN ADVENTURE",
-    highlights: [
-      "Basecamp at the foot of the loop — poolside beers and mountain views",
-      "Du Gia waterfalls and free-flow beers in a remote mountain homestay",
-      "Ma Pi Leng Pass and the Skywalk — best views in Southeast Asia",
-      "Push to Lung Cu, Vietnam's 'North Pole', and frontier village Nam Dam",
-      "Vietnam vs. The World football match with local guides",
-      "Ride the Tham Ma Pass — the most 'Instagrammable' road in the country",
-    ],
+    body:
+      "Set off towards Ha Giang city on our VIP Cabin Bus. Spend the afternoon by the pool with a welcome drink and big mountain views, getting to know the crew you'll share the next four days with. Come evening, your Tour Leader and Easy Riders join for dinner, with stories from the road and a taste of what's coming. Dinner at the retreat is an optional add-on (200,000 VND).",
+    meals: "Breakfast",
   },
   {
-    num: "05",
-    location: "Ninh Binh",
-    nights: "1 night",
+    day: 6,
+    title: "Ha Giang Loop begins",
+    image: hagiangImg,
+    body:
+      "Wake up in Ha Giang, grab your crew and point the bikes at the mountains. Today is all first views, winding passes and waterfalls you didn't see coming. Dramatic roads, tiny villages, and the sound of engines rolling down the valleys. You'll stop every twenty minutes because the views are ridiculous. The night lands family-style in Du Gia: shared dinner, karaoke, happy water and underground bars, with people who already feel like old mates.",
+    meals: "Breakfast, Lunch, Dinner",
+  },
+  {
+    day: 7,
+    title: "Ma Pi Leng",
+    image: hagiangImg,
+    body:
+      "This is the day people talk about for years. Bigger mountains, wilder roads, and the legendary Ma Pi Leng Pass, cliffside tarmac with the Nho Que River carving the canyon far below. Every corner looks unreal. Every stop somehow tops the last. By the time you're cracking sunset beers in Dong Van, normal life feels a world away.",
+    meals: "Breakfast, Lunch, Dinner",
+  },
+  {
+    day: 8,
+    title: "To the top of Vietnam",
+    image: hagiangImg,
+    body:
+      "Culture, history and some of the most iconic scenery on the Loop. Ride to Lung Cu Flag Tower, the very top of Vietnam, then look across the border into China, and wander ancient villages where kids wave from the roadside. Then a football match with your Easy Riders gets gloriously chaotic, before one big farewell dinner brings the crew together.",
+    meals: "Breakfast, Lunch, Dinner",
+  },
+  {
+    day: 9,
+    title: "Last ride home",
+    image: hagiangImg,
+    body:
+      "One last morning in the mountains before the ride home through hidden roads, jungle passes and a secret waterfall or two. By now the group feels like family and nobody's ready for it to end. Music in the helmets, tired eyes, camera rolls full. One last cheers before rolling back into Ha Giang already planning the next one. Back in Hanoi for around 11pm.",
+    meals: "Breakfast, Lunch",
+  },
+  {
+    day: 10,
+    title: "Ninh Binh, then south",
     image: ninhbinhImg,
-    tag: "HA LONG ON LAND",
-    highlights: [
-      "Explore caves and rafts in 'Ha Long Bay on Land'",
-      "Sunset from the top of Mua Cave",
-      "Board the VIP sleeper cabin for an overnight journey to the coast",
-    ],
+    body:
+      "Swap the city for the countryside on a full day in Ninh Binh. They call it Halong Bay on land, and one glide through Tam Coc on a sampan tells you why. Cycle the rice-paddy backroads, then row through three river caves: Hang Ca, Hang Hai and Hang Ba. Around 5:30pm you board the VIP cabin sleeper bus south to Hoi An, with plenty of stops for snacks, dinner and a leg stretch on the way.",
+    meals: "Breakfast, Lunch",
   },
   {
-    num: "06",
-    location: "Hoi An & Da Nang",
-    nights: "3 nights",
+    day: 11,
+    title: "Hoi An pool party",
     image: hoianImg,
-    tag: "LANTERNS & GOLDEN BRIDGES",
-    highlights: [
-      "Professional cooking class in beautiful Hoi An",
-      "Spin through the palms on the TikTok-famous coconut boats",
-      "Visit the 'Hands of God' Golden Bridge",
-      "Explore the mountain top French Village Ba Na Hills",
-      "Cycle through serene rice paddies",
-      "Final night Hot Pot feast and a last round of Happy Water",
-    ],
+    body:
+      "Roll into Hoi An early and ease in poolside. Around 4pm the sunset pool party kicks off. Free beer, happy-hour cocktails, an all-you-can-eat BBQ and live DJs by the water. Up for a big one? The free shuttle runs you straight into town for Hoi An's nightlife.",
+    meals: "Dinner",
+  },
+  {
+    day: 12,
+    title: "Hoi An by bike",
+    image: hoianImg,
+    body:
+      "Out at 11am on a cycle tour through old Hoi An, taking in a lantern-making workshop, the Rehahn gallery, the Japanese Bridge, an ancient house and a stop with a local tailor. Back to the hostel for an ice-cold beer and a bowl of cao lao noodles. The afternoon's yours: laze by the pool, or hit An Bang Beach for the waves and the sunset. Then dance it out before the pub crawl heads into town.",
+    meals: "Breakfast, Lunch",
+  },
+  {
+    day: 13,
+    title: "One last sunset",
+    image: hoianImg,
+    body:
+      "Last full day, and it's a good one. Out around 8am to a local market and into the coconut mangroves by bamboo basket boat, then a two-hour cooking class where a local chef walks you through spring rolls, bánh xèo and phở, and you eat the lot. At 4pm the sunset river cruise sets sail as the sky turns gold, with five free drinks in hand and a boat full of backpackers up for a good time. After that, the last night is yours. Go big with the crew one final time, or wind it down with a cold one under the lanterns. However you want to round off two weeks in Vietnam.",
+    meals: "Breakfast, Lunch",
+  },
+  {
+    day: 14,
+    title: "Onward",
+    image: hoianImg,
+    body:
+      "One last breakfast, goodbyes all round, and you're off. Nearest airport is Danang. We can support with booking transfers, just ask at reception. Mad Monkey doesn't really do goodbyes, though. Wherever you're headed next across Southeast Asia, there's a bunk with your name on it.",
+    meals: "Breakfast",
   },
 ];
 
@@ -104,61 +136,49 @@ export function VietnamItinerary({ days }: { days: number }) {
         <Sticker color="lime" rotate={3}>THE ITINERARY</Sticker>
         <h2 className="mt-4 font-display text-[2.5rem] leading-[0.92] text-mm-bone md:mt-6 md:text-7xl lg:text-8xl">
           {days} DAYS.<br />
-          <span className="text-mm-lime">SIX STOPS.</span>
+          <span className="text-mm-lime">FIVE STOPS.</span>
         </h2>
         <p className="mt-4 max-w-xl font-sticker text-[11px] tracking-[0.18em] text-mm-bone/70 md:text-xs">
-          HANOI → LAN HA BAY → HA GIANG → NINH BINH → HOI AN
+          HANOI → LAN HA BAY → HA GIANG LOOP → NINH BINH → HOI AN
         </p>
 
-        <ol className="mt-10 space-y-10 md:mt-16 md:space-y-16">
-          {STOPS.map((s, i) => (
+        <ol className="mt-10 space-y-10 md:mt-16 md:space-y-14">
+          {DAYS.map((d, i) => (
             <li
-              key={s.num}
+              key={d.day}
               className="grid gap-5 md:grid-cols-[1.1fr_1fr] md:items-center md:gap-10"
             >
-              {/* Image placeholder */}
               <div
                 className={`relative overflow-hidden border-[3px] border-mm-bone ${
                   i % 2 === 1 ? "md:order-2" : ""
                 }`}
               >
                 <img
-                  src={s.image}
-                  alt={s.location}
+                  src={d.image}
+                  alt={d.title}
                   loading="lazy"
                   className="aspect-[4/3] w-full object-cover"
                 />
                 <div className="absolute left-3 top-3">
                   <Sticker color={i % 2 === 0 ? "pink" : "yellow"} rotate={-6}>
-                    STOP {s.num}
-                  </Sticker>
-                </div>
-                <div className="absolute bottom-3 right-3">
-                  <Sticker color="lime" rotate={4}>
-                    {s.nights.toUpperCase()}
+                    DAY {String(d.day).padStart(2, "0")}
                   </Sticker>
                 </div>
               </div>
 
-              {/* Content */}
               <div>
                 <p className="font-sticker text-[10px] tracking-[0.22em] text-mm-lime md:text-[11px]">
-                  {s.tag}
+                  DAY {d.day}
                 </p>
-                <h3 className="mt-2 font-display text-4xl leading-none text-mm-bone md:text-6xl">
-                  {s.location.toUpperCase()}
+                <h3 className="mt-2 font-display text-3xl leading-[1.02] text-mm-bone md:text-5xl">
+                  {d.title.toUpperCase()}
                 </h3>
-                <ul className="mt-5 space-y-2.5">
-                  {s.highlights.map((h, k) => (
-                    <li
-                      key={k}
-                      className="flex gap-3 border-l-[3px] border-mm-bone/40 pl-3 text-[13px] leading-snug text-mm-bone/90 md:text-sm"
-                    >
-                      <span className="font-sticker text-mm-pink">▸</span>
-                      <span>{h}</span>
-                    </li>
-                  ))}
-                </ul>
+                <p className="mt-4 text-[13.5px] leading-relaxed text-mm-bone/90 md:text-[15px]">
+                  {d.body}
+                </p>
+                <p className="mt-4 inline-block border-[3px] border-mm-bone/40 px-3 py-1 font-sticker text-[10px] tracking-[0.18em] text-mm-lime md:text-[11px]">
+                  MEALS: {d.meals.toUpperCase()}
+                </p>
               </div>
             </li>
           ))}
