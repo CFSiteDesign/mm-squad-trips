@@ -8,6 +8,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import {
   APP_URL,
   OPS_NOTIFY_EMAILS,
+  opsCcForTrip,
   sendEmail,
   tripConfirmedEmail,
 } from "../_shared/email.ts";
@@ -165,8 +166,10 @@ Deno.serve(async (req) => {
 
     // Ops notification — one line so the team sees the confirmation happen
     try {
+      const opsCc = opsCcForTrip(tripName, tripSlug);
       await sendEmail({
         to: OPS_NOTIFY_EMAILS,
+        cc: opsCc.length ? opsCc : undefined,
         subject: `Trip CONFIRMED — ${tripName} · ${fmtDate(depDate)}`,
         html: `<p>${tripName} on <strong>${fmtDate(
           depDate,
