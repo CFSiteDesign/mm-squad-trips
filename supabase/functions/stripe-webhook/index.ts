@@ -12,6 +12,7 @@ import {
   bookingConfirmationEmail,
   bookingOpsNotificationEmail,
   OPS_NOTIFY_EMAILS,
+  opsCcForTrip,
   sendEmail,
   squadMemberJoinedEmail,
   squadMilestoneEmail,
