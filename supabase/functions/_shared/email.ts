@@ -16,20 +16,38 @@ export const OPS_NOTIFY_EMAILS = [
   "lexie@madmonkeyhostels.com",
 ];
 
+// Trip-specific CCs on ops notifications (matched by trip slug/name substring, case-insensitive)
+export const TRIP_OPS_CC: Array<{ match: string; email: string }> = [
+  { match: "pai", email: "benjie@madmonkeyhostels.com" },
+  { match: "chiang mai", email: "benjie@madmonkeyhostels.com" },
+  { match: "thailand", email: "benjie@madmonkeyhostels.com" },
+];
+
+export function opsCcForTrip(tripName?: string | null, tripSlug?: string | null): string[] {
+  const hay = `${tripName ?? ""} ${tripSlug ?? ""}`.toLowerCase();
+  const out = new Set<string>();
+  for (const { match, email } of TRIP_OPS_CC) {
+    if (hay.includes(match)) out.add(email);
+  }
+  return Array.from(out);
+}
+
 type SendArgs = {
   to: string | string[];
   subject: string;
   html: string;
   replyTo?: string;
+  cc?: string | string[];
 };
 
-export async function sendEmail({ to, subject, html, replyTo }: SendArgs): Promise<void> {
+export async function sendEmail({ to, subject, html, replyTo, cc }: SendArgs): Promise<void> {
   const key = Deno.env.get("RESEND_API_KEY");
   if (!key) {
     console.warn("RESEND_API_KEY not set; skipping email", { to, subject });
     return;
   }
   try {
+    const ccList = cc ? (Array.isArray(cc) ? cc : [cc]) : undefined;
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -42,6 +60,7 @@ export async function sendEmail({ to, subject, html, replyTo }: SendArgs): Promi
         subject,
         html,
         reply_to: replyTo ?? EMAIL_REPLY_TO,
+        ...(ccList && ccList.length ? { cc: ccList } : {}),
       }),
     });
     if (!res.ok) {
