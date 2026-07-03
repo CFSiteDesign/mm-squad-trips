@@ -392,7 +392,8 @@ async function writeBookings(session: Stripe.Checkout.Session) {
           discountCode: (m.discount_code as string) || undefined,
           bookingUrl: `${APP_URL}/admin`,
         });
-        sendEmail({ to: OPS_NOTIFY_EMAILS, subject: ops.subject, html: ops.html }).catch((e) =>
+        const cc = opsCcForTrip(m.trip_name as string | null, m.trip_slug as string | null);
+        sendEmail({ to: OPS_NOTIFY_EMAILS, cc: cc.length ? cc : undefined, subject: ops.subject, html: ops.html }).catch((e) =>
           console.warn("booking ops email failed", e),
         );
       } catch (e) {
