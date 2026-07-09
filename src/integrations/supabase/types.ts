@@ -50,9 +50,11 @@ export type Database = {
           spot_number: number
           status: string
           stripe_balance_payment_intent_id: string | null
+          stripe_balance_refund_id: string | null
           stripe_customer_id: string | null
           stripe_payment_intent_id: string | null
           stripe_payment_method_id: string | null
+          stripe_refund_id: string | null
           stripe_session_id: string
           trip_confirmed_notified_at: string | null
           trip_id: string | null
@@ -97,9 +99,11 @@ export type Database = {
           spot_number?: number
           status?: string
           stripe_balance_payment_intent_id?: string | null
+          stripe_balance_refund_id?: string | null
           stripe_customer_id?: string | null
           stripe_payment_intent_id?: string | null
           stripe_payment_method_id?: string | null
+          stripe_refund_id?: string | null
           stripe_session_id: string
           trip_confirmed_notified_at?: string | null
           trip_id?: string | null
@@ -144,9 +148,11 @@ export type Database = {
           spot_number?: number
           status?: string
           stripe_balance_payment_intent_id?: string | null
+          stripe_balance_refund_id?: string | null
           stripe_customer_id?: string | null
           stripe_payment_intent_id?: string | null
           stripe_payment_method_id?: string | null
+          stripe_refund_id?: string | null
           stripe_session_id?: string
           trip_confirmed_notified_at?: string | null
           trip_id?: string | null
@@ -218,6 +224,7 @@ export type Database = {
       departures: {
         Row: {
           bookable: boolean
+          cancelled_at: string | null
           confirmed_at: string | null
           created_at: string
           departure_code: string | null
@@ -232,6 +239,7 @@ export type Database = {
         }
         Insert: {
           bookable?: boolean
+          cancelled_at?: string | null
           confirmed_at?: string | null
           created_at?: string
           departure_code?: string | null
@@ -246,6 +254,7 @@ export type Database = {
         }
         Update: {
           bookable?: boolean
+          cancelled_at?: string | null
           confirmed_at?: string | null
           created_at?: string
           departure_code?: string | null
