@@ -520,3 +520,33 @@ export function balanceFailedEmail(v: {
   );
   return { subject: `Action needed: final payment for ${v.tripName} declined`, html: shell("Final payment failed", inner) };
 }
+
+export function departureCancelledEmail(v: {
+  firstName: string;
+  tripName: string;
+  departureDate: string;
+  amount: string;
+  tripUrl: string;
+}): { subject: string; html: string } {
+  const inner = render(
+    `<tr><td style="padding:16px 24px 8px 24px">
+<h1 style="margin:0;font-size:28px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em">WE'RE SO SORRY — TRIP CANCELLED 💔</h1>
+</td></tr>
+<tr><td style="padding:0 24px 16px 24px;font-size:16px;line-height:1.5">
+<p style="margin:0 0 12px 0">Hey {{firstName}},</p>
+<p style="margin:0 0 12px 0">Really gutted to share this: the <strong>{{departureDate}}</strong> departure of <strong>{{tripName}}</strong> didn't reach our 5-traveller minimum, so we've had to cancel it.</p>
+<p style="margin:0 0 16px 0">Your full deposit of <strong>{{amount}}</strong> has been refunded to the card you paid with — expect it back in your account within <strong>5–10 business days</strong>.</p>
+<div style="margin:18px 0;padding:16px;border:2px solid #0a0a0a;background:#ffc000">
+<div style="font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px">Don't give up on the trip 🐒</div>
+<p style="margin:0;font-size:14px;line-height:1.5">Other departures are still filling up. Grab a spot on one that's closer to going — we'd love to have you along.</p>
+</div>
+<p style="margin:0 0 20px 0"><a href="{{tripUrl}}" style="display:inline-block;background:#ff6600;color:#0a0a0a;font-weight:900;text-transform:uppercase;padding:14px 22px;border:2px solid #0a0a0a;text-decoration:none">Pick a new departure</a></p>
+<p style="margin:0;font-size:14px;line-height:1.5">Any questions at all — even just to vent — reply here or email <a href="mailto:cs@madmonkeyhostels.com" style="color:#0a0a0a">cs@madmonkeyhostels.com</a>. We're on it.</p>
+</td></tr>`,
+    v as Record<string, string>,
+  );
+  return {
+    subject: `Your ${v.tripName} departure didn't reach its minimum — you've been refunded`,
+    html: shell("Trip cancelled — refund issued", inner),
+  };
+}
