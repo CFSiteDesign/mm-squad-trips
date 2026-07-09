@@ -21,6 +21,18 @@ export const TRIP_OPS_CC: Array<{ match: string; email: string }> = [
   { match: "pai", email: "benjie@madmonkeyhostels.com" },
   { match: "chiang mai", email: "benjie@madmonkeyhostels.com" },
   { match: "thailand", email: "benjie@madmonkeyhostels.com" },
+  { match: "vietnam", email: "chris@madmonkeyhostels.com" },
+  { match: "vietnam", email: "andrew@madmonkeyhostels.com" },
+  { match: "vietnam", email: "thuyanh@madmonkeyhostels.com" },
+  { match: "vietnam", email: "brock@madmonkeyhostels.com" },
+  { match: "indonesia", email: "marco@madmonkeyhostels.com" },
+  { match: "indonesia", email: "rade@madmonkeyhostels.com" },
+  { match: "indonesia", email: "josh@madmonkeyhostels.com" },
+  { match: "indonesia", email: "dimas@madmonkeyhostels.com" },
+  { match: "indonesia", email: "kylewalters@madmonkeyhostels.com" },
+  { match: "cambodia", email: "adrian@madmonkeyhostels.com" },
+  { match: "cambodia", email: "kassy@madmonkeyhostels.com" },
+  { match: "cambodia", email: "johan@madmonkeyhostels.com" },
 ];
 
 export function opsCcForTrip(tripName?: string | null, tripSlug?: string | null): string[] {
