@@ -150,7 +150,7 @@ export function bookingConfirmationEmail(v: {
 
 <p style="margin:0 0 12px 0"><strong>What happens next:</strong></p>
 <ul style="margin:0 0 16px 18px;padding:0;font-size:14px;line-height:1.6">
-<li>As soon as your departure hits 5 bookings, we'll email you the green light to book flights + the link to settle the balance.</li>
+<li>As soon as your departure hits 5 travellers, we'll email you the green light to book flights + the link to settle the balance.</li>
 <li>If we're already inside the 30-day window before departure, we'll be in touch then either way with final details.</li>
 <li>Balance is due 7 days before departure — you'll get a reminder, but you can pay it whenever once the trip is confirmed.</li>
 </ul>
