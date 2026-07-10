@@ -9,7 +9,8 @@ const DEFAULT_FAQS = [
   { q: "What if I don't drink?", a: "Plenty of guests don't. The crew always plans non-drinking options for every night." },
   { q: "What happens after I pay the deposit?", a: "You get an email with your booking reference. The remaining balance is automatically charged to the same card 7 days before your departure — no action needed." },
   { q: "When is the balance due?", a: "7 days before departure. We'll email you a reminder with a payment link." },
-  { q: "What's your refund policy?", a: "Deposit is non-refundable. Full balance refundable up to 60 days before departure, 50% up to 30 days, none after that." },
+  { q: "What if my departure doesn't reach the minimum?", a: "Every departure needs at least 5 travellers to run. If it hasn't reached 5 by 30 days before departure, we cancel it and refund your deposit in full, automatically — you don't need to do anything." },
+  { q: "What's your refund policy?", a: "If you cancel: your deposit is non-refundable, and the balance is refundable up to 60 days before departure, 50% up to 30 days, none after that. If we cancel because the departure didn't reach its 5-traveller minimum, you get a full refund automatically." },
   { q: "Do I need travel insurance?", a: "Yes — it's a hard requirement. Cheap and easy with SafetyWing or World Nomads." },
 ];
 
