@@ -117,14 +117,18 @@ export default function StudentIndex() {
           </div>
 
           <ul className="mt-10 grid gap-6 md:mt-12 md:grid-cols-2 lg:grid-cols-3">
-            {visible.map((t) => (
-              <li key={t.slug}>
-                <Link
-                  to={`/students/${t.slug}`}
-                  className="group relative block h-full border-[4px] border-mm-bone bg-mm-bone p-5 text-mm-black shadow-mm transition-transform hover:-translate-x-[4px] hover:-translate-y-[4px] md:p-6"
-                >
+            {visible.map((t) => {
+              const comingSoon = t.comingSoonOn?.includes(variant);
+              const cardInner = (
+                <>
                   <div className="flex items-start justify-end gap-3">
-                    <span className={`flex h-12 w-12 items-center justify-center border-[3px] border-mm-black ${ACCENT_BG[t.accent]} font-display text-2xl text-mm-black`}>→</span>
+                    {comingSoon ? (
+                      <span className="inline-flex items-center border-[3px] border-mm-black bg-mm-yellow px-2.5 py-1 font-sticker text-[10px] tracking-[0.14em] text-mm-black">
+                        COMING SOON
+                      </span>
+                    ) : (
+                      <span className={`flex h-12 w-12 items-center justify-center border-[3px] border-mm-black ${ACCENT_BG[t.accent]} font-display text-2xl text-mm-black`}>→</span>
+                    )}
                   </div>
                   <h3 className="mt-2 font-display text-[2.75rem] leading-[0.88] md:text-5xl">{t.name}.</h3>
                   <p className="mt-1 font-display text-base leading-none text-mm-orange md:text-lg">
@@ -132,11 +136,27 @@ export default function StudentIndex() {
                   </p>
                   <p className="mt-4 text-[13px] font-medium leading-snug text-mm-black/80">{t.route}</p>
                   <p className="mt-5 font-sticker text-[11px] tracking-[0.14em] text-mm-black">
-                    {t.days} DAYS · FROM ${t.price}
+                    {comingSoon ? "COMING SOON" : `${t.days} DAYS · FROM $${t.price}`}
                   </p>
-                </Link>
-              </li>
-            ))}
+                </>
+              );
+              return (
+                <li key={t.slug}>
+                  {comingSoon ? (
+                    <div className="relative block h-full border-[4px] border-mm-bone bg-mm-bone p-5 text-mm-black shadow-mm opacity-60 cursor-default md:p-6">
+                      {cardInner}
+                    </div>
+                  ) : (
+                    <Link
+                      to={`/students/${t.slug}`}
+                      className="group relative block h-full border-[4px] border-mm-bone bg-mm-bone p-5 text-mm-black shadow-mm transition-transform hover:-translate-x-[4px] hover:-translate-y-[4px] md:p-6"
+                    >
+                      {cardInner}
+                    </Link>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         </div>
       </section>
