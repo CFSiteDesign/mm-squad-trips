@@ -279,12 +279,13 @@ async function writeBookings(session: Stripe.Checkout.Session) {
 
 
   // Squad leader credit
-  if (m.discount_code) {
+  const squadCode = (m.squad_code as string) || (m.discount_code as string);
+  if (squadCode) {
     try {
       const { data: leader } = await sb
         .from("squad_leaders")
         .select("id")
-        .eq("code", m.discount_code)
+        .eq("code", squadCode)
         .maybeSingle();
       if (leader) {
         const { error: sErr } = await sb.from("squad_bookings").insert({
@@ -303,7 +304,7 @@ async function writeBookings(session: Stripe.Checkout.Session) {
         try {
           const { data: full } = await sb
             .from("squad_leaders")
-            .select("id, name, email, code")
+            .select("id, name, email, code, is_student")
             .eq("id", leader.id)
             .maybeSingle();
           const { count } = await sb
@@ -311,11 +312,18 @@ async function writeBookings(session: Stripe.Checkout.Session) {
             .select("id", { count: "exact", head: true })
             .eq("squad_leader_id", leader.id);
           const bookingsCount = count ?? 0;
-          const dashboardUrl = `${APP_URL}/squad-leader/login`;
+          const isStudent = Boolean(full?.is_student);
+          const dashboardUrl = isStudent
+            ? `${APP_URL}/students/squad-leader/login`
+            : `${APP_URL}/squad-leader/login`;
           if (full?.email) {
             const leaderFirst = (full.name as string | null)?.split(" ")[0] || "captain";
-            const nextRewardObj =
-              bookingsCount < 4
+            const goal = isStudent ? 10 : 8;
+            const nextRewardObj = isStudent
+              ? bookingsCount < 10
+                ? { at: 10, text: "2 free squad leader spots" }
+                : { at: bookingsCount, text: "the next perk" }
+              : bookingsCount < 4
                 ? { at: 4, text: "50% off your trip" }
                 : bookingsCount < 8
                   ? { at: 8, text: "a free trip" }
@@ -328,20 +336,32 @@ async function writeBookings(session: Stripe.Checkout.Session) {
               toNextMilestone: String(Math.max(0, nextRewardObj.at - bookingsCount)),
               nextReward: nextRewardObj.text,
               dashboardUrl,
+              progressGoal: goal,
             });
             sendEmail({ to: full.email as string, subject: joined.subject, html: joined.html }).catch(
               (e) => console.warn("squad-member-joined email failed", e),
             );
-            if (bookingsCount === 4 || bookingsCount === 8) {
+            const milestoneHit = isStudent
+              ? bookingsCount === 10
+              : bookingsCount === 4 || bookingsCount === 8;
+            if (milestoneHit) {
               const milestone = squadMilestoneEmail({
                 leaderName: leaderFirst,
                 squadCode: (full.code as string) ?? "",
                 bookingsCount,
-                milestoneHeadline: bookingsCount === 8 ? "Free trip unlocked" : "50% off unlocked",
-                rewardText:
-                  bookingsCount === 8 ? "Your trip is on the house" : "Your trip is half price",
-                nextStepText:
-                  bookingsCount === 8
+                milestoneHeadline: isStudent
+                  ? "2 free spots unlocked"
+                  : bookingsCount === 8
+                    ? "Free trip unlocked"
+                    : "50% off unlocked",
+                rewardText: isStudent
+                  ? "2 FREE SQUAD LEADER SPOTS"
+                  : bookingsCount === 8
+                    ? "Your trip is on the house"
+                    : "Your trip is half price",
+                nextStepText: isStudent
+                  ? "Email hayley@madmonkeyhostels.com to book in your 2 free squad leader spots."
+                  : bookingsCount === 8
                     ? "We'll be in touch to lock in your free trip."
                     : "Keep going — 4 more bookings unlocks a free trip.",
                 dashboardUrl,
