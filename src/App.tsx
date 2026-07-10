@@ -66,14 +66,19 @@ const App = () => (
           <Route path="/squad-leader/dashboard" element={<SquadDashboard />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/vietnam" element={<TripPage />} />
+          <Route path="/vietnam-7" element={<TripPage />} />
           <Route path="/cambodia" element={<TripPage />} />
           <Route path="/indonesia" element={<TripPage />} />
+          <Route path="/indonesia-7" element={<TripPage />} />
 
           {/* Student variant */}
           <Route path="/students" element={<StudentIndex />} />
           <Route path="/students/vietnam" element={<TripPage />} />
+          <Route path="/students/vietnam-7" element={<TripPage />} />
           <Route path="/students/cambodia" element={<TripPage />} />
           <Route path="/students/indonesia" element={<TripPage />} />
+          <Route path="/students/indonesia-7" element={<TripPage />} />
+
           <Route path="/students/squad-leader" element={<StudentSquadHub />} />
           <Route path="/students/squad-leader/register" element={<StudentSquadRegister />} />
           <Route path="/students/squad-leader/login" element={<SquadLogin />} />
