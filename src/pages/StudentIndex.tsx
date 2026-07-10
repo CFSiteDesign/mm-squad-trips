@@ -96,7 +96,7 @@ export default function StudentIndex() {
             WHERE'S YOUR<br /><span className="text-mm-lime">ADVENTURE?</span>
           </h2>
           <div className="mt-7 flex flex-wrap gap-3 md:mt-9">
-            {(["ALL", "Indonesia", "Cambodia", "Vietnam"] as Filter[]).map((f) => {
+            {(["ALL", "Indonesia", "Vietnam", "Cambodia", "Laos"] as Filter[]).map((f) => {
               const active = filter === f;
               return (
                 <button
