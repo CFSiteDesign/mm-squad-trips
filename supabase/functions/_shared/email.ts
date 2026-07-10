@@ -145,7 +145,7 @@ export function bookingConfirmationEmail(v: {
 
 <div style="margin:18px 0;padding:16px;border:2px solid #0a0a0a;background:#ffc000">
 <div style="font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px">⚠️ Hold off on flights</div>
-<p style="margin:0;font-size:14px;line-height:1.5"><strong>Don't book your flights yet.</strong> Wait for the official "Trip Confirmed" email from us before locking in dates. Trips only confirm once we hit our 5-booking minimum.</p>
+<p style="margin:0;font-size:14px;line-height:1.5"><strong>Don't book your flights yet.</strong> Wait for the official "Trip Confirmed" email from us before locking in dates. Trips only confirm once we hit our 5-traveller minimum.</p>
 </div>
 
 <p style="margin:0 0 12px 0"><strong>What happens next:</strong></p>
@@ -184,7 +184,7 @@ export function tripConfirmedEmail(v: {
 </td></tr>
 <tr><td style="padding:0 24px 16px 24px;font-size:16px;line-height:1.5">
 <p style="margin:0 0 12px 0">Hey {{firstName}},</p>
-<p style="margin:0 0 12px 0">Big news — <strong>{{tripName}}</strong> on <strong>{{departureDate}}</strong> is officially <strong>CONFIRMED</strong>. We hit the booking minimum and it's a go.</p>
+<p style="margin:0 0 12px 0">Big news — <strong>{{tripName}}</strong> on <strong>{{departureDate}}</strong> is officially <strong>CONFIRMED</strong>. We hit the 5-traveller minimum and it's a go.</p>
 
 <div style="margin:18px 0;padding:16px;border:2px solid #0a0a0a;background:#ccff01">
 <div style="font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px">✈️ Green light on flights</div>

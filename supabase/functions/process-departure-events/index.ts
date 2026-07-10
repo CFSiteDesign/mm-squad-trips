@@ -173,7 +173,7 @@ Deno.serve(async (req) => {
         subject: `Trip CONFIRMED — ${tripName} · ${fmtDate(depDate)}`,
         html: `<p>${tripName} on <strong>${fmtDate(
           depDate,
-        )}</strong> just hit its booking minimum and is officially confirmed.</p>
+        )}</strong> just hit its 5-traveller minimum and is officially confirmed.</p>
 <p>${sent} lead booker${sent === 1 ? "" : "s"} have been emailed with flight clearance + balance link.</p>`,
       });
     } catch (e) {
