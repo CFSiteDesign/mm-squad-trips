@@ -119,6 +119,7 @@ Deno.serve(async (req) => {
     let discountAmount = 0;
     let appliedCode: string | null = null;
     let discountRecordId: string | null = null;
+    let squadCode: string | null = null;
     if (discountCode) {
       const safe = String(discountCode).toUpperCase();
       const { data: d } = await sb
@@ -136,6 +137,14 @@ Deno.serve(async (req) => {
           appliedCode = safe;
           discountRecordId = d.id;
         }
+      } else {
+        // Squad leader code fallback — no discount to price, but credit the leader via metadata.
+        const { data: squad } = await sb
+          .from("squad_leaders")
+          .select("code")
+          .eq("code", safe)
+          .maybeSingle();
+        if (squad?.code) squadCode = squad.code as string;
       }
     }
 
