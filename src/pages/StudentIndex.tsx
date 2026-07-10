@@ -11,7 +11,9 @@ const TICKER =
 
 export default function StudentIndex() {
   const [filter, setFilter] = useState<Filter>("ALL");
-  const visible = filter === "ALL" ? TRIPS : TRIPS.filter((t) => t.country === filter);
+  const variant: "default" | "student" = "student";
+  const shown = TRIPS.filter((t) => !t.hiddenOn?.includes(variant));
+  const visible = filter === "ALL" ? shown : shown.filter((t) => t.country === filter);
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-mm-black text-mm-bone">
