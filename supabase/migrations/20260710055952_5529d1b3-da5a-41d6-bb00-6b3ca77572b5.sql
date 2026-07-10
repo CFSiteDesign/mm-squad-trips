@@ -1,0 +1,1 @@
+UPDATE public.trips SET name = 'Vietnam' WHERE slug = 'vietnam';
