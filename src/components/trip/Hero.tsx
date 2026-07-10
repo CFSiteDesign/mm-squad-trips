@@ -3,12 +3,17 @@ import { Link } from "react-router-dom";
 import { formatPrice, allDeparturesUnder60Days } from "@/lib/trip-helpers";
 import type { Trip } from "@/types/trip";
 import { Sticker, Starburst } from "@/components/brand/Sticker";
+import { DurationToggle } from "./DurationToggle";
+
+const TOGGLE_BASE_SLUGS = new Set(["indonesia", "vietnam", "indonesia-7", "vietnam-7"]);
 
 export function Hero({ trip, heroImageUrl }: { trip: Trip; heroImageUrl?: string }) {
   const headPrice = trip.departures[0]?.price ?? trip.defaultPrice;
   const headStrike = trip.departures[0]?.strikethrough ?? trip.defaultStrikethrough;
   const payInFull = allDeparturesUnder60Days(trip.departures);
   const hasVideo = /\.(mp4|webm|mov|m4v)(\?|$)/i.test(trip.heroVideoUrl ?? "");
+  const showToggle = TOGGLE_BASE_SLUGS.has(trip.slug);
+
 
 
   const scrollTo = (id: string) => {
