@@ -9,7 +9,8 @@ const DEFAULT_FAQS = [
   { q: "What if I don't drink?", a: "Plenty of guests don't. The crew always plans non-drinking options for every night." },
   { q: "What happens after I pay the deposit?", a: "You get an email with your booking reference. The remaining balance is automatically charged to the same card 7 days before your departure — no action needed." },
   { q: "When is the balance due?", a: "7 days before departure. We'll email you a reminder with a payment link." },
-  { q: "What's your refund policy?", a: "Deposit is non-refundable. Full balance refundable up to 60 days before departure, 50% up to 30 days, none after that." },
+  { q: "What if my departure doesn't reach the minimum?", a: "Every departure needs at least 5 travellers to run. If it hasn't reached 5 by 30 days before departure, we cancel it and refund your deposit in full, automatically — you don't need to do anything." },
+  { q: "What's your refund policy?", a: "If you cancel: your deposit is non-refundable, and the balance is refundable up to 60 days before departure, 50% up to 30 days, none after that. If we cancel because the departure didn't reach its 5-traveller minimum, you get a full refund automatically." },
   { q: "Do I need travel insurance?", a: "Yes — it's a hard requirement. Cheap and easy with SafetyWing or World Nomads." },
 ];
 
@@ -17,10 +18,11 @@ const STUDENT_FAQS = [
   { q: "What if I'm not part of a society?", a: "No worries! This offer is open to any group of students." },
   { q: "What's the age range?", a: "Most guests are 23–31. Nobody under 18, nobody over 39 on these specific trips." },
   { q: "Is this like Contiki?", a: "No coach buses. No 60-person mega-groups. Max 20 people, real backpacker hostels, free time built in." },
-  { q: "What if less than 10 people book?", a: "If your squad doesn't hit 10 by the deadline, we'll be in touch with options — switch to a different departure, roll your deposit over, or get a full refund. Nobody loses out." },
+  { q: "What if less than 10 people book?", a: "The 10-booking target is only for the squad leader reward. Miss it and you simply don't unlock the 2 free spots — your trip still goes ahead, as long as the departure reaches its 5-traveller minimum." },
   { q: "What happens after I pay the deposit?", a: "You get an email with your booking reference. You'll receive another email once the minimum number of people have booked and your trip is confirmed. Then it's time to book your flights and pay the balance. The balance is due 7 days before departure — we'll send you a reminder." },
   { q: "When is the balance due?", a: "7 days before departure. We'll email you a reminder with a payment link." },
-  { q: "What's your refund policy?", a: "Deposit is non-refundable. Full balance refundable up to 60 days before departure, 50% up to 30 days, none after that." },
+  { q: "What if my departure doesn't reach the minimum?", a: "Every departure needs at least 5 travellers to run. If it hasn't reached 5 by 30 days before departure, we cancel it and refund your deposit in full, automatically — you don't need to do anything." },
+  { q: "What's your refund policy?", a: "If you cancel: your deposit is non-refundable, and the balance is refundable up to 60 days before departure, 50% up to 30 days, none after that. If we cancel because the departure didn't reach its 5-traveller minimum, you get a full refund automatically." },
   { q: "Do I need travel insurance?", a: "Yes — it's a hard requirement. Cheap and easy with SafetyWing or World Nomads." },
 ];
 
