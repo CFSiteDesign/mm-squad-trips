@@ -4,7 +4,12 @@ import { useSiteVariant, tripPath } from "@/hooks/use-site-variant";
 
 export function TripCrossSell({ currentSlug }: { currentSlug?: string }) {
   const variant = useSiteVariant();
-  const others = TRIPS.filter((t) => t.slug !== currentSlug);
+  const others = TRIPS.filter(
+    (t) =>
+      t.slug !== currentSlug &&
+      !t.hiddenOn?.includes(variant) &&
+      !t.comingSoonOn?.includes(variant),
+  );
 
   return (
     <section className="relative bg-mm-blue px-5 py-16 text-mm-bone md:px-8 md:py-24">
