@@ -73,9 +73,24 @@ export default function TripPage() {
 
   return (
     <main>
-      <Hero trip={trip} heroImageUrl={slug === "indonesia" ? indoHero : slug === "cambodia" ? khHero : slug === "vietnam" ? vnHero : undefined} />
+      <Hero
+        trip={trip}
+        heroImageUrl={
+          slug === "indonesia" || slug === "indonesia-7"
+            ? indoHero
+            : slug === "cambodia"
+            ? khHero
+            : slug === "vietnam" || slug === "vietnam-7"
+            ? vnHero
+            : undefined
+        }
+      />
       <Included trip={trip} />
-      {slug === "indonesia" ? (
+      {slug === "indonesia-7" ? (
+        <Indonesia7Itinerary />
+      ) : slug === "vietnam-7" ? (
+        <Vietnam7Itinerary />
+      ) : slug === "indonesia" ? (
         <IndonesiaItinerary days={trip.days} />
       ) : slug === "vietnam" ? (
         <VietnamItinerary days={trip.days} />
@@ -84,6 +99,7 @@ export default function TripPage() {
       ) : (
         <Route trip={trip} />
       )}
+
 
       <BookingFlow trip={trip} />
       <FAQ />
