@@ -6,7 +6,9 @@ import { Hero } from "@/components/trip/Hero";
 import { Included } from "@/components/trip/Included";
 import { Route } from "@/components/trip/Route";
 import { IndonesiaItinerary } from "@/components/trip/IndonesiaItinerary";
+import { Indonesia7Itinerary } from "@/components/trip/Indonesia7Itinerary";
 import { VietnamItinerary } from "@/components/trip/VietnamItinerary";
+import { Vietnam7Itinerary } from "@/components/trip/Vietnam7Itinerary";
 import { CambodiaItinerary } from "@/components/trip/CambodiaItinerary";
 import indoHero from "@/assets/indo-hero.jpg";
 import khHero from "@/assets/kh-hero.png";
@@ -21,7 +23,8 @@ import { TripCrossSell } from "@/components/trip/TripCrossSell";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sticker } from "@/components/brand/Sticker";
 
-const TRIP_SLUGS = ["vietnam", "indonesia", "cambodia"];
+const TRIP_SLUGS = ["vietnam", "indonesia", "cambodia", "vietnam-7", "indonesia-7"];
+
 
 function getSetupHint(_message: string, slug: string) {
   return `Operator check: verify that slug "${slug}" exists in the Trips table and is marked active.`;
@@ -70,9 +73,24 @@ export default function TripPage() {
 
   return (
     <main>
-      <Hero trip={trip} heroImageUrl={slug === "indonesia" ? indoHero : slug === "cambodia" ? khHero : slug === "vietnam" ? vnHero : undefined} />
+      <Hero
+        trip={trip}
+        heroImageUrl={
+          slug === "indonesia" || slug === "indonesia-7"
+            ? indoHero
+            : slug === "cambodia"
+            ? khHero
+            : slug === "vietnam" || slug === "vietnam-7"
+            ? vnHero
+            : undefined
+        }
+      />
       <Included trip={trip} />
-      {slug === "indonesia" ? (
+      {slug === "indonesia-7" ? (
+        <Indonesia7Itinerary />
+      ) : slug === "vietnam-7" ? (
+        <Vietnam7Itinerary />
+      ) : slug === "indonesia" ? (
         <IndonesiaItinerary days={trip.days} />
       ) : slug === "vietnam" ? (
         <VietnamItinerary days={trip.days} />
@@ -81,6 +99,7 @@ export default function TripPage() {
       ) : (
         <Route trip={trip} />
       )}
+
 
       <BookingFlow trip={trip} />
       <FAQ />

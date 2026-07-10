@@ -10,7 +10,7 @@ export const HIDE_WITHIN_DAYS = 0;
 // - Vietnam departs Wednesday; bookings close after Tuesday (must be >=1 day out).
 // - Indonesia/Cambodia depart Monday; bookings close after the Friday before (must be >=3 days out).
 export function bookingCutoffDays(slug: string): number {
-  return slug === "vietnam" ? 1 : 3;
+  return slug.startsWith("vietnam") ? 1 : 3;
 }
 
 export function daysUntil(dateIso: string): number {

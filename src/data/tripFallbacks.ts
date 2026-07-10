@@ -102,7 +102,44 @@ const FALLBACKS: Record<string, Trip> = {
     defaultStrikethrough: 1200,
     departures: [],
   },
+  "indonesia-7": {
+    ...BASE,
+    testimonials: DUMMY_TESTIMONIALS,
+    id: "placeholder-indonesia-7",
+    code: "IND7",
+    name: "ALL IN · 7 Day Gili T + Lombok",
+    slug: "indonesia-7",
+    days: 7,
+    stops: [
+      { name: "Gili Trawangan", nights: 3, description: "", photos: [], activities: [] },
+      { name: "Kuta Lombok", nights: 4, description: "", photos: [], activities: [] },
+    ],
+    activityCount: 9,
+    heroVideoUrl: "",
+    defaultPrice: 450,
+    defaultStrikethrough: 720,
+    departures: [],
+  },
+  "vietnam-7": {
+    ...BASE,
+    testimonials: DUMMY_TESTIMONIALS,
+    id: "placeholder-vietnam-7",
+    code: "VIE7",
+    name: "ALL IN · Vietnam Adventure",
+    slug: "vietnam-7",
+    days: 7,
+    stops: [
+      { name: "Hanoi", nights: 2, description: "", photos: [], activities: [] },
+      { name: "Ha Giang Loop", nights: 4, description: "", photos: [], activities: [] },
+    ],
+    activityCount: 9,
+    heroVideoUrl: "",
+    defaultPrice: 310,
+    defaultStrikethrough: 500,
+    departures: [],
+  },
 };
+
 
 export function getTripFallback(slug: string): Trip | undefined {
   return FALLBACKS[slug];

@@ -3,12 +3,17 @@ import { Link } from "react-router-dom";
 import { formatPrice, allDeparturesUnder60Days } from "@/lib/trip-helpers";
 import type { Trip } from "@/types/trip";
 import { Sticker, Starburst } from "@/components/brand/Sticker";
+import { DurationToggle } from "./DurationToggle";
+
+const TOGGLE_BASE_SLUGS = new Set(["indonesia", "vietnam", "indonesia-7", "vietnam-7"]);
 
 export function Hero({ trip, heroImageUrl }: { trip: Trip; heroImageUrl?: string }) {
   const headPrice = trip.departures[0]?.price ?? trip.defaultPrice;
   const headStrike = trip.departures[0]?.strikethrough ?? trip.defaultStrikethrough;
   const payInFull = allDeparturesUnder60Days(trip.departures);
   const hasVideo = /\.(mp4|webm|mov|m4v)(\?|$)/i.test(trip.heroVideoUrl ?? "");
+  const showToggle = TOGGLE_BASE_SLUGS.has(trip.slug);
+
 
 
   const scrollTo = (id: string) => {
@@ -79,11 +84,21 @@ export function Hero({ trip, heroImageUrl }: { trip: Trip; heroImageUrl?: string
               <span className="block text-mm-lime">SORTED.</span>
             </h1>
 
-            <p className="mt-5 max-w-[260px] text-[14px] leading-snug text-mm-bone/85">
+            <p className="mt-5 max-w-[280px] text-[14px] leading-snug text-mm-bone/85">
               {trip.slug === "vietnam"
                 ? "Northern + Central Vietnam · 14 Days / 13 Nights · 5 stops · One unforgettable trip"
+                : trip.slug === "vietnam-7"
+                ? "Hanoi → Ha Giang Loop · 7 days · one unforgettable trip · Starts Wednesday · $310 · $99 deposit holds your spot"
+                : trip.slug === "indonesia-7"
+                ? "Gili T → Kuta Lombok · 7 days · one unforgettable trip · Starts Thursday · $450 · $99 deposit holds your spot"
                 : `${trip.days} days · ${trip.stops.length} stops · ${trip.activityCount} activities · One crew`}
             </p>
+
+            {showToggle && (
+              <div className="mt-5">
+                <DurationToggle slug={trip.slug} />
+              </div>
+            )}
 
             <div className="mt-5 flex flex-wrap items-center gap-3">
               <button
@@ -99,6 +114,7 @@ export function Hero({ trip, heroImageUrl }: { trip: Trip; heroImageUrl?: string
                 WHAT'S INCLUDED
               </button>
             </div>
+
           </div>
 
           {/* Price */}
@@ -151,8 +167,18 @@ export function Hero({ trip, heroImageUrl }: { trip: Trip; heroImageUrl?: string
             <p className="mt-7 max-w-xl text-lg leading-snug text-mm-bone/85">
               {trip.slug === "vietnam"
                 ? "Northern + Central Vietnam · 14 Days / 13 Nights · 5 stops · One unforgettable trip"
+                : trip.slug === "vietnam-7"
+                ? "Hanoi → Ha Giang Loop · 7 days · one unforgettable trip · Starts Wednesday · $310 · $99 deposit holds your spot"
+                : trip.slug === "indonesia-7"
+                ? "Gili T → Kuta Lombok · 7 days · one unforgettable trip · Starts Thursday · $450 · $99 deposit holds your spot"
                 : `${trip.days} days · ${trip.stops.length} stops · ${trip.activityCount} activities · One crew`}
             </p>
+
+            {showToggle && (
+              <div className="mt-6">
+                <DurationToggle slug={trip.slug} />
+              </div>
+            )}
 
             <div className="mt-10 flex flex-wrap items-center gap-4">
               <button
@@ -168,6 +194,7 @@ export function Hero({ trip, heroImageUrl }: { trip: Trip; heroImageUrl?: string
                 WHAT'S INCLUDED
               </button>
             </div>
+
           </div>
 
           <div className="mt-auto flex flex-col gap-6 pt-10">
