@@ -1,4 +1,4 @@
-import { Bed, Bus, Compass, HeadphonesIcon, MapPin, PartyPopper, Moon, Utensils } from "lucide-react";
+import { Bed, Bus, Compass, HeadphonesIcon, MapPin, PartyPopper, Moon, Sparkles, Utensils } from "lucide-react";
 import type { Trip } from "@/types/trip";
 import { Sticker } from "@/components/brand/Sticker";
 
@@ -7,14 +7,15 @@ export function Included({ trip }: { trip: Trip }) {
 
   const items = isVietnam
     ? [
+        { icon: Sparkles, label: "EVERYTHING SORTED" },
         { icon: MapPin, label: "14 DAYS, 5 DESTINATIONS" },
-        { icon: Bus, label: "All domestic transport" },
-        { icon: HeadphonesIcon, label: "24/7 local crew" },
-        { icon: Moon, label: "Free pre-trip night. Arrive Sunday before. First night on us." },
-        { icon: Utensils, label: "12 breakfasts, 9 lunches, 6 dinners" },
-        { icon: PartyPopper, label: "Loads of free-flow beer, happy water + shots throughout" },
-        { icon: Compass, label: "All activities included in the itinerary" },
-        { icon: Bed, label: "Dorm beds at Mad Monkey + local homestays" },
+        { icon: Bus, label: "ALL DOMESTIC TRANSPORT" },
+        { icon: HeadphonesIcon, label: "24/7 LOCAL CREW" },
+        { icon: Moon, label: "FREE PRE-TRIP NIGHT — ARRIVE THE SUNDAY BEFORE, FIRST NIGHT ON US" },
+        { icon: Utensils, label: "12 BREAKFASTS, 9 LUNCHES, 6 DINNERS" },
+        { icon: PartyPopper, label: "LOADS OF FREE-FLOW BEER, HAPPY WATER + SHOTS THROUGHOUT" },
+        { icon: Compass, label: "ALL ACTIVITIES INCLUDED IN THE ITINERARY" },
+        { icon: Bed, label: "DORM BEDS AT MAD MONKEY + LOCAL HOMESTAYS" },
       ]
     : [
         { icon: MapPin, label: `${trip.days} days, ${trip.stops.length} destinations` },
