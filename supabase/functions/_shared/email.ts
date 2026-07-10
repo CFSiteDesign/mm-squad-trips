@@ -372,7 +372,9 @@ export function squadMemberJoinedEmail(v: {
   toNextMilestone: string;
   nextReward: string;
   dashboardUrl: string;
+  progressGoal?: number;
 }): { subject: string; html: string } {
+  const goal = v.progressGoal ?? 8;
   const inner = render(
     `<tr><td style="padding:16px 24px 8px 24px">
 <h1 style="margin:0;font-size:28px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em">SQUAD JUST GREW 🚀</h1>
@@ -382,14 +384,14 @@ export function squadMemberJoinedEmail(v: {
 <p style="margin:0 0 12px 0"><strong>{{memberName}}</strong> just booked <strong>{{tripName}}</strong> with your squad code.</p>
 <div style="margin:16px 0;padding:14px;border:2px solid #0a0a0a;background:#ccff01">
 <div style="font-size:12px;text-transform:uppercase;letter-spacing:.15em">Squad progress</div>
-<div style="font-size:24px;font-weight:900;margin-top:4px">{{bookingsCount}} / 8 bookings</div>
+<div style="font-size:24px;font-weight:900;margin-top:4px">{{bookingsCount}} / {{progressGoal}} bookings</div>
 <div style="font-size:13px;margin-top:4px">{{toNextMilestone}} to go until {{nextReward}}.</div>
 </div>
 <a href="{{dashboardUrl}}" style="display:inline-block;background:#ff6600;color:#0a0a0a;font-weight:900;text-transform:uppercase;padding:14px 22px;border:2px solid #0a0a0a;text-decoration:none">Open dashboard</a>
 </td></tr>`,
-    v as Record<string, string>,
+    { ...v, progressGoal: String(goal) } as Record<string, string>,
   );
-  return { subject: `Squad just grew — ${v.bookingsCount}/8`, html: shell("New squad member", inner) };
+  return { subject: `Squad just grew — ${v.bookingsCount}/${goal}`, html: shell("New squad member", inner) };
 }
 
 export function squadMilestoneEmail(v: {
