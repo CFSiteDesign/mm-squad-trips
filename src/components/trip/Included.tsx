@@ -4,34 +4,58 @@ import { Sticker } from "@/components/brand/Sticker";
 
 export function Included({ trip }: { trip: Trip }) {
   const isVietnam = trip.slug === "vietnam";
+  const isVietnam7 = trip.slug === "vietnam-7";
+  const isIndonesia7 = trip.slug === "indonesia-7";
 
-  const items = isVietnam
-    ? [
-        { icon: Sparkles, label: "EVERYTHING SORTED" },
-        { icon: MapPin, label: "14 DAYS, 5 DESTINATIONS" },
-        { icon: Bus, label: "ALL DOMESTIC TRANSPORT" },
-        { icon: HeadphonesIcon, label: "24/7 LOCAL CREW" },
-        { icon: Moon, label: "FREE PRE-TRIP NIGHT — ARRIVE THE SUNDAY BEFORE, FIRST NIGHT ON US" },
-        { icon: Utensils, label: "12 BREAKFASTS, 9 LUNCHES, 6 DINNERS" },
-        { icon: PartyPopper, label: "LOADS OF FREE-FLOW BEER, HAPPY WATER + SHOTS THROUGHOUT" },
-        { icon: Compass, label: "ALL ACTIVITIES INCLUDED IN THE ITINERARY" },
-        { icon: Bed, label: "DORM BEDS AT MAD MONKEY + LOCAL HOMESTAYS" },
-      ]
-    : [
-        { icon: MapPin, label: `${trip.days} days, ${trip.stops.length} destinations` },
-        { icon: Bed, label: "Beds in Mad Monkey hostels every night" },
-        { icon: Bus, label: "ALL DOMESTIC TRANSPORT" },
-        { icon: Compass, label: `${trip.activityCount} activities` },
-        { icon: HeadphonesIcon, label: "24/7 local crew support" },
-        { icon: PartyPopper, label: "Loads of free drinks" },
-        { icon: Moon, label: "Free pre-trip night. Arrive Sunday before. First night on us." },
-        { icon: Bed, label: "Daily breakfast (except when travelling overnight)" },
-        { icon: Compass, label: "Lunch + dinner included in some experiences" },
-      ];
+  let items;
+  if (isVietnam) {
+    items = [
+      { icon: Sparkles, label: "EVERYTHING SORTED" },
+      { icon: MapPin, label: "14 DAYS, 5 DESTINATIONS" },
+      { icon: Bus, label: "ALL DOMESTIC TRANSPORT" },
+      { icon: HeadphonesIcon, label: "24/7 LOCAL CREW" },
+      { icon: Moon, label: "FREE PRE-TRIP NIGHT — ARRIVE THE SUNDAY BEFORE, FIRST NIGHT ON US" },
+      { icon: Utensils, label: "12 BREAKFASTS, 9 LUNCHES, 6 DINNERS" },
+      { icon: PartyPopper, label: "LOADS OF FREE-FLOW BEER, HAPPY WATER + SHOTS THROUGHOUT" },
+      { icon: Compass, label: "ALL ACTIVITIES INCLUDED IN THE ITINERARY" },
+      { icon: Bed, label: "DORM BEDS AT MAD MONKEY + LOCAL HOMESTAYS" },
+    ];
+  } else if (isVietnam7) {
+    items = [
+      { icon: Bus, label: "ALL DOMESTIC TRANSPORT" },
+      { icon: HeadphonesIcon, label: "24/7 LOCAL CREW" },
+      { icon: Utensils, label: "7 BREAKFASTS, 4 LUNCHES, 4 DINNERS" },
+      { icon: PartyPopper, label: "LOADS OF FREE FLOW BEER, HAPPY WATER + SHOTS THROUGHOUT" },
+      { icon: Compass, label: "ALL ACTIVITIES INCLUDED IN THE ITINERARY" },
+      { icon: Bed, label: "DORM BEDS AT MAD MONKEY + LOCAL HOMESTAYS" },
+    ];
+  } else if (isIndonesia7) {
+    items = [
+      { icon: Bus, label: "ALL TRANSFERS + ISLAND BOATS" },
+      { icon: HeadphonesIcon, label: "24/7 LOCAL CREW" },
+      { icon: Moon, label: "FREE PRE-TRIP NIGHT, FIRST NIGHT ON US" },
+      { icon: Utensils, label: "4 BREAKFASTS, 5 LUNCHES, 5 DINNERS" },
+      { icon: PartyPopper, label: "LOADS OF FREE DRINKS INCLUDED THROUGHOUT" },
+      { icon: Compass, label: "ALL ACTIVITIES INCLUDED IN THE ITINERARY" },
+      { icon: Bed, label: "DORM BEDS AT MAD MONKEY" },
+    ];
+  } else {
+    items = [
+      { icon: MapPin, label: `${trip.days} days, ${trip.stops.length} destinations` },
+      { icon: Bed, label: "Beds in Mad Monkey hostels every night" },
+      { icon: Bus, label: "ALL DOMESTIC TRANSPORT" },
+      { icon: Compass, label: `${trip.activityCount} activities` },
+      { icon: HeadphonesIcon, label: "24/7 local crew support" },
+      { icon: PartyPopper, label: "Loads of free drinks" },
+      { icon: Moon, label: "Free pre-trip night. Arrive Sunday before. First night on us." },
+      { icon: Compass, label: "Lunch + dinner included in some experiences" },
+    ];
+  }
 
-  const notIncluded = isVietnam
+  const notIncluded = (isVietnam || isVietnam7 || isIndonesia7)
     ? "Flights · Additional food, drink + personal expenses · Upgrades + optional add-ons · Insurance"
     : "Flights · Additional food + drink · Optional add-ons · Travel insurance";
+
 
   return (
     <section id="included" className="relative bg-mm-bone px-5 py-12 text-mm-black md:px-8 md:py-24">
