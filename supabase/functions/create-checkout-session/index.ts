@@ -183,6 +183,7 @@ Deno.serve(async (req) => {
       discount_code: appliedCode ?? "",
       discount_code_id: discountRecordId ?? "",
       discount_amount: String(discountAmount),
+      squad_code: squadCode ?? "",
       final_price: String(fullDue),
       full_due: String(fullDue),
       amount_today: String(amountToday),
