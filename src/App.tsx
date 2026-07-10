@@ -75,7 +75,7 @@ const App = () => (
           <Route path="/students" element={<StudentIndex />} />
           <Route path="/students/vietnam" element={<TripPage />} />
           <Route path="/students/vietnam-7" element={<TripPage />} />
-          <Route path="/students/cambodia" element={<TripPage />} />
+          <Route path="/students/cambodia" element={<Navigate to="/students" replace />} />
           <Route path="/students/indonesia" element={<TripPage />} />
           <Route path="/students/indonesia-7" element={<TripPage />} />
 
