@@ -84,11 +84,21 @@ export function Hero({ trip, heroImageUrl }: { trip: Trip; heroImageUrl?: string
               <span className="block text-mm-lime">SORTED.</span>
             </h1>
 
-            <p className="mt-5 max-w-[260px] text-[14px] leading-snug text-mm-bone/85">
+            <p className="mt-5 max-w-[280px] text-[14px] leading-snug text-mm-bone/85">
               {trip.slug === "vietnam"
                 ? "Northern + Central Vietnam · 14 Days / 13 Nights · 5 stops · One unforgettable trip"
+                : trip.slug === "vietnam-7"
+                ? "Hanoi → Ha Giang Loop · 7 days · one unforgettable trip · Starts Wednesday · $310 · $99 deposit holds your spot"
+                : trip.slug === "indonesia-7"
+                ? "Gili T → Kuta Lombok · 7 days · one unforgettable trip · Starts Thursday · $450 · $99 deposit holds your spot"
                 : `${trip.days} days · ${trip.stops.length} stops · ${trip.activityCount} activities · One crew`}
             </p>
+
+            {showToggle && (
+              <div className="mt-5">
+                <DurationToggle slug={trip.slug} />
+              </div>
+            )}
 
             <div className="mt-5 flex flex-wrap items-center gap-3">
               <button
@@ -104,6 +114,7 @@ export function Hero({ trip, heroImageUrl }: { trip: Trip; heroImageUrl?: string
                 WHAT'S INCLUDED
               </button>
             </div>
+
           </div>
 
           {/* Price */}
