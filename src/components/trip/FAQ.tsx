@@ -8,7 +8,7 @@ const DEFAULT_FAQS = [
   { q: "Is this like Contiki?", a: "No coach buses. No 60-person mega-groups. Max 20 people, real backpacker hostels, free time built in." },
   { q: "What if I don't drink?", a: "Plenty of guests don't. The crew always plans non-drinking options for every night." },
   { q: "What happens after I pay the deposit?", a: "You get an email with your booking reference. The remaining balance is automatically charged to the same card 7 days before your departure — no action needed." },
-  { q: "When is the balance due?", a: "60 days before departure. We'll email you a reminder 75 days out with a payment link." },
+  { q: "When is the balance due?", a: "7 days before departure. We'll email you a reminder with a payment link." },
   { q: "What's your refund policy?", a: "Deposit is non-refundable. Full balance refundable up to 60 days before departure, 50% up to 30 days, none after that." },
   { q: "Do I need travel insurance?", a: "Yes — it's a hard requirement. Cheap and easy with SafetyWing or World Nomads." },
 ];
