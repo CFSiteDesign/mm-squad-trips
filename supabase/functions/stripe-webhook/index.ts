@@ -385,8 +385,8 @@ async function writeBookings(session: Stripe.Checkout.Session) {
     if (m.lead_email) {
       const country = (m.trip_name as string)?.split(/[—\-:]/)[0]?.trim() || (m.trip_slug as string) || "your trip";
       const firstName = ((m.lead_name as string) || "").split(" ")[0] || "traveler";
-      const isSolo = m.lead_solo === "true";
-      if (isSolo) {
+      const isSoloLead = m.lead_solo === "true";
+      if (isSoloLead) {
         // Solo bookings are confirmed immediately — send the "book flights now" email, not the "hold off" one.
         const balanceTotal = Math.max(0, fullDue - amountPaidTotal);
         const depForDue = new Date(((m.departure_date as string) || "") + "T00:00:00Z");
