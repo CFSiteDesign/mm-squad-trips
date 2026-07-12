@@ -14,6 +14,7 @@ import {
   OPS_NOTIFY_EMAILS,
   opsCcForTrip,
   sendEmail,
+  soloBookingConfirmedEmail,
   squadMemberJoinedEmail,
   squadMilestoneEmail,
 } from "../_shared/email.ts";
