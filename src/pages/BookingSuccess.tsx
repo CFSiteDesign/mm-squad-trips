@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MessageCircle, Share2 } from "lucide-react";
+import { Share2 } from "lucide-react";
 
 interface BookingInfo {
   bookingRef: string | null;
@@ -86,7 +86,7 @@ export default function BookingSuccess() {
             <Row k="Trip" v={info.tripName} />
             <Row k="Departure" v={info.departureDate} />
             <Row k={info.paymentType === "Deposit" ? "Deposit paid" : "Paid in full"} v={`$${info.amountPaid}`} bold />
-            {info.balanceDue > 0 && <Row k="Balance due 60 days before departure" v={`$${info.balanceDue}`} muted />}
+            {info.balanceDue > 0 && <Row k="Balance auto-charged 7 days before departure" v={`$${info.balanceDue}`} muted />}
           </dl>
 
           <div className="mt-6 rounded-2xl bg-accent/20 p-5">
@@ -96,17 +96,10 @@ export default function BookingSuccess() {
             </p>
           </div>
 
-          <a
-            href="https://wa.me/855000000000"
-            className="mt-6 flex items-center justify-center gap-2 rounded-full bg-secondary py-3 text-sm font-bold text-secondary-foreground"
-          >
-            <MessageCircle className="h-4 w-4" /> Message us on WhatsApp
-          </a>
-
           <button
             type="button"
             onClick={() => navigator.share?.({ title: "I'm going on a Mad Monkey trip", url: window.location.origin })}
-            className="mt-3 flex w-full items-center justify-center gap-2 rounded-full border border-border py-3 text-sm font-semibold"
+            className="mt-6 flex w-full items-center justify-center gap-2 rounded-full border border-border py-3 text-sm font-semibold"
           >
             <Share2 className="h-4 w-4" /> Tell a friend
           </button>
