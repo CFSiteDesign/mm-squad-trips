@@ -212,6 +212,52 @@ export function tripConfirmedEmail(v: {
   };
 }
 
+export function soloBookingConfirmedEmail(v: {
+  firstName: string;
+  tripCountry: string;
+  tripName: string;
+  departureDate: string;
+  spots: number | string;
+  balanceAmount: string;
+  balanceDueDate: string;
+  payBalanceUrl: string;
+  bookingRef: string;
+  bookingUrl: string;
+  hasBalance: boolean;
+}): { subject: string; html: string } {
+  const balanceBlock = v.hasBalance
+    ? `<p style="margin:0 0 12px 0"><strong>Balance to settle:</strong></p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #0a0a0a;margin:0 0 16px 0">
+<tr><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a"><strong>Spots</strong></td><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a">{{spots}}</td></tr>
+<tr><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a"><strong>Balance</strong></td><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a">{{balanceAmount}}</td></tr>
+<tr><td style="padding:10px 14px"><strong>Due by</strong></td><td style="padding:10px 14px">{{balanceDueDate}} (7 days before departure)</td></tr>
+</table>
+<p style="margin:0 0 12px 0">Pay it anytime from now. Heads up: if you don't, we'll auto-charge the card on file 7 days before departure.</p>
+<p style="margin:18px 0"><a href="{{payBalanceUrl}}" style="display:inline-block;background:#ff6600;color:#0a0a0a;font-weight:900;text-transform:uppercase;padding:14px 22px;border:2px solid #0a0a0a;text-decoration:none">Pay balance now</a></p>`
+    : `<p style="margin:0 0 16px 0"><strong>You're paid in full — nothing left to settle 🎉</strong></p>`;
+
+  const inner = render(
+    `<tr><td style="padding:16px 24px 8px 24px">
+<h1 style="margin:0;font-size:28px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em">YOU'RE CONFIRMED ✅ BOOK YOUR FLIGHTS</h1>
+</td></tr>
+<tr><td style="padding:0 24px 16px 24px;font-size:16px;line-height:1.5">
+<p style="margin:0 0 12px 0">Hey {{firstName}},</p>
+<p style="margin:0 0 12px 0">You booked <strong>{{tripName}}</strong> on <strong>{{departureDate}}</strong> as a <strong>solo traveller</strong> — which means it's <strong>guaranteed to run</strong>. No waiting on a minimum, no group needed. You're locked in.</p>
+<div style="margin:18px 0;padding:16px;border:2px solid #0a0a0a;background:#ccff01">
+<div style="font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px">✈️ Green light on flights</div>
+<p style="margin:0;font-size:14px;line-height:1.5">Book your flights whenever you're ready — your trip is confirmed. Aim to arrive the day before departure (your free pre-trip night). Shout if you'd like a hand with anything.</p>
+</div>
+${balanceBlock}
+<p style="margin:0 0 20px 0;font-size:13px;color:#555">Booking ref: <strong>{{bookingRef}}</strong> · <a href="{{bookingUrl}}" style="color:#0a0a0a">View booking</a></p>
+</td></tr>`,
+    v as unknown as Record<string, string>,
+  );
+  return {
+    subject: `${v.tripCountry} is CONFIRMED ✅ — you're solo & good to book flights`,
+    html: shell("You're confirmed", inner),
+  };
+}
+
 export function balanceReminderEmail(v: {
   firstName: string;
   tripCountry: string;
