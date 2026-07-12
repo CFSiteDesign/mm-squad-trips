@@ -32,7 +32,7 @@ interface LeadFields {
 interface TravelerFields { firstName: string; lastName: string; email: string; age: string; dietary: string; }
 
 const emptyLead: LeadFields = {
-  name: "", email: "", phone: "", phoneDial: "44", country: "", age: "", solo: true, source: "", friends: "",
+  name: "", email: "", phone: "", phoneDial: "44", country: "", age: "", solo: false, source: "", friends: "",
 };
 const emptyTraveler: TravelerFields = { firstName: "", lastName: "", email: "", age: "", dietary: "" };
 
@@ -57,8 +57,18 @@ export function BookingFlow({ trip }: { trip: Trip }) {
   function changeGroup(n: number) {
     setGroupSize(n);
     setSelectedId(null);
-    setLead({ ...emptyLead, solo: n === 1 });
+    setLead({ ...emptyLead, solo: false });
     setTravelers(Array.from({ length: Math.max(0, n - 1) }, () => ({ ...emptyTraveler })));
+  }
+
+  const soloSelected = groupSize === 1 && lead.solo;
+
+  function selectSolo() {
+    setGroupSize(1);
+    setSelectedId(null);
+    setLead({ ...emptyLead, solo: true });
+    setTravelers([]);
+    setJoinMode(false);
   }
 
   const validatedFor = useRef<{ depId: string; code: string } | null>(null);
@@ -191,9 +201,27 @@ export function BookingFlow({ trip }: { trip: Trip }) {
           )}
         </div>
 
-        <p className="font-sticker text-xs tracking-[0.15em] text-mm-bone/80">
-          NO SQUAD? NO STRESS — YOU CAN STILL BOOK SOLO OR WITH YOUR CREW BELOW.
-        </p>
+        {/* Travel solo — prominent, explicit opt-in (brief: "unique TRAVEL SOLO box") */}
+        <div className="space-y-3">
+          <p className="font-sticker text-sm tracking-[0.15em] text-mm-bone/80">OR TRAVEL SOLO — STRESS-FREE, DONE FOR YOU</p>
+          <button
+            type="button"
+            onClick={selectSolo}
+            className={`flex w-full flex-col border-[3px] p-4 text-left shadow-mm-sm transition ${
+              soloSelected
+                ? "border-mm-black bg-mm-lime text-mm-black shadow-mm"
+                : "border-mm-black bg-mm-paper text-mm-black hover:-translate-x-[2px] hover:-translate-y-[2px]"
+            }`}
+          >
+            <span className="font-display text-lg">TRAVEL SOLO 🧳</span>
+            <span className="mt-1 text-xs text-mm-black/70">
+              Just you — and it's <strong>guaranteed to run</strong>. No crew, no 5-person minimum. We plan the whole itinerary; you just show up, and you're cleared to book flights the moment you've paid.
+            </span>
+          </button>
+          <p className="font-sticker text-[11px] tracking-[0.15em] text-mm-bone/70">
+            BOOKING A FEW OF YOU WITHOUT A SQUAD? JUST PICK YOUR SPOTS BELOW.
+          </p>
+        </div>
 
         {/* Step 1: spots */}
         <FormStep n={1} label="HOW MANY SPOTS?">
