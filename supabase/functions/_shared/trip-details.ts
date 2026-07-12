@@ -50,6 +50,16 @@ const CAMBODIA_CHATS: PropertyChat[] = [
   { property: "Koh Sdach", url: "https://chat.whatsapp.com/KcCxhxFGWISBS8qL6ZQ3Gw" },
 ];
 
+const INDONESIA7_CHATS: PropertyChat[] = [
+  { property: "Kuta Lombok", url: "https://chat.whatsapp.com/FuOjWvIRMwBFFyoB0mKYDk" },
+  // Gili Trawangan chat: pending verification
+];
+
+const VIETNAM7_CHATS: PropertyChat[] = [
+  { property: "Hanoi", url: "https://chat.whatsapp.com/DpI7WUmVDizAfacDxXwzmw?mode=ac_t" },
+  // Ha Giang Loop chat: pending verification
+];
+
 const TRIP_DETAILS: Record<string, TripFinalDetails> = {
   vietnam: {
     whatsappUrl: VIETNAM_CHATS[0].url,
@@ -90,6 +100,33 @@ const TRIP_DETAILS: Record<string, TripFinalDetails> = {
         "<strong>Nearest airport:</strong> arrive into PNH (Phnom Penh). Depart from REP (Siem Reap) or KOS (Sihanoukville).",
       ]) + chatsBlock(CAMBODIA_CHATS),
   },
+  "indonesia-7": {
+    whatsappUrl: INDONESIA7_CHATS[0].url,
+    finalDetailsHtml:
+      block("Final details — Indonesia (7-day)", [
+        "<strong>Meeting point:</strong> Mad Monkey Gili Trawangan. Free pre-trip night included — arrive the day before departure.",
+        "<strong>Welcome dinner:</strong> traditional Mexican family dinner at the hostel on arrival night.",
+        "<strong>Day-1 kick-off:</strong> settle into Gili T — beach, pool and meeting the crew before dinner.",
+        "<strong>Getting there:</strong> most fly into Bali (DPS) or Lombok (LOP), then a fast-boat over to Gili Trawangan — we can help arrange the transfer.",
+        "<strong>What to pack:</strong> swimwear x3, reef-safe sunscreen, sandals + trainers, a dry bag for the boats, and board shorts / rash vest for surf camp at Kuta Lombok.",
+        "<strong>Cash:</strong> bring ~$200 USD or equivalent IDR for boats, drinks, tips and warungs.",
+        "<strong>Weather right now:</strong> hot + humid with the odd afternoon shower — pack a light rain layer.",
+        "<strong>Nearest airport:</strong> depart from Lombok (LOP) after surf camp in Kuta Lombok.",
+      ]) + chatsBlock(INDONESIA7_CHATS),
+  },
+  "vietnam-7": {
+    whatsappUrl: VIETNAM7_CHATS[0].url,
+    finalDetailsHtml:
+      block("Final details — Vietnam (7-day)", [
+        "<strong>Meeting point:</strong> Mad Monkey Hanoi (Old Quarter). Free pre-trip night included — arrive the day before departure.",
+        "<strong>Welcome drinks:</strong> at the hostel bar on arrival night.",
+        "<strong>Day-1 kick-off:</strong> Hanoi Old Quarter — street food, bia hoi and the Train Street run.",
+        "<strong>What to pack:</strong> warm layers + a proper jacket and gloves for the Ha Giang Loop (cold at altitude on the bikes), rain shell, sturdy shoes, swimwear.",
+        "<strong>Cash:</strong> bring ~$150 USD or equivalent VND for tips, optional add-ons and street food.",
+        "<strong>Weather right now:</strong> Ha Giang can be cold and wet — check the Hanoi + Ha Giang forecast the day before you fly.",
+        "<strong>Nearest airport:</strong> arrive into HAN (Hanoi Noi Bai). The loop returns to Hanoi, so you also depart from HAN.",
+      ]) + chatsBlock(VIETNAM7_CHATS),
+  },
 };
 
 const DEFAULT_DETAILS: TripFinalDetails = {
@@ -110,7 +147,9 @@ export function tripCountryFromSlug(slug: string | null | undefined): string {
   if (!slug) return "your trip";
   const map: Record<string, string> = {
     vietnam: "Vietnam",
+    "vietnam-7": "Vietnam",
     indonesia: "Indonesia",
+    "indonesia-7": "Indonesia",
     cambodia: "Cambodia",
   };
   return map[slug.toLowerCase()] ?? slug;
