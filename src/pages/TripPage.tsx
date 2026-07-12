@@ -9,6 +9,7 @@ import { IndonesiaItinerary } from "@/components/trip/IndonesiaItinerary";
 import { Indonesia7Itinerary } from "@/components/trip/Indonesia7Itinerary";
 import { VietnamItinerary } from "@/components/trip/VietnamItinerary";
 import { Vietnam7Itinerary } from "@/components/trip/Vietnam7Itinerary";
+import { DurationToggle } from "@/components/trip/DurationToggle";
 import { CambodiaItinerary } from "@/components/trip/CambodiaItinerary";
 import indoHero from "@/assets/indo-hero.jpg";
 import khHero from "@/assets/kh-hero.png";
@@ -36,6 +37,7 @@ export default function TripPage() {
   const slug = segments.find((s) => TRIP_SLUGS.includes(s)) ?? segments[0] ?? "";
 
   const fallback = getTripFallback(slug);
+  const showDurationToggle = ["indonesia", "vietnam", "indonesia-7", "vietnam-7"].includes(slug);
 
   const { data: trip, isLoading, error } = useQuery({
     queryKey: ["trip", slug],
@@ -86,6 +88,11 @@ export default function TripPage() {
         }
       />
       <Included trip={trip} />
+      {showDurationToggle && (
+        <div className="flex justify-center bg-mm-black px-5 pt-12 md:pt-20">
+          <DurationToggle slug={slug} />
+        </div>
+      )}
       {slug === "indonesia-7" ? (
         <Indonesia7Itinerary />
       ) : slug === "vietnam-7" ? (

@@ -17,6 +17,7 @@ import {
   closedDepartures,
 } from "@/lib/trip-helpers";
 import { SpotBadge } from "./SpotBadge";
+import { DurationToggle } from "./DurationToggle";
 import type { Trip, Departure } from "@/types/trip";
 import { createCheckoutSession, validateDiscount } from "@/lib/api";
 import { Sticker } from "@/components/brand/Sticker";
@@ -39,6 +40,7 @@ const emptyTraveler: TravelerFields = { firstName: "", lastName: "", email: "", 
 export function BookingFlow({ trip }: { trip: Trip }) {
   const variant = useSiteVariant();
   const isStudent = variant === "student";
+  const showDurationToggle = ["indonesia", "vietnam", "indonesia-7", "vietnam-7"].includes(trip.slug);
   const [groupSize, setGroupSize] = useState(1);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [lead, setLead] = useState<LeadFields>(emptyLead);
@@ -135,6 +137,11 @@ export function BookingFlow({ trip }: { trip: Trip }) {
   return (
     <section id="booking" className="relative bg-mm-pink px-5 py-12 text-mm-bone md:px-8 md:py-24">
       <div className="mx-auto max-w-3xl space-y-8 md:max-w-5xl md:space-y-12">
+        {showDurationToggle && (
+          <div className="flex justify-center md:justify-start">
+            <DurationToggle slug={trip.slug} />
+          </div>
+        )}
         <div>
           <Sticker color="yellow" rotate={-4}>STEP UP</Sticker>
           <h2 className="mt-4 font-display text-[2.5rem] leading-[0.92] text-mm-bone md:mt-6 md:text-7xl lg:text-8xl">
