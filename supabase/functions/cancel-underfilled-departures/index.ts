@@ -77,32 +77,40 @@ Deno.serve(async (req) => {
     const depSummary: Record<string, unknown> = { departureId: depId, departureDate, refunds: [] as unknown[] };
 
     try {
-      // One-way status flip so re-runs skip already-cancelled departures.
+      // Read confirmed bookings BEFORE flipping so we can tell solo from squad.
+      const { data: bookings, error: bkErr } = await sb
+        .from("bookings")
+        .select("id,stripe_session_id,stripe_payment_intent_id,stripe_balance_payment_intent_id,amount_paid,group_size,spot_number,lead_email,lead_name,lead_solo")
+        .eq("departure_id", depId)
+        .eq("status", "Confirmed");
+      if (bkErr) throw new Error(`bookings query failed: ${bkErr.message}`);
+
+      const soloBookings = (bookings ?? []).filter((b) => b.lead_solo === true);
+      const squadBookings = (bookings ?? []).filter((b) => b.lead_solo !== true);
+      const hasSolo = soloBookings.length > 0;
+      // Solo travellers are exempt from the 5-minimum, so the departure still runs for them.
+      const targetStatus = hasSolo ? "confirmed" : "cancelled";
+      const stampCol = hasSolo ? "confirmed_at" : "cancelled_at";
+
+      // One-way status flip, guarded on 'pending', so re-runs skip already-processed departures.
       const { data: flipped, error: flipErr } = await sb
         .from("departures")
-        .update({ status: "cancelled", cancelled_at: new Date().toISOString() })
+        .update({ status: targetStatus, [stampCol]: new Date().toISOString() })
         .eq("id", depId)
         .eq("status", "pending")
         .select("id");
       if (flipErr) throw new Error(`status flip failed: ${flipErr.message}`);
       if (!flipped || flipped.length === 0) {
-        summary.push({ ...depSummary, skipped: "already_cancelled" });
+        summary.push({ ...depSummary, skipped: "already_processed" });
         continue;
       }
 
-      const { data: bookings, error: bkErr } = await sb
-        .from("bookings")
-        .select("id,stripe_session_id,stripe_payment_intent_id,stripe_balance_payment_intent_id,amount_paid,group_size,spot_number,lead_email,lead_name")
-        .eq("departure_id", depId)
-        .eq("status", "Confirmed");
-      if (bkErr) throw new Error(`bookings query failed: ${bkErr.message}`);
-
-      // Group by stripe_session_id (one Stripe checkout per group).
-      const groups = new Map<string, typeof bookings>();
-      for (const b of bookings ?? []) {
+      // Only squad (non-solo) bookings get cancelled + refunded. Group by stripe_session_id.
+      const groups = new Map<string, typeof squadBookings>();
+      for (const b of squadBookings) {
         const sid = (b.stripe_session_id as string) ?? "";
         if (!sid) continue;
-        if (!groups.has(sid)) groups.set(sid, [] as typeof bookings);
+        if (!groups.has(sid)) groups.set(sid, [] as typeof squadBookings);
         groups.get(sid)!.push(b);
       }
 
@@ -186,7 +194,7 @@ Deno.serve(async (req) => {
         });
       }
 
-      summary.push({ ...depSummary, cancelled: true, groups: groups.size });
+      summary.push({ ...depSummary, outcome: hasSolo ? "confirmed_for_solo" : "cancelled", soloKept: soloBookings.length, squadCancelledGroups: groups.size });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       console.error(`departure ${depId} failed:`, msg);
