@@ -385,19 +385,44 @@ async function writeBookings(session: Stripe.Checkout.Session) {
     if (m.lead_email) {
       const country = (m.trip_name as string)?.split(/[—\-:]/)[0]?.trim() || (m.trip_slug as string) || "your trip";
       const firstName = ((m.lead_name as string) || "").split(" ")[0] || "traveler";
-      const { subject, html } = bookingConfirmationEmail({
-        firstName,
-        tripCountry: country,
-        tripName: (m.trip_name as string) || (m.trip_slug as string) || "",
-        departureDate: (m.departure_date as string) || "",
-        spots: groupSize,
-        amount: `$${amountPaidTotal.toFixed(2)} ${(session.currency || "usd").toUpperCase()}`,
-        bookingRef,
-        bookingUrl: `${APP_URL}/booking-success?session_id=${encodeURIComponent(sessionId)}`,
-      });
-      sendEmail({ to: m.lead_email as string, subject, html }).catch((e) =>
-        console.warn("booking-confirmation email failed", e),
-      );
+      const isSolo = m.lead_solo === "true";
+      if (isSolo) {
+        // Solo bookings are confirmed immediately — send the "book flights now" email, not the "hold off" one.
+        const balanceTotal = Math.max(0, fullDue - amountPaidTotal);
+        const depForDue = new Date(((m.departure_date as string) || "") + "T00:00:00Z");
+        depForDue.setUTCDate(depForDue.getUTCDate() - 7);
+        const balDue = isNaN(depForDue.getTime()) ? "" : depForDue.toISOString().slice(0, 10);
+        const { subject, html } = soloBookingConfirmedEmail({
+          firstName,
+          tripCountry: country,
+          tripName: (m.trip_name as string) || (m.trip_slug as string) || "",
+          departureDate: (m.departure_date as string) || "",
+          spots: groupSize,
+          balanceAmount: `$${balanceTotal.toFixed(2)} ${(session.currency || "usd").toUpperCase()}`,
+          balanceDueDate: balDue,
+          payBalanceUrl: `${APP_URL}/pay-balance?ref=${encodeURIComponent(bookingRef)}&email=${encodeURIComponent(m.lead_email as string)}`,
+          bookingRef,
+          bookingUrl: `${APP_URL}/booking-success?session_id=${encodeURIComponent(sessionId)}`,
+          hasBalance: balanceTotal > 0,
+        });
+        sendEmail({ to: m.lead_email as string, subject, html }).catch((e) => console.warn("solo-confirmation email failed", e));
+        // Stamp so process-departure-events never double-sends a trip-confirmed email if this departure later hits 5.
+        await sb.from("bookings").update({ trip_confirmed_notified_at: new Date().toISOString() }).eq("stripe_session_id", sessionId);
+      } else {
+        const { subject, html } = bookingConfirmationEmail({
+          firstName,
+          tripCountry: country,
+          tripName: (m.trip_name as string) || (m.trip_slug as string) || "",
+          departureDate: (m.departure_date as string) || "",
+          spots: groupSize,
+          amount: `$${amountPaidTotal.toFixed(2)} ${(session.currency || "usd").toUpperCase()}`,
+          bookingRef,
+          bookingUrl: `${APP_URL}/booking-success?session_id=${encodeURIComponent(sessionId)}`,
+        });
+        sendEmail({ to: m.lead_email as string, subject, html }).catch((e) =>
+          console.warn("booking-confirmation email failed", e),
+        );
+      }
 
       // Ops team notification — single email to the internal crew
       try {
