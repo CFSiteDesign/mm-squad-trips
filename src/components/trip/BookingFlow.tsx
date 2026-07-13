@@ -319,6 +319,24 @@ export function BookingFlow({ trip }: { trip: Trip }) {
 
 
             <div className="border-mm-thick bg-mm-paper p-4 text-mm-black shadow-mm-lg md:p-6">
+              {/* Final confirmation + last-chance duration switch */}
+              <div className="mb-4 border-[3px] border-mm-black bg-mm-black p-3 text-mm-bone md:mb-5 md:p-4">
+                <p className="font-sticker text-[10px] tracking-[0.18em] text-mm-bone/60">YOU'RE ABOUT TO BOOK</p>
+                <p className="mt-1 font-display text-lg leading-tight text-mm-bone md:text-xl">
+                  {trip.name.toUpperCase()} · {trip.days} DAYS
+                </p>
+                <p className="mt-1 text-[13px] text-mm-bone/80">
+                  {formatDateLong(selected.date)} · {groupSize} SPOT{groupSize > 1 ? "S" : ""} · from {formatPrice(selected.price)}
+                </p>
+                {showDurationToggle && (
+                  <div className="mt-3">
+                    <p className="mb-2 font-sticker text-[10px] tracking-[0.14em] text-mm-bone/50">
+                      CHANGE THE LENGTH ONE LAST TIME?
+                    </p>
+                    <DurationToggle slug={trip.slug} />
+                  </div>
+                )}
+              </div>
               <PaymentSummary trip={trip} selected={selected} groupSize={groupSize} discountAmount={discountState?.amount ?? 0} />
               <Button
                 disabled={submitting}

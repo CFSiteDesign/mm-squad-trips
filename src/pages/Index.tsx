@@ -20,7 +20,7 @@ import { SquadCTA } from "@/components/trip/SquadCTA";
 import heroImg from "@/assets/home-hero.png";
 import allInLogo from "@/assets/all-in-logo.png";
 
-import { TRIPS, ACCENT_BG, type Filter } from "@/data/trips";
+import { TRIPS, ACCENT_BG, type Filter, type TripCard } from "@/data/trips";
 
 const INCLUDED_TABS: { name: string; items: { icon: any; title: string; desc: string }[] }[] = [
   {
@@ -210,48 +210,11 @@ export default function Index() {
 
           {/* trip cards */}
           <ul className="mt-10 grid gap-6 md:mt-12 md:grid-cols-2 lg:grid-cols-3">
-            {visible.map((t, i) => {
-              const comingSoon = t.comingSoonOn?.includes(variant);
-              const cardInner = (
-                <>
-                  <div className="flex items-start justify-end gap-3">
-                    {comingSoon ? (
-                      <span className="inline-flex items-center border-[3px] border-mm-black bg-mm-yellow px-2.5 py-1 font-sticker text-[10px] tracking-[0.14em] text-mm-black">
-                        COMING SOON
-                      </span>
-                    ) : (
-                      <span className={`flex h-12 w-12 items-center justify-center border-[3px] border-mm-black ${ACCENT_BG[t.accent]} font-display text-2xl text-mm-black`}>
-                        →
-                      </span>
-                    )}
-                  </div>
-                  <h3 className="mt-2 font-display text-[2.75rem] leading-[0.88] md:text-5xl">{t.name}.</h3>
-                  <p className="mt-1 font-display text-base leading-none text-mm-orange md:text-lg">
-                    {t.sub.toUpperCase()}
-                  </p>
-                  <p className="mt-4 text-[13px] font-medium leading-snug text-mm-black/80">{t.route}</p>
-                  <p className="mt-5 font-sticker text-[11px] tracking-[0.14em] text-mm-black">
-                    {comingSoon ? "COMING SOON" : `${t.days} DAYS · FROM $${t.price}`}
-                  </p>
-                </>
-              );
-              return (
-                <li key={t.slug}>
-                  {comingSoon ? (
-                    <div className="relative block h-full border-[4px] border-mm-bone bg-mm-bone p-5 text-mm-black shadow-mm opacity-60 cursor-default md:p-6">
-                      {cardInner}
-                    </div>
-                  ) : (
-                    <Link
-                      to={`/${t.slug}`}
-                      className="group relative block h-full border-[4px] border-mm-bone bg-mm-bone p-5 text-mm-black shadow-mm transition-transform hover:-translate-x-[4px] hover:-translate-y-[4px] md:p-6"
-                    >
-                      {cardInner}
-                    </Link>
-                  )}
-                </li>
-              );
-            })}
+            {groupTrips(visible).map((g) => (
+              <li key={g.country}>
+                <TripCardView group={g} variant={variant} />
+              </li>
+            ))}
           </ul>
         </div>
       </section>
@@ -304,5 +267,101 @@ export default function Index() {
 
       <SiteFooter />
     </main>
+  );
+}
+
+type CardGroup = { country: Filter; long: TripCard; short?: TripCard };
+
+/** Group trips by country so each country renders one card. Countries with both
+ * a 7-day and a 12+ day trip (Indonesia, Vietnam) get a duration toggle. */
+function groupTrips(list: TripCard[]): CardGroup[] {
+  const order: Filter[] = [];
+  const byCountry = new Map<Filter, TripCard[]>();
+  for (const t of list) {
+    if (!byCountry.has(t.country)) {
+      byCountry.set(t.country, []);
+      order.push(t.country);
+    }
+    byCountry.get(t.country)!.push(t);
+  }
+  return order.map((country) => {
+    const trips = byCountry.get(country)!;
+    const short = trips.find((t) => t.days > 0 && t.days <= 7);
+    const long =
+      trips.find((t) => t.days > 7) ?? trips.find((t) => t.days === 0) ?? trips[0];
+    return { country, long, short };
+  });
+}
+
+function TripCardView({ group, variant }: { group: CardGroup; variant: "default" | "student" }) {
+  const [dur, setDur] = useState<"short" | "long">("long");
+  const hasToggle = Boolean(group.short);
+  const active = dur === "short" && group.short ? group.short : group.long;
+  const comingSoon = active.comingSoonOn?.includes(variant);
+
+  const inner = (
+    <>
+      <div className="flex items-start justify-end gap-3">
+        {comingSoon ? (
+          <span className="inline-flex items-center border-[3px] border-mm-black bg-mm-yellow px-2.5 py-1 font-sticker text-[10px] tracking-[0.14em] text-mm-black">
+            COMING SOON
+          </span>
+        ) : (
+          <span className={`flex h-12 w-12 items-center justify-center border-[3px] border-mm-black ${ACCENT_BG[active.accent]} font-display text-2xl text-mm-black`}>
+            →
+          </span>
+        )}
+      </div>
+      <h3 className="mt-2 font-display text-[2.75rem] leading-[0.88] md:text-5xl">{group.country}.</h3>
+      <p className="mt-1 font-display text-base leading-none text-mm-orange md:text-lg">
+        {active.sub.toUpperCase()}
+      </p>
+      <p className="mt-4 text-[13px] font-medium leading-snug text-mm-black/80">{active.route}</p>
+
+      {hasToggle && !comingSoon && (
+        <div className="mt-5 inline-flex items-center gap-1 border-[3px] border-mm-black bg-mm-black/[0.06] p-1">
+          {(["short", "long"] as const).map((d) => {
+            const dv = d === "short" ? group.short! : group.long;
+            const on = dur === d;
+            return (
+              <button
+                key={d}
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setDur(d);
+                }}
+                className={`px-3 py-1 font-sticker text-[10px] tracking-[0.14em] transition-colors ${
+                  on ? "bg-mm-black text-mm-bone" : "text-mm-black hover:bg-mm-black/10"
+                }`}
+              >
+                {dv.days} DAYS
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      <p className={`${hasToggle && !comingSoon ? "mt-3" : "mt-5"} font-sticker text-[11px] tracking-[0.14em] text-mm-black`}>
+        {comingSoon ? "COMING SOON" : `${active.days} DAYS · FROM $${active.price}`}
+      </p>
+    </>
+  );
+
+  if (comingSoon) {
+    return (
+      <div className="relative block h-full border-[4px] border-mm-bone bg-mm-bone p-5 text-mm-black shadow-mm opacity-60 cursor-default md:p-6">
+        {inner}
+      </div>
+    );
+  }
+  return (
+    <Link
+      to={`/${active.slug}`}
+      className="group relative block h-full border-[4px] border-mm-bone bg-mm-bone p-5 text-mm-black shadow-mm transition-transform hover:-translate-x-[4px] hover:-translate-y-[4px] md:p-6"
+    >
+      {inner}
+    </Link>
   );
 }
