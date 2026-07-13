@@ -56,10 +56,11 @@ Deno.serve(async (req) => {
     discountCode?: string;
     friendsMentioned?: string;
     utm?: Record<string, string>;
+    gaClientId?: string;
   };
   try { payload = await req.json(); } catch { return err("Invalid JSON body"); }
 
-  const { tripSlug, departureId, groupSize, leadBooker, travelers = [], discountCode, friendsMentioned, utm = {} } = payload;
+  const { tripSlug, departureId, groupSize, leadBooker, travelers = [], discountCode, friendsMentioned, utm = {}, gaClientId } = payload;
   if (!tripSlug || typeof tripSlug !== "string") return err("tripSlug required");
   if (!departureId || typeof departureId !== "string") return err("departureId required");
   if (!groupSize || typeof groupSize !== "number" || groupSize < 1 || groupSize > 5) return err("groupSize must be 1–5");
@@ -200,6 +201,9 @@ Deno.serve(async (req) => {
       utm_medium: utm.utm_medium ?? "",
       utm_campaign: utm.utm_campaign ?? "",
       utm_content: utm.utm_content ?? "",
+      // GA4 client id — lets charge-trip-balances attribute the later balance
+      // charge to the same GA4 session/campaign via Measurement Protocol.
+      ga_client_id: gaClientId ?? "",
     };
 
     (travelers as Array<Record<string, string>>).slice(0, 4).forEach((t, i) => {
