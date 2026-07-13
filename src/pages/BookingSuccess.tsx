@@ -3,6 +3,15 @@ import { useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Share2 } from "lucide-react";
+import { gtmClearEcommerce, gtmPushEvent } from "@/utils/gtmTracker";
+import {
+  buildGa4Item,
+  CONVERSION_TYPE_ALL_IN,
+  ITEM_CATEGORY_ALL_IN,
+  LIST_ID_ALL_IN,
+  LIST_NAME_ALL_IN,
+  markCheckoutEventOnce,
+} from "@/utils/ecommerceDataLayer";
 
 interface BookingInfo {
   bookingRef: string | null;
@@ -56,6 +65,39 @@ export default function BookingSuccess() {
 
     return () => { cancelled = true; };
   }, [sessionId]);
+
+  // NOTE (documented limitation): booking-lookup only returns
+  // tripName/departureDate/amountPaid — not trip slug, groupSize, or
+  // per-spot discount — so this item is coarser than view_item/begin_checkout.
+  // For deposit bookings, `amountPaid` is the deposit only ($99/spot), not the
+  // full trip price — the balance auto-charged 7 days before departure has no
+  // client-side moment to report to GA4, so revenue here reads as
+  // deposit-moment revenue, not total revenue collected.
+  useEffect(() => {
+    if (!info || !sessionId) return;
+    if (!markCheckoutEventOnce("purchase", sessionId)) return;
+    gtmClearEcommerce();
+    gtmPushEvent("purchase", {
+      conversion_type: CONVERSION_TYPE_ALL_IN,
+      ecommerce: {
+        transaction_id: sessionId,
+        currency: "USD",
+        value: info.amountPaid,
+        items: [
+          buildGa4Item({
+            item_id: info.tripName,
+            item_name: info.tripName,
+            price: info.amountPaid,
+            quantity: 1,
+            item_category: ITEM_CATEGORY_ALL_IN,
+            item_variant: info.paymentType,
+            item_list_id: LIST_ID_ALL_IN,
+            item_list_name: LIST_NAME_ALL_IN,
+          }),
+        ],
+      },
+    });
+  }, [info, sessionId]);
 
   const refDisplay =
     refStatus === "ready" ? (info?.bookingRef ?? "") :

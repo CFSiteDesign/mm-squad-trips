@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { registerSquadLeader } from "@/lib/squad";
+import { gtmPushEvent } from "@/utils/gtmTracker";
 
 export default function StudentSquadRegister() {
   const navigate = useNavigate();
@@ -39,6 +40,7 @@ export default function StudentSquadRegister() {
       await registerSquadLeader({ ...f, is_student: true });
       setPendingDone(true);
       window.scrollTo({ top: 0, behavior: "auto" });
+      gtmPushEvent("sign_up", { method: "squad_leader_student" });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not submit application");
     } finally {

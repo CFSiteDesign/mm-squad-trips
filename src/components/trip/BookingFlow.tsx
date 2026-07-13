@@ -20,6 +20,8 @@ import { SpotBadge } from "./SpotBadge";
 import { DurationToggle } from "./DurationToggle";
 import type { Trip, Departure } from "@/types/trip";
 import { createCheckoutSession, validateDiscount } from "@/lib/api";
+import { gtmClearEcommerce, gtmPushEvent } from "@/utils/gtmTracker";
+import { buildTripEcommerceItem, CONVERSION_TYPE_ALL_IN, markCheckoutEventOnce } from "@/utils/ecommerceDataLayer";
 import { Sticker } from "@/components/brand/Sticker";
 import { COUNTRIES } from "@/lib/countries";
 import { useSiteVariant, squadPath } from "@/hooks/use-site-variant";
@@ -100,6 +102,26 @@ export function BookingFlow({ trip }: { trip: Trip }) {
     if (!selected) return toast.error("Pick a departure first");
     if (!lead.name || !lead.email || !lead.phone || !lead.country) return toast.error("Fill out your details");
     setSubmitting(true);
+    const discountAmount = discountState?.valid ? discountState.amount ?? 0 : 0;
+    const checkoutDedupeKey = `${trip.slug}:${selected.id}:${groupSize}`;
+    if (markCheckoutEventOnce("begin_checkout", checkoutDedupeKey)) {
+      gtmClearEcommerce();
+      gtmPushEvent("begin_checkout", {
+        conversion_type: CONVERSION_TYPE_ALL_IN,
+        ecommerce: {
+          currency: "USD",
+          value: selected.price * groupSize - discountAmount,
+          coupon: discountState?.valid ? discountCode.trim().toUpperCase() : "",
+          items: [
+            buildTripEcommerceItem(trip, selected, {
+              quantity: groupSize,
+              coupon: discountState?.valid ? discountCode.trim().toUpperCase() : undefined,
+              discount: discountAmount,
+            }),
+          ],
+        },
+      });
+    }
     try {
       const params = new URLSearchParams(window.location.search);
       const utm: Record<string, string> = {};
