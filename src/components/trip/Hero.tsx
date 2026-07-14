@@ -70,7 +70,7 @@ export function Hero({ trip, heroImageUrl }: { trip: Trip; heroImageUrl?: string
         {/* Starburst */}
         <div className="pointer-events-none absolute right-3 top-[5rem] z-30">
           <Starburst size={92} color="pink" rotate={-12}>
-            {trip.days}
+            {displayDays}
             <br />
             DAYS
           </Starburst>
@@ -95,7 +95,7 @@ export function Hero({ trip, heroImageUrl }: { trip: Trip; heroImageUrl?: string
                 ? "Hanoi → Ha Giang Loop · 7 days · one unforgettable trip · Starts Wednesday · $310 · $99 deposit holds your spot"
                 : trip.slug === "indonesia-7"
                 ? "Gili T → Kuta Lombok · 7 days · one unforgettable trip · Starts Thursday · $450 · $99 deposit holds your spot"
-                : `${trip.days} days · ${trip.stops.length} stops · ${trip.activityCount} activities · One crew`}
+                : `${displayDays} days · ${trip.stops.length} stops · ${trip.activityCount} activities · One crew`}
             </p>
 
             {showToggle && (
@@ -152,7 +152,7 @@ export function Hero({ trip, heroImageUrl }: { trip: Trip; heroImageUrl?: string
         {/* Starburst */}
         <div className="pointer-events-none absolute right-8 top-20 z-20 origin-top-right scale-[0.78] lg:right-16 lg:top-20 lg:scale-100">
           <Starburst size={180} color="pink" rotate={-12} textClassName="text-2xl">
-            {trip.days}
+            {displayDays}
             <br />
             DAYS
           </Starburst>
@@ -175,7 +175,7 @@ export function Hero({ trip, heroImageUrl }: { trip: Trip; heroImageUrl?: string
                 ? "Hanoi → Ha Giang Loop · 7 days · one unforgettable trip · Starts Wednesday · $310 · $99 deposit holds your spot"
                 : trip.slug === "indonesia-7"
                 ? "Gili T → Kuta Lombok · 7 days · one unforgettable trip · Starts Thursday · $450 · $99 deposit holds your spot"
-                : `${trip.days} days · ${trip.stops.length} stops · ${trip.activityCount} activities · One crew`}
+                : `${displayDays} days · ${trip.stops.length} stops · ${trip.activityCount} activities · One crew`}
             </p>
 
             {showToggle && (
