@@ -13,6 +13,10 @@ export function Hero({ trip, heroImageUrl }: { trip: Trip; heroImageUrl?: string
   const payInFull = allDeparturesUnder60Days(trip.departures);
   const hasVideo = /\.(mp4|webm|mov|m4v)(\?|$)/i.test(trip.heroVideoUrl ?? "");
   const showToggle = TOGGLE_BASE_SLUGS.has(trip.slug);
+  const isStudentPath =
+    typeof window !== "undefined" && window.location.pathname.startsWith("/students");
+  const isStudentIndo = isStudentPath && trip.slug === "indonesia";
+  const displayDays = isStudentIndo ? 13 : trip.days;
 
 
 
