@@ -62,7 +62,7 @@ const INCLUDED_TABS: { name: string; items: { icon: any; title: string; desc: st
 
 import { Testimonials } from "@/components/trip/Testimonials";
 
-const TICKER = "ALL IN  ·  53,000+ IN THE CREW  ·  $99 HOLDS YOUR SPOT  ·  REAL MAD MONKEY HOSTELS  ·  SOLO? NOT FOR LONG  ·  ";
+const TICKER = "ALL IN  ·  53,000+ IN THE CREW  ·  $99 HOLDS YOUR SPOT  ·  REAL MAD MONKEY HOSTELS  ·  CHANGE OF PLANS? LIFETIME DEPOSIT GUARANTEE  ·  $99 SECURES YOUR SPOT  ·  SOLO? NOT FOR LONG  ·  ";
 
 export default function Index() {
   const [filter, setFilter] = useState<Filter>("ALL");
