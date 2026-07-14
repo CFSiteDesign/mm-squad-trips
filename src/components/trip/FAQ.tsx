@@ -7,6 +7,7 @@ const DEFAULT_FAQS = [
   { q: "What's the age range?", a: "Most guests are 23–31. Nobody under 18, nobody over 39 on these specific trips." },
   { q: "Is this like Contiki?", a: "No coach buses. No 60-person mega-groups. Max 20 people, real backpacker hostels, free time built in." },
   { q: "What if I don't drink?", a: "Plenty of guests don't. The crew always plans non-drinking options for every night." },
+  { q: "What if my plans change?", a: "Plans change, and that's totally okay. Swap your trip dates, gift it to someone, or save it for later with our Lifetime Deposit Guarantee." },
   { q: "What happens after I pay the deposit?", a: "You get an email with your booking reference. Once 5 travellers have booked, your trip is confirmed and we'll email you the green light to book your flights. The remaining balance is then automatically charged to the same card 7 days before departure — no action needed." },
   { q: "When is the balance due?", a: "7 days before departure. We'll email you a reminder with a payment link." },
   { q: "What if my departure doesn't reach the minimum?", a: "Every departure needs at least 5 travellers to run. If it hasn't reached 5 by 30 days before departure, we cancel it and refund your deposit in full, automatically — you don't need to do anything." },
