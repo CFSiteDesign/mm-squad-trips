@@ -1,14 +1,31 @@
 import { Bed, Bus, Compass, HeadphonesIcon, MapPin, PartyPopper, Moon, Sparkles, Utensils } from "lucide-react";
 import type { Trip } from "@/types/trip";
 import { Sticker } from "@/components/brand/Sticker";
+import { useSiteVariant } from "@/hooks/use-site-variant";
 
 export function Included({ trip }: { trip: Trip }) {
+  const variant = useSiteVariant();
+  const isStudent = variant === "student";
   const isVietnam = trip.slug === "vietnam";
   const isVietnam7 = trip.slug === "vietnam-7";
   const isIndonesia7 = trip.slug === "indonesia-7";
+  const isStudentIndonesia = isStudent && trip.slug === "indonesia";
+
 
   let items;
-  if (isVietnam) {
+  if (isStudentIndonesia) {
+    items = [
+      { icon: Sparkles, label: "EVERYTHING SORTED" },
+      { icon: MapPin, label: "13 DAYS, 4 DESTINATIONS" },
+      { icon: Bus, label: "ALL TRANSFERS + ISLAND BOATS" },
+      { icon: HeadphonesIcon, label: "24/7 LOCAL CREW" },
+      { icon: Moon, label: "FREE PRE-NIGHT TRIP, ARRIVE FRIDAY BEFORE, FIRST NIGHT ON US" },
+      { icon: Utensils, label: "4 BREAKFASTS, 5 LUNCHES, 5 DINNERS" },
+      { icon: PartyPopper, label: "LOADS OF FREE DRINKS INCLUDED THROUGHOUT" },
+      { icon: Compass, label: "ALL ACTIVITIES INCLUDED IN THE ITINERARY" },
+      { icon: Bed, label: "DORM BEDS AT MAD MONKEY" },
+    ];
+  } else if (isVietnam) {
     items = [
       { icon: Sparkles, label: "EVERYTHING SORTED" },
       { icon: MapPin, label: "14 DAYS, 5 DESTINATIONS" },
@@ -52,7 +69,7 @@ export function Included({ trip }: { trip: Trip }) {
     ];
   }
 
-  const notIncluded = (isVietnam || isVietnam7 || isIndonesia7)
+  const notIncluded = (isVietnam || isVietnam7 || isIndonesia7 || isStudentIndonesia)
     ? "Flights · Additional food, drink + personal expenses · Upgrades + optional add-ons · Insurance"
     : "Flights · Additional food + drink · Optional add-ons · Travel insurance";
 
