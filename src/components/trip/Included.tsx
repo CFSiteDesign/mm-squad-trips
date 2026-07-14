@@ -1,11 +1,16 @@
 import { Bed, Bus, Compass, HeadphonesIcon, MapPin, PartyPopper, Moon, Sparkles, Utensils } from "lucide-react";
 import type { Trip } from "@/types/trip";
 import { Sticker } from "@/components/brand/Sticker";
+import { useSiteVariant } from "@/hooks/use-site-variant";
 
 export function Included({ trip }: { trip: Trip }) {
+  const variant = useSiteVariant();
+  const isStudent = variant === "student";
   const isVietnam = trip.slug === "vietnam";
   const isVietnam7 = trip.slug === "vietnam-7";
   const isIndonesia7 = trip.slug === "indonesia-7";
+  const isStudentIndonesia = isStudent && trip.slug === "indonesia";
+
 
   let items;
   if (isVietnam) {
