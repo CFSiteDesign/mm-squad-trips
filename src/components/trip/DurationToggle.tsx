@@ -1,8 +1,10 @@
 import { useNavigate } from "react-router-dom";
+import { TRIPS } from "@/data/trips";
 
 /**
- * 7 DAYS / 12+ DAYS toggle for Indonesia & Vietnam trip pages.
- * Switches between the base slug and the "-7" variant slug.
+ * 7 DAYS / X DAYS toggle for Indonesia & Vietnam trip pages.
+ * X reflects the long-variant trip length from TRIPS data
+ * (or 13 for the student Indonesia itinerary).
  */
 export function DurationToggle({ slug }: { slug: string }) {
   const navigate = useNavigate();
@@ -12,6 +14,10 @@ export function DurationToggle({ slug }: { slug: string }) {
   const isStudentPath =
     typeof window !== "undefined" && window.location.pathname.startsWith("/students");
   const prefix = isStudentPath ? "/students" : "";
+
+  const longTrip = TRIPS.find((t) => t.slug === base);
+  const longDays =
+    isStudentPath && base === "indonesia" ? 13 : longTrip?.days ?? 12;
 
   const go = (variant: "long" | "short") => {
     const target = variant === "short" ? `${base}-7` : base;
