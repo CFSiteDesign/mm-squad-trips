@@ -13,7 +13,19 @@ export function Included({ trip }: { trip: Trip }) {
 
 
   let items;
-  if (isVietnam) {
+  if (isStudentIndonesia) {
+    items = [
+      { icon: Sparkles, label: "EVERYTHING SORTED" },
+      { icon: MapPin, label: "13 DAYS, 4 DESTINATIONS" },
+      { icon: Bus, label: "ALL TRANSFERS + ISLAND BOATS" },
+      { icon: HeadphonesIcon, label: "24/7 LOCAL CREW" },
+      { icon: Moon, label: "FREE PRE-NIGHT TRIP, ARRIVE FRIDAY BEFORE, FIRST NIGHT ON US" },
+      { icon: Utensils, label: "4 BREAKFASTS, 5 LUNCHES, 5 DINNERS" },
+      { icon: PartyPopper, label: "LOADS OF FREE DRINKS INCLUDED THROUGHOUT" },
+      { icon: Compass, label: "ALL ACTIVITIES INCLUDED IN THE ITINERARY" },
+      { icon: Bed, label: "DORM BEDS AT MAD MONKEY" },
+    ];
+  } else if (isVietnam) {
     items = [
       { icon: Sparkles, label: "EVERYTHING SORTED" },
       { icon: MapPin, label: "14 DAYS, 5 DESTINATIONS" },
