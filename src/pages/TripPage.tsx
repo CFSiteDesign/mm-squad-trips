@@ -26,6 +26,8 @@ import { Sticker } from "@/components/brand/Sticker";
 
 const TRIP_SLUGS = ["vietnam", "indonesia", "cambodia", "vietnam-7", "indonesia-7"];
 
+const BOOKING_TICKER = "$99 SECURES YOUR SPOT  ·  CHANGE OF PLANS? LIFETIME DEPOSIT GUARANTEE  ·  $99 SECURES YOUR SPOT  ·  ";
+
 
 function getSetupHint(_message: string, slug: string) {
   return `Operator check: verify that slug "${slug}" exists in the Trips table and is marked active.`;
