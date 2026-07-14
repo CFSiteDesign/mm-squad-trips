@@ -69,7 +69,7 @@ export function Included({ trip }: { trip: Trip }) {
     ];
   }
 
-  const notIncluded = (isVietnam || isVietnam7 || isIndonesia7)
+  const notIncluded = (isVietnam || isVietnam7 || isIndonesia7 || isStudentIndonesia)
     ? "Flights · Additional food, drink + personal expenses · Upgrades + optional add-ons · Insurance"
     : "Flights · Additional food + drink · Optional add-ons · Travel insurance";
 
