@@ -41,7 +41,7 @@ export function DurationToggle({ slug }: { slug: string }) {
         7 DAYS
       </button>
       <button type="button" onClick={() => go("long")} className={btn(!isSeven)}>
-        12+ DAYS
+        {longDays} DAYS
       </button>
     </div>
   );
