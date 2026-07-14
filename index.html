@@ -10,15 +10,12 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Bungee&display=swap" rel="stylesheet" />
 
-    <!-- Cookiebot Cookie Consent (same domain group as madmonkeyhostels.com — this app is served at /all-in-trips on that domain) -->
-    <script
-      id="CookiebotSetupScript"
-      src="https://consent.cookiebot.com/uc.js"
-      data-cbid="ca1958c7-4d45-419e-821f-0b5dc0190413"
-      data-blockingmode="auto"
-      type="text/javascript"
-      async
-    ></script>
+    <!-- Cookiebot itself is NOT hardcoded here — the shared GTM-KC78NFHD
+         container already has its own "Cookiebot" tag (a community template,
+         firing on GTM's Consent Initialization trigger). Adding a second,
+         hardcoded <script id="CookiebotSetupScript"> here loaded it twice
+         (confirmed via console: "Cookiebot script is included twice"),
+         which is what was actually breaking things — not GTM itself. -->
 
     <!-- Cookiebot to Google Consent Mode Integration -->
     <script>
