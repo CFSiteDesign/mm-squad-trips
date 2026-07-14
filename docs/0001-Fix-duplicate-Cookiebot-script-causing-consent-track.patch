@@ -1,0 +1,52 @@
+From 5ea883c772632a1cfc707d5f2c5ba0d603fce5b5 Mon Sep 17 00:00:00 2001
+From: Alexies Iglesia <ialexies@gmail.com>
+Date: Tue, 14 Jul 2026 15:40:25 +0800
+Subject: [PATCH] Fix duplicate Cookiebot script causing consent/tracking
+ issues
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Browser console showed "Cookiebot script is included twice" — the shared
+GTM-KC78NFHD container already loads Cookiebot itself via its own tag
+(a community template, tag id 74, firing on GTM's Consent Initialization
+trigger, confirmed by inspecting the container's export at
+frontend/docs/analytics/gtm/GTM-KC78NFHD_workspace48.json). index.html
+additionally hardcoded a second <script id="CookiebotSetupScript"> tag,
+loading it twice. Removed the redundant manual tag; the Consent Mode
+default stub stays since it still needs to run before gtm.js loads.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ index.html | 15 ++++++---------
+ 1 file changed, 6 insertions(+), 9 deletions(-)
+
+diff --git a/index.html b/index.html
+index 9dc95be..7bdb1b2 100644
+--- a/index.html
++++ b/index.html
+@@ -10,15 +10,12 @@
+     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Bungee&display=swap" rel="stylesheet" />
+ 
+-    <!-- Cookiebot Cookie Consent (same domain group as madmonkeyhostels.com — this app is served at /all-in-trips on that domain) -->
+-    <script
+-      id="CookiebotSetupScript"
+-      src="https://consent.cookiebot.com/uc.js"
+-      data-cbid="ca1958c7-4d45-419e-821f-0b5dc0190413"
+-      data-blockingmode="auto"
+-      type="text/javascript"
+-      async
+-    ></script>
++    <!-- Cookiebot itself is NOT hardcoded here — the shared GTM-KC78NFHD
++         container already has its own "Cookiebot" tag (a community template,
++         firing on GTM's Consent Initialization trigger). Adding a second,
++         hardcoded <script id="CookiebotSetupScript"> here loaded it twice
++         (confirmed via console: "Cookiebot script is included twice"),
++         which is what was actually breaking things — not GTM itself. -->
+ 
+     <!-- Cookiebot to Google Consent Mode Integration -->
+     <script>
+-- 
+2.55.0.windows.2
+
