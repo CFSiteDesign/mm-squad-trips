@@ -109,6 +109,12 @@ export default function TripPage() {
 
 
       <BookingFlow trip={trip} />
+      <div className="ticker bg-mm-lime text-mm-black">
+        <div className="ticker-track text-2xl font-black uppercase tracking-tight md:text-3xl">
+          <span>{BOOKING_TICKER}{BOOKING_TICKER}{BOOKING_TICKER}</span>
+          <span>{BOOKING_TICKER}{BOOKING_TICKER}{BOOKING_TICKER}</span>
+        </div>
+      </div>
       <FAQ />
       <SquadCTA />
       <TripCrossSell currentSlug={slug} />
