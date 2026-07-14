@@ -20,14 +20,14 @@ export function DurationToggle({ slug }: { slug: string }) {
 
   const btn = (active: boolean) =>
     [
-      "border-[3px] border-mm-bone px-4 py-2 font-sticker text-[11px] tracking-[0.16em] transition-transform md:text-xs",
+      "border-[3px] border-mm-bone px-4 py-2 font-sticker text-[11px] tracking-[0.16em] transition-colors md:text-xs",
       active
-        ? "bg-mm-lime text-mm-black shadow-mm-bone -translate-x-[2px] -translate-y-[2px]"
+        ? "bg-mm-lime text-mm-black"
         : "bg-transparent text-mm-bone hover:bg-mm-bone hover:text-mm-black",
     ].join(" ");
 
   return (
-    <div className="inline-flex items-center gap-2 border-[3px] border-mm-bone bg-mm-black/60 p-1 backdrop-blur">
+    <div className="relative z-10 inline-flex items-center gap-2 border-[3px] border-mm-bone bg-mm-black p-1">
       <span className="ml-2 mr-1 font-sticker text-[10px] tracking-[0.18em] text-mm-bone/70">
         DURATION
       </span>
