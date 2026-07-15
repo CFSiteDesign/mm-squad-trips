@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { registerSquadLeader, setSquadPassword } from "@/lib/squad";
+import { gtmPushEvent } from "@/utils/gtmTracker";
 
 
 export default function SquadRegister() {
@@ -57,6 +58,7 @@ export default function SquadRegister() {
       }
       window.scrollTo({ top: 0, behavior: "auto" });
       setSuccess({ code: res.code, accessToken: res.accessToken, name: f.name });
+      gtmPushEvent("sign_up", { method: "squad_leader" });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not register");
     } finally {

@@ -62,6 +62,10 @@ export interface CreateCheckoutInput {
   discountCode?: string;
   friendsMentioned?: string;
   utm?: Record<string, string>;
+  /** GA4 client id (from the _ga cookie) so a later server-side balance charge
+   *  can be attributed to the same session/campaign in GA4. Empty when the
+   *  visitor declined analytics cookies (no _ga cookie exists). */
+  gaClientId?: string;
 }
 
 export async function createCheckoutSession(input: CreateCheckoutInput): Promise<{ url: string }> {

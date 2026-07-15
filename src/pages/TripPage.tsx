@@ -1,6 +1,9 @@
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "react-router-dom";
 import { fetchTrip } from "@/lib/api";
+import { gtmClearEcommerce, gtmPushEvent } from "@/utils/gtmTracker";
+import { buildTripEcommerceItem, CONVERSION_TYPE_ALL_IN, markCheckoutEventOnce } from "@/utils/ecommerceDataLayer";
 import { getTripFallback } from "@/data/tripFallbacks";
 import { Hero } from "@/components/trip/Hero";
 import { Included } from "@/components/trip/Included";
@@ -41,12 +44,29 @@ export default function TripPage() {
   const fallback = getTripFallback(slug);
   const showDurationToggle = ["indonesia", "vietnam", "indonesia-7", "vietnam-7"].includes(slug);
 
-  const { data: trip, isLoading, error } = useQuery({
+  const { data: trip, isLoading, error, isPlaceholderData } = useQuery({
     queryKey: ["trip", slug],
     queryFn: () => fetchTrip(slug),
     retry: false,
     placeholderData: fallback,
   });
+
+  // Only fire once real data has arrived — `trip` shows instant dummy pricing
+  // from tripFallbacks.ts via placeholderData while the real fetch is in
+  // flight, and firing on that would log fabricated prices into GA4.
+  useEffect(() => {
+    if (!trip || isPlaceholderData) return;
+    if (!markCheckoutEventOnce("view_item", trip.slug)) return;
+    gtmClearEcommerce();
+    gtmPushEvent("view_item", {
+      conversion_type: CONVERSION_TYPE_ALL_IN,
+      ecommerce: {
+        currency: "USD",
+        value: trip.defaultPrice,
+        items: [buildTripEcommerceItem(trip, { price: trip.defaultPrice })],
+      },
+    });
+  }, [trip, isPlaceholderData]);
 
   if (error && !fallback) {
     const message = error instanceof Error ? error.message : "Could not reach the trip data.";

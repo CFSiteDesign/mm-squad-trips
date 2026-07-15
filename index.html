@@ -10,8 +10,66 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Bungee&display=swap" rel="stylesheet" />
 
-    
-    
+    <!-- Cookiebot itself is NOT hardcoded here — the shared GTM-KC78NFHD
+         container already has its own "Cookiebot" tag (a community template,
+         firing on GTM's Consent Initialization trigger). Adding a second,
+         hardcoded <script id="CookiebotSetupScript"> here loaded it twice
+         (confirmed via console: "Cookiebot script is included twice"),
+         which is what was actually breaking things — not GTM itself. -->
+
+    <!-- Cookiebot to Google Consent Mode Integration -->
+    <script>
+      // Initialize Google Consent Mode
+      window.dataLayer = window.dataLayer || [];
+      function gtag() { dataLayer.push(arguments); }
+
+      // Set default consent state (denied until Cookiebot gives consent)
+      gtag('consent', 'default', {
+        'analytics_storage': 'denied',
+        'ad_storage': 'denied',
+        'ad_user_data': 'denied',
+        'ad_personalization': 'denied'
+      });
+
+      function updateGoogleConsentFromCookiebot() {
+        if (typeof Cookiebot === 'undefined') return;
+        if (Cookiebot.consent.statistics) {
+          gtag('consent', 'update', { 'analytics_storage': 'granted' });
+        }
+        if (Cookiebot.consent.marketing) {
+          gtag('consent', 'update', {
+            'ad_storage': 'granted',
+            'ad_user_data': 'granted',
+            'ad_personalization': 'granted'
+          });
+        }
+      }
+
+      function waitForCookiebot() {
+        if (typeof Cookiebot !== 'undefined' && Cookiebot.consent) {
+          updateGoogleConsentFromCookiebot();
+        } else {
+          setTimeout(waitForCookiebot, 500);
+        }
+      }
+      waitForCookiebot();
+      window.addEventListener('CookiebotOnConsentReady', updateGoogleConsentFromCookiebot);
+      window.addEventListener('CookiebotOnConsentChange', updateGoogleConsentFromCookiebot);
+    </script>
+
+    <!-- Google Tag Manager -->
+    <script>
+      (function(w,d,s,l,i){
+        w[l]=w[l]||[];
+        w[l].push({'gtm.start': new Date().getTime(), event: 'gtm.js'});
+        var f=d.getElementsByTagName(s)[0],
+        j=d.createElement(s), dl=l!='dataLayer'?'&l='+l:'';
+        j.async=true;
+        j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;
+        f.parentNode.insertBefore(j,f);
+      })(window,document,'script','dataLayer','%VITE_GTM_ID%');
+    </script>
+
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta property="og:title" content="Mad Monkey Group Trips — ALL IN.">
@@ -22,6 +80,16 @@
   <meta name="twitter:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/tzR2PpIkesUVrzz7XGJoD3wIFsL2/social-images/social-1779854602939-mmsquad.webp">
 </head>
   <body>
+    <!-- Google Tag Manager (noscript) -->
+    <noscript>
+      <iframe
+        src="https://www.googletagmanager.com/ns.html?id=%VITE_GTM_ID%"
+        height="0"
+        width="0"
+        title="Google Tag Manager"
+        style="display: none; visibility: hidden"
+      ></iframe>
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

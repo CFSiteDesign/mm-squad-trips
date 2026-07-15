@@ -22,6 +22,69 @@ function fmtDate(d: string | null | undefined): string {
 }
 
 const RETRY_DAYS = 2;
+
+// GA4 Measurement Protocol — reports the balance charge server-side so this
+// product's GA4 revenue reflects the full trip price, not just the deposit
+// captured client-side at booking. Inert until both secrets are set in the
+// Supabase project (Settings → Edge Functions → Secrets):
+//   GA4_MEASUREMENT_ID  (e.g. G-XXXXXXXXXX — the GA4 web data stream)
+//   GA4_MP_API_SECRET   (GA4 Admin → Data Streams → Measurement Protocol API secrets)
+const GA4_MEASUREMENT_ID = Deno.env.get("GA4_MEASUREMENT_ID");
+const GA4_MP_API_SECRET = Deno.env.get("GA4_MP_API_SECRET");
+
+async function sendBalancePurchaseToGa4(opts: {
+  clientId: string;
+  sessionId: string;
+  value: number;
+  tripName: string;
+  tripSlug: string;
+  groupSize: number;
+  perSpotBalance: number;
+}): Promise<string> {
+  // Not configured yet → no-op (safe for production before Alexeis provisions the secret).
+  if (!GA4_MEASUREMENT_ID || !GA4_MP_API_SECRET) return "skipped:not_configured";
+  // No client id means the visitor declined analytics cookies at booking
+  // (no _ga cookie existed) — skip rather than manufacture tracking they opted out of.
+  if (!opts.clientId) return "skipped:no_client_id";
+  try {
+    const res = await fetch(
+      `https://www.google-analytics.com/mp/collect?measurement_id=${GA4_MEASUREMENT_ID}&api_secret=${GA4_MP_API_SECRET}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          client_id: opts.clientId,
+          events: [{
+            name: "purchase",
+            params: {
+              // Distinct from the deposit-moment purchase (which uses the bare
+              // session id) so GA4 does not dedupe the two — deposit + balance
+              // then sum to the full trip price.
+              transaction_id: `${opts.sessionId}-balance`,
+              currency: "USD",
+              value: opts.value,
+              conversion_type: "all_in",
+              items: [{
+                item_id: opts.tripSlug || opts.tripName,
+                item_name: opts.tripName,
+                item_brand: "Mad Monkey",
+                item_category: "All In",
+                item_list_id: "all-in-trips",
+                item_list_name: "All In Trips",
+                item_variant: "Balance",
+                price: opts.perSpotBalance,
+                quantity: opts.groupSize,
+              }],
+            },
+          }],
+        }),
+      },
+    );
+    return res.ok ? "sent" : `error:http_${res.status}`;
+  } catch (e) {
+    return `error:${e instanceof Error ? e.message : String(e)}`;
+  }
+}
 const normalizeCronSecret = (value: string | null) => {
   const trimmed = value?.trim() ?? "";
   return /^[0-9a-fA-F]{64}$/.test(trimmed) ? trimmed.toLowerCase() : trimmed;
@@ -66,7 +129,7 @@ Deno.serve(async (req) => {
   // Get all lead rows that are due
   const { data: due, error } = await sb
     .from("bookings")
-    .select("id,stripe_session_id,stripe_customer_id,stripe_payment_method_id,balance_amount,balance_attempts,balance_due_date,group_size,lead_email,lead_name,trip_id,departure_id,booking_ref,trips(name),departures(departure_date)")
+    .select("id,stripe_session_id,stripe_customer_id,stripe_payment_method_id,balance_amount,balance_attempts,balance_due_date,group_size,lead_email,lead_name,trip_id,departure_id,booking_ref,trips(name,slug),departures(departure_date)")
     .in("balance_status", ["scheduled", "failed"])
     .eq("spot_number", 1)
     .lte("balance_next_attempt_at", nowIso);
@@ -164,6 +227,26 @@ Deno.serve(async (req) => {
         sendEmail({ to: row.lead_email as string, subject, html }).catch((e) =>
           console.warn("balance-paid email failed", e),
         );
+      }
+
+      // Report the balance charge to GA4 (Measurement Protocol) so revenue for
+      // this product isn't stuck at the deposit amount. The GA client id was
+      // captured at booking and lives on the original Checkout Session metadata.
+      try {
+        const checkoutSession = await stripe.checkout.sessions.retrieve(sessionId);
+        const gaClientId = (checkoutSession.metadata?.ga_client_id as string | undefined) ?? "";
+        const gaStatus = await sendBalancePurchaseToGa4({
+          clientId: gaClientId,
+          sessionId,
+          value: totalCents / 100,
+          tripName: (row.trips as { name?: string } | null)?.name ?? "",
+          tripSlug: (row.trips as { slug?: string } | null)?.slug ?? "",
+          groupSize: Number(row.group_size),
+          perSpotBalance: Number(row.balance_amount),
+        });
+        console.log(`GA4 balance purchase for ${sessionId}: ${gaStatus}`);
+      } catch (e) {
+        console.warn("GA4 balance purchase reporting failed", e);
       }
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);

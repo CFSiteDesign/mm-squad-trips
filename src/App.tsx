@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -21,6 +21,7 @@ import Admin from "./pages/Admin";
 import PayBalance from "./pages/PayBalance";
 
 import NotFound from "./pages/NotFound";
+import { gtmPushEvent } from "@/utils/gtmTracker";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -46,6 +47,28 @@ function ConditionalNavbar() {
   return <Navbar />;
 }
 
+// GTM's container fires its own page_view once on first load. This only
+// pushes on subsequent client-side route changes (SPA "virtual" pageviews),
+// mirroring the main site's routeChangeComplete-based tracking.
+function RouteChangeTracker() {
+  const location = useLocation();
+  const isFirstRender = useRef(true);
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    gtmPushEvent("page_view", {
+      page_location: window.location.href,
+      page_path: location.pathname + location.search,
+      page_title: document.title,
+    });
+  }, [location.pathname, location.search]);
+
+  return null;
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -54,6 +77,7 @@ const App = () => (
       <BrowserRouter>
         <ConditionalNavbar />
         <ScrollToTop />
+        <RouteChangeTracker />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/booking-success" element={<BookingSuccess />} />
