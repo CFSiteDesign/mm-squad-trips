@@ -3,7 +3,7 @@
 
 export const EMAIL_FROM = "ALL IN - Mad Monkey <hello@all.in.trips.madmonkeyhostels.com>";
 export const EMAIL_REPLY_TO = "cs@madmonkeyhostels.com";
-export const APP_URL = "https://mm-squad-trips.lovable.app";
+export const APP_URL = "https://madmonkeyhostels.com/all-in-trips";
 export const SQUAD_LOGIN_URL = `${APP_URL}/squad-leader/login`;
 export const SQUAD_DASHBOARD_PATH = "/squad-leader/dashboard";
 
