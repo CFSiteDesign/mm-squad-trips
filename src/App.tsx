@@ -74,7 +74,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
+      <BrowserRouter basename={typeof window !== "undefined" && window.location.pathname.startsWith("/all-in-trips") ? "/all-in-trips" : "/"}>
         <ConditionalNavbar />
         <ScrollToTop />
         <RouteChangeTracker />
