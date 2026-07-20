@@ -13,7 +13,7 @@ Deno.serve(async (req) => {
     }
     // Tiny delay to slow brute force
     await new Promise((r) => setTimeout(r, 300));
-    if (password !== expected) return jr({ error: "Invalid password" }, 401);
+    if (password.trim() !== expected.trim()) return jr({ error: "Invalid password" }, 401);
     const token = await issueAdminToken();
     return jr({ token, expiresInSeconds: 8 * 60 * 60 });
   } catch (e) {
