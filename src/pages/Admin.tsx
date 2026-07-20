@@ -140,10 +140,12 @@ const COLUMNS: Record<AdminTable, ColumnDef[]> = {
     { key: "booking_ref", label: "Booking Ref", tooltip: "Short reference code for this booking", readOnly: true, compute: (r) =>
         r.booking_ref ?? r.group_id ?? String(r.id ?? "").slice(0, 8).toUpperCase() },
     { key: "trip_id", label: "Trip", tooltip: "Which trip was booked", readOnly: true, lookup: "trip" },
-    { key: "trip_duration", label: "Duration", tooltip: "Whether the guest booked the 7-day variant or the standard long trip", readOnly: true, compute: (r, ctx) => {
+    { key: "trip_duration", label: "Duration", tooltip: "Length of the trip the guest booked", readOnly: true, compute: (r, ctx) => {
         const code = String(ctx.trip[String(r.trip_id ?? "")] ?? "").toUpperCase();
         if (!code) return "";
-        return /7$/.test(code) ? "7 days" : "Long trip";
+        const DAYS: Record<string, number> = { IND7: 7, VIE7: 7, VIE: 14, CAM: 14, IND: 12 };
+        const d = DAYS[code];
+        return d ? `${d} days` : code;
       } },
     { key: "departure_id", label: "Departure", tooltip: "Which departure date was selected", readOnly: true, lookup: "departure" },
     { key: "booking_type", label: "Booking Type", tooltip: "Lead traveler or group member", readOnly: true },
