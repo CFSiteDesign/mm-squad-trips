@@ -49,7 +49,7 @@ async function call<T = unknown>(body: Record<string, unknown>): Promise<T> {
   return data as T;
 }
 
-export type AdminTable = "trips" | "departures" | "pricing_calendar" | "discount_codes" | "bookings";
+export type AdminTable = "trips" | "departures" | "pricing_calendar" | "discount_codes" | "bookings" | "email_send_log";
 
 export const adminApi = {
   list: <T = Record<string, unknown>>(table: AdminTable, opts: { orderBy?: string; ascending?: boolean; limit?: number } = {}) =>
