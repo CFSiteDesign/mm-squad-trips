@@ -11,7 +11,10 @@ const TABLES = new Set([
   "pricing_calendar",
   "discount_codes",
   "bookings",
+  "email_send_log",
 ]);
+const READ_ONLY_TABLES = new Set(["bookings", "email_send_log"]);
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -40,8 +43,9 @@ Deno.serve(async (req) => {
     }
 
     if (op === "create") {
-      if (table === "bookings") return jr({ error: "Bookings are read-only" }, 400);
+      if (READ_ONLY_TABLES.has(table)) return jr({ error: `${table} is read-only` }, 400);
       const { values } = body;
+
       if (!values || typeof values !== "object") return jr({ error: "values required" }, 400);
       const { data, error } = await sb.from(table).insert(values).select().single();
       if (error) return jr({ error: error.message }, 400);
@@ -49,6 +53,7 @@ Deno.serve(async (req) => {
     }
 
     if (op === "update") {
+      if (READ_ONLY_TABLES.has(table)) return jr({ error: `${table} is read-only` }, 400);
       const { id, values } = body;
       if (!id) return jr({ error: "id required" }, 400);
       if (!values || typeof values !== "object") return jr({ error: "values required" }, 400);
@@ -58,12 +63,14 @@ Deno.serve(async (req) => {
     }
 
     if (op === "delete") {
+      if (READ_ONLY_TABLES.has(table)) return jr({ error: `${table} is read-only` }, 400);
       const { id } = body;
       if (!id) return jr({ error: "id required" }, 400);
       const { error } = await sb.from(table).delete().eq("id", id);
       if (error) return jr({ error: error.message }, 400);
       return jr({ ok: true });
     }
+
 
     return jr({ error: "Unknown op" }, 400);
   } catch (e) {

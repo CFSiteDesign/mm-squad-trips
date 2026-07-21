@@ -220,6 +220,18 @@ const COLUMNS: Record<AdminTable, ColumnDef[]> = {
     { key: "updated_at", label: "Updated", readOnly: true, hideInTable: true },
   ],
 
+  email_send_log: [
+    { key: "id", label: "ID", readOnly: true, hidden: true },
+    { key: "created_at", label: "Sent At", tooltip: "When the email was sent", readOnly: true },
+    { key: "template_name", label: "Template", tooltip: "Which email template was used", readOnly: true },
+    { key: "recipient_email", label: "Recipient", tooltip: "The email address the message was sent to", readOnly: true },
+    { key: "cc", label: "CC", tooltip: "Any additional recipients CC'd on the email", readOnly: true },
+    { key: "subject", label: "Subject", tooltip: "Subject line of the email", readOnly: true },
+    { key: "status", label: "Status", tooltip: "Whether the email was sent, failed or skipped", readOnly: true },
+    { key: "error_message", label: "Error", tooltip: "Reason the email failed, if any", readOnly: true },
+    { key: "provider_message_id", label: "Provider ID", tooltip: "Message ID returned by the email provider", readOnly: true, hideInTable: true },
+    { key: "metadata", label: "Metadata", readOnly: true, hideInTable: true },
+  ],
 };
 
 const TABS: { id: AdminTable; label: string }[] = [
@@ -228,7 +240,9 @@ const TABS: { id: AdminTable; label: string }[] = [
   { id: "pricing_calendar", label: "Pricing" },
   { id: "discount_codes", label: "Discounts" },
   { id: "bookings", label: "Bookings" },
+  { id: "email_send_log", label: "Emails" },
 ];
+
 
 export default function Admin() {
   const [authed, setAuthed] = useState<boolean>(() => !!getAdminToken());
