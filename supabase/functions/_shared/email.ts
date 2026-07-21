@@ -50,16 +50,57 @@ type SendArgs = {
   html: string;
   replyTo?: string;
   cc?: string | string[];
+  templateName?: string;
+  metadata?: Record<string, unknown>;
 };
 
-export async function sendEmail({ to, subject, html, replyTo, cc }: SendArgs): Promise<void> {
+async function logEmailSend(row: {
+  template_name: string;
+  recipient_email: string;
+  cc: string | null;
+  subject: string;
+  status: string;
+  provider_message_id: string | null;
+  error_message: string | null;
+  metadata: Record<string, unknown> | null;
+}): Promise<void> {
+  const url = Deno.env.get("SUPABASE_URL");
+  const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!url || !key) return;
+  try {
+    await fetch(`${url}/rest/v1/email_send_log`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        Prefer: "return=minimal",
+      },
+      body: JSON.stringify(row),
+    });
+  } catch (e) {
+    console.warn("email log insert failed", e instanceof Error ? e.message : e);
+  }
+}
+
+export async function sendEmail({ to, subject, html, replyTo, cc, templateName, metadata }: SendArgs): Promise<void> {
+  const recipients = Array.isArray(to) ? to : [to];
+  const ccList = cc ? (Array.isArray(cc) ? cc : [cc]) : undefined;
+  const recipientLog = recipients.join(", ");
+  const ccLog = ccList && ccList.length ? ccList.join(", ") : null;
+  const tpl = templateName || "unknown";
+
   const key = Deno.env.get("RESEND_API_KEY");
   if (!key) {
     console.warn("RESEND_API_KEY not set; skipping email", { to, subject });
+    await logEmailSend({
+      template_name: tpl, recipient_email: recipientLog, cc: ccLog, subject,
+      status: "skipped", provider_message_id: null,
+      error_message: "RESEND_API_KEY not set", metadata: metadata ?? null,
+    });
     return;
   }
   try {
-    const ccList = cc ? (Array.isArray(cc) ? cc : [cc]) : undefined;
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -68,7 +109,7 @@ export async function sendEmail({ to, subject, html, replyTo, cc }: SendArgs): P
       },
       body: JSON.stringify({
         from: EMAIL_FROM,
-        to: Array.isArray(to) ? to : [to],
+        to: recipients,
         subject,
         html,
         reply_to: replyTo ?? EMAIL_REPLY_TO,
@@ -78,11 +119,35 @@ export async function sendEmail({ to, subject, html, replyTo, cc }: SendArgs): P
     if (!res.ok) {
       const body = await res.text().catch(() => "");
       console.error("Resend send failed", res.status, body);
+      await logEmailSend({
+        template_name: tpl, recipient_email: recipientLog, cc: ccLog, subject,
+        status: "failed", provider_message_id: null,
+        error_message: `HTTP ${res.status}: ${body.slice(0, 500)}`,
+        metadata: metadata ?? null,
+      });
+      return;
     }
+    let providerId: string | null = null;
+    try {
+      const j = await res.json();
+      providerId = (j && typeof j.id === "string") ? j.id : null;
+    } catch { /* ignore */ }
+    await logEmailSend({
+      template_name: tpl, recipient_email: recipientLog, cc: ccLog, subject,
+      status: "sent", provider_message_id: providerId,
+      error_message: null, metadata: metadata ?? null,
+    });
   } catch (e) {
-    console.error("Resend send threw", e instanceof Error ? e.message : e);
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error("Resend send threw", msg);
+    await logEmailSend({
+      template_name: tpl, recipient_email: recipientLog, cc: ccLog, subject,
+      status: "failed", provider_message_id: null,
+      error_message: msg, metadata: metadata ?? null,
+    });
   }
 }
+
 
 function escapeHtml(s: string): string {
   return s
