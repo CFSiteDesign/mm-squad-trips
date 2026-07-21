@@ -43,8 +43,9 @@ Deno.serve(async (req) => {
     }
 
     if (op === "create") {
-      if (table === "bookings") return jr({ error: "Bookings are read-only" }, 400);
+      if (READ_ONLY_TABLES.has(table)) return jr({ error: `${table} is read-only` }, 400);
       const { values } = body;
+
       if (!values || typeof values !== "object") return jr({ error: "values required" }, 400);
       const { data, error } = await sb.from(table).insert(values).select().single();
       if (error) return jr({ error: error.message }, 400);
