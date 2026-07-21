@@ -11,7 +11,10 @@ const TABLES = new Set([
   "pricing_calendar",
   "discount_codes",
   "bookings",
+  "email_send_log",
 ]);
+const READ_ONLY_TABLES = new Set(["bookings", "email_send_log"]);
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
