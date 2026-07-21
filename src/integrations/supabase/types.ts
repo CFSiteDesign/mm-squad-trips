@@ -316,6 +316,45 @@ export type Database = {
         }
         Relationships: []
       }
+      email_send_log: {
+        Row: {
+          cc: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          metadata: Json | null
+          provider_message_id: string | null
+          recipient_email: string
+          status: string
+          subject: string | null
+          template_name: string
+        }
+        Insert: {
+          cc?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          provider_message_id?: string | null
+          recipient_email: string
+          status?: string
+          subject?: string | null
+          template_name?: string
+        }
+        Update: {
+          cc?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          provider_message_id?: string | null
+          recipient_email?: string
+          status?: string
+          subject?: string | null
+          template_name?: string
+        }
+        Relationships: []
+      }
       pricing_calendar: {
         Row: {
           active: boolean
