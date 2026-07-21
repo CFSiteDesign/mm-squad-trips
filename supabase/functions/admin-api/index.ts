@@ -53,6 +53,7 @@ Deno.serve(async (req) => {
     }
 
     if (op === "update") {
+      if (READ_ONLY_TABLES.has(table)) return jr({ error: `${table} is read-only` }, 400);
       const { id, values } = body;
       if (!id) return jr({ error: "id required" }, 400);
       if (!values || typeof values !== "object") return jr({ error: "values required" }, 400);
@@ -62,12 +63,14 @@ Deno.serve(async (req) => {
     }
 
     if (op === "delete") {
+      if (READ_ONLY_TABLES.has(table)) return jr({ error: `${table} is read-only` }, 400);
       const { id } = body;
       if (!id) return jr({ error: "id required" }, 400);
       const { error } = await sb.from(table).delete().eq("id", id);
       if (error) return jr({ error: error.message }, 400);
       return jr({ ok: true });
     }
+
 
     return jr({ error: "Unknown op" }, 400);
   } catch (e) {
