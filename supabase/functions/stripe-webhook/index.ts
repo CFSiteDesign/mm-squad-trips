@@ -102,6 +102,15 @@ async function writeBookings(session: Stripe.Checkout.Session) {
   const m = session.metadata ?? {};
   const sessionId = session.id;
 
+  // Guard: this Stripe account is shared with the hostels business. Only process
+  // sessions that came from our trip booking flow (create-checkout-session always
+  // sets trip_id or trip_slug in metadata). Everything else — hostel room
+  // bookings, bar tabs, etc — must be ignored.
+  if (!m.trip_id && !m.trip_slug) {
+    console.log("Ignoring non-trip checkout session:", sessionId);
+    return;
+  }
+
   // Idempotency
   const { data: existing } = await sb
     .from("bookings")
@@ -112,6 +121,7 @@ async function writeBookings(session: Stripe.Checkout.Session) {
     console.log("Booking already exists for", sessionId);
     return;
   }
+
 
   // Resolve trip + departure ids (metadata carries Postgres uuids set by create-checkout-session)
   let tripId: string | null = m.trip_id || null;
