@@ -5,14 +5,11 @@ import lembonganImg from "@/assets/indo-lembongan-new.jpg";
 import giliImg from "@/assets/indo-gili-new.jpg";
 import lombokImg from "@/assets/indo-kuta-new.jpg";
 import stuNusaWelcome from "@/assets/student-nusa-welcome.png.asset.json";
-import stuNusaPool from "@/assets/student-nusa-1.png.asset.json";
 import stuNusaSnorkel from "@/assets/student-nusa-snorkeling.jpg.asset.json";
 import stuNusaPenida from "@/assets/student-nusa-penida.jpg.asset.json";
 import stuGiliBar from "@/assets/student-gili-bar-photo.png.asset.json";
-import stuGiliPool from "@/assets/student-gili-pool.jpeg.asset.json";
 import stuGiliPoolParty from "@/assets/student-gili-t-pool-party.jpg.asset.json";
 import stuGiliBoatParty from "@/assets/student-mad-monkey-boat-party-4.jpg.asset.json";
-import stuGiliBoatRing from "@/assets/student-gili-boat-party.jpg.asset.json";
 import stuGiliSnorkel from "@/assets/student-gili-snorkeling.jpg.asset.json";
 
 type Stop = {
