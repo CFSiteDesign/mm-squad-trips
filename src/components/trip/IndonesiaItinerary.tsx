@@ -11,6 +11,9 @@ import stuGiliBar from "@/assets/student-gili-bar-photo.png.asset.json";
 import stuGiliPoolParty from "@/assets/student-gili-t-pool-party.jpg.asset.json";
 import stuGiliBoatParty from "@/assets/student-mad-monkey-boat-party-4.jpg.asset.json";
 import stuGiliSnorkel from "@/assets/student-gili-snorkeling.jpg.asset.json";
+import stuUluSpa from "@/assets/student-ulu-spa.png.asset.json";
+import stuUluBatur from "@/assets/student-ulu-batur.jpg.asset.json";
+import stuNusaPool from "@/assets/student-nusa-pool2.png.asset.json";
 
 type Stop = {
   num: string;
@@ -92,7 +95,7 @@ const DAYS: Day[] = [
   {
     day: 1,
     title: "Welcome to Uluwatu",
-    image: uluwatuImg,
+    image: stuUluSpa.url,
     body:
       "Land in Bali and make your way up to the clifftops of Uluwatu. The rest of the day's yours until we head out at 5pm for the welcome sunset at Panorama Point: the whole crew, a cold one in hand, and the coastline dropping into the ocean as the sky turns gold. Learn everyone's name over that first drink, then take it easy. Tomorrow starts in the dark, and it's one you won't want to sleep through.",
     meals: "None",
@@ -100,7 +103,7 @@ const DAYS: Day[] = [
   {
     day: 2,
     title: "Mount Batur sunrise hike",
-    image: uluwatuImg,
+    image: stuUluBatur.url,
     body:
       "The alarm goes at 1:30am and you'll thank us later. Trek up Mount Batur in the dark and hit the summit of an active volcano just as the sun breaks the horizon, cloud sitting in the valley below and the whole caldera lighting up. Back at the hostel to recover properly: sauna, hot tub, and an ice bath to bring the legs back to life. Then family dinner with a couple of drinks on us, and boozy bingo to see the night out.",
     meals: "Breakfast, Dinner",
@@ -108,7 +111,7 @@ const DAYS: Day[] = [
   {
     day: 3,
     title: "Welcome to Nusa",
-    image: stuNusaWelcome.url,
+    image: stuNusaPool.url,
     body:
       "Grab breakfast, check out, and by 1:30pm you're in a taxi to the coast and onto a fast boat over to Nusa Lembongan. This is where the pace drops and the water goes turquoise. Check into Mad Monkey and settle in: ice baths, saunas, a gym if you're feeling virtuous, and a pool that's very hard to leave. Tonight it's a beer pong tournament to get the island crew properly acquainted.",
     meals: "Breakfast",
