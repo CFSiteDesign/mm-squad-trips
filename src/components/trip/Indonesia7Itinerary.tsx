@@ -2,72 +2,45 @@ import { Sticker } from "@/components/brand/Sticker";
 import giliImg from "@/assets/indo-gili-new.jpg";
 import lombokImg from "@/assets/indo-kuta-new.jpg";
 
-type Day = { day: number; title: string; image: string; body: string; meals: string };
+type Stop = {
+  num: string;
+  location: string;
+  nights: string;
+  image: string;
+  tag: string;
+  highlights: string[];
+};
 
-const DAYS: Day[] = [
+const STOPS: Stop[] = [
   {
-    day: 1,
-    title: "Welcome to Gili T",
+    num: "01",
+    location: "Gili T",
+    nights: "3 nights",
     image: giliImg,
-    body:
-      "Arrive into Gili Trawangan and head to Mad Monkey. We're on the more secluded part of the island, so it's a bit of a walk from the pier, but there's an ice-cold beer and a pool waiting at the other end while you meet the crew. Check in, drop the bag and do as you please: beach, bar, or flat out by the water. Then join us for our traditional Mexican family dinner to kick off the trip.",
-    meals: "Dinner",
+    tag: "PARTY ISLAND",
+    highlights: [
+      "Arrive into Gili Trawangan, check into Mad Monkey, meet the crew",
+      "Traditional Mexican family dinner to kick off the trip",
+      "Bucket List Bike Tour looping the island",
+      "Pool party with a live DJ running till late",
+      "Mad Monkey Boat Party (2–6PM) → unlimited BBQ & drinks after",
+      "Monkey Sea, Monkey Do snorkel trip on the way out",
+    ],
   },
   {
-    day: 2,
-    title: "Explore Gili T",
-    image: giliImg,
-    body:
-      "The Gili T bucket-list bike tour rolls out at 1pm: three hours looping the island, stopping wherever looks good, which is basically everywhere. Back to Mad Monkey by 3 and straight into the pool party with a live DJ running till 10. It's as messy as it sounds. Pace yourself, or don't.",
-    meals: "None",
-  },
-  {
-    day: 3,
-    title: "The boat party",
-    image: giliImg,
-    body:
-      "The one the whole island talks about. The Mad Monkey Boat Party kicks off at 2pm: four hours on the water, drinks flowing, DJs playing, everyone in. Roll back to the hostel by bike or on foot for an unlimited BBQ and more drinks to keep it rolling. One of those afternoons that doesn't really end.",
-    meals: "Dinner",
-  },
-  {
-    day: 4,
-    title: "Monkey sea, monkey do",
-    image: giliImg,
-    body:
-      "One last Gili morning, and it's a good one: the Monkey Sea, Monkey Do snorkelling trip from 10:30 to 4, out over the reefs and turtles in that ridiculous clear water. Lunch is included on the boat. Then a short crossing back to Lombok and a two-hour drive down to Mad Monkey Kuta Lombok, checking in around dinner. This is where you learn to surf.",
-    meals: "Lunch",
-  },
-  {
-    day: 5,
-    title: "Surf camp begins",
+    num: "02",
+    location: "Kuta Lombok",
+    nights: "4 nights",
     image: lombokImg,
-    body:
-      "Meet your surf instructors and the rest of the camp. The morning's for theory and drilling your pop-ups on the sand before you go near the water. Grab your welcome pack and merch, get lunch in with everyone, then paddle out for the real thing. Back to the hostel for family dinner and karaoke: surf camp bonds a group fast.",
-    meals: "Breakfast, Lunch, Dinner",
-  },
-  {
-    day: 6,
-    title: "Dawn patrol",
-    image: lombokImg,
-    body:
-      "Run club for anyone up for starting the day moving. Breakfast first, then out for the morning surf: the beach changes day to day depending on where the swell's best. Back for lunch and photo analysis, where you watch yourself nail it, or eat it, in slow motion. Afternoon session, then a bonfire on the beach for sunset with a few cold ones.",
-    meals: "Breakfast, Lunch",
-  },
-  {
-    day: 7,
-    title: "Last waves",
-    image: lombokImg,
-    body:
-      "Breakfast, then the morning surf one more time at whichever beach is firing. Back to the hostel for a pool party and a slow afternoon with a drink in hand. As the sun drops, head to the surf-skate meet-up, then back for the DJ party night: the last big one of the trip.",
-    meals: "Breakfast, Lunch",
-  },
-  {
-    day: 8,
-    title: "Onward",
-    image: lombokImg,
-    body:
-      "Goodbyes all round, then transfers to Lombok airport — grab whichever fits your flight. Mad Monkey doesn't really do goodbyes, though. Wherever you're headed next across Southeast Asia, there's a bunk with your name on it.",
-    meals: "None",
+    tag: "SURF CAMP",
+    highlights: [
+      "Short crossing back to Lombok, transfer down to Kuta Lombok",
+      "Surf camp kicks off: theory, pop-ups, then paddle out for real",
+      "Morning + afternoon sessions at whichever beach is firing",
+      "Lunch + video analysis (watch yourself eat it in slo-mo)",
+      "Beach bonfires, pool parties, surf-skate meet-ups & DJ nights",
+      "Farewell, then transfers to Lombok Airport",
+    ],
   },
 ];
 
@@ -84,24 +57,53 @@ export function Indonesia7Itinerary() {
           GILI T → KUTA LOMBOK
         </p>
 
-        <ol className="mt-10 space-y-10 md:mt-16 md:space-y-14">
-          {DAYS.map((d, i) => (
-            <li key={d.day} className="grid gap-5 md:grid-cols-[1.1fr_1fr] md:items-center md:gap-10">
-              <div className={`relative overflow-hidden border-[3px] border-mm-bone ${i % 2 === 1 ? "md:order-2" : ""}`}>
-                <img src={d.image} alt={d.title} loading="lazy" className="aspect-[4/3] w-full object-cover" />
+        <ol className="mt-10 space-y-10 md:mt-16 md:space-y-16">
+          {STOPS.map((s, i) => (
+            <li
+              key={s.num}
+              className="grid gap-5 md:grid-cols-[1.1fr_1fr] md:items-center md:gap-10"
+            >
+              <div
+                className={`relative overflow-hidden border-[3px] border-mm-bone ${
+                  i % 2 === 1 ? "md:order-2" : ""
+                }`}
+              >
+                <img
+                  src={s.image}
+                  alt={s.location}
+                  loading="lazy"
+                  className="aspect-[4/3] w-full object-cover"
+                />
                 <div className="absolute left-3 top-3">
                   <Sticker color={i % 2 === 0 ? "pink" : "yellow"} rotate={-6}>
-                    DAY {String(d.day).padStart(2, "0")}
+                    STOP {s.num}
+                  </Sticker>
+                </div>
+                <div className="absolute bottom-3 right-3">
+                  <Sticker color="lime" rotate={4}>
+                    {s.nights.toUpperCase()}
                   </Sticker>
                 </div>
               </div>
+
               <div>
-                <p className="font-sticker text-[10px] tracking-[0.22em] text-mm-lime md:text-[11px]">DAY {d.day}</p>
-                <h3 className="mt-2 font-display text-3xl leading-[1.02] text-mm-bone md:text-5xl">{d.title.toUpperCase()}</h3>
-                <p className="mt-4 text-[13.5px] leading-relaxed text-mm-bone/90 md:text-[15px]">{d.body}</p>
-                <p className="mt-4 inline-block border-[3px] border-mm-bone/40 px-3 py-1 font-sticker text-[10px] tracking-[0.18em] text-mm-lime md:text-[11px]">
-                  MEALS: {d.meals.toUpperCase()}
+                <p className="font-sticker text-[10px] tracking-[0.22em] text-mm-lime md:text-[11px]">
+                  {s.tag}
                 </p>
+                <h3 className="mt-2 font-display text-4xl leading-none text-mm-bone md:text-6xl">
+                  {s.location.toUpperCase()}
+                </h3>
+                <ul className="mt-5 space-y-2.5">
+                  {s.highlights.map((h, k) => (
+                    <li
+                      key={k}
+                      className="flex gap-3 border-l-[3px] border-mm-bone/40 pl-3 text-[13px] leading-snug text-mm-bone/90 md:text-sm"
+                    >
+                      <span className="font-sticker text-mm-pink">▸</span>
+                      <span>{h}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             </li>
           ))}
