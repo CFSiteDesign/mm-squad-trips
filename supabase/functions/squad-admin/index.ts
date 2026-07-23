@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
         squadCode: updated.code,
         dashboardUrl: `${APP_URL}/students/squad-leader/dashboard?token=${encodeURIComponent(updated.access_token)}`,
       });
-      sendEmail({ to: updated.email, subject, html }).catch((e) => console.warn("approve email failed", e));
+      sendEmail({ to: updated.email, subject, html, templateName: "squad_approved" }).catch((e) => console.warn("approve email failed", e));
     }
     return jr({ ok: true, status: newStatus });
   }

@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
 </div>`;
 
   try {
-    await sendEmail({ to: OPS_NOTIFY_EMAILS, cc, subject, html });
+    await sendEmail({ to: OPS_NOTIFY_EMAILS, cc, subject, html, templateName: "test_ops_email" });
     return new Response(
       JSON.stringify({ ok: true, to: OPS_NOTIFY_EMAILS, cc }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },

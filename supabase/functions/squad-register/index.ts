@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
       squadCode: existing.code,
       dashboardUrl: `${APP_URL}/squad-leader/dashboard?token=${encodeURIComponent(existing.access_token)}`,
     });
-    sendEmail({ to: email, subject, html }).catch((e) => console.warn("squad-created resend failed", e));
+    sendEmail({ to: email, subject, html, templateName: "squad_created_resend" }).catch((e) => console.warn("squad-created resend failed", e));
     return jr({ returning: true });
   }
 
@@ -92,7 +92,7 @@ Deno.serve(async (req) => {
           squadCode: data.code,
           dashboardUrl: `${APP_URL}/squad-leader/dashboard?token=${encodeURIComponent(data.access_token)}`,
         });
-        sendEmail({ to: email, subject, html }).catch((e) => console.warn("squad-created email failed", e));
+        sendEmail({ to: email, subject, html, templateName: "squad_created" }).catch((e) => console.warn("squad-created email failed", e));
         return jr({ code: data.code, accessToken: data.access_token, returning: false });
       }
       // Pending student — don't reveal code/token; Hayley approves first.

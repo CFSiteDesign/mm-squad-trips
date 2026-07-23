@@ -94,6 +94,9 @@ Deno.serve(async (req) => {
     const depDate = dep.departure_date as string;
     const spotsRemaining = dep.spots_remaining ?? dep.total_spots ?? 0;
     if (dep.bookable !== true) return err("This departure is no longer bookable");
+    // Backstop: never sell a spot on a cancelled departure, even if bookable
+    // was left true or the guest is on a stale page.
+    if (dep.status === "cancelled") return err("This departure has been cancelled — please pick another date.");
     if (spotsRemaining < groupSize) {
       return err(`Only ${spotsRemaining} spot${spotsRemaining === 1 ? "" : "s"} left`);
     }

@@ -350,7 +350,7 @@ async function writeBookings(session: Stripe.Checkout.Session) {
               dashboardUrl,
               progressGoal: goal,
             });
-            sendEmail({ to: full.email as string, subject: joined.subject, html: joined.html }).catch(
+            sendEmail({ to: full.email as string, subject: joined.subject, html: joined.html, templateName: "squad_member_joined" }).catch(
               (e) => console.warn("squad-member-joined email failed", e),
             );
             const milestoneHit = isStudent
@@ -378,7 +378,7 @@ async function writeBookings(session: Stripe.Checkout.Session) {
                     : "Keep going — 4 more bookings unlocks a free trip.",
                 dashboardUrl,
               });
-              sendEmail({ to: full.email as string, subject: milestone.subject, html: milestone.html })
+              sendEmail({ to: full.email as string, subject: milestone.subject, html: milestone.html, templateName: "squad_milestone" })
                 .catch((e) => console.warn("squad-milestone email failed", e));
             }
           }
@@ -416,7 +416,7 @@ async function writeBookings(session: Stripe.Checkout.Session) {
           bookingUrl: `${APP_URL}/booking-success?session_id=${encodeURIComponent(sessionId)}`,
           hasBalance: balanceTotal > 0,
         });
-        sendEmail({ to: m.lead_email as string, subject, html }).catch((e) => console.warn("solo-confirmation email failed", e));
+        sendEmail({ to: m.lead_email as string, subject, html, templateName: "solo_booking_confirmed" }).catch((e) => console.warn("solo-confirmation email failed", e));
         // Stamp so process-departure-events never double-sends a trip-confirmed email if this departure later hits 5.
         await sb.from("bookings").update({ trip_confirmed_notified_at: new Date().toISOString() }).eq("stripe_session_id", sessionId);
       } else {
@@ -430,7 +430,7 @@ async function writeBookings(session: Stripe.Checkout.Session) {
           bookingRef,
           bookingUrl: `${APP_URL}/booking-success?session_id=${encodeURIComponent(sessionId)}`,
         });
-        sendEmail({ to: m.lead_email as string, subject, html }).catch((e) =>
+        sendEmail({ to: m.lead_email as string, subject, html, templateName: "booking_confirmation" }).catch((e) =>
           console.warn("booking-confirmation email failed", e),
         );
       }
@@ -452,7 +452,7 @@ async function writeBookings(session: Stripe.Checkout.Session) {
           bookingUrl: `${APP_URL}/admin`,
         });
         const cc = opsCcForTrip(m.trip_name as string | null, m.trip_slug as string | null);
-        sendEmail({ to: OPS_NOTIFY_EMAILS, cc: cc.length ? cc : undefined, subject: ops.subject, html: ops.html }).catch((e) =>
+        sendEmail({ to: OPS_NOTIFY_EMAILS, cc: cc.length ? cc : undefined, subject: ops.subject, html: ops.html, templateName: "booking_ops_notification" }).catch((e) =>
           console.warn("booking ops email failed", e),
         );
       } catch (e) {

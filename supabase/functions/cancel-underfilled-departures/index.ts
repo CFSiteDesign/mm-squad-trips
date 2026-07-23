@@ -95,7 +95,14 @@ Deno.serve(async (req) => {
       // One-way status flip, guarded on 'pending', so re-runs skip already-processed departures.
       const { data: flipped, error: flipErr } = await sb
         .from("departures")
-        .update({ status: targetStatus, [stampCol]: new Date().toISOString() })
+        // Cancelling must also close the departure to new bookings — otherwise it
+        // stays visible/bookable on the site for the ~23 days until it falls
+        // inside the 7-day window that trips-get filters on.
+        .update({
+          status: targetStatus,
+          [stampCol]: new Date().toISOString(),
+          ...(hasSolo ? {} : { bookable: false }),
+        })
         .eq("id", depId)
         .eq("status", "pending")
         .select("id");
@@ -179,7 +186,7 @@ Deno.serve(async (req) => {
               amount: fmtUsd(amountCents),
               tripUrl: tripSlug ? `${APP_URL}/${tripSlug}` : APP_URL,
             });
-            await sendEmail({ to: lead.lead_email as string, subject, html });
+            await sendEmail({ to: lead.lead_email as string, subject, html, templateName: "departure_cancelled" });
           } catch (e) {
             errors.push(`email: ${e instanceof Error ? e.message : String(e)}`);
           }

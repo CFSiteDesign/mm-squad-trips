@@ -154,6 +154,7 @@ Deno.serve(async (req) => {
         to: lead.lead_email as string,
         subject,
         html,
+        templateName: "trip_confirmed",
       }).catch((e) => console.warn("trip-confirmed email failed", e));
 
       await sb
@@ -175,6 +176,7 @@ Deno.serve(async (req) => {
           depDate,
         )}</strong> just hit its 5-traveller minimum and is officially confirmed.</p>
 <p>${sent} lead booker${sent === 1 ? "" : "s"} have been emailed with flight clearance + balance link.</p>`,
+        templateName: "trip_confirmed_ops",
       });
     } catch (e) {
       console.warn("ops confirmation email failed", e);

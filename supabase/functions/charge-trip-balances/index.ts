@@ -224,7 +224,7 @@ Deno.serve(async (req) => {
           bookingRef: (row.booking_ref as string) || sessionId,
           bookingUrl: `${APP_URL}/booking-success?session_id=${encodeURIComponent(sessionId)}`,
         });
-        sendEmail({ to: row.lead_email as string, subject, html }).catch((e) =>
+        sendEmail({ to: row.lead_email as string, subject, html, templateName: "balance_paid" }).catch((e) =>
           console.warn("balance-paid email failed", e),
         );
       }
@@ -278,7 +278,7 @@ Deno.serve(async (req) => {
           nextAttemptDate: fmtDate(next.toISOString()),
           bookingRef: (row.booking_ref as string) || sessionId,
         });
-        sendEmail({ to: row.lead_email as string, subject, html }).catch((e) =>
+        sendEmail({ to: row.lead_email as string, subject, html, templateName: "balance_failed" }).catch((e) =>
           console.warn("balance-failed email failed", e),
         );
       }

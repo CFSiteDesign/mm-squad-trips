@@ -35,6 +35,7 @@ Deno.serve(async (req) => {
       .select("*")
       .eq("trip_id", trip.id)
       .gt("departure_date", minDate)
+      .neq("status", "cancelled")
       .order("departure_date", { ascending: true });
     if (dErr) return jr({ error: dErr.message }, 500);
 

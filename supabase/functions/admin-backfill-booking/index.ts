@@ -226,7 +226,7 @@ async function processSession(
           bookingUrl: `${APP_URL}/booking-success?session_id=${encodeURIComponent(sessionId)}`,
           hasBalance: balanceTotal > 0,
         });
-        await sendEmail({ to: m.lead_email as string, subject, html });
+        await sendEmail({ to: m.lead_email as string, subject, html, templateName: "backfill_booking_confirmation" });
         await sb.from("bookings").update({ trip_confirmed_notified_at: new Date().toISOString() }).eq("stripe_session_id", sessionId);
       } else {
         const { subject, html } = bookingConfirmationEmail({
@@ -239,7 +239,7 @@ async function processSession(
           bookingRef,
           bookingUrl: `${APP_URL}/booking-success?session_id=${encodeURIComponent(sessionId)}`,
         });
-        await sendEmail({ to: m.lead_email as string, subject, html });
+        await sendEmail({ to: m.lead_email as string, subject, html, templateName: "backfill_trip_confirmed" });
       }
 
       try {
@@ -262,6 +262,7 @@ async function processSession(
           cc: cc.length ? cc : undefined,
           subject: `[BACKFILL] ${ops.subject}`,
           html: ops.html,
+          templateName: "backfill_ops_notification",
         });
       } catch (e) {
         console.warn("ops notify build failed:", e instanceof Error ? e.message : e);

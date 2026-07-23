@@ -112,7 +112,7 @@ Deno.serve(async (req) => {
         finalDetailsHtml: details.finalDetailsHtml,
         whatsappUrl: details.whatsappUrl,
       });
-      await sendEmail({ to: row.lead_email as string, subject, html }).catch((e) =>
+      await sendEmail({ to: row.lead_email as string, subject, html, templateName: "balance_reminder_7d" }).catch((e) =>
         console.warn("countdown email failed", e),
       );
     } else {
@@ -132,7 +132,7 @@ Deno.serve(async (req) => {
         finalDetailsHtml: details.finalDetailsHtml,
         whatsappUrl: details.whatsappUrl,
       });
-      await sendEmail({ to: row.lead_email as string, subject, html }).catch((e) =>
+      await sendEmail({ to: row.lead_email as string, subject, html, templateName: "trip_countdown_7d" }).catch((e) =>
         console.warn("balance-reminder email failed", e),
       );
     }

@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
     squadCode: leader.code as string,
     resetUrl: `${APP_URL}/squad-leader/reset-password?token=${encodeURIComponent(token)}`,
   });
-  await sendEmail({ to: email, subject, html });
+  await sendEmail({ to: email, subject, html, templateName: "squad_password_reset" });
 
   return jr({ ok: true });
 });

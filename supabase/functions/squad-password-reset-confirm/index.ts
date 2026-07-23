@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
       squadCode: leader.code as string,
       loginUrl: `${APP_URL}/squad-leader/login`,
     });
-    sendEmail({ to: leader.email as string, subject, html }).catch((e) =>
+    sendEmail({ to: leader.email as string, subject, html, templateName: "squad_password_reset_confirm" }).catch((e) =>
       console.warn("password-set email failed", e),
     );
   }
