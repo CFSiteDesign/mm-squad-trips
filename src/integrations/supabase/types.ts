@@ -48,6 +48,7 @@ export type Database = {
           payment_type: string | null
           reminder_7d_sent_at: string | null
           spot_number: number
+          staff_recommendation: string | null
           status: string
           stripe_balance_payment_intent_id: string | null
           stripe_balance_refund_id: string | null
@@ -97,6 +98,7 @@ export type Database = {
           payment_type?: string | null
           reminder_7d_sent_at?: string | null
           spot_number?: number
+          staff_recommendation?: string | null
           status?: string
           stripe_balance_payment_intent_id?: string | null
           stripe_balance_refund_id?: string | null
@@ -146,6 +148,7 @@ export type Database = {
           payment_type?: string | null
           reminder_7d_sent_at?: string | null
           spot_number?: number
+          staff_recommendation?: string | null
           status?: string
           stripe_balance_payment_intent_id?: string | null
           stripe_balance_refund_id?: string | null
@@ -280,10 +283,12 @@ export type Database = {
       discount_codes: {
         Row: {
           active: boolean
+          applicable_months: number[] | null
           applicable_to: string[]
           code: string
           created_at: string
           discount_amount: number
+          discount_type: string
           expiry_date: string | null
           id: string
           updated_at: string
@@ -292,10 +297,12 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          applicable_months?: number[] | null
           applicable_to?: string[]
           code: string
           created_at?: string
           discount_amount?: number
+          discount_type?: string
           expiry_date?: string | null
           id?: string
           updated_at?: string
@@ -304,10 +311,12 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          applicable_months?: number[] | null
           applicable_to?: string[]
           code?: string
           created_at?: string
           discount_amount?: number
+          discount_type?: string
           expiry_date?: string | null
           id?: string
           updated_at?: string
