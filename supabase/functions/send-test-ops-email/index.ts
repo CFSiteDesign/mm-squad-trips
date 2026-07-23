@@ -10,12 +10,24 @@ import {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  // CC every GM across all regions + Lexie + Cai (Cai/Lexie already in OPS list, dedupe)
-  const gmCc = Array.from(new Set(TRIP_OPS_CC.map((r) => r.email)));
-  const extraCc = ["lexie@madmonkeyhostels.com", "cai@madmonkeyhostels.com"];
-  const cc = Array.from(new Set([...gmCc, ...extraCc])).filter(
-    (e) => !OPS_NOTIFY_EMAILS.includes(e),
-  );
+  let overrideTo: string[] | null = null;
+  try {
+    const body = await req.json();
+    if (body?.to) {
+      overrideTo = Array.isArray(body.to) ? body.to : [body.to];
+    }
+  } catch { /* no body */ }
+
+  const to = overrideTo ?? OPS_NOTIFY_EMAILS;
+  const cc = overrideTo
+    ? []
+    : Array.from(
+        new Set([
+          ...TRIP_OPS_CC.map((r) => r.email),
+          "lexie@madmonkeyhostels.com",
+          "cai@madmonkeyhostels.com",
+        ]),
+      ).filter((e) => !OPS_NOTIFY_EMAILS.includes(e));
 
   const subject =
     "[TEST — PLEASE IGNORE] Example ops notification — All In trip booking";
@@ -53,9 +65,9 @@ Deno.serve(async (req) => {
 </div>`;
 
   try {
-    await sendEmail({ to: OPS_NOTIFY_EMAILS, cc, subject, html, templateName: "test_ops_email" });
+    await sendEmail({ to, cc, subject, html, templateName: "test_ops_email" });
     return new Response(
-      JSON.stringify({ ok: true, to: OPS_NOTIFY_EMAILS, cc }),
+      JSON.stringify({ ok: true, to, cc }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (e) {
