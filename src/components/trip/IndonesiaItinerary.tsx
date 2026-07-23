@@ -11,6 +11,9 @@ import stuGiliBar from "@/assets/student-gili-bar-photo.png.asset.json";
 import stuGiliPoolParty from "@/assets/student-gili-t-pool-party.jpg.asset.json";
 import stuGiliBoatParty from "@/assets/student-mad-monkey-boat-party-4.jpg.asset.json";
 import stuGiliSnorkel from "@/assets/student-gili-snorkeling.jpg.asset.json";
+import stuUluSpa from "@/assets/student-ulu-spa.png.asset.json";
+import stuUluBatur from "@/assets/student-ulu-batur.jpg.asset.json";
+import stuNusaPool from "@/assets/student-nusa-pool2.png.asset.json";
 
 type Stop = {
   num: string;
