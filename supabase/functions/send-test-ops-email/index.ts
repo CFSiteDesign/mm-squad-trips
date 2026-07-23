@@ -65,9 +65,9 @@ Deno.serve(async (req) => {
 </div>`;
 
   try {
-    await sendEmail({ to: OPS_NOTIFY_EMAILS, cc, subject, html, templateName: "test_ops_email" });
+    await sendEmail({ to, cc, subject, html, templateName: "test_ops_email" });
     return new Response(
-      JSON.stringify({ ok: true, to: OPS_NOTIFY_EMAILS, cc }),
+      JSON.stringify({ ok: true, to, cc }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (e) {
