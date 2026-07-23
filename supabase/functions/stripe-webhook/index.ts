@@ -187,6 +187,7 @@ async function writeBookings(session: Stripe.Checkout.Session) {
     lead_age: m.lead_age ? Number(m.lead_age) : null,
     lead_solo: m.lead_solo === "true",
     lead_source: m.lead_source || null,
+    staff_recommendation: m.staff_recommendation || null,
     additional_travelers: additionalTravelers.length > 0 ? additionalTravelers : null,
     payment_type: paymentType,
     original_price: pricePerSpot || subtotal / groupSize,
@@ -446,6 +447,7 @@ async function writeBookings(session: Stripe.Checkout.Session) {
           amount: `$${amountPaidTotal.toFixed(2)} ${(session.currency || "usd").toUpperCase()}`,
           bookingRef,
           squadCode: (m.squad_code as string) || undefined,
+          staffRecommendation: (m.staff_recommendation as string) || undefined,
           discountCode: (m.discount_code as string) || undefined,
           bookingUrl: `${APP_URL}/admin`,
         });

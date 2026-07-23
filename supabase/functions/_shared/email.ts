@@ -414,6 +414,7 @@ export function bookingOpsNotificationEmail(v: {
   bookingRef: string;
   squadCode?: string;
   discountCode?: string;
+  staffRecommendation?: string;
   bookingUrl: string;
 }): { subject: string; html: string } {
   const inner = render(
@@ -432,6 +433,7 @@ export function bookingOpsNotificationEmail(v: {
 <tr><td style="padding:8px 12px;border-bottom:1px solid #0a0a0a"><strong>Paid</strong></td><td style="padding:8px 12px;border-bottom:1px solid #0a0a0a">{{amount}}</td></tr>
 <tr><td style="padding:8px 12px;border-bottom:1px solid #0a0a0a"><strong>Squad code</strong></td><td style="padding:8px 12px;border-bottom:1px solid #0a0a0a">{{squadCode}}</td></tr>
 <tr><td style="padding:8px 12px;border-bottom:1px solid #0a0a0a"><strong>Discount</strong></td><td style="padding:8px 12px;border-bottom:1px solid #0a0a0a">{{discountCode}}</td></tr>
+<tr><td style="padding:8px 12px;border-bottom:1px solid #0a0a0a"><strong>Staff rec</strong></td><td style="padding:8px 12px;border-bottom:1px solid #0a0a0a">{{staffRecommendation}}</td></tr>
 <tr><td style="padding:8px 12px"><strong>Ref</strong></td><td style="padding:8px 12px">{{bookingRef}}</td></tr>
 </table>
 <a href="{{bookingUrl}}" style="display:inline-block;background:#0a0a0a;color:#ccff01;font-weight:900;text-transform:uppercase;padding:12px 18px;border:2px solid #0a0a0a;text-decoration:none">View in admin</a>
@@ -441,6 +443,7 @@ export function bookingOpsNotificationEmail(v: {
       leadPhone: v.leadPhone || "—",
       squadCode: v.squadCode || "—",
       discountCode: v.discountCode || "—",
+      staffRecommendation: v.staffRecommendation || "—",
     } as Record<string, string>,
   );
   return {

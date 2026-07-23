@@ -128,12 +128,14 @@ const COLUMNS: Record<AdminTable, ColumnDef[]> = {
   discount_codes: [
     { key: "id", label: "ID", readOnly: true, hidden: true },
     { key: "code", label: "Code", tooltip: "The discount code customers enter at checkout", type: "text" },
-    { key: "discount_amount", label: "Discount ($)", tooltip: "Fixed dollar amount subtracted from the trip price", type: "number" },
+    { key: "discount_type", label: "Type", tooltip: "'fixed' = dollar amount off, 'percent' = percentage of the subtotal off", type: "text" },
+    { key: "discount_amount", label: "Amount ($ or %)", tooltip: "Dollar amount for fixed codes, percentage (e.g. 20 = 20%) for percent codes", type: "number" },
     { key: "active", label: "Active", tooltip: "Whether this code can currently be used", type: "boolean" },
     { key: "usage_limit", label: "Usage Limit", tooltip: "Maximum number of times this code can be redeemed", type: "number" },
     { key: "used_count", label: "Used Count", tooltip: "How many times this code has already been used", type: "number", readOnly: true },
     { key: "expiry_date", label: "Expiry", tooltip: "Date after which the code can no longer be used", type: "date" },
     { key: "applicable_to", label: "Applicable To (JSON array)", tooltip: "List of trip codes this discount can be applied to", type: "json" },
+    { key: "applicable_months", label: "Months (JSON array)", tooltip: "Departure months this code works for, e.g. [9,10,11] = Sept/Oct/Nov. Empty = any month", type: "json" },
   ],
   bookings: [
     { key: "id", label: "ID", readOnly: true, hidden: true },
@@ -169,6 +171,7 @@ const COLUMNS: Record<AdminTable, ColumnDef[]> = {
     { key: "lead_country", label: "Lead Country", tooltip: "Country the primary traveler is from", readOnly: true, compute: (r, ctx) => getTravelerForRow(r, ctx)?.country ?? "" },
     { key: "lead_age", label: "Lead Age", tooltip: "Age of the primary traveler", readOnly: true, compute: (r, ctx) => getTravelerForRow(r, ctx)?.age ?? "" },
     { key: "lead_source", label: "Source", tooltip: "How the traveler found the trip (e.g. Instagram, Google)", readOnly: true },
+    { key: "staff_recommendation", label: "Staff Rec", tooltip: "Mad Monkey staff member the guest says recommended the trip", readOnly: true },
 
     { key: "payment_type", label: "Payment Type", tooltip: "Full payment or deposit booking", readOnly: true },
     { key: "discount_code_id", label: "Discount Code", tooltip: "Code used to reduce the price, if any", readOnly: true, lookup: "discount" },

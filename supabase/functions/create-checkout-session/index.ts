@@ -20,8 +20,10 @@ function bookingCutoffDays(slug: string): number {
 
 const SLUG_TO_LABEL: Record<string, string> = {
   indonesia: "Indonesia",
+  "indonesia-7": "Indonesia",
   cambodia: "Cambodia",
   vietnam: "Vietnam",
+  "vietnam-7": "Vietnam",
 };
 
 function daysUntil(iso: string): number {
@@ -55,12 +57,13 @@ Deno.serve(async (req) => {
     travelers?: unknown[];
     discountCode?: string;
     friendsMentioned?: string;
+    staffRecommendation?: string;
     utm?: Record<string, string>;
     gaClientId?: string;
   };
   try { payload = await req.json(); } catch { return err("Invalid JSON body"); }
 
-  const { tripSlug, departureId, groupSize, leadBooker, travelers = [], discountCode, friendsMentioned, utm = {}, gaClientId } = payload;
+  const { tripSlug, departureId, groupSize, leadBooker, travelers = [], discountCode, friendsMentioned, staffRecommendation, utm = {}, gaClientId } = payload;
   if (!tripSlug || typeof tripSlug !== "string") return err("tripSlug required");
   if (!departureId || typeof departureId !== "string") return err("departureId required");
   if (!groupSize || typeof groupSize !== "number" || groupSize < 1 || groupSize > 5) return err("groupSize must be 1–5");
@@ -133,8 +136,16 @@ Deno.serve(async (req) => {
         const exhausted = typeof d.usage_limit === "number" && (d.used_count ?? 0) >= d.usage_limit;
         const appliesTo: string[] = d.applicable_to ?? [];
         const applies = appliesTo.includes("All") || appliesTo.includes(SLUG_TO_LABEL[tripSlug]);
-        if (d.active && !expired && !exhausted && applies) {
-          discountAmount = Number(d.discount_amount) || 0;
+        // Month restriction: departure month must be in applicable_months (null/empty = any).
+        const months: number[] = d.applicable_months ?? [];
+        const depMonthOk = months.length === 0 ||
+          months.includes(new Date(depDate + "T00:00:00Z").getUTCMonth() + 1);
+        if (d.active && !expired && !exhausted && applies && depMonthOk) {
+          // Percent codes: discount_amount holds the percentage of the subtotal.
+          const raw = Number(d.discount_amount) || 0;
+          discountAmount = d.discount_type === "percent"
+            ? Math.round(subtotal * Math.min(100, Math.max(0, raw))) / 100
+            : raw;
           appliedCode = safe;
           discountRecordId = d.id;
         }
@@ -197,6 +208,7 @@ Deno.serve(async (req) => {
       lead_source: lead.source ?? "",
       lead_solo: String(lead.solo ?? ""),
       friends_mentioned: friendsMentioned ?? "",
+      staff_recommendation: (staffRecommendation ?? "").slice(0, 200),
       utm_source: utm.utm_source ?? "",
       utm_medium: utm.utm_medium ?? "",
       utm_campaign: utm.utm_campaign ?? "",
@@ -259,6 +271,9 @@ Deno.serve(async (req) => {
             custom_text: {
               submit: {
                 message:
+                  (discountAmount > 0 && appliedCode
+                    ? `Discount ${appliedCode} applied — $${discountAmount.toFixed(0)} off your trip total. `
+                    : "") +
                   `You're paying a $${DEPOSIT_PER_SPOT * groupSize} deposit today. ` +
                   `The remaining balance of $${(fullDue - amountToday).toFixed(0)} will be automatically charged to this card 7 days before departure (${depDate}). ` +
                   `If the charge fails we'll retry every 2 days and email you.`,

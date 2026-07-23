@@ -42,12 +42,12 @@ function readGaClientId(): string {
 
 interface LeadFields {
   name: string; email: string; phone: string; phoneDial: string; country: string; age: string;
-  solo: boolean; source: string; friends: string;
+  solo: boolean; source: string; staffRec: string; friends: string;
 }
 interface TravelerFields { firstName: string; lastName: string; email: string; age: string; dietary: string; }
 
 const emptyLead: LeadFields = {
-  name: "", email: "", phone: "", phoneDial: "44", country: "", age: "", solo: false, source: "", friends: "",
+  name: "", email: "", phone: "", phoneDial: "44", country: "", age: "", solo: false, source: "", staffRec: "", friends: "",
 };
 const emptyTraveler: TravelerFields = { firstName: "", lastName: "", email: "", age: "", dietary: "" };
 
@@ -99,7 +99,7 @@ export function BookingFlow({ trip }: { trip: Trip }) {
     setDiscountState(null);
 
     const subtotal = selected.price * groupSize;
-    validateDiscount({ code, tripSlug: trip.slug, amount: subtotal })
+    validateDiscount({ code, tripSlug: trip.slug, amount: subtotal, departureDate: selected.date })
       .then((result) => {
         if (result.valid) {
           setDiscountState({ valid: true, msg: `Applied — ${formatPrice(result.discountAmount ?? 0)} off`, amount: result.discountAmount });
@@ -159,6 +159,7 @@ export function BookingFlow({ trip }: { trip: Trip }) {
         travelers: travelerPayload,
         discountCode: discountState?.valid ? discountCode.trim().toUpperCase() : undefined,
         friendsMentioned: lead.friends,
+        staffRecommendation: lead.staffRec.trim() || undefined,
         utm,
         gaClientId: readGaClientId(),
       });
@@ -508,16 +509,29 @@ function LeadForm({
           <Switch id="solo" checked={value.solo} onCheckedChange={(v) => set("solo", v)} />
         </div>
       )}
-      <div>
-        <Label className="font-sticker text-[10px] tracking-[0.15em] text-mm-black/80">WHERE DID YOU HEAR ABOUT US?</Label>
-        <Select value={value.source} onValueChange={(v) => set("source", v)}>
-          <SelectTrigger className="mt-1 h-11 rounded-none border-[3px] border-mm-black bg-mm-paper font-medium">
-            <SelectValue placeholder="Choose one" />
-          </SelectTrigger>
-          <SelectContent className="rounded-none border-[3px] border-mm-black">
-            {SOURCES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-          </SelectContent>
-        </Select>
+      <div className="grid gap-3 md:grid-cols-2">
+        <div>
+          <Label className="font-sticker text-[10px] tracking-[0.15em] text-mm-black/80">WHERE DID YOU HEAR ABOUT US?</Label>
+          <Select value={value.source} onValueChange={(v) => set("source", v)}>
+            <SelectTrigger className="mt-1 h-11 rounded-none border-[3px] border-mm-black bg-mm-paper font-medium">
+              <SelectValue placeholder="Choose one" />
+            </SelectTrigger>
+            <SelectContent className="rounded-none border-[3px] border-mm-black">
+              {SOURCES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label className="font-sticker text-[10px] tracking-[0.15em] text-mm-black/80">
+            MAD MONKEY STAFF RECOMMENDATION? SHARE THEIR NAME <span className="text-mm-black/50">(OPTIONAL)</span>
+          </Label>
+          <Input
+            value={value.staffRec}
+            onChange={(e) => set("staffRec", e.target.value)}
+            placeholder="Staff member's name"
+            className="mt-1 h-11 rounded-none border-[3px] border-mm-black bg-mm-paper font-medium"
+          />
+        </div>
       </div>
       {groupSize === 1 && (
         <div>

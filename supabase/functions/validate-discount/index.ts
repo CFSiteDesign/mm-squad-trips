@@ -4,14 +4,18 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const SLUG_TO_LABEL: Record<string, string> = {
   indonesia: "Indonesia",
+  "indonesia-7": "Indonesia",
   cambodia: "Cambodia",
   vietnam: "Vietnam",
+  "vietnam-7": "Vietnam",
 };
+
+const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
-    const { code, tripSlug, amount } = await req.json();
+    const { code, tripSlug, amount, departureDate } = await req.json();
     if (!code || !tripSlug || typeof amount !== "number") {
       return jr({ valid: false, reason: "Missing fields" }, 400);
     }
@@ -51,9 +55,23 @@ Deno.serve(async (req) => {
     if (!appliesTo.includes("All") && !appliesTo.includes(label)) {
       return jr({ valid: false, reason: "Code not valid for this trip" });
     }
-    const discountAmount = Number(d.discount_amount) || 0;
+    // Month restriction: departure month must be in applicable_months (null/empty = any).
+    const months: number[] = d.applicable_months ?? [];
+    if (months.length > 0) {
+      const depMonth = departureDate ? new Date(String(departureDate) + "T00:00:00Z").getUTCMonth() + 1 : null;
+      if (!depMonth || !months.includes(depMonth)) {
+        const names = months.map((m) => MONTH_NAMES[m - 1] ?? m).join("/");
+        return jr({ valid: false, reason: `Code only valid for ${names} departures` });
+      }
+    }
+    // Percent codes: discount_amount holds the percentage (e.g. 20 = 20% of subtotal).
+    const isPercent = d.discount_type === "percent";
+    const raw = Number(d.discount_amount) || 0;
+    const discountAmount = isPercent
+      ? Math.round(amount * Math.min(100, Math.max(0, raw))) / 100
+      : raw;
     const newTotal = Math.max(0, amount - discountAmount);
-    return jr({ valid: true, discountAmount, newTotal });
+    return jr({ valid: true, discountAmount, newTotal, discountType: isPercent ? "percent" : "fixed", percent: isPercent ? raw : undefined });
   } catch (e) {
     return jr({ valid: false, reason: e instanceof Error ? e.message : "error" }, 500);
   }

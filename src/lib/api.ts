@@ -47,6 +47,8 @@ export async function validateDiscount(input: {
   code: string;
   tripSlug: string;
   amount: number;
+  /** ISO date of the selected departure — used for month-restricted codes. */
+  departureDate?: string;
 }): Promise<DiscountResult> {
   const { data, error } = await supabase.functions.invoke("validate-discount", { body: input });
   if (error) return { valid: false, reason: error.message };
@@ -61,6 +63,8 @@ export interface CreateCheckoutInput {
   travelers: unknown[];
   discountCode?: string;
   friendsMentioned?: string;
+  /** Optional "Mad Monkey staff recommendation" name from the booking form. */
+  staffRecommendation?: string;
   utm?: Record<string, string>;
   /** GA4 client id (from the _ga cookie) so a later server-side balance charge
    *  can be attributed to the same session/campaign in GA4. Empty when the
