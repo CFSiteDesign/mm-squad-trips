@@ -319,12 +319,18 @@ export default function Admin() {
                   {t.label}
                 </TabsTrigger>
               ))}
+              <TabsTrigger value="leaderboard" className="rounded-none data-[state=active]:bg-mm-pink data-[state=active]:text-mm-bone">
+                Leaderboard
+              </TabsTrigger>
             </TabsList>
             {TABS.map((t) => (
               <TabsContent key={t.id} value={t.id} className="mt-4">
                 <TableEditor table={t.id} refreshKey={refreshKey} />
               </TabsContent>
             ))}
+            <TabsContent value="leaderboard" className="mt-4">
+              <StaffLeaderboard refreshKey={refreshKey} />
+            </TabsContent>
           </Tabs>
         )}
       </main>
@@ -1052,6 +1058,137 @@ function CompBookingDialog({ onClose, onSaved }: { onClose: () => void; onSaved:
           </Button>
         </div>
       </div>
+    </div>
+  );
+}
+
+/* ============ STAFF RECOMMENDATION LEADERBOARD ============ */
+/* Aggregates bookings.staff_recommendation (collected at checkout) so the
+   on-ground teams' pitches are visible: one row per staff name, counting
+   checkouts + travellers. Names are grouped case/space-insensitively so
+   "josh", "Josh " and "JOSH" count as one person. Cancelled bookings excluded. */
+function StaffLeaderboard({ refreshKey }: { refreshKey: number }) {
+  const [rows, setRows] = useState<Record<string, unknown>[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [month, setMonth] = useState<string>("all");
+
+  useEffect(() => {
+    let cancelled = false;
+    setRows(null);
+    setError(null);
+    adminApi
+      .list("bookings", { limit: 2000 })
+      .then((r) => { if (!cancelled) setRows(r); })
+      .catch((e) => { if (!cancelled) setError(e instanceof Error ? e.message : "Could not load bookings"); });
+    return () => { cancelled = true; };
+  }, [refreshKey]);
+
+  const mentions = useMemo(() => {
+    if (!rows) return [];
+    // One entry per checkout (dedupe by stripe session), staff name present, not cancelled.
+    const seen = new Set<string>();
+    const out: { name: string; groupSize: number; created: string }[] = [];
+    for (const r of rows) {
+      const name = String(r.staff_recommendation ?? "").trim();
+      if (!name) continue;
+      if (String(r.status ?? "") === "Cancelled") continue;
+      const key = String(r.stripe_session_id || r.id);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({
+        name,
+        groupSize: Number(r.group_size ?? 1) || 1,
+        created: String(r.created_at ?? ""),
+      });
+    }
+    return out;
+  }, [rows]);
+
+  const months = useMemo(() => {
+    const s = new Set<string>();
+    for (const m of mentions) if (m.created) s.add(m.created.slice(0, 7));
+    return Array.from(s).sort().reverse();
+  }, [mentions]);
+
+  const board = useMemo(() => {
+    const filtered = month === "all" ? mentions : mentions.filter((m) => m.created.slice(0, 7) === month);
+    const agg = new Map<string, { display: string; bookings: number; travellers: number; last: string }>();
+    for (const m of filtered) {
+      const norm = m.name.toLowerCase().replace(/\s+/g, " ");
+      const cur = agg.get(norm) ?? { display: m.name.replace(/\s+/g, " "), bookings: 0, travellers: 0, last: "" };
+      cur.bookings += 1;
+      cur.travellers += m.groupSize;
+      if (m.created > cur.last) cur.last = m.created;
+      agg.set(norm, cur);
+    }
+    return Array.from(agg.values()).sort((a, b) => b.bookings - a.bookings || b.travellers - a.travellers);
+  }, [mentions, month]);
+
+  if (error) return <p className="border-[2px] border-mm-black bg-mm-bone p-4 text-sm">{error}</p>;
+  if (!rows) return <p className="p-4 font-sticker text-[11px] tracking-[0.15em] text-mm-black/60">LOADING…</p>;
+
+  const medal = (i: number) => (i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}`);
+
+  return (
+    <div>
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 className="font-display text-2xl">STAFF RECOMMENDATION LEADERBOARD</h2>
+          <p className="mt-1 text-sm text-mm-black/70">
+            Guests naming a Mad Monkey staff member at checkout. Bookings = checkouts; Travellers = people booked.
+            Cancelled bookings excluded. Spelling variants are grouped, but "Josh" and "Josh W" count separately —
+            eyeball the names before paying out incentives.
+          </p>
+        </div>
+        <label className="flex items-center gap-2 font-sticker text-[10px] tracking-[0.15em]">
+          PERIOD
+          <select
+            value={month}
+            onChange={(e) => setMonth(e.target.value)}
+            className="h-10 rounded-none border-[2px] border-mm-black bg-mm-bone px-2 font-sans text-sm"
+          >
+            <option value="all">All time</option>
+            {months.map((m) => (
+              <option key={m} value={m}>{m}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      {board.length === 0 ? (
+        <div className="border-[2px] border-mm-black bg-mm-bone p-6 text-center">
+          <p className="font-display text-lg">NO NAMES YET</p>
+          <p className="mt-1 text-sm text-mm-black/70">
+            The "Mad Monkey staff recommendation" question went live on 23 Jul 2026 — names appear here as new
+            bookings come in{month !== "all" ? " (try All time)" : ""}.
+          </p>
+        </div>
+      ) : (
+        <div className="overflow-x-auto border-[2px] border-mm-black">
+          <table className="w-full min-w-[520px] border-collapse bg-mm-bone text-sm">
+            <thead>
+              <tr className="border-b-[2px] border-mm-black bg-mm-black text-left text-mm-bone">
+                <th className="px-3 py-2 font-sticker text-[10px] tracking-[0.15em]">RANK</th>
+                <th className="px-3 py-2 font-sticker text-[10px] tracking-[0.15em]">STAFF MEMBER</th>
+                <th className="px-3 py-2 text-right font-sticker text-[10px] tracking-[0.15em]">BOOKINGS</th>
+                <th className="px-3 py-2 text-right font-sticker text-[10px] tracking-[0.15em]">TRAVELLERS</th>
+                <th className="px-3 py-2 text-right font-sticker text-[10px] tracking-[0.15em]">LAST MENTIONED</th>
+              </tr>
+            </thead>
+            <tbody>
+              {board.map((r, i) => (
+                <tr key={r.display + i} className={`border-b border-mm-black/20 ${i < 3 ? "bg-mm-lime/20" : ""}`}>
+                  <td className="px-3 py-2 font-display">{medal(i)}</td>
+                  <td className="px-3 py-2 font-medium">{r.display}</td>
+                  <td className="px-3 py-2 text-right font-display text-base">{r.bookings}</td>
+                  <td className="px-3 py-2 text-right">{r.travellers}</td>
+                  <td className="px-3 py-2 text-right text-mm-black/70">{r.last ? r.last.slice(0, 10) : "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
