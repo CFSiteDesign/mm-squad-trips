@@ -5,15 +5,21 @@ import { issueAdminToken } from "../_shared/admin-auth.ts";
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
-    const expected = Deno.env.get("ADMIN_PASSWORD");
-    if (!expected) return jr({ error: "ADMIN_PASSWORD not configured" }, 503);
-    const { password } = await req.json().catch(() => ({}));
+    const adminPw = Deno.env.get("ADMIN_PASSWORD");
+    const studentPw = Deno.env.get("STUDENT_ADMIN_PASSWORD");
+    if (!adminPw) return jr({ error: "ADMIN_PASSWORD not configured" }, 503);
+    const { password, variant } = await req.json().catch(() => ({}));
     if (typeof password !== "string" || password.length === 0) {
       return jr({ error: "password required" }, 400);
     }
     // Tiny delay to slow brute force
     await new Promise((r) => setTimeout(r, 300));
-    if (password.trim() !== expected.trim()) return jr({ error: "Invalid password" }, 401);
+    const submitted = password.trim();
+    const isStudentVariant = variant === "student";
+    const accepted =
+      submitted === adminPw.trim() ||
+      (isStudentVariant && studentPw ? submitted === studentPw.trim() : false);
+    if (!accepted) return jr({ error: "Invalid password" }, 401);
     const token = await issueAdminToken();
     return jr({ token, expiresInSeconds: 8 * 60 * 60 });
   } catch (e) {
