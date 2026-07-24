@@ -15,6 +15,15 @@ import stuUluSpa from "@/assets/student-ulu-spa.png.asset.json";
 import stuUluBatur from "@/assets/student-ulu-batur.jpg.asset.json";
 import stuNusaPool from "@/assets/student-nusa-pool2.png.asset.json";
 
+// The production site is served under the /all-in-trips path prefix, but
+// Lovable asset JSON URLs are stored as origin-absolute (/__l5e/...). Prefix
+// them at runtime when we're deployed under /all-in-trips.
+const assetPrefix =
+  typeof window !== "undefined" && window.location.pathname.startsWith("/all-in-trips")
+    ? "/all-in-trips"
+    : "";
+const assetUrl = (u: string) => (u.startsWith("/") ? `${assetPrefix}${u}` : u);
+
 type Stop = {
   num: string;
   location: string;
@@ -95,7 +104,7 @@ const DAYS: Day[] = [
   {
     day: 1,
     title: "Welcome to Uluwatu",
-    image: stuUluSpa.url,
+    image: assetUrl(stuUluSpa.url),
     body:
       "Land in Bali and make your way up to the clifftops of Uluwatu. The rest of the day's yours until we head out at 5pm for the welcome sunset at Panorama Point: the whole crew, a cold one in hand, and the coastline dropping into the ocean as the sky turns gold. Learn everyone's name over that first drink, then take it easy. Tomorrow starts in the dark, and it's one you won't want to sleep through.",
     meals: "None",
@@ -103,7 +112,7 @@ const DAYS: Day[] = [
   {
     day: 2,
     title: "Mount Batur sunrise hike",
-    image: stuUluBatur.url,
+    image: assetUrl(stuUluBatur.url),
     body:
       "The alarm goes at 1:30am and you'll thank us later. Trek up Mount Batur in the dark and hit the summit of an active volcano just as the sun breaks the horizon, cloud sitting in the valley below and the whole caldera lighting up. Back at the hostel to recover properly: sauna, hot tub, and an ice bath to bring the legs back to life. Then family dinner with a couple of drinks on us, and boozy bingo to see the night out.",
     meals: "Breakfast, Dinner",
@@ -111,7 +120,7 @@ const DAYS: Day[] = [
   {
     day: 3,
     title: "Welcome to Nusa",
-    image: stuNusaPool.url,
+    image: assetUrl(stuNusaPool.url),
     body:
       "Grab breakfast, check out, and by 1:30pm you're in a taxi to the coast and onto a fast boat over to Nusa Lembongan. This is where the pace drops and the water goes turquoise. Check into Mad Monkey and settle in: ice baths, saunas, a gym if you're feeling virtuous, and a pool that's very hard to leave. Tonight it's a beer pong tournament to get the island crew properly acquainted.",
     meals: "Breakfast",
@@ -119,7 +128,7 @@ const DAYS: Day[] = [
   {
     day: 4,
     title: "Swim with mantas",
-    image: stuNusaSnorkel.url,
+    image: assetUrl(stuNusaSnorkel.url),
     body:
       "Out early for the big one: snorkelling with manta rays as they glide in off Nusa Penida, three or four metres wingtip to wingtip, cruising right under you. Back on dry land and the day's yours: beach, pool, hammock, repeat. Regroup at the hostel in the evening for family dinner and a few drinks with the crew.",
     meals: "Dinner",
@@ -127,7 +136,7 @@ const DAYS: Day[] = [
   {
     day: 5,
     title: "Nusa Penida",
-    image: stuNusaPenida.url,
+    image: assetUrl(stuNusaPenida.url),
     body:
       "A full day island hopping around Nusa Penida from 8:30am. This is the Bali you've seen on the screensavers: Kelingking Beach and its dinosaur-shaped cliff, Broken Beach, water so clear it doesn't look real. Lunch is sorted along the way. Back to Mad Monkey for the pool party from 6pm, where the island properly lets loose.",
     meals: "Lunch",
@@ -135,7 +144,7 @@ const DAYS: Day[] = [
   {
     day: 6,
     title: "Over to Gili T",
-    image: stuGiliBar.url,
+    image: assetUrl(stuGiliBar.url),
     body:
       "Early fast boat across to Gili Trawangan: no cars, no scooters, just pushbikes, horse carts and sand. It's a bit of a walk from the pier in the heat, but there's an ice-cold beer and a pool waiting at the other end. Check into Mad Monkey, drop the bag and do as you please: beach, bar, or flat out by the water. Then it's our traditional Mexican family dinner to pull everyone back together.",
     meals: "Dinner",
@@ -143,7 +152,7 @@ const DAYS: Day[] = [
   {
     day: 7,
     title: "Explore Gili T",
-    image: stuGiliPoolParty.url,
+    image: assetUrl(stuGiliPoolParty.url),
     body:
       "The Gili T bucket-list bike tour rolls out at 1pm: three hours looping the island, stopping wherever looks good, which is basically everywhere. Back to Mad Monkey by 3 and straight into the foam party with a live DJ running till 10. It's as messy as it sounds. Pace yourself, or don't.",
     meals: "None",
@@ -151,7 +160,7 @@ const DAYS: Day[] = [
   {
     day: 8,
     title: "The boat party",
-    image: stuGiliBoatParty.url,
+    image: assetUrl(stuGiliBoatParty.url),
     body:
       "The one the whole island talks about. The Mad Monkey Boat Party kicks off at 2pm: four hours on the water, drinks flowing, DJs playing, everyone in. Roll back to the hostel by bike or on foot for an unlimited BBQ and more drinks to keep it rolling. One of those afternoons that doesn't really end.",
     meals: "Dinner",
@@ -159,7 +168,7 @@ const DAYS: Day[] = [
   {
     day: 9,
     title: "Monkey sea, monkey do",
-    image: stuGiliSnorkel.url,
+    image: assetUrl(stuGiliSnorkel.url),
     body:
       "One last Gili morning, and it's a good one: the Monkey Sea, Monkey Do snorkelling trip from 10:30 to 4, out over the reefs and turtles in that ridiculous clear water. Lunch is included on the boat. Then a short crossing back to Lombok and a two-hour drive down to Mad Monkey Kuta Lombok, checking in around dinner. This is where you learn to surf.",
     meals: "Lunch",
