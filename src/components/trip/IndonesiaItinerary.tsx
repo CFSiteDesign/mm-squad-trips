@@ -15,6 +15,15 @@ import stuUluSpa from "@/assets/student-ulu-spa.png.asset.json";
 import stuUluBatur from "@/assets/student-ulu-batur.jpg.asset.json";
 import stuNusaPool from "@/assets/student-nusa-pool2.png.asset.json";
 
+// The production site is served under the /all-in-trips path prefix, but
+// Lovable asset JSON URLs are stored as origin-absolute (/__l5e/...). Prefix
+// them at runtime when we're deployed under /all-in-trips.
+const assetPrefix =
+  typeof window !== "undefined" && window.location.pathname.startsWith("/all-in-trips")
+    ? "/all-in-trips"
+    : "";
+const assetUrl = (u: string) => (u.startsWith("/") ? `${assetPrefix}${u}` : u);
+
 type Stop = {
   num: string;
   location: string;
