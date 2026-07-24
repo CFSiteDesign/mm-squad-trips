@@ -13,9 +13,9 @@ export function setAdminToken(token: string | null) {
   } catch {}
 }
 
-export async function adminLogin(password: string): Promise<string> {
+export async function adminLogin(password: string, variant?: "student"): Promise<string> {
   const { data, error } = await supabase.functions.invoke("admin-verify", {
-    body: { password },
+    body: { password, variant },
   });
   if (error) throw new Error(error.message);
   if (!data?.token) throw new Error(data?.error ?? "Login failed");
