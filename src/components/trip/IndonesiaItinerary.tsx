@@ -14,6 +14,9 @@ import stuGiliSnorkel from "@/assets/student-gili-snorkeling.jpg.asset.json";
 import stuUluSpa from "@/assets/student-ulu-spa.png.asset.json";
 import stuUluBatur from "@/assets/student-ulu-batur.jpg.asset.json";
 import stuNusaPool from "@/assets/student-nusa-pool2.png.asset.json";
+import stuGiliPool from "@/assets/student-gili-pool.jpeg.asset.json";
+import stuNusa1 from "@/assets/student-nusa-1.png.asset.json";
+import indoLombokAsset from "@/assets/indo-lombok.png.asset.json";
 
 // The production site is served under the /all-in-trips path prefix, but
 // Lovable asset JSON URLs are stored as origin-absolute (/__l5e/...). Prefix
@@ -184,7 +187,7 @@ const DAYS: Day[] = [
   {
     day: 11,
     title: "Dawn patrol",
-    image: lombokImg,
+    image: assetUrl(indoLombokAsset.url),
     body:
       "Run club for anyone up for starting the day moving. Breakfast first, then out for the morning surf: the beach changes day to day depending on where the swell's best. Back for lunch and photo analysis, where you watch yourself nail it, or eat it, in slow motion. Afternoon session, then a bonfire on the beach for sunset with a few cold ones.",
     meals: "Breakfast, Lunch",
@@ -192,7 +195,7 @@ const DAYS: Day[] = [
   {
     day: 12,
     title: "Last waves",
-    image: lombokImg,
+    image: assetUrl(stuGiliPool.url),
     body:
       "Breakfast, then the morning surf one more time at whichever beach is firing. Back to the hostel for a pool party and a slow afternoon with a drink in hand. As the sun drops, head to the surf-skate meet-up, then back for the DJ party night: the last big one of the trip.",
     meals: "Breakfast, Lunch",
@@ -200,7 +203,7 @@ const DAYS: Day[] = [
   {
     day: 13,
     title: "Onward",
-    image: lombokImg,
+    image: assetUrl(stuNusa1.url),
     body:
       "Goodbyes all round, then transfers to Lombok airport — grab whichever fits your flight. Mad Monkey doesn't really do goodbyes, though. Wherever you're headed next across Southeast Asia, there's a bunk with your name on it.",
     meals: "None",
