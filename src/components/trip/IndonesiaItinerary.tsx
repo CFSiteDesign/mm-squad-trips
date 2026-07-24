@@ -14,6 +14,9 @@ import stuGiliSnorkel from "@/assets/student-gili-snorkeling.jpg.asset.json";
 import stuUluSpa from "@/assets/student-ulu-spa.png.asset.json";
 import stuUluBatur from "@/assets/student-ulu-batur.jpg.asset.json";
 import stuNusaPool from "@/assets/student-nusa-pool2.png.asset.json";
+import stuGiliPool from "@/assets/student-gili-pool.jpeg.asset.json";
+import stuNusa1 from "@/assets/student-nusa-1.png.asset.json";
+import indoLombokAsset from "@/assets/indo-lombok.png.asset.json";
 
 // The production site is served under the /all-in-trips path prefix, but
 // Lovable asset JSON URLs are stored as origin-absolute (/__l5e/...). Prefix
