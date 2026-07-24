@@ -341,12 +341,13 @@ export default function Admin() {
 function Login({ onSuccess }: { onSuccess: () => void }) {
   const [pw, setPw] = useState("");
   const [loading, setLoading] = useState(false);
+  const isStudent = typeof window !== "undefined" && window.location.pathname.includes("/students/admin");
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     try {
-      await adminLogin(pw);
+      await adminLogin(pw, isStudent ? "student" : undefined);
       onSuccess();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Login failed");
@@ -358,8 +359,8 @@ function Login({ onSuccess }: { onSuccess: () => void }) {
   return (
     <main className="flex min-h-screen items-center justify-center bg-mm-black px-5 text-mm-bone">
       <form onSubmit={submit} className="w-full max-w-sm border-[3px] border-mm-bone bg-mm-paper p-6 text-mm-black shadow-mm-lg md:p-8">
-        <h1 className="font-display text-3xl">ADMIN LOGIN</h1>
-        <p className="mt-2 text-sm text-mm-black/70">Enter the admin password.</p>
+        <h1 className="font-display text-3xl">{isStudent ? "STUDENT ADMIN LOGIN" : "ADMIN LOGIN"}</h1>
+        <p className="mt-2 text-sm text-mm-black/70">Enter the {isStudent ? "student admin " : ""}password.</p>
         <Label className="mt-5 block font-sticker text-[10px] tracking-[0.15em]">PASSWORD</Label>
         <Input
           type="password"
