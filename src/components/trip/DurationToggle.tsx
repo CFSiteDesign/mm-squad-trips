@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { TRIPS } from "@/data/trips";
+import { useSiteVariant } from "@/hooks/use-site-variant";
 
 /**
  * 7 DAYS / X DAYS toggle for Indonesia & Vietnam trip pages.
@@ -11,8 +12,10 @@ export function DurationToggle({ slug }: { slug: string }) {
 
   const isSeven = slug.endsWith("-7");
   const base = slug.replace(/-7$/, "");
-  const isStudentPath =
-    typeof window !== "undefined" && window.location.pathname.startsWith("/students");
+  // useSiteVariant reads the router's basename-relative path, so this works on
+  // both mm-squad-trips.lovable.app (/students/…) and the production domain
+  // (/all-in-trips/students/…). Raw window.location broke the latter.
+  const isStudentPath = useSiteVariant() === "student";
   const prefix = isStudentPath ? "/students" : "";
 
   const longTrip = TRIPS.find((t) => t.slug === base);

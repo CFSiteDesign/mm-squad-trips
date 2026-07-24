@@ -4,6 +4,7 @@ import { formatPrice, allDeparturesUnder60Days } from "@/lib/trip-helpers";
 import type { Trip } from "@/types/trip";
 import { Sticker, Starburst } from "@/components/brand/Sticker";
 import { DurationToggle } from "./DurationToggle";
+import { useSiteVariant } from "@/hooks/use-site-variant";
 
 const TOGGLE_BASE_SLUGS = new Set(["indonesia", "vietnam", "indonesia-7", "vietnam-7"]);
 
@@ -13,8 +14,8 @@ export function Hero({ trip, heroImageUrl }: { trip: Trip; heroImageUrl?: string
   const payInFull = allDeparturesUnder60Days(trip.departures);
   const hasVideo = /\.(mp4|webm|mov|m4v)(\?|$)/i.test(trip.heroVideoUrl ?? "");
   const showToggle = TOGGLE_BASE_SLUGS.has(trip.slug);
-  const isStudentPath =
-    typeof window !== "undefined" && window.location.pathname.startsWith("/students");
+  // Router-relative path (works under the /all-in-trips basename on production).
+  const isStudentPath = useSiteVariant() === "student";
   const isStudentIndo = isStudentPath && trip.slug === "indonesia";
   const displayDays = isStudentIndo ? 13 : trip.days;
 
