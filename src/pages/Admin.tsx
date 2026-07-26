@@ -1275,28 +1275,51 @@ function CreatorRevenue({ refreshKey }: { refreshKey: number }) {
     const seen = new Set<string>();
     let entries7 = 0;
     let entries12 = 0;
+    // One prize-draw entry per qualifying checkout — lead booker is the entrant.
+    type Entrant = { key: string; ref: string; name: string; email: string; code: string; creator: string; days: number; booked: string };
+    const entrantByKey = new Map<string, Entrant>();
     for (const b of bookings) {
       const codeId = b.discount_code_id ? String(b.discount_code_id) : "";
       if (!codeId || !byCodeId.has(codeId)) continue;
       const state = commissionState(b);
       if (state === "void") continue;
       const key = String(b.stripe_session_id || b.id);
-      if (seen.has(key)) continue;
-      seen.add(key);
       const agg = byCodeId.get(codeId)!;
       const days = tripDays.get(String(b.trip_id)) ?? 0;
+      if (seen.has(key)) {
+        // Later rows of the same checkout: prefer the lead row's guest details.
+        const e = entrantByKey.get(key);
+        if (e && Number(b.spot_number ?? 0) === 1) {
+          e.name = String(b.lead_name || e.name);
+          e.email = String(b.lead_email || e.email);
+          e.ref = String(b.booking_ref || e.ref);
+        }
+        continue;
+      }
+      seen.add(key);
       const isShort = days > 0 && days <= 7;
       const rate = isShort ? agg.c7 : agg.c12;
       if (isShort) { agg.n7 += 1; entries7 += 1; } else { agg.n12 += 1; entries12 += 1; }
       if (state === "confirmed") agg.confirmed += rate; else agg.pending += rate;
       agg.travellers += Number(b.group_size ?? 1) || 1;
+      entrantByKey.set(key, {
+        key,
+        ref: String(b.booking_ref || key.slice(0, 10)),
+        name: String(b.lead_name || "—"),
+        email: String(b.lead_email || "—"),
+        code: agg.code,
+        creator: agg.name,
+        days,
+        booked: String(b.created_at ?? "").slice(0, 10),
+      });
     }
+    const entrants = Array.from(entrantByKey.values()).sort((a, b) => (a.booked < b.booked ? 1 : -1));
     const all = Array.from(byCodeId.values());
     // 320+ codes are live; only surface the ones that have actually sold.
     const rows = all
       .filter((r) => r.n7 + r.n12 > 0)
       .sort((a, b) => b.confirmed + b.pending - (a.confirmed + a.pending) || b.n7 + b.n12 - (a.n7 + a.n12));
-    return { rows, entries7, entries12, totalCodes: all.length, idleCodes: all.length - rows.length };
+    return { rows, entries7, entries12, totalCodes: all.length, idleCodes: all.length - rows.length, entrants };
   }, [bookings, codes, trips]);
 
   if (error) return <p className="border-[2px] border-mm-black bg-mm-bone p-4 text-sm">{error}</p>;
@@ -1368,6 +1391,96 @@ function CreatorRevenue({ refreshKey }: { refreshKey: number }) {
           </tbody>
         </table>
       </div>
+
+      <PrizeDraw entrants={board.entrants} />
+    </div>
+  );
+}
+
+/* Prize draw: every qualifying creator-code checkout = one entry. Winner is
+   picked with crypto randomness in the browser; nothing is written to the DB —
+   redraw freely until the team announces it. */
+function PrizeDraw({ entrants }: { entrants: { key: string; ref: string; name: string; email: string; code: string; creator: string; days: number; booked: string }[] }) {
+  const [winner, setWinner] = useState<typeof entrants[number] | null>(null);
+  const [showEntries, setShowEntries] = useState(false);
+
+  function draw() {
+    if (entrants.length === 0) return;
+    const buf = new Uint32Array(1);
+    crypto.getRandomValues(buf);
+    setWinner(entrants[buf[0] % entrants.length]);
+  }
+
+  return (
+    <div className="mt-8">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h3 className="font-display text-xl">🎟️ PRIZE DRAW — {entrants.length} ENTR{entrants.length === 1 ? "Y" : "IES"}</h3>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setShowEntries((v) => !v)}
+            className="rounded-none border-[2px] border-mm-black"
+          >
+            {showEntries ? "HIDE ENTRIES" : "SHOW ENTRIES"}
+          </Button>
+          <Button
+            onClick={draw}
+            disabled={entrants.length === 0}
+            className="rounded-none border-[2px] border-mm-black bg-mm-lime font-display text-mm-black hover:bg-mm-lime"
+          >
+            {winner ? "DRAW AGAIN 🎲" : "DRAW A WINNER 🎲"}
+          </Button>
+        </div>
+      </div>
+      <p className="mt-1 text-sm text-mm-black/70">
+        One entry per booking made with a creator code. Winner is picked randomly on this device and isn't saved —
+        note it down before leaving the page.
+      </p>
+
+      {winner && (
+        <div className="mt-4 border-[3px] border-mm-black bg-mm-lime p-5 shadow-mm">
+          <p className="font-sticker text-[10px] tracking-[0.18em] text-mm-black/60">WINNER 🏆</p>
+          <p className="mt-1 font-display text-2xl">{winner.name}</p>
+          <p className="mt-1 text-sm font-medium">
+            {winner.email} · Ref {winner.ref} · via {winner.creator} ({winner.code}) · {winner.days <= 7 ? "7-day" : "12+ day"} trip · booked {winner.booked}
+          </p>
+        </div>
+      )}
+
+      {showEntries && (
+        entrants.length === 0 ? (
+          <p className="mt-4 border-[2px] border-mm-black bg-mm-bone p-4 text-sm text-mm-black/70">
+            No entries yet — they'll appear as soon as bookings come in with a creator code.
+          </p>
+        ) : (
+          <div className="mt-4 overflow-x-auto border-[2px] border-mm-black">
+            <table className="w-full min-w-[640px] border-collapse bg-mm-bone text-sm">
+              <thead>
+                <tr className="border-b-[2px] border-mm-black bg-mm-black text-left text-mm-bone">
+                  <th className="px-3 py-2 font-sticker text-[10px] tracking-[0.15em]">GUEST</th>
+                  <th className="px-3 py-2 font-sticker text-[10px] tracking-[0.15em]">EMAIL</th>
+                  <th className="px-3 py-2 font-sticker text-[10px] tracking-[0.15em]">REF</th>
+                  <th className="px-3 py-2 font-sticker text-[10px] tracking-[0.15em]">CREATOR</th>
+                  <th className="px-3 py-2 font-sticker text-[10px] tracking-[0.15em]">TRIP</th>
+                  <th className="px-3 py-2 text-right font-sticker text-[10px] tracking-[0.15em]">BOOKED</th>
+                </tr>
+              </thead>
+              <tbody>
+                {entrants.map((e) => (
+                  <tr key={e.key} className={`border-b border-mm-black/20 ${winner?.key === e.key ? "bg-mm-lime/40" : ""}`}>
+                    <td className="px-3 py-2 font-medium">{e.name}</td>
+                    <td className="px-3 py-2">{e.email}</td>
+                    <td className="px-3 py-2 font-mono text-xs">{e.ref}</td>
+                    <td className="px-3 py-2">{e.creator}</td>
+                    <td className="px-3 py-2">{e.days <= 7 ? "7-day" : "12+ day"}</td>
+                    <td className="px-3 py-2 text-right">{e.booked}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
+      )}
     </div>
   );
 }
