@@ -304,11 +304,15 @@ export type Database = {
           applicable_months: number[] | null
           applicable_to: string[]
           code: string
+          commission_12day: number | null
+          commission_7day: number | null
           created_at: string
+          creator_name: string | null
           discount_amount: number
           discount_type: string
           expiry_date: string | null
           id: string
+          is_creator: boolean
           updated_at: string
           usage_limit: number | null
           used_count: number
@@ -318,11 +322,15 @@ export type Database = {
           applicable_months?: number[] | null
           applicable_to?: string[]
           code: string
+          commission_12day?: number | null
+          commission_7day?: number | null
           created_at?: string
+          creator_name?: string | null
           discount_amount?: number
           discount_type?: string
           expiry_date?: string | null
           id?: string
+          is_creator?: boolean
           updated_at?: string
           usage_limit?: number | null
           used_count?: number
@@ -332,11 +340,15 @@ export type Database = {
           applicable_months?: number[] | null
           applicable_to?: string[]
           code?: string
+          commission_12day?: number | null
+          commission_7day?: number | null
           created_at?: string
+          creator_name?: string | null
           discount_amount?: number
           discount_type?: string
           expiry_date?: string | null
           id?: string
+          is_creator?: boolean
           updated_at?: string
           usage_limit?: number | null
           used_count?: number
