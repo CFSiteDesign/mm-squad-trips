@@ -71,7 +71,16 @@ Deno.serve(async (req) => {
       ? Math.round(amount * Math.min(100, Math.max(0, raw))) / 100
       : raw;
     const newTotal = Math.max(0, amount - discountAmount);
-    return jr({ valid: true, discountAmount, newTotal, discountType: isPercent ? "percent" : "fixed", percent: isPercent ? raw : undefined });
+    return jr({
+      valid: true,
+      discountAmount,
+      newTotal,
+      discountType: isPercent ? "percent" : "fixed",
+      percent: isPercent ? raw : undefined,
+      // Creator tracking codes: $0 off, booking enters the shared prize draw.
+      isCreator: d.is_creator === true,
+      creatorName: d.creator_name ?? undefined,
+    });
   } catch (e) {
     return jr({ valid: false, reason: e instanceof Error ? e.message : "error" }, 500);
   }

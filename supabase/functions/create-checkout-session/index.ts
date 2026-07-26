@@ -126,6 +126,7 @@ Deno.serve(async (req) => {
     let discountAmount = 0;
     let appliedCode: string | null = null;
     let discountRecordId: string | null = null;
+    let appliedIsCreator = false;
     let squadCode: string | null = null;
     if (discountCode) {
       const safe = String(discountCode).toUpperCase();
@@ -151,6 +152,7 @@ Deno.serve(async (req) => {
             : raw;
           appliedCode = safe;
           discountRecordId = d.id;
+          appliedIsCreator = d.is_creator === true;
         }
       } else {
         // Squad leader code fallback — no discount to price, but credit the leader via metadata.
@@ -276,6 +278,8 @@ Deno.serve(async (req) => {
                 message:
                   (discountAmount > 0 && appliedCode
                     ? `Discount ${appliedCode} applied — $${discountAmount.toFixed(0)} off your trip total. `
+                    : appliedIsCreator && appliedCode
+                    ? `Creator code ${appliedCode} applied — this booking is entered into the prize draw. `
                     : "") +
                   `You're paying a $${DEPOSIT_PER_SPOT * groupSize} deposit today. ` +
                   `The remaining balance of $${(fullDue - amountToday).toFixed(0)} will be automatically charged to this card 7 days before departure (${depDate}). ` +

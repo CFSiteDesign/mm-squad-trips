@@ -41,6 +41,9 @@ export interface DiscountResult {
   reason?: string;
   discountAmount?: number;
   newTotal?: number;
+  /** Creator tracking code: $0 off, the booking enters the shared prize draw. */
+  isCreator?: boolean;
+  creatorName?: string;
 }
 
 export async function validateDiscount(input: {

@@ -136,6 +136,10 @@ const COLUMNS: Record<AdminTable, ColumnDef[]> = {
     { key: "expiry_date", label: "Expiry", tooltip: "Date after which the code can no longer be used", type: "date" },
     { key: "applicable_to", label: "Applicable To (JSON array)", tooltip: "List of trip codes this discount can be applied to", type: "json" },
     { key: "applicable_months", label: "Months (JSON array)", tooltip: "Departure months this code works for, e.g. [9,10,11] = Sept/Oct/Nov. Empty = any month", type: "json" },
+    { key: "is_creator", label: "Creator Code", tooltip: "Tracking-only code for a creator/partner: $0 discount, bookings enter the prize draw and accrue commission", type: "boolean" },
+    { key: "creator_name", label: "Creator", tooltip: "Display name of the creator/partner this code belongs to", type: "text" },
+    { key: "commission_7day", label: "Commission 7d ($)", tooltip: "Commission per 7-day booking made with this code", type: "number" },
+    { key: "commission_12day", label: "Commission 12d+ ($)", tooltip: "Commission per 12+ day booking made with this code", type: "number" },
   ],
   bookings: [
     { key: "id", label: "ID", readOnly: true, hidden: true },
@@ -322,6 +326,9 @@ export default function Admin() {
               <TabsTrigger value="leaderboard" className="rounded-none data-[state=active]:bg-mm-pink data-[state=active]:text-mm-bone">
                 Leaderboard
               </TabsTrigger>
+              <TabsTrigger value="creators" className="rounded-none data-[state=active]:bg-mm-pink data-[state=active]:text-mm-bone">
+                Creators
+              </TabsTrigger>
             </TabsList>
             {TABS.map((t) => (
               <TabsContent key={t.id} value={t.id} className="mt-4">
@@ -330,6 +337,9 @@ export default function Admin() {
             ))}
             <TabsContent value="leaderboard" className="mt-4">
               <StaffLeaderboard refreshKey={refreshKey} />
+            </TabsContent>
+            <TabsContent value="creators" className="mt-4">
+              <CreatorRevenue refreshKey={refreshKey} />
             </TabsContent>
           </Tabs>
         )}
@@ -1190,6 +1200,127 @@ function StaffLeaderboard({ refreshKey }: { refreshKey: number }) {
           </table>
         </div>
       )}
+    </div>
+  );
+}
+
+/* ============ CREATOR REVENUE / PRIZE DRAW ============ */
+/* Bookings made with a creator tracking code (discount_codes.is_creator),
+   within the campaign window, split 7-day vs 12+ day with commission owed
+   per creator. Every qualifying booking is one entry in the shared prize
+   draw. Rates live on each code row (Discounts tab) — Lexie to confirm. */
+const CREATOR_WINDOW_START = "2026-07-15";
+const CREATOR_WINDOW_END = "2026-09-15"; // inclusive: bookings made through this date
+
+function CreatorRevenue({ refreshKey }: { refreshKey: number }) {
+  const [bookings, setBookings] = useState<Record<string, unknown>[] | null>(null);
+  const [codes, setCodes] = useState<Record<string, unknown>[] | null>(null);
+  const [trips, setTrips] = useState<Record<string, unknown>[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setError(null);
+    Promise.all([
+      adminApi.list("bookings", { limit: 2000 }),
+      adminApi.list("discount_codes", { limit: 500 }),
+      adminApi.list("trips", { limit: 100 }),
+    ])
+      .then(([b, c, t]) => { if (!cancelled) { setBookings(b); setCodes(c); setTrips(t); } })
+      .catch((e) => { if (!cancelled) setError(e instanceof Error ? e.message : "Could not load data"); });
+    return () => { cancelled = true; };
+  }, [refreshKey]);
+
+  const board = useMemo(() => {
+    if (!bookings || !codes || !trips) return null;
+    const tripDays = new Map<string, number>();
+    for (const t of trips) tripDays.set(String(t.id), Number(t.days ?? 0));
+    const creatorCodes = codes.filter((c) => c.is_creator === true);
+    const byCodeId = new Map<string, { code: string; name: string; c7: number; c12: number; n7: number; n12: number; travellers: number }>();
+    for (const c of creatorCodes) {
+      byCodeId.set(String(c.id), {
+        code: String(c.code),
+        name: String(c.creator_name || c.code),
+        c7: Number(c.commission_7day ?? 25),
+        c12: Number(c.commission_12day ?? 50),
+        n7: 0, n12: 0, travellers: 0,
+      });
+    }
+    const seen = new Set<string>();
+    let entries = 0;
+    for (const b of bookings) {
+      const codeId = b.discount_code_id ? String(b.discount_code_id) : "";
+      if (!codeId || !byCodeId.has(codeId)) continue;
+      if (String(b.status ?? "") === "Cancelled") continue;
+      const created = String(b.created_at ?? "").slice(0, 10);
+      if (created < CREATOR_WINDOW_START || created > CREATOR_WINDOW_END) continue;
+      const key = String(b.stripe_session_id || b.id);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      entries++;
+      const agg = byCodeId.get(codeId)!;
+      const days = tripDays.get(String(b.trip_id)) ?? 0;
+      if (days > 0 && days <= 7) agg.n7 += 1; else agg.n12 += 1;
+      agg.travellers += Number(b.group_size ?? 1) || 1;
+    }
+    const rows = Array.from(byCodeId.values())
+      .map((r) => ({ ...r, commission: r.n7 * r.c7 + r.n12 * r.c12 }))
+      .sort((a, b) => b.commission - a.commission || b.n7 + b.n12 - (a.n7 + a.n12));
+    return { rows, entries };
+  }, [bookings, codes, trips]);
+
+  if (error) return <p className="border-[2px] border-mm-black bg-mm-bone p-4 text-sm">{error}</p>;
+  if (!board) return <p className="p-4 font-sticker text-[11px] tracking-[0.15em] text-mm-black/60">LOADING…</p>;
+
+  return (
+    <div>
+      <div className="mb-4">
+        <h2 className="font-display text-2xl">CREATOR CODES — BOOKINGS & COMMISSION</h2>
+        <p className="mt-1 text-sm text-mm-black/70">
+          Tracking-only codes ($0 discount). Window: bookings made {CREATOR_WINDOW_START} → {CREATOR_WINDOW_END},
+          any travel dates. Cancelled bookings excluded. Commission = 7-day bookings × rate7 + 12+ day bookings × rate12
+          (rates editable per code in the Discounts tab — Lexie to confirm final rates).
+        </p>
+        <p className="mt-2 inline-block border-[2px] border-mm-black bg-mm-lime px-3 py-1 font-sticker text-[11px] tracking-[0.15em]">
+          🎟️ PRIZE DRAW ENTRIES SO FAR: {board.entries}
+        </p>
+      </div>
+
+      <div className="overflow-x-auto border-[2px] border-mm-black">
+        <table className="w-full min-w-[640px] border-collapse bg-mm-bone text-sm">
+          <thead>
+            <tr className="border-b-[2px] border-mm-black bg-mm-black text-left text-mm-bone">
+              <th className="px-3 py-2 font-sticker text-[10px] tracking-[0.15em]">CREATOR</th>
+              <th className="px-3 py-2 font-sticker text-[10px] tracking-[0.15em]">CODE</th>
+              <th className="px-3 py-2 text-right font-sticker text-[10px] tracking-[0.15em]">7-DAY BOOKINGS</th>
+              <th className="px-3 py-2 text-right font-sticker text-[10px] tracking-[0.15em]">12+ DAY BOOKINGS</th>
+              <th className="px-3 py-2 text-right font-sticker text-[10px] tracking-[0.15em]">TRAVELLERS</th>
+              <th className="px-3 py-2 text-right font-sticker text-[10px] tracking-[0.15em]">COMMISSION OWED</th>
+            </tr>
+          </thead>
+          <tbody>
+            {board.rows.map((r) => (
+              <tr key={r.code} className="border-b border-mm-black/20">
+                <td className="px-3 py-2 font-medium">{r.name}</td>
+                <td className="px-3 py-2 font-mono text-xs">{r.code}</td>
+                <td className="px-3 py-2 text-right">{r.n7}</td>
+                <td className="px-3 py-2 text-right">{r.n12}</td>
+                <td className="px-3 py-2 text-right">{r.travellers}</td>
+                <td className="px-3 py-2 text-right font-display text-base">${r.commission.toFixed(0)}</td>
+              </tr>
+            ))}
+            <tr className="bg-mm-lime/30 font-medium">
+              <td className="px-3 py-2 font-display" colSpan={2}>TOTAL</td>
+              <td className="px-3 py-2 text-right">{board.rows.reduce((s, r) => s + r.n7, 0)}</td>
+              <td className="px-3 py-2 text-right">{board.rows.reduce((s, r) => s + r.n12, 0)}</td>
+              <td className="px-3 py-2 text-right">{board.rows.reduce((s, r) => s + r.travellers, 0)}</td>
+              <td className="px-3 py-2 text-right font-display text-base">
+                ${board.rows.reduce((s, r) => s + r.commission, 0).toFixed(0)}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

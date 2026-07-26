@@ -101,7 +101,9 @@ export function BookingFlow({ trip }: { trip: Trip }) {
     const subtotal = selected.price * groupSize;
     validateDiscount({ code, tripSlug: trip.slug, amount: subtotal, departureDate: selected.date })
       .then((result) => {
-        if (result.valid) {
+        if (result.valid && result.isCreator) {
+          setDiscountState({ valid: true, msg: "Creator code applied — you're in the prize draw! 🎉", amount: 0 });
+        } else if (result.valid) {
           setDiscountState({ valid: true, msg: `Applied — ${formatPrice(result.discountAmount ?? 0)} off`, amount: result.discountAmount });
         } else {
           setDiscountState({ valid: false, msg: result.reason || "Code does not exist" });
