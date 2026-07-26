@@ -1,167 +1,208 @@
-# Creator codes on ALL IN TRIPS → Creator Revenue dashboard
+# ALL IN Trips → Creator Hub: affiliate commission plan
 
-Plan agreed off the back of Kyle's Chat message (Fri 9:50pm):
+Source of truth: **"All in trips - Affiliate brief"** (Lexie/Kyle) + Kyle's Chat message
+(Fri 9:50pm). Rewritten 2026-07-27 after reading the brief and auditing what is
+already built.
 
-> Add a page to the Creator Revenue dashboard (ALL IN TRIPS), and connect an API to
-> ALL IN TRIPS backend so any necessary creator data (e.g. $$) stored there will be
-> visible from Creator Revenue. Saves having to login and handle 2 CRMs for $$.
+---
 
-Date: 2026-07-27
+## What the brief actually asks for
+
+> "We're adding a new commission category to the Creator Hub — ALL IN Trips. Same
+> system, same dashboard, no new build from scratch."
+
+- Creators refer using their **existing affiliate code**. Guest pays full price.
+- **14-day trip → creator earns $50. 7-day trip → creator earns $25.**
+- Guest reward is **not a discount**: 2 free hostel nights (any Mad Monkey property,
+  valid 3 months, auto-issued voucher on booking confirmation — Dhany building) **+
+  entry into a draw** to win another trip of the same length.
+- ALL IN becomes a **fourth category** next to Beds, Travel + Tours, Events — one
+  dashboard, broken out as its own line.
+- **Not all codes qualify.** Admin-side per-code flag: "ALL IN eligible: yes/no",
+  controlled by the Mad Monkey side. Everything else for that creator is unchanged.
+- **Commission confirms only when the final trip payment lands** — not the deposit.
+  Cancellation before that = no commission.
+- Side note in the brief: the **Events** category is currently Dutchies-only and
+  "ideally will apply ASAP to everyone by default".
 
 ---
 
 ## The two systems
 
-| | ALL IN TRIPS | Creator Revenue |
+| | ALL IN TRIPS | Creator Hub / Creator Revenue |
 |---|---|---|
 | Lovable project | `mm-squad-trips` (`7ddaa420…`) | `mm-influencer-rev` (`e90d5e0b…`) |
-| Local repo | `~/mm-squad-trips` (git → Lovable) | none — Lovable-only, drive via prompt |
+| Local repo | `~/mm-squad-trips` ✅ | none — Lovable-only, drive via prompt |
 | Backend | Lovable Cloud / Supabase | Supabase `jtiawsakiidtfobophyv` |
-| Key tables | `discount_codes`, `bookings`, `squad_leaders`, `squad_bookings` | `creators` (332 codes), `creator_revenue`, `creator_monthly_revenue` |
-| Today's revenue sources | Stripe checkout, live | Google Sheet → `sheets-sync` (rooms `rd_*`, tours `hgl_*`, `events_revenue`) |
+| Key tables | `discount_codes`, `bookings`, `trips` | `creators` (332), `creator_revenue`, `creator_monthly_revenue` |
+| Revenue today | live Stripe checkout | Google Sheet → `sheets-sync` (`rd_*` beds, `hgl_*` tours, `events_revenue`) |
 
-**Principle: ALL IN TRIPS' database is the source of truth for trips $$.** Creator
-Revenue reads it over a signed API and caches a monthly snapshot. That kills the
-`ALL IN → Cloudbeds → mark sheet → creator hub` chain Kyle called out — trips data
-never touches Cloudbeds or the sheet.
+**Principle: ALL IN TRIPS' database is the source of truth for trips commission.**
+The Hub reads it over a signed API and stores a monthly snapshot. That removes the
+`ALL IN → Cloudbeds → mark sheet → Creator Hub` chain Kyle flagged.
 
-Current state check (27 Jul): ALL IN TRIPS has **4** discount codes
-(`EARLYBIRD100`, `TWICE150`, `FIFOAUSTRALIA`, `KS!!32WS11H@`) — all fixed $, none
-creator. Creator Revenue has **332** creator codes (`AARON10`, `AMY10`, … all `10`
-suffix). Trips are priced and charged in **USD**.
+Trips are priced and charged in **USD**. Live trips: Cambodia 14d ($650),
+Indonesia 12d ($700), Indonesia 7d ($450), Vietnam 14d ($850), Vietnam 7d ($310).
 
 ---
 
-## Decisions needed before build (blockers marked ⛔)
+## Already built (commit `6ce05b1`, 27 Jul) — trips side
 
-1. ⛔ **The code list.** Charlie to send. Assume it's the same codes as the hostel
-   codes (`NAME10`) so a creator has ONE code across rooms + trips.
-2. ⛔ **Guest discount on trips.** Hostel codes are 10% off a bed. 10% off a
-   ~$1,500 trip is ~$150. Same 10%, a lower %, or a fixed $ (e.g. $100 to match
-   `EARLYBIRD100`)? Can be set per code.
-3. ⛔ **Creator commission** — % or fixed, and of what: gross booking value, or net
-   after the guest discount. Stored per code so it can vary by creator tier.
-4. **When it counts:** booked-month (date of checkout) vs departure-month. Rec:
-   **booked-month** — that's when the code did the work, and it matches how
-   `creator_revenue.month` already behaves.
-5. **Deposit vs full:** show *booked value* (`final_price`) as the headline and
-   *paid to date* (`amount_paid`) underneath. Commission only becomes payable once
-   the balance is charged — flag it, don't hide it.
-6. **Stacking:** creator codes can't combine with `EARLYBIRD100` etc. (checkout
-   only accepts one code today — no change needed, just confirming the rule).
-7. **Scope:** all 332 codes live on trips, or a pilot batch first? Rec: **pilot 20**
-   for a fortnight, then bulk-enable — one `active` flag flip either way.
+- `discount_codes.is_creator`, `creator_name`, `commission_7day` (25),
+  `commission_12day` (50) — migration `20260727100000_creator_tracking_codes.sql`,
+  applied to the live DB.
+- Three $0 tracking codes seeded and active: `YELLOW4MADMONKEY`, `CODE4MADMONKEY`,
+  `LYLO4MADMONKEY` (expiry 2026-09-15).
+- `validate-discount` returns `isCreator`; the booking form shows
+  "Creator code applied — you're in the prize draw! 🎉" instead of "$0 off".
+- Admin → Creators tab: per-code 7-day vs 12+ bookings, travellers, commission owed,
+  total prize-draw entries. Window hardcoded 15 Jul – 15 Sep 2026, cancelled excluded,
+  deduped per checkout.
+
+So the **$0-tracking-code model and the $25/$50 rates already match the brief.** What
+follows is the gap.
 
 ---
 
-## Phase 1 — ALL IN TRIPS backend (`~/mm-squad-trips`, local repo)
+## Gap analysis
 
-**1.1 Migration** — `supabase/migrations/2026XXXX_creator_codes.sql`
-
-```sql
-alter table public.discount_codes
-  add column if not exists is_creator_code boolean not null default false,
-  add column if not exists creator_code text,          -- code as it exists in Creator Revenue
-  add column if not exists creator_name text,
-  add column if not exists creator_email text,
-  add column if not exists commission_type text default 'percent',  -- 'percent' | 'fixed'
-  add column if not exists commission_value numeric(10,2) default 0;
-
-create index if not exists discount_codes_creator_idx
-  on public.discount_codes(creator_code) where is_creator_code;
-
--- Snapshot the code onto the booking so later edits to a code never rewrite history
-alter table public.bookings add column if not exists creator_code text;
-create index if not exists bookings_creator_code_idx on public.bookings(creator_code);
-```
-
-**1.2 Seed the codes.** Idempotent `insert … on conflict (code) do update` from the
-list Charlie sends. Guards before import:
-- collision with the 4 existing trip codes,
-- collision with `squad_leaders.code` — `validate-discount` checks `discount_codes`
-  first, so a clash would silently hijack a squad leader's code. Must be a hard
-  pre-flight check.
-
-**1.3 Webhook attribution** — `supabase/functions/stripe-webhook/index.ts` already
-resolves `discount_code_id` from the typed code (line ~135). Add: when that code is
-a creator code, write `creator_code` onto every booking row for the checkout
-(including group members, which already inherit `discount_code_id`).
-
-**1.4 New edge function** — `supabase/functions/creator-trips-revenue/index.ts`
-
-Modelled on `staff-leaderboard` (server-side secret, aggregate-safe fields only).
-
-- Auth: `x-api-key` header vs `CREATOR_HUB_API_KEY` secret. Never called from a
-  browser — only from the Creator Revenue edge function.
-- Body: `{ code?: string, month?: 'YYYY-MM', all?: true }`
-- Excludes `status = 'Cancelled'`, dedupes by `stripe_session_id` where needed.
-- Returns per creator per month:
-  `bookings`, `travellers`, `gross_value`, `discount_given`, `net_revenue`,
-  `paid_to_date`, `commission_owed`, `by_trip[]` (Indonesia / Cambodia / Vietnam),
-  and `pending_balance`.
-- **No guest names, emails or booking refs** — same privacy line as the staff
-  leaderboard.
-
-**1.5 Admin (optional, ship after 1.1–1.4).** A Creator Codes tab in
-`src/pages/Admin.tsx`: activate/deactivate, set discount + commission, see usage.
-Until then, codes are managed by SQL.
-
-**Deploy:** `git push` syncs the Lovable workspace, then hit **Publish** in Lovable —
-two steps, the push alone does not go live.
+| Brief requirement | Status | Work |
+|---|---|---|
+| Guest pays full price, code is tracking-only | ✅ done | — |
+| $50 (14-day) / $25 (7-day) | 🟡 rates right, tiering by `trips.days ≤ 7` | confirm Indonesia at **12 days** pays the $50 tier |
+| Creators use their **existing** affiliate code | ❌ | seeded codes are partner-style (`*4MADMONKEY`), not hub codes (`AARON10`) |
+| Only approved codes eligible, admin toggle | 🟡 `is_creator` exists in trips admin | toggle needs to live where Mad Monkey controls it (Hub) |
+| Commission confirms on **final payment** | ❌ | admin counts at booking; needs pending/confirmed split |
+| ALL IN as 4th category on Hub dashboard | ❌ | Hub untouched |
+| Coupon report tracking same as current | ❌ | needs the API + sync |
+| 2 free nights voucher, 3-month validity, auto-issued | ❌ | Dhany dependency + issuance hook |
+| Draw entry per trip length | 🟡 one shared entry count | split into 7-day and 14-day draws |
+| Events category default-on for everyone | ❌ | Hub-side change (brief side note) |
 
 ---
 
-## Phase 2 — Creator Revenue dashboard (`mm-influencer-rev`, via Lovable prompt)
+## Phase A — ALL IN TRIPS (local repo)
 
-**2.1 Table**
+**Done 27 Jul:** A1 (commission timing), A2 (draw entries per tier), A3 (321 codes
+imported, no expiry). Remaining: A4 voucher, A5 API, A6 eligibility write-through.
+
+
+**A1. Commission state machine.** The brief's timing rule is the biggest correction.
+Derive per booking:
+
+- `void` — status `Cancelled`, or refunded.
+- `confirmed` — balance settled: `balance_status = 'paid'` / `balance_charged_at`
+  set, **or** `payment_type = 'Full'` (paid in full at checkout).
+- `pending` — deposit paid, balance outstanding.
+
+Commission owed = confirmed only. Pending shown separately so creators see what's
+coming without it being payable. Applies to the admin tab **and** the API.
+
+**A2. Prize draw, per tier.** Split entries into the 7-day draw and the 14-day (12+)
+draw — the brief promises "another 7-day trip" / "another 14-day trip" separately.
+Store entries as rows (auditable list of qualifying bookings), not a live recount in
+the browser.
+
+**A3. Seed the approved codes.** ⛔ Needs the approved list. Idempotent upsert,
+with a hard pre-flight check against `squad_leaders.code` — `validate-discount` reads
+`discount_codes` first, so a clash would silently hijack a squad leader's code.
+
+**A4. Guest reward issuance.** 2 free nights, any property, 3 months from issue,
+auto-issued on booking confirmation. Interim if Dhany's system isn't ready: generate
+a voucher code per booking, store it, include it in the confirmation email, and hand
+ops a redemption list. Needs a decision on who honours it at property level.
+
+**A5. `creator-trips-revenue` edge function.** Modelled on `staff-leaderboard`
+(server-side secret, aggregate-safe fields only).
+
+- Auth: `x-api-key` vs `CREATOR_HUB_API_KEY`. Never called from a browser.
+- Body: `{ code?, month?, all?: true }`
+- Per creator per month: `bookings`, `travellers`, `commission_confirmed`,
+  `commission_pending`, `draw_entries_7d`, `draw_entries_14d`, `by_trip[]`.
+- No guest names, emails or booking refs — same privacy line as the staff leaderboard.
+
+**A6. Eligibility write-through.** Small authed endpoint so the Hub admin toggle sets
+`is_creator` on the trips code. One enforcement point, no drift.
+
+**Deploy:** `git push` syncs the Lovable workspace, then **Publish** in Lovable — two
+steps; the push alone does not go live.
+
+---
+
+## Phase B — Creator Hub (`mm-influencer-rev`, via Lovable prompt)
+
+**B1. Table**
 
 ```sql
 create table if not exists public.creator_trips_revenue (
   id uuid primary key default gen_random_uuid(),
   creator_code text not null,
-  month text not null,                 -- 'YYYY-MM'
+  month text not null,                          -- 'YYYY-MM'
   bookings integer not null default 0,
   travellers integer not null default 0,
-  gross_value numeric(10,2) not null default 0,
-  discount_given numeric(10,2) not null default 0,
-  net_revenue numeric(10,2) not null default 0,
-  paid_to_date numeric(10,2) not null default 0,
-  commission_owed numeric(10,2) not null default 0,
+  commission_confirmed numeric(10,2) not null default 0,
+  commission_pending numeric(10,2) not null default 0,
+  draw_entries_7d integer not null default 0,
+  draw_entries_14d integer not null default 0,
   by_trip jsonb not null default '[]'::jsonb,
   synced_at timestamptz not null default now(),
   unique (creator_code, month)
 );
 ```
 
-**2.2 `trips-sync` edge function.** Calls the ALL IN TRIPS endpoint with the shared
-secret (Supabase secret, never in the client), upserts every returned row. Runs
-hourly on cron + a **Sync now** button in admin. Proxying it this way means: the key
-stays server-side, the hub keeps its own history, and the dashboard still renders if
-the trips backend is down.
+**B2. `trips-sync` edge function** — calls ALL IN TRIPS with the shared secret from
+Supabase secrets, upserts every row. Hourly cron + a **Sync now** button in admin.
+Proxying keeps the key server-side, gives the Hub its own history, and keeps the
+dashboard rendering if the trips backend is down.
 
-**2.3 UI**
-- Creator dashboard: a fourth revenue card, **ALL IN TRIPS**, alongside Rooms /
-  Tours / Events — bookings, travellers, revenue driven, your commission.
-- New page `/trips` (linked from the card): month selector, per-trip table, booked
-  vs paid split, and a "balance still to be collected" note.
-- Admin dashboard totals + leaderboard include trips revenue (behind the same
-  month filter as everything else).
-- Same look and language as the existing cards — this is one dashboard, not a
-  bolted-on tab.
+**B3. UI — fourth category.** "ALL IN" card beside Beds / Travel + Tours / Events on
+the creator dashboard, and a detail view: bookings, travellers, **confirmed vs pending
+commission**, per-trip table, draw entries. Same components and language as the
+existing cards — one dashboard, not a bolted-on tab. Hidden for creators who are not
+ALL IN eligible.
+
+**B4. Admin: "ALL IN eligible: yes/no"** per creator, writing through to A6. Plus
+totals and a payout export.
+
+**B5. Events for everyone.** Drop the Dutchies-only gate so Events shows by default —
+called out in the brief, cheap while we're in the file.
 
 ---
 
-## Phase 3 — QA and ops
+## Phase C — QA and ops
 
-1. Seed one test code, run a real checkout in Stripe test mode (or
-   `admin-add-comp-booking`), confirm the row lands with `creator_code` set.
-2. Run `trips-sync`, confirm the creator's dashboard shows it within the hour.
-3. Cancel that booking, confirm it drops out of both sides.
-4. Payout export: CSV of `creator_code, month, commission_owed, paid_to_date` from
-   the admin page, so finance never opens either CRM.
-5. Brief Cai — the affiliate brief says "runs on the existing Creator Hub affiliate
-   system", which is now true in the sense that codes are shared, but the trips $$
-   originate in ALL IN TRIPS. The brief should say that explicitly.
+1. Test code end-to-end: checkout with a creator code (or `admin-add-comp-booking`),
+   confirm booking attribution, pending commission, draw entry.
+2. Run `charge-trip-balances` against it → commission flips to confirmed.
+3. Cancel it → drops out on both sides.
+4. Payout export: `creator_code, month, commission_confirmed` CSV so finance never
+   opens either CRM.
+5. Reply to Cai on the brief thread with what "runs on the existing Creator Hub
+   affiliate system" now means in practice: shared codes, trips $$ originating in
+   ALL IN TRIPS, surfaced in the Hub.
+
+---
+
+## Decisions made (Charlie, 27 Jul)
+
+- **Codes:** Lexie's list of 323 — imported as **321** (`TEST10` / `TESTT10` dropped).
+- **No expiry** on the creator codes; ALL IN is permanent. Only the three partner
+  codes (`YELLOW`/`CODE`/`LYLO4MADMONKEY`) still stop on 15 Sep 2026. The admin
+  tab's hardcoded 15 Jul – 15 Sep window is gone.
+- **One prize draw**, not two — the winner gets whichever trip length they booked,
+  so entries are tagged 7-day / 12+ rather than split into separate pools.
+
+## Open questions (with Cai)
+
+1. **Indonesia is 12 days, not 14** — does it pay the $50 tier? Built as $50.
+2. **Full-payment bookings** — commission confirms immediately at checkout? Built
+   as yes (paying in full *is* the final payment).
+3. **Voucher ownership** — Dhany's system issues the 2 free nights, or ALL IN TRIPS
+   generates and ops honours it?
+
+Data hygiene for Lexie: two emails are each on two creators —
+`zsuzsipalocz@gmail.com` (ZSUZSI10 + LINDSEY10) and `jimjimenez1996@gmail.com`
+(JIM10 + KAYLA10). 281 of 321 codes have no email at all.
 
 ---
 
@@ -169,12 +210,14 @@ the trips backend is down.
 
 | Step | Where | Blocked on |
 |---|---|---|
-| 1.1 migration + 1.3 webhook | local repo | — |
-| 1.4 API endpoint | local repo | — |
-| 1.2 seed codes | local repo | ⛔ code list + discount % |
-| 2.1 + 2.2 sync | Lovable prompt | 1.4 deployed |
-| 2.3 UI | Lovable prompt | 2.2 |
-| 1.5 admin tab | local repo | after go-live |
-| Phase 3 | both | all of the above |
+| A1 commission state machine | local repo | — |
+| A2 per-tier draw entries | local repo | Q6 (can build with one-entry-per-booking) |
+| A5 API + A6 eligibility endpoint | local repo | — |
+| A3 seed approved codes | local repo | ⛔ Q1 |
+| B1 + B2 sync | Lovable prompt | A5 deployed |
+| B3 + B4 UI | Lovable prompt | B2 |
+| B5 Events default-on | Lovable prompt | — |
+| A4 voucher issuance | local repo + Dhany | Q5 |
+| Phase C | both | all of the above |
 
-Steps 1.1, 1.3 and 1.4 need nothing from anyone and can start now.
+A1, A5, A6 and B5 need nothing from anyone and can start now.

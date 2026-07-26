@@ -1205,12 +1205,33 @@ function StaffLeaderboard({ refreshKey }: { refreshKey: number }) {
 }
 
 /* ============ CREATOR REVENUE / PRIZE DRAW ============ */
-/* Bookings made with a creator tracking code (discount_codes.is_creator),
-   within the campaign window, split 7-day vs 12+ day with commission owed
-   per creator. Every qualifying booking is one entry in the shared prize
-   draw. Rates live on each code row (Discounts tab) — Lexie to confirm. */
-const CREATOR_WINDOW_START = "2026-07-15";
-const CREATOR_WINDOW_END = "2026-09-15"; // inclusive: bookings made through this date
+/* Bookings made with a creator tracking code (discount_codes.is_creator), split
+   7-day vs 12+ day with commission per creator. Rates live on each code row
+   (Discounts tab): commission_7day / commission_12day.
+
+   No date window here — each code carries its own expiry_date, so the creator
+   codes (no expiry) earn indefinitely while the three partner codes stop on
+   15 Sep 2026 at checkout.
+
+   Commission timing (affiliate brief): confirmed only once the FINAL payment
+   lands. A deposit-only booking counts as pending; a cancellation earns nothing.
+
+   Prize draw: one pool. Every non-cancelled booking made on a creator code is
+   one entry, tagged with the trip length so the winner gets the trip they
+   booked. */
+
+type CommissionState = "confirmed" | "pending" | "void";
+
+function commissionState(b: Record<string, unknown>): CommissionState {
+  if (String(b.status ?? "") === "Cancelled") return "void";
+  const bal = String(b.balance_status ?? "");
+  if (bal === "cancelled" || bal === "failed_final") return "void";
+  // Paid in full at checkout, or the balance has since been charged.
+  if (bal === "charged" || bal === "not_required" || String(b.payment_type ?? "") === "Full") {
+    return "confirmed";
+  }
+  return "pending"; // deposit paid, balance still scheduled/failed
+}
 
 function CreatorRevenue({ refreshKey }: { refreshKey: number }) {
   const [bookings, setBookings] = useState<Record<string, unknown>[] | null>(null);
@@ -1236,37 +1257,46 @@ function CreatorRevenue({ refreshKey }: { refreshKey: number }) {
     const tripDays = new Map<string, number>();
     for (const t of trips) tripDays.set(String(t.id), Number(t.days ?? 0));
     const creatorCodes = codes.filter((c) => c.is_creator === true);
-    const byCodeId = new Map<string, { code: string; name: string; c7: number; c12: number; n7: number; n12: number; travellers: number }>();
+    type Agg = {
+      code: string; name: string; c7: number; c12: number;
+      n7: number; n12: number; travellers: number;
+      confirmed: number; pending: number;
+    };
+    const byCodeId = new Map<string, Agg>();
     for (const c of creatorCodes) {
       byCodeId.set(String(c.id), {
         code: String(c.code),
         name: String(c.creator_name || c.code),
         c7: Number(c.commission_7day ?? 25),
         c12: Number(c.commission_12day ?? 50),
-        n7: 0, n12: 0, travellers: 0,
+        n7: 0, n12: 0, travellers: 0, confirmed: 0, pending: 0,
       });
     }
     const seen = new Set<string>();
-    let entries = 0;
+    let entries7 = 0;
+    let entries12 = 0;
     for (const b of bookings) {
       const codeId = b.discount_code_id ? String(b.discount_code_id) : "";
       if (!codeId || !byCodeId.has(codeId)) continue;
-      if (String(b.status ?? "") === "Cancelled") continue;
-      const created = String(b.created_at ?? "").slice(0, 10);
-      if (created < CREATOR_WINDOW_START || created > CREATOR_WINDOW_END) continue;
+      const state = commissionState(b);
+      if (state === "void") continue;
       const key = String(b.stripe_session_id || b.id);
       if (seen.has(key)) continue;
       seen.add(key);
-      entries++;
       const agg = byCodeId.get(codeId)!;
       const days = tripDays.get(String(b.trip_id)) ?? 0;
-      if (days > 0 && days <= 7) agg.n7 += 1; else agg.n12 += 1;
+      const isShort = days > 0 && days <= 7;
+      const rate = isShort ? agg.c7 : agg.c12;
+      if (isShort) { agg.n7 += 1; entries7 += 1; } else { agg.n12 += 1; entries12 += 1; }
+      if (state === "confirmed") agg.confirmed += rate; else agg.pending += rate;
       agg.travellers += Number(b.group_size ?? 1) || 1;
     }
-    const rows = Array.from(byCodeId.values())
-      .map((r) => ({ ...r, commission: r.n7 * r.c7 + r.n12 * r.c12 }))
-      .sort((a, b) => b.commission - a.commission || b.n7 + b.n12 - (a.n7 + a.n12));
-    return { rows, entries };
+    const all = Array.from(byCodeId.values());
+    // 320+ codes are live; only surface the ones that have actually sold.
+    const rows = all
+      .filter((r) => r.n7 + r.n12 > 0)
+      .sort((a, b) => b.confirmed + b.pending - (a.confirmed + a.pending) || b.n7 + b.n12 - (a.n7 + a.n12));
+    return { rows, entries7, entries12, totalCodes: all.length, idleCodes: all.length - rows.length };
   }, [bookings, codes, trips]);
 
   if (error) return <p className="border-[2px] border-mm-black bg-mm-bone p-4 text-sm">{error}</p>;
@@ -1277,12 +1307,17 @@ function CreatorRevenue({ refreshKey }: { refreshKey: number }) {
       <div className="mb-4">
         <h2 className="font-display text-2xl">CREATOR CODES — BOOKINGS & COMMISSION</h2>
         <p className="mt-1 text-sm text-mm-black/70">
-          Tracking-only codes ($0 discount). Window: bookings made {CREATOR_WINDOW_START} → {CREATOR_WINDOW_END},
-          any travel dates. Cancelled bookings excluded. Commission = 7-day bookings × rate7 + 12+ day bookings × rate12
-          (rates editable per code in the Discounts tab — Lexie to confirm final rates).
+          Tracking-only codes ($0 discount) — the guest pays full price and gets 2 free hostel nights plus a
+          prize-draw entry. Commission = 7-day bookings × rate7 + 12+ day bookings × rate12 (rates editable per
+          code in the Discounts tab). <strong>Confirmed</strong> = final payment received; <strong>pending</strong> =
+          deposit paid, balance still to come. Cancellations earn nothing. Each code's own expiry controls how long
+          it runs.
         </p>
         <p className="mt-2 inline-block border-[2px] border-mm-black bg-mm-lime px-3 py-1 font-sticker text-[11px] tracking-[0.15em]">
-          🎟️ PRIZE DRAW ENTRIES SO FAR: {board.entries}
+          🎟️ PRIZE DRAW ENTRIES: {board.entries7 + board.entries12} ({board.entries7} × 7-DAY, {board.entries12} × 12+ DAY)
+        </p>
+        <p className="mt-2 text-xs text-mm-black/60">
+          {board.totalCodes} creator codes live · {board.idleCodes} with no bookings yet (hidden below)
         </p>
       </div>
 
@@ -1295,7 +1330,8 @@ function CreatorRevenue({ refreshKey }: { refreshKey: number }) {
               <th className="px-3 py-2 text-right font-sticker text-[10px] tracking-[0.15em]">7-DAY BOOKINGS</th>
               <th className="px-3 py-2 text-right font-sticker text-[10px] tracking-[0.15em]">12+ DAY BOOKINGS</th>
               <th className="px-3 py-2 text-right font-sticker text-[10px] tracking-[0.15em]">TRAVELLERS</th>
-              <th className="px-3 py-2 text-right font-sticker text-[10px] tracking-[0.15em]">COMMISSION OWED</th>
+              <th className="px-3 py-2 text-right font-sticker text-[10px] tracking-[0.15em]">CONFIRMED</th>
+              <th className="px-3 py-2 text-right font-sticker text-[10px] tracking-[0.15em]">PENDING</th>
             </tr>
           </thead>
           <tbody>
@@ -1306,16 +1342,27 @@ function CreatorRevenue({ refreshKey }: { refreshKey: number }) {
                 <td className="px-3 py-2 text-right">{r.n7}</td>
                 <td className="px-3 py-2 text-right">{r.n12}</td>
                 <td className="px-3 py-2 text-right">{r.travellers}</td>
-                <td className="px-3 py-2 text-right font-display text-base">${r.commission.toFixed(0)}</td>
+                <td className="px-3 py-2 text-right font-display text-base">${r.confirmed.toFixed(0)}</td>
+                <td className="px-3 py-2 text-right text-mm-black/60">${r.pending.toFixed(0)}</td>
               </tr>
             ))}
+            {board.rows.length === 0 && (
+              <tr>
+                <td className="px-3 py-6 text-center text-sm text-mm-black/60" colSpan={7}>
+                  No bookings on a creator code yet.
+                </td>
+              </tr>
+            )}
             <tr className="bg-mm-lime/30 font-medium">
               <td className="px-3 py-2 font-display" colSpan={2}>TOTAL</td>
               <td className="px-3 py-2 text-right">{board.rows.reduce((s, r) => s + r.n7, 0)}</td>
               <td className="px-3 py-2 text-right">{board.rows.reduce((s, r) => s + r.n12, 0)}</td>
               <td className="px-3 py-2 text-right">{board.rows.reduce((s, r) => s + r.travellers, 0)}</td>
               <td className="px-3 py-2 text-right font-display text-base">
-                ${board.rows.reduce((s, r) => s + r.commission, 0).toFixed(0)}
+                ${board.rows.reduce((s, r) => s + r.confirmed, 0).toFixed(0)}
+              </td>
+              <td className="px-3 py-2 text-right text-mm-black/60">
+                ${board.rows.reduce((s, r) => s + r.pending, 0).toFixed(0)}
               </td>
             </tr>
           </tbody>
