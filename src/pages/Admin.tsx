@@ -810,7 +810,11 @@ function RowEditor({ table, row, isNew, onClose, onSaved }: {
   table: AdminTable; row: Row; isNew: boolean; onClose: () => void; onSaved: () => void;
 }) {
   const cols = COLUMNS[table].filter((c) => !c.hidden);
-  const [values, setValues] = useState<Row>(() => ({ ...row }));
+  const [values, setValues] = useState<Row>(() => (
+    // New records: start Active ticked — a code you create should work unless
+    // you deliberately switch it off.
+    isNew && row.active === undefined ? { active: true, ...row } : { ...row }
+  ));
   const [saving, setSaving] = useState(false);
 
   function setVal(k: string, v: unknown) { setValues((s) => ({ ...s, [k]: v })); }
@@ -823,6 +827,9 @@ function RowEditor({ table, row, isNew, onClose, onSaved }: {
       for (const c of cols) {
         if (c.readOnly) continue;
         let v = values[c.key];
+        // Unchecked checkboxes arrive as undefined — save false, not null, so
+        // NOT NULL boolean columns (is_creator, stackable) accept the row.
+        if (c.type === "boolean") { out[c.key] = v === true; continue; }
         if (v === "" || v === undefined) { out[c.key] = null; continue; }
         if (c.type === "number") v = v === null ? null : Number(v);
         if (c.type === "json" && typeof v === "string") {
