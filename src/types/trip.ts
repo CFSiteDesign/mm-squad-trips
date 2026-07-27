@@ -22,6 +22,8 @@ export interface Departure {
   bookable: boolean;
   price: number;              // resolved current price for this departure
   strikethrough: number | null;
+  /** Guest-created custom date — hidden from public browsing. */
+  isPrivate?: boolean;
 }
 
 export interface Trip {
@@ -37,5 +39,7 @@ export interface Trip {
   videoTestimonialUrl?: string;
   defaultPrice: number;
   defaultStrikethrough: number;
+  /** Only weekday this trip may depart on (Sun=0 … Sat=6, UTC). */
+  startWeekday?: number | null;
   departures: Departure[];
 }

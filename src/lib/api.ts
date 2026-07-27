@@ -18,9 +18,9 @@ async function getFunctionErrorMessage(error: unknown): Promise<string> {
   return error.message;
 }
 
-export async function fetchTrip(slug: string): Promise<Trip> {
+export async function fetchTrip(slug: string, squadCode?: string): Promise<Trip> {
   const { data, error } = await supabase.functions.invoke("trips-get", {
-    body: { slug },
+    body: squadCode ? { slug, squadCode } : { slug },
   });
   if (error) throw new Error(await getFunctionErrorMessage(error));
   if (!data?.trip) throw new Error(data?.error || "Trip not found");
@@ -51,6 +51,8 @@ export interface DiscountResult {
   /** Creator tracking code: $0 off, the booking enters the shared prize draw. */
   isCreator?: boolean;
   creatorName?: string;
+  /** "squad" when the code belongs to a squad leader rather than a discount. */
+  kind?: string;
 }
 
 export async function validateDiscount(input: {
@@ -69,7 +71,10 @@ export async function validateDiscount(input: {
 
 export interface CreateCheckoutInput {
   tripSlug: string;
-  departureId: string;
+  /** Existing departure row. Omit when supplying customDate instead. */
+  departureId?: string;
+  /** ISO date for a guest-created custom departure (squad leaders + solo). */
+  customDate?: string;
   groupSize: number;
   leadBooker: unknown;
   travelers: unknown[];

@@ -12,6 +12,12 @@ const DEPOSIT_PER_SPOT = 99;
 const DEPOSIT_THRESHOLD_DAYS = 7;
 const HIDE_WITHIN_DAYS = 0;
 
+// Minimum notice for a guest-created custom departure date. Currently the same
+// as the normal booking cutoff (i.e. no extra restriction) — raise this to give
+// ops more lead time on brand-new dates. [PENDING: client decision on notice]
+const MIN_CUSTOM_DATE_NOTICE_DAYS = 0;
+const WEEKDAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
 // Booking cutoff per trip (mirrors src/lib/trip-helpers.ts):
 // Vietnam departs Wed → must be >=1 day out. Others depart Mon → must be >=3 days out.
 function bookingCutoffDays(slug: string): number {
@@ -61,12 +67,14 @@ Deno.serve(async (req) => {
     staffRecommendation?: string;
     utm?: Record<string, string>;
     gaClientId?: string;
+    /** ISO date for a guest-created custom departure (alternative to departureId). */
+    customDate?: string;
   };
   try { payload = await req.json(); } catch { return err("Invalid JSON body"); }
 
-  const { tripSlug, departureId, groupSize, leadBooker, travelers = [], discountCode, secondDiscountCode, friendsMentioned, staffRecommendation, utm = {}, gaClientId } = payload;
+  const { tripSlug, departureId, groupSize, leadBooker, travelers = [], discountCode, secondDiscountCode, friendsMentioned, staffRecommendation, utm = {}, gaClientId, customDate } = payload;
   if (!tripSlug || typeof tripSlug !== "string") return err("tripSlug required");
-  if (!departureId || typeof departureId !== "string") return err("departureId required");
+  if (!departureId && !customDate) return err("departureId or customDate required");
   if (!groupSize || typeof groupSize !== "number" || groupSize < 1 || groupSize > 5) return err("groupSize must be 1–5");
   if (!leadBooker || typeof leadBooker !== "object") return err("leadBooker required");
   const lead = leadBooker as Record<string, string>;
@@ -83,24 +91,68 @@ Deno.serve(async (req) => {
     if (tErr) return err(tErr.message, 500);
     if (!trip) return err("Trip not found or inactive", 404);
 
-    // 2. Departure
-    const { data: dep, error: dErr } = await sb
-      .from("departures")
-      .select("*")
-      .eq("id", departureId)
-      .maybeSingle();
-    if (dErr) return err(dErr.message, 500);
-    if (!dep) return err("Departure not found", 404);
-    if (dep.trip_id !== trip.id) return err("Departure does not belong to this trip");
-    const depDate = dep.departure_date as string;
-    const spotsRemaining = dep.spots_remaining ?? dep.total_spots ?? 0;
-    if (dep.bookable !== true) return err("This departure is no longer bookable");
-    // Backstop: never sell a spot on a cancelled departure, even if bookable
-    // was left true or the guest is on a stale page.
-    if (dep.status === "cancelled") return err("This departure has been cancelled — please pick another date.");
-    if (spotsRemaining < groupSize) {
-      return err(`Only ${spotsRemaining} spot${spotsRemaining === 1 ? "" : "s"} left`);
+    // 2. Departure — either an existing row, or a guest-chosen custom date that
+    //    is materialised by the webhook once payment succeeds.
+    let dep: Record<string, unknown> | null = null;
+    let depDate: string;
+
+    if (departureId) {
+      const { data, error: dErr } = await sb
+        .from("departures")
+        .select("*")
+        .eq("id", departureId)
+        .maybeSingle();
+      if (dErr) return err(dErr.message, 500);
+      if (!data) return err("Departure not found", 404);
+      if (data.trip_id !== trip.id) return err("Departure does not belong to this trip");
+      dep = data;
+      depDate = data.departure_date as string;
+      const spotsRemaining = data.spots_remaining ?? data.total_spots ?? 0;
+      if (data.bookable !== true) return err("This departure is no longer bookable");
+      // Backstop: never sell a spot on a cancelled departure, even if bookable
+      // was left true or the guest is on a stale page.
+      if (data.status === "cancelled") return err("This departure has been cancelled — please pick another date.");
+      if (spotsRemaining < groupSize) {
+        return err(`Only ${spotsRemaining} spot${spotsRemaining === 1 ? "" : "s"} left`);
+      }
+    } else {
+      // Custom date: must be a real ISO date on this trip's start weekday.
+      const iso = String(customDate);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return err("Invalid custom date");
+      const d = new Date(iso + "T00:00:00Z");
+      if (Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== iso) {
+        return err("Invalid custom date");
+      }
+      const startWeekday = trip.start_weekday;
+      if (startWeekday === null || startWeekday === undefined) {
+        return err("This trip doesn't support custom dates yet");
+      }
+      if (d.getUTCDay() !== Number(startWeekday)) {
+        return err(`${trip.name} departs on ${WEEKDAY_NAMES[Number(startWeekday)]}s — please pick a ${WEEKDAY_NAMES[Number(startWeekday)]}.`);
+      }
+      if (daysUntil(iso) < MIN_CUSTOM_DATE_NOTICE_DAYS) {
+        return err(`Custom dates need at least ${MIN_CUSTOM_DATE_NOTICE_DAYS} days' notice — please pick a later date.`);
+      }
+      // An existing row for this date wins (it may already be public/filling).
+      const { data: existing } = await sb
+        .from("departures")
+        .select("*")
+        .eq("trip_id", trip.id)
+        .eq("departure_date", iso)
+        .maybeSingle();
+      if (existing) {
+        if (existing.status === "cancelled" || existing.bookable !== true) {
+          return err("That date is no longer available — please pick another.");
+        }
+        const spotsRemaining = existing.spots_remaining ?? existing.total_spots ?? 0;
+        if (spotsRemaining < groupSize) {
+          return err(`Only ${spotsRemaining} spot${spotsRemaining === 1 ? "" : "s"} left on that date`);
+        }
+        dep = existing;
+      }
+      depDate = iso;
     }
+
     const cutoff = bookingCutoffDays(tripSlug);
     if (daysUntil(depDate) < cutoff) {
       const msg = tripSlug === "vietnam"
@@ -240,9 +292,15 @@ Deno.serve(async (req) => {
       trip_id: trip.id,
       trip_code: trip.code,
       trip_name: trip.name,
-      departure_id: dep.id,
-      departure_code: dep.departure_code ?? `${trip.code}-${depDate}`,
+      // Empty when the guest picked a custom date with no row yet — the webhook
+      // find-or-creates it on payment so abandoned checkouts leave no ghost dates.
+      departure_id: dep ? String(dep.id) : "",
+      departure_code: (dep?.departure_code as string) ?? `${trip.code}-${depDate}`,
       departure_date: depDate,
+      // Custom-date materialisation instructions for the webhook.
+      custom_date: dep ? "" : depDate,
+      custom_visibility: dep ? "" : "private",
+      custom_owner_code: dep ? "" : (squadCode ?? ""),
       group_size: String(groupSize),
       price_per_spot: String(pricePerSpot),
       strikethrough_per_spot: strikethrough != null ? String(strikethrough) : "",

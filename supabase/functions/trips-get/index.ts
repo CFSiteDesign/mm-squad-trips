@@ -12,8 +12,14 @@ function todayPlusDays(d: number): string {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
-    const { slug } = await req.json().catch(() => ({}));
+    const { slug, squadCode } = await req.json().catch(() => ({}));
     if (!slug || typeof slug !== "string") return jr({ error: "slug required" }, 400);
+    // A squad code reveals that squad's private custom departure(s) only.
+    // Strip to [A-Z0-9-] — this value is interpolated into a PostgREST `or`
+    // filter, so punctuation must never reach it.
+    const revealCode = typeof squadCode === "string" && squadCode.trim()
+      ? (squadCode.trim().toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 40) || null)
+      : null;
 
     const url = Deno.env.get("SUPABASE_URL");
     const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -30,13 +36,18 @@ Deno.serve(async (req) => {
     if (!trip) return jr({ error: "Trip not found" }, 404);
 
     const minDate = todayPlusDays(7);
-    const { data: deps, error: dErr } = await sb
+    let depQuery = sb
       .from("departures")
       .select("*")
       .eq("trip_id", trip.id)
       .gt("departure_date", minDate)
-      .neq("status", "cancelled")
-      .order("departure_date", { ascending: true });
+      .neq("status", "cancelled");
+    // Private (guest-created) dates never appear in public browsing. Supplying a
+    // squad code additionally reveals the private dates owned by that code.
+    depQuery = revealCode
+      ? depQuery.or(`visibility.eq.public,and(visibility.eq.private,owner_code.eq.${revealCode})`)
+      : depQuery.eq("visibility", "public");
+    const { data: deps, error: dErr } = await depQuery.order("departure_date", { ascending: true });
     if (dErr) return jr({ error: dErr.message }, 500);
 
     // Pricing override per month (optional table — client also has local fallback)
@@ -59,6 +70,7 @@ Deno.serve(async (req) => {
         date: d.departure_date,
         spotsRemaining: d.spots_remaining ?? d.total_spots ?? 0,
         bookable: d.bookable === true,
+        isPrivate: d.visibility === "private",
         price: pm?.price ?? Number(trip.default_price),
         strikethrough: pm?.strikethrough ?? trip.default_strikethrough ?? null,
       };
@@ -77,6 +89,8 @@ Deno.serve(async (req) => {
       videoTestimonialUrl: trip.video_testimonial_url ?? "",
       defaultPrice: Number(trip.default_price),
       defaultStrikethrough: Number(trip.default_strikethrough ?? 0),
+      /** Only weekday this trip may depart on (Sun=0 … Sat=6, UTC). */
+      startWeekday: trip.start_weekday ?? null,
       departures: resolvedDepartures,
     };
 

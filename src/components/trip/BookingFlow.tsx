@@ -19,7 +19,7 @@ import {
 import { SpotBadge } from "./SpotBadge";
 import { DurationToggle } from "./DurationToggle";
 import type { Trip, Departure } from "@/types/trip";
-import { createCheckoutSession, validateDiscount } from "@/lib/api";
+import { createCheckoutSession, validateDiscount, fetchTrip } from "@/lib/api";
 import { gtmClearEcommerce, gtmPushEvent } from "@/utils/gtmTracker";
 import { buildTripEcommerceItem, CONVERSION_TYPE_ALL_IN, markCheckoutEventOnce } from "@/utils/ecommerceDataLayer";
 import { Sticker } from "@/components/brand/Sticker";
@@ -51,6 +51,21 @@ const emptyLead: LeadFields = {
 };
 const emptyTraveler: TravelerFields = { firstName: "", lastName: "", email: "", age: "", dietary: "" };
 
+/** Sentinel id for the not-yet-created custom departure. */
+const CUSTOM_DEPARTURE_ID = "__custom__";
+const WEEKDAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+/** Minimum notice for a custom date. [PENDING: client decision on notice] */
+const MIN_CUSTOM_DATE_NOTICE_DAYS = 0;
+
+/** Next date on `weekday` that is at least `minNoticeDays` away (ISO, UTC). */
+function firstAllowedCustomDate(weekday: number, minNoticeDays: number): string {
+  const d = new Date();
+  d.setUTCHours(0, 0, 0, 0);
+  d.setUTCDate(d.getUTCDate() + Math.max(1, minNoticeDays));
+  while (d.getUTCDay() !== weekday) d.setUTCDate(d.getUTCDate() + 1);
+  return d.toISOString().slice(0, 10);
+}
+
 export function BookingFlow({ trip }: { trip: Trip }) {
   const variant = useSiteVariant();
   const isStudent = variant === "student";
@@ -62,15 +77,65 @@ export function BookingFlow({ trip }: { trip: Trip }) {
   const [discountCode, setDiscountCode] = useState("");
   const [secondCode, setSecondCode] = useState("");
   const [firstStackable, setFirstStackable] = useState(false);
-  const [discountState, setDiscountState] = useState<{ valid: boolean; msg: string; amount?: number } | null>(null);
+  const [discountState, setDiscountState] = useState<{ valid: boolean; msg: string; amount?: number; kind?: string } | null>(null);
   const [discountLoading, setDiscountLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [joinMode, setJoinMode] = useState(false);
   const [joinCode, setJoinCode] = useState("");
 
-  const visible = useMemo(() => visibleDepartures(trip.departures, groupSize, trip.slug), [trip.departures, groupSize, trip.slug]);
-  const closed = useMemo(() => closedDepartures(trip.departures, trip.slug), [trip.departures, trip.slug]);
-  const selected = visible.find((d) => d.id === selectedId) ?? null;
+  // Private departures owned by an entered squad code — invisible to the public,
+  // revealed to anyone holding the code so a leader's crew can book their date.
+  const [revealedDepartures, setRevealedDepartures] = useState<Departure[]>([]);
+  const allDepartures = useMemo(() => {
+    if (revealedDepartures.length === 0) return trip.departures;
+    const known = new Set(trip.departures.map((d) => d.id));
+    return [...trip.departures, ...revealedDepartures.filter((d) => !known.has(d.id))]
+      .sort((a, b) => (a.date < b.date ? -1 : 1));
+  }, [trip.departures, revealedDepartures]);
+
+  const visible = useMemo(() => visibleDepartures(allDepartures, groupSize, trip.slug), [allDepartures, groupSize, trip.slug]);
+  const closed = useMemo(() => closedDepartures(allDepartures, trip.slug), [allDepartures, trip.slug]);
+
+  // Custom departure date (squad leaders + solo). Held client-side until payment,
+  // then materialised as a private departure by the webhook.
+  const [customDate, setCustomDate] = useState("");
+  const customDeparture = useMemo<Departure | null>(() => {
+    if (!customDate) return null;
+    return {
+      id: CUSTOM_DEPARTURE_ID,
+      departureId: `${trip.code}-${customDate}`,
+      date: customDate,
+      spotsRemaining: 20,
+      bookable: true,
+      price: trip.defaultPrice,
+      strikethrough: trip.defaultStrikethrough || null,
+      isPrivate: true,
+    };
+  }, [customDate, trip.code, trip.defaultPrice, trip.defaultStrikethrough]);
+
+  const selected = selectedId === CUSTOM_DEPARTURE_ID
+    ? customDeparture
+    : visible.find((d) => d.id === selectedId) ?? null;
+
+  const startWeekday = typeof trip.startWeekday === "number" ? trip.startWeekday : null;
+
+  // A recognised squad code unlocks that squad's private dates.
+  useEffect(() => {
+    const code = discountCode.trim().toUpperCase();
+    if (!code || discountState?.kind !== "squad") {
+      setRevealedDepartures([]);
+      return;
+    }
+    let cancelled = false;
+    fetchTrip(trip.slug, code)
+      .then((t) => { if (!cancelled) setRevealedDepartures((t.departures ?? []).filter((d) => d.isPrivate)); })
+      .catch(() => { /* reveal is best-effort — public dates still work */ });
+    return () => { cancelled = true; };
+  }, [discountCode, discountState?.kind, trip.slug]);
+  // Only a squad leader (identified by their squad code) or a solo traveller may
+  // create a custom date — plain group bookings pick from the listed departures.
+  const isSquadCodeEntered = discountState?.valid === true && discountState.kind === "squad";
+  const showCustomDate = (soloSelected || isSquadCodeEntered) && startWeekday !== null;
 
   function changeGroup(n: number) {
     setGroupSize(n);
@@ -94,22 +159,28 @@ export function BookingFlow({ trip }: { trip: Trip }) {
   useEffect(() => {
     const code = discountCode.trim().toUpperCase();
     const code2 = secondCode.trim().toUpperCase();
-    if (!selected || !code || discountLoading) return;
+    // Validate before a date is picked too — a squad leader needs their code
+    // recognised for the custom-date box to appear, which is exactly when no
+    // listed departure suits them. Re-validates once they choose a date.
+    if (!code || discountLoading) return;
+    const depKey = selected?.id ?? "none";
     if (
-      validatedFor.current?.depId === selected.id &&
+      validatedFor.current?.depId === depKey &&
       validatedFor.current?.code === code &&
       validatedFor.current?.code2 === code2
     ) return;
 
     setDiscountLoading(true);
-    validatedFor.current = { depId: selected.id, code, code2 };
+    validatedFor.current = { depId: depKey, code, code2 };
     setDiscountState(null);
 
-    const subtotal = selected.price * groupSize;
-    validateDiscount({ code, secondCode: code2 || undefined, tripSlug: trip.slug, amount: subtotal, departureDate: selected.date })
+    const subtotal = (selected?.price ?? trip.defaultPrice) * groupSize;
+    validateDiscount({ code, secondCode: code2 || undefined, tripSlug: trip.slug, amount: subtotal, departureDate: selected?.date })
       .then((result) => {
         setFirstStackable(result.stackable === true || !!code2);
-        if (result.valid && result.isCreator) {
+        if (result.valid && result.kind === "squad") {
+          setDiscountState({ valid: true, msg: "Squad code applied ✓", amount: 0, kind: "squad" });
+        } else if (result.valid && result.isCreator) {
           setDiscountState({ valid: true, msg: "Creator code applied — you're in the prize draw! 🎉", amount: 0 });
         } else if (result.valid && result.stackFixed != null && result.stackPercent != null) {
           // Stacked codes: messaging is fixed-first, then % (matches the maths).
@@ -125,7 +196,7 @@ export function BookingFlow({ trip }: { trip: Trip }) {
         }
       })
       .finally(() => setDiscountLoading(false));
-  }, [selected, discountCode, secondCode, discountLoading, groupSize, trip.slug]);
+  }, [selected, discountCode, secondCode, discountLoading, groupSize, trip.slug, trip.defaultPrice]);
 
   async function submit() {
     if (!selected) return toast.error("Pick a departure first");
@@ -170,7 +241,11 @@ export function BookingFlow({ trip }: { trip: Trip }) {
       }));
       const { url } = await createCheckoutSession({
         tripSlug: trip.slug,
-        departureId: selected.id,
+        // Custom dates have no departure row yet — the server validates the date
+        // and the webhook creates it once payment succeeds.
+        ...(selected.id === CUSTOM_DEPARTURE_ID
+          ? { customDate: selected.date }
+          : { departureId: selected.id }),
         groupSize,
         leadBooker: { ...lead, phone: fullPhone },
         travelers: travelerPayload,
@@ -318,6 +393,48 @@ export function BookingFlow({ trip }: { trip: Trip }) {
               {closed.map((d) => (
                 <ClosedDepartureCard key={d.id} dep={d} />
               ))}
+            </div>
+          )}
+
+          {/* Custom date — squad leaders (starting a new date for their crew) and
+              solo travellers. Locked to the trip's start weekday. */}
+          {showCustomDate && startWeekday !== null && (
+            <div className="mt-4 border-[3px] border-mm-bone bg-mm-black/40 p-4">
+              <p className="font-sticker text-[11px] tracking-[0.15em] text-mm-lime">
+                ✳ CAN'T SEE YOUR DATE? PICK YOUR OWN
+              </p>
+              <p className="mt-1 text-[13px] leading-snug text-mm-bone/80">
+                {isSquadCodeEntered && !soloSelected
+                  ? `Start your squad on any ${WEEKDAY_NAMES[startWeekday]}. Only people with your squad code will see it.`
+                  : `Depart any ${WEEKDAY_NAMES[startWeekday]} you like — solo trips are guaranteed to run.`}
+              </p>
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <Input
+                  type="date"
+                  value={customDate}
+                  min={firstAllowedCustomDate(startWeekday, MIN_CUSTOM_DATE_NOTICE_DAYS)}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (!v) { setCustomDate(""); if (selectedId === CUSTOM_DEPARTURE_ID) setSelectedId(null); return; }
+                    const picked = new Date(v + "T00:00:00Z");
+                    if (picked.getUTCDay() !== startWeekday) {
+                      toast.error(`${trip.name} departs on ${WEEKDAY_NAMES[startWeekday]}s — please pick a ${WEEKDAY_NAMES[startWeekday]}.`);
+                      return;
+                    }
+                    setCustomDate(v);
+                    setSelectedId(CUSTOM_DEPARTURE_ID);
+                  }}
+                  className="h-12 w-[190px] rounded-none border-[3px] border-mm-black bg-mm-paper font-display text-mm-black"
+                />
+                {customDate && selectedId === CUSTOM_DEPARTURE_ID && (
+                  <span className="font-sticker text-[11px] tracking-[0.14em] text-mm-lime">
+                    {formatDateLong(customDate).toUpperCase()} SELECTED ✓
+                  </span>
+                )}
+              </div>
+              <p className="mt-2 font-sticker text-[10px] tracking-[0.14em] text-mm-bone/50">
+                {WEEKDAY_NAMES[startWeekday].toUpperCase()}S ONLY · {soloSelected ? "RUNS WHATEVER THE NUMBERS" : "NEEDS 5 TRAVELLERS TO RUN"}
+              </p>
             </div>
           )}
         </FormStep>

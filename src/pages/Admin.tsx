@@ -424,6 +424,7 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
   const [editing, setEditing] = useState<Row | null>(null);
   const [creating, setCreating] = useState(false);
   const [compOpen, setCompOpen] = useState(false);
+  const [runDateOpen, setRunDateOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
 
@@ -620,6 +621,14 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
               + ADD COMP
             </Button>
           )}
+          {table === "departures" && (
+            <Button
+              onClick={() => setRunDateOpen(true)}
+              className="rounded-none border-[2px] border-mm-black bg-mm-lime text-mm-black hover:bg-mm-lime"
+            >
+              + ADD RUN DATE
+            </Button>
+          )}
           {canCreate && (
             <Button
               onClick={() => setCreating(true)}
@@ -759,6 +768,142 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
           onSaved={() => { setCompOpen(false); reload(true); }}
         />
       )}
+
+      {runDateOpen && (
+        <AddRunDateDialog
+          onClose={() => setRunDateOpen(false)}
+          onSaved={() => { setRunDateOpen(false); reload(true); }}
+        />
+      )}
+    </div>
+  );
+}
+
+/* Adds a public run date that's immediately bookable on the landing page.
+   The date picker only accepts the trip's own start weekday. */
+const RUN_WEEKDAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+function AddRunDateDialog({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
+  const [trips, setTrips] = useState<Row[] | null>(null);
+  const [tripId, setTripId] = useState("");
+  const [date, setDate] = useState("");
+  const [spots, setSpots] = useState("20");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    adminApi.list("trips", { limit: 100 })
+      .then((t) => setTrips(t))
+      .catch((e) => toast.error(e instanceof Error ? e.message : "Could not load trips"));
+  }, []);
+
+  const trip = trips?.find((t) => String(t.id) === tripId);
+  const weekday = trip && trip.start_weekday != null ? Number(trip.start_weekday) : null;
+
+  async function submit() {
+    if (!tripId) return toast.error("Pick a trip");
+    if (!date) return toast.error("Pick a date");
+    const picked = new Date(date + "T00:00:00Z");
+    if (weekday !== null && picked.getUTCDay() !== weekday) {
+      return toast.error(`${String(trip?.name ?? "This trip")} departs on ${RUN_WEEKDAY_NAMES[weekday]}s.`);
+    }
+    const n = Math.max(1, Number(spots) || 20);
+    setSaving(true);
+    try {
+      await adminApi.create("departures", {
+        trip_id: tripId,
+        departure_code: `${String(trip?.code ?? "TRIP")}-${date}`,
+        departure_date: date,
+        total_spots: n,
+        spots_remaining: n,
+        bookable: true,
+        status: "pending",
+        visibility: "public",
+      });
+      toast.success("Run date added — it's live on the site now");
+      onSaved();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not add the run date");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-mm-black/60 p-4 pt-16">
+      <div className="w-full max-w-md border-[3px] border-mm-black bg-mm-paper p-5 shadow-mm">
+        <h3 className="font-display text-xl">ADD A RUN DATE</h3>
+        <p className="mt-1 text-sm text-mm-black/70">
+          Creates a public departure that everyone can see and book straight away.
+        </p>
+
+        <div className="mt-4 space-y-3">
+          <div>
+            <Label className="font-sticker text-[10px] tracking-[0.15em]">TRIP</Label>
+            <select
+              value={tripId}
+              onChange={(e) => { setTripId(e.target.value); setDate(""); }}
+              className="mt-1 h-11 w-full rounded-none border-[2px] border-mm-black bg-mm-bone px-2 text-sm"
+            >
+              <option value="">{trips ? "Choose a trip" : "Loading…"}</option>
+              {(trips ?? []).map((t) => (
+                <option key={String(t.id)} value={String(t.id)}>
+                  {String(t.name)} ({String(t.slug)})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <Label className="font-sticker text-[10px] tracking-[0.15em]">
+              DATE {weekday !== null && <span className="text-mm-black/60">· {RUN_WEEKDAY_NAMES[weekday].toUpperCase()}S ONLY</span>}
+            </Label>
+            <Input
+              type="date"
+              value={date}
+              disabled={!tripId}
+              onChange={(e) => {
+                const v = e.target.value;
+                if (v && weekday !== null && new Date(v + "T00:00:00Z").getUTCDay() !== weekday) {
+                  toast.error(`Pick a ${RUN_WEEKDAY_NAMES[weekday]} — that's when this trip departs.`);
+                  return;
+                }
+                setDate(v);
+              }}
+              className="mt-1 h-11 rounded-none border-[2px] border-mm-black bg-mm-bone"
+            />
+            {tripId && weekday === null && (
+              <p className="mt-1 text-xs text-mm-black/60">
+                No start weekday set for this trip — any date is accepted.
+              </p>
+            )}
+          </div>
+
+          <div>
+            <Label className="font-sticker text-[10px] tracking-[0.15em]">SPOTS</Label>
+            <Input
+              type="number"
+              value={spots}
+              onChange={(e) => setSpots(e.target.value)}
+              onWheel={(e) => (e.target as HTMLInputElement).blur()}
+              className="mt-1 h-11 rounded-none border-[2px] border-mm-black bg-mm-bone"
+            />
+            <p className="mt-1 text-xs text-mm-black/60">
+              Still needs 5 travellers to be confirmed, same as every departure.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-5 flex justify-end gap-2">
+          <Button variant="outline" onClick={onClose} className="rounded-none border-[2px] border-mm-black">CANCEL</Button>
+          <Button
+            onClick={submit}
+            disabled={saving}
+            className="rounded-none border-[2px] border-mm-black bg-mm-lime text-mm-black hover:bg-mm-lime"
+          >
+            {saving ? "ADDING…" : "ADD RUN DATE"}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

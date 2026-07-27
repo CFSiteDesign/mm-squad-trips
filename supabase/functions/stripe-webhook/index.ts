@@ -133,7 +133,53 @@ async function writeBookings(session: Stripe.Checkout.Session) {
     const { data: t } = await sb.from("trips").select("id").eq("slug", m.trip_slug).maybeSingle();
     tripId = t?.id ?? null;
   }
-  const departureId: string | null = m.departure_id || null;
+  let departureId: string | null = m.departure_id || null;
+
+  // Custom date: the guest picked a date with no departure row. Materialise it
+  // now that payment succeeded (abandoned checkouts never create one). Idempotent
+  // via the unique-ish trip+date lookup, so a webhook retry reuses the same row.
+  if (!departureId && m.custom_date && tripId) {
+    const iso = String(m.custom_date);
+    const { data: existing } = await sb
+      .from("departures")
+      .select("id")
+      .eq("trip_id", tripId)
+      .eq("departure_date", iso)
+      .maybeSingle();
+    if (existing?.id) {
+      departureId = String(existing.id);
+    } else {
+      const { data: created, error: cErr } = await sb
+        .from("departures")
+        .insert({
+          trip_id: tripId,
+          departure_code: m.departure_code || `${m.trip_code ?? "TRIP"}-${iso}`,
+          departure_date: iso,
+          total_spots: 20,
+          spots_remaining: 20,
+          bookable: true,
+          status: "pending",
+          visibility: m.custom_visibility === "public" ? "public" : "private",
+          owner_code: m.custom_owner_code || null,
+        })
+        .select("id")
+        .single();
+      if (cErr) {
+        // Lost a race with a concurrent booking on the same date — re-read.
+        const { data: retry } = await sb
+          .from("departures")
+          .select("id")
+          .eq("trip_id", tripId)
+          .eq("departure_date", iso)
+          .maybeSingle();
+        departureId = retry?.id ? String(retry.id) : null;
+        if (!departureId) console.error("custom departure create failed", cErr.message);
+      } else {
+        departureId = String(created.id);
+        console.log(`Created custom departure ${iso} for trip ${tripId} (${m.custom_visibility || "private"})`);
+      }
+    }
+  }
 
   // Discount id: metadata if set, else lookup
   let discountId: string | null = m.discount_code_id || null;
