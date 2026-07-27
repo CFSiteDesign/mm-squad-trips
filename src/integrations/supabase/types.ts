@@ -307,12 +307,16 @@ export type Database = {
           commission_12day: number | null
           commission_7day: number | null
           created_at: string
+          creator_email: string | null
           creator_name: string | null
+          creator_ref: string | null
           discount_amount: number
           discount_type: string
           expiry_date: string | null
           id: string
           is_creator: boolean
+          stack_percent: number | null
+          stackable: boolean
           updated_at: string
           usage_limit: number | null
           used_count: number
@@ -325,12 +329,16 @@ export type Database = {
           commission_12day?: number | null
           commission_7day?: number | null
           created_at?: string
+          creator_email?: string | null
           creator_name?: string | null
+          creator_ref?: string | null
           discount_amount?: number
           discount_type?: string
           expiry_date?: string | null
           id?: string
           is_creator?: boolean
+          stack_percent?: number | null
+          stackable?: boolean
           updated_at?: string
           usage_limit?: number | null
           used_count?: number
@@ -343,12 +351,16 @@ export type Database = {
           commission_12day?: number | null
           commission_7day?: number | null
           created_at?: string
+          creator_email?: string | null
           creator_name?: string | null
+          creator_ref?: string | null
           discount_amount?: number
           discount_type?: string
           expiry_date?: string | null
           id?: string
           is_creator?: boolean
+          stack_percent?: number | null
+          stackable?: boolean
           updated_at?: string
           usage_limit?: number | null
           used_count?: number
