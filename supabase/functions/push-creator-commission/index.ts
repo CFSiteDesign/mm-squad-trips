@@ -2,10 +2,13 @@
 // (mm-influencer-rev), where creators view their earnings. One row per
 // creator code per month, POSTed to the hub's add-trip-commission endpoint.
 //
-// Commission rules (affiliate brief):
-// - flat fee per booking: commission_7day (trips ≤7 days) / commission_12day
-// - confirmed once the final payment lands (balance charged, or paid in full)
-// - deposit-only bookings are pending; cancellations earn nothing
+// Commission rules (affiliate brief + Cai 27 Jul):
+// - flat fee per booking: commission_7day (trips ≤10 days) / commission_12day
+//   (trips over 10 days)
+// - confirmed only when the trip is locked in: fully paid AND departure
+//   confirmed AND past the 30-day cancellation checkpoint — a fully-paid
+//   booking that can still be cancelled stays pending
+// - cancellations earn nothing
 // - a booking counts in the month it was made (Australia/Brisbane)
 //
 // Trigger: POST with x-cron-secret vs the Vault CRON_SECRET (same guard as
@@ -29,16 +32,24 @@ const normalizeCronSecret = (value: string | null) => {
   return /^[0-9A-Fa-f]{64}$/.test(trimmed) ? trimmed.toLowerCase() : trimmed;
 };
 
+const LONG_TRIP_MIN_DAYS = 11; // >10 days = the commission_12day tier
+const CANCEL_WINDOW_DAYS = 30; // underfilled departures cancel at 30 days out
+
 type CommissionState = "confirmed" | "pending" | "void";
 
-function commissionState(b: Record<string, unknown>): CommissionState {
+function commissionState(
+  b: Record<string, unknown>,
+  dep?: { status: string; date: string },
+): CommissionState {
   if (String(b.status ?? "") === "Cancelled") return "void";
   const bal = String(b.balance_status ?? "");
   if (bal === "cancelled" || bal === "failed_final") return "void";
-  if (bal === "charged" || bal === "not_required" || String(b.payment_type ?? "") === "Full") {
-    return "confirmed";
-  }
-  return "pending";
+  const fullyPaid =
+    bal === "charged" || bal === "not_required" || String(b.payment_type ?? "") === "Full";
+  if (!fullyPaid) return "pending";
+  if (!dep || dep.status !== "confirmed" || !dep.date) return "pending";
+  const cutoff = new Date(dep.date + "T00:00:00Z").getTime() - CANCEL_WINDOW_DAYS * 86400_000;
+  return Date.now() >= cutoff ? "confirmed" : "pending";
 }
 
 function brisbaneMonth(iso: string): string {
@@ -79,9 +90,14 @@ Deno.serve(async (req) => {
   const { data: trips } = await sb.from("trips").select("id,days");
   const tripDays = new Map((trips ?? []).map((t) => [String(t.id), Number(t.days ?? 0)]));
 
+  const { data: deps } = await sb.from("departures").select("id,status,departure_date");
+  const depById = new Map(
+    (deps ?? []).map((d) => [String(d.id), { status: String(d.status ?? ""), date: String(d.departure_date ?? "") }]),
+  );
+
   const { data: bookings, error: bErr } = await sb
     .from("bookings")
-    .select("discount_code_id,trip_id,status,payment_type,balance_status,stripe_session_id,id,created_at")
+    .select("discount_code_id,trip_id,departure_id,status,payment_type,balance_status,stripe_session_id,id,created_at")
     .in("discount_code_id", Array.from(byId.keys()))
     .limit(10000);
   if (bErr) return jr({ error: bErr.message }, 500);
@@ -94,12 +110,14 @@ Deno.serve(async (req) => {
     const dedupe = String(b.stripe_session_id || b.id);
     if (seen.has(dedupe)) continue;
     seen.add(dedupe);
-    const state = commissionState(b);
+    const state = commissionState(b, depById.get(String(b.departure_id)));
     if (state === "void") continue;
     const codeRow = byId.get(String(b.discount_code_id))!;
     const month = brisbaneMonth(String(b.created_at));
     const days = tripDays.get(String(b.trip_id)) ?? 0;
-    const rate = days > 0 && days <= 7 ? Number(codeRow.commission_7day ?? 25) : Number(codeRow.commission_12day ?? 50);
+    const rate = days > 0 && days < LONG_TRIP_MIN_DAYS
+      ? Number(codeRow.commission_7day ?? 25)
+      : Number(codeRow.commission_12day ?? 50);
     const k = `${codeRow.code}|${month}`;
     const a = agg.get(k) ?? { code: String(codeRow.code), month, bookings: 0, confirmed: 0, pending: 0 };
     a.bookings += 1;

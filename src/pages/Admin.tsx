@@ -1213,30 +1213,40 @@ function StaffLeaderboard({ refreshKey }: { refreshKey: number }) {
    codes (no expiry) earn indefinitely while the three partner codes stop on
    15 Sep 2026 at checkout.
 
-   Commission timing (affiliate brief): confirmed only once the FINAL payment
-   lands. A deposit-only booking counts as pending; a cancellation earns nothing.
+   Commission timing (Cai, 27 Jul): confirmed only once the trip is locked in —
+   the guest has fully paid AND the departure is confirmed AND it's past the
+   30-day cancellation checkpoint. Even a fully-paid booking stays pending
+   before that, because it can still be cancelled. Cancellations earn nothing.
 
-   Prize draw: one pool. Every non-cancelled booking made on a creator code is
-   one entry, tagged with the trip length so the winner gets the trip they
-   booked. */
+   Commission tiers (Cai, 27 Jul): trips over 10 days pay the higher rate
+   (commission_12day); 10 days or under pay commission_7day. */
+
+const LONG_TRIP_MIN_DAYS = 11; // >10 days = $50 tier
+const CANCEL_WINDOW_DAYS = 30; // underfilled departures cancel at 30 days out
 
 type CommissionState = "confirmed" | "pending" | "void";
 
-function commissionState(b: Record<string, unknown>): CommissionState {
+function commissionState(
+  b: Record<string, unknown>,
+  dep?: { status: string; date: string },
+): CommissionState {
   if (String(b.status ?? "") === "Cancelled") return "void";
   const bal = String(b.balance_status ?? "");
   if (bal === "cancelled" || bal === "failed_final") return "void";
-  // Paid in full at checkout, or the balance has since been charged.
-  if (bal === "charged" || bal === "not_required" || String(b.payment_type ?? "") === "Full") {
-    return "confirmed";
-  }
-  return "pending"; // deposit paid, balance still scheduled/failed
+  const fullyPaid =
+    bal === "charged" || bal === "not_required" || String(b.payment_type ?? "") === "Full";
+  if (!fullyPaid) return "pending";
+  // Fully paid, but the trip itself must be locked in too.
+  if (!dep || dep.status !== "confirmed" || !dep.date) return "pending";
+  const cutoff = new Date(dep.date + "T00:00:00Z").getTime() - CANCEL_WINDOW_DAYS * 86400_000;
+  return Date.now() >= cutoff ? "confirmed" : "pending";
 }
 
 function CreatorRevenue({ refreshKey }: { refreshKey: number }) {
   const [bookings, setBookings] = useState<Record<string, unknown>[] | null>(null);
   const [codes, setCodes] = useState<Record<string, unknown>[] | null>(null);
   const [trips, setTrips] = useState<Record<string, unknown>[] | null>(null);
+  const [departures, setDepartures] = useState<Record<string, unknown>[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -1246,14 +1256,22 @@ function CreatorRevenue({ refreshKey }: { refreshKey: number }) {
       adminApi.list("bookings", { limit: 2000 }),
       adminApi.list("discount_codes", { limit: 500 }),
       adminApi.list("trips", { limit: 100 }),
+      adminApi.list("departures", { limit: 1000 }),
     ])
-      .then(([b, c, t]) => { if (!cancelled) { setBookings(b); setCodes(c); setTrips(t); } })
+      .then(([b, c, t, d]) => { if (!cancelled) { setBookings(b); setCodes(c); setTrips(t); setDepartures(d); } })
       .catch((e) => { if (!cancelled) setError(e instanceof Error ? e.message : "Could not load data"); });
     return () => { cancelled = true; };
   }, [refreshKey]);
 
   const board = useMemo(() => {
-    if (!bookings || !codes || !trips) return null;
+    if (!bookings || !codes || !trips || !departures) return null;
+    const depById = new Map<string, { status: string; date: string }>();
+    for (const d of departures) {
+      depById.set(String(d.id), {
+        status: String(d.status ?? ""),
+        date: String(d.departure_date ?? ""),
+      });
+    }
     const tripDays = new Map<string, number>();
     for (const t of trips) tripDays.set(String(t.id), Number(t.days ?? 0));
     const creatorCodes = codes.filter((c) => c.is_creator === true);
@@ -1281,7 +1299,7 @@ function CreatorRevenue({ refreshKey }: { refreshKey: number }) {
     for (const b of bookings) {
       const codeId = b.discount_code_id ? String(b.discount_code_id) : "";
       if (!codeId || !byCodeId.has(codeId)) continue;
-      const state = commissionState(b);
+      const state = commissionState(b, depById.get(String(b.departure_id)));
       if (state === "void") continue;
       const key = String(b.stripe_session_id || b.id);
       const agg = byCodeId.get(codeId)!;
@@ -1297,7 +1315,7 @@ function CreatorRevenue({ refreshKey }: { refreshKey: number }) {
         continue;
       }
       seen.add(key);
-      const isShort = days > 0 && days <= 7;
+      const isShort = days > 0 && days < LONG_TRIP_MIN_DAYS;
       const rate = isShort ? agg.c7 : agg.c12;
       if (isShort) { agg.n7 += 1; entries7 += 1; } else { agg.n12 += 1; entries12 += 1; }
       if (state === "confirmed") agg.confirmed += rate; else agg.pending += rate;
@@ -1320,7 +1338,7 @@ function CreatorRevenue({ refreshKey }: { refreshKey: number }) {
       .filter((r) => r.n7 + r.n12 > 0)
       .sort((a, b) => b.confirmed + b.pending - (a.confirmed + a.pending) || b.n7 + b.n12 - (a.n7 + a.n12));
     return { rows, entries7, entries12, totalCodes: all.length, idleCodes: all.length - rows.length, entrants };
-  }, [bookings, codes, trips]);
+  }, [bookings, codes, trips, departures]);
 
   if (error) return <p className="border-[2px] border-mm-black bg-mm-bone p-4 text-sm">{error}</p>;
   if (!board) return <p className="p-4 font-sticker text-[11px] tracking-[0.15em] text-mm-black/60">LOADING…</p>;
@@ -1331,10 +1349,10 @@ function CreatorRevenue({ refreshKey }: { refreshKey: number }) {
         <h2 className="font-display text-2xl">CREATOR CODES — BOOKINGS & COMMISSION</h2>
         <p className="mt-1 text-sm text-mm-black/70">
           Tracking-only codes ($0 discount) — the guest pays full price and gets 2 free hostel nights plus a
-          prize-draw entry. Commission = 7-day bookings × rate7 + 12+ day bookings × rate12 (rates editable per
-          code in the Discounts tab). <strong>Confirmed</strong> = final payment received; <strong>pending</strong> =
-          deposit paid, balance still to come. Cancellations earn nothing. Each code's own expiry controls how long
-          it runs.
+          prize-draw entry. Commission: trips over 10 days pay rate12, 10 days or under pay rate7 (rates editable
+          per code in the Discounts tab). <strong>Confirmed</strong> = trip locked in: fully paid + departure
+          confirmed + past the 30-day cancellation window. <strong>Pending</strong> = everything else that isn't
+          cancelled — even paid-in-full bookings stay pending until the trip can no longer be cancelled.
         </p>
         <p className="mt-2 inline-block border-[2px] border-mm-black bg-mm-lime px-3 py-1 font-sticker text-[11px] tracking-[0.15em]">
           🎟️ PRIZE DRAW ENTRIES: {board.entries7 + board.entries12} ({board.entries7} × 7-DAY, {board.entries12} × 12+ DAY)
