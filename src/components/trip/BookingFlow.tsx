@@ -132,10 +132,6 @@ export function BookingFlow({ trip }: { trip: Trip }) {
       .catch(() => { /* reveal is best-effort — public dates still work */ });
     return () => { cancelled = true; };
   }, [discountCode, discountState?.kind, trip.slug]);
-  // Only a squad leader (identified by their squad code) or a solo traveller may
-  // create a custom date — plain group bookings pick from the listed departures.
-  const isSquadCodeEntered = discountState?.valid === true && discountState.kind === "squad";
-  const showCustomDate = (soloSelected || isSquadCodeEntered) && startWeekday !== null;
 
   function changeGroup(n: number) {
     setGroupSize(n);
@@ -145,6 +141,12 @@ export function BookingFlow({ trip }: { trip: Trip }) {
   }
 
   const soloSelected = groupSize === 1 && lead.solo;
+
+  // Only a squad leader (identified by their squad code) or a solo traveller may
+  // create a custom date — plain group bookings pick from the listed departures.
+  // NOTE: must stay below soloSelected — it reads it at render time.
+  const isSquadCodeEntered = discountState?.valid === true && discountState.kind === "squad";
+  const showCustomDate = (soloSelected || isSquadCodeEntered) && startWeekday !== null;
 
   function selectSolo() {
     setGroupSize(1);
