@@ -130,8 +130,12 @@ Deno.serve(async (req) => {
       if (d.getUTCDay() !== Number(startWeekday)) {
         return err(`${trip.name} departs on ${WEEKDAY_NAMES[Number(startWeekday)]}s — please pick a ${WEEKDAY_NAMES[Number(startWeekday)]}.`);
       }
-      if (daysUntil(iso) < MIN_CUSTOM_DATE_NOTICE_DAYS) {
-        return err(`Custom dates need at least ${MIN_CUSTOM_DATE_NOTICE_DAYS} days' notice — please pick a later date.`);
+      if (daysUntil(iso) < Math.max(1, MIN_CUSTOM_DATE_NOTICE_DAYS)) {
+        return err(
+          MIN_CUSTOM_DATE_NOTICE_DAYS > 1
+            ? `Custom dates need at least ${MIN_CUSTOM_DATE_NOTICE_DAYS} days' notice — please pick a later date.`
+            : "Please pick a future date.",
+        );
       }
       // An existing row for this date wins (it may already be public/filling).
       const { data: existing } = await sb
