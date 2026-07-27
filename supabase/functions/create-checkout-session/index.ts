@@ -146,10 +146,22 @@ Deno.serve(async (req) => {
           months.includes(new Date(depDate + "T00:00:00Z").getUTCMonth() + 1);
         if (d.active && !expired && !exhausted && applies && depMonthOk) {
           // Percent codes: discount_amount holds the percentage of the subtotal.
+          // Stacked codes: fixed off first, then stack_percent of the remainder
+          // (Michele 27 Jul). app_config max_discount_usd caps the total.
           const raw = Number(d.discount_amount) || 0;
+          const stackPct = d.discount_type !== "percent"
+            ? Math.min(100, Math.max(0, Number(d.stack_percent) || 0)) : 0;
           discountAmount = d.discount_type === "percent"
             ? Math.round(subtotal * Math.min(100, Math.max(0, raw))) / 100
             : raw;
+          if (stackPct > 0) {
+            const afterFixed = Math.max(0, subtotal - raw);
+            discountAmount = Math.round((raw + afterFixed * (stackPct / 100)) * 100) / 100;
+          }
+          const { data: capRow } = await sb
+            .from("app_config").select("value").eq("key", "max_discount_usd").maybeSingle();
+          const cap = Number(capRow?.value) || 0;
+          if (cap > 0 && discountAmount > cap) discountAmount = cap;
           appliedCode = safe;
           discountRecordId = d.id;
           appliedIsCreator = d.is_creator === true;

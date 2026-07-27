@@ -41,6 +41,11 @@ export interface DiscountResult {
   reason?: string;
   discountAmount?: number;
   newTotal?: number;
+  /** Stacked code: fixed comes off first, then stackPercent of the remainder. */
+  stackFixed?: number;
+  stackPercent?: number;
+  /** True when the discount hit the global max-discount cap. */
+  capped?: boolean;
   /** Creator tracking code: $0 off, the booking enters the shared prize draw. */
   isCreator?: boolean;
   creatorName?: string;

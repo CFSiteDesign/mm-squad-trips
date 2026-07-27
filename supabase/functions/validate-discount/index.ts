@@ -65,18 +65,34 @@ Deno.serve(async (req) => {
       }
     }
     // Percent codes: discount_amount holds the percentage (e.g. 20 = 20% of subtotal).
+    // Stacked codes (fixed + stack_percent): the fixed comes off FIRST, then the
+    // percent applies to the remainder (Michele 27 Jul) — e.g. $150 + 20% on
+    // $850 = 150 + 700×20% = $290. app_config max_discount_usd caps the total.
     const isPercent = d.discount_type === "percent";
     const raw = Number(d.discount_amount) || 0;
-    const discountAmount = isPercent
+    const stackPct = !isPercent ? Math.min(100, Math.max(0, Number(d.stack_percent) || 0)) : 0;
+    let discountAmount = isPercent
       ? Math.round(amount * Math.min(100, Math.max(0, raw))) / 100
       : raw;
+    if (stackPct > 0) {
+      const afterFixed = Math.max(0, amount - raw);
+      discountAmount = Math.round((raw + afterFixed * (stackPct / 100)) * 100) / 100;
+    }
+    const { data: capRow } = await sb
+      .from("app_config").select("value").eq("key", "max_discount_usd").maybeSingle();
+    const cap = Number(capRow?.value) || 0;
+    const capped = cap > 0 && discountAmount > cap;
+    if (capped) discountAmount = cap;
     const newTotal = Math.max(0, amount - discountAmount);
     return jr({
       valid: true,
       discountAmount,
       newTotal,
-      discountType: isPercent ? "percent" : "fixed",
+      discountType: stackPct > 0 ? "stacked" : isPercent ? "percent" : "fixed",
       percent: isPercent ? raw : undefined,
+      stackFixed: stackPct > 0 ? raw : undefined,
+      stackPercent: stackPct > 0 ? stackPct : undefined,
+      capped: capped || undefined,
       // Creator tracking codes: $0 off, booking enters the shared prize draw.
       isCreator: d.is_creator === true,
       creatorName: d.creator_name ?? undefined,
