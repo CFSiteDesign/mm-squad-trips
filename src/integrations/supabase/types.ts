@@ -252,11 +252,13 @@ export type Database = {
           departure_date: string
           id: string
           min_bookings_to_confirm: number
+          owner_code: string | null
           spots_remaining: number
           status: string
           total_spots: number
           trip_id: string
           updated_at: string
+          visibility: string
         }
         Insert: {
           bookable?: boolean
@@ -267,11 +269,13 @@ export type Database = {
           departure_date: string
           id?: string
           min_bookings_to_confirm?: number
+          owner_code?: string | null
           spots_remaining?: number
           status?: string
           total_spots?: number
           trip_id: string
           updated_at?: string
+          visibility?: string
         }
         Update: {
           bookable?: boolean
@@ -282,11 +286,13 @@ export type Database = {
           departure_date?: string
           id?: string
           min_bookings_to_confirm?: number
+          owner_code?: string | null
           spots_remaining?: number
           status?: string
           total_spots?: number
           trip_id?: string
           updated_at?: string
+          visibility?: string
         }
         Relationships: [
           {
@@ -564,6 +570,7 @@ export type Database = {
           id: string
           name: string
           slug: string
+          start_weekday: number | null
           stops: Json
           testimonials: Json
           updated_at: string
@@ -581,6 +588,7 @@ export type Database = {
           id?: string
           name: string
           slug: string
+          start_weekday?: number | null
           stops?: Json
           testimonials?: Json
           updated_at?: string
@@ -598,6 +606,7 @@ export type Database = {
           id?: string
           name?: string
           slug?: string
+          start_weekday?: number | null
           stops?: Json
           testimonials?: Json
           updated_at?: string
