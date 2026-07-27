@@ -60,6 +60,8 @@ export function BookingFlow({ trip }: { trip: Trip }) {
   const [lead, setLead] = useState<LeadFields>(emptyLead);
   const [travelers, setTravelers] = useState<TravelerFields[]>([]);
   const [discountCode, setDiscountCode] = useState("");
+  const [secondCode, setSecondCode] = useState("");
+  const [firstStackable, setFirstStackable] = useState(false);
   const [discountState, setDiscountState] = useState<{ valid: boolean; msg: string; amount?: number } | null>(null);
   const [discountLoading, setDiscountLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -87,24 +89,30 @@ export function BookingFlow({ trip }: { trip: Trip }) {
     setJoinMode(false);
   }
 
-  const validatedFor = useRef<{ depId: string; code: string } | null>(null);
+  const validatedFor = useRef<{ depId: string; code: string; code2: string } | null>(null);
 
   useEffect(() => {
     const code = discountCode.trim().toUpperCase();
+    const code2 = secondCode.trim().toUpperCase();
     if (!selected || !code || discountLoading) return;
-    if (validatedFor.current?.depId === selected.id && validatedFor.current?.code === code) return;
+    if (
+      validatedFor.current?.depId === selected.id &&
+      validatedFor.current?.code === code &&
+      validatedFor.current?.code2 === code2
+    ) return;
 
     setDiscountLoading(true);
-    validatedFor.current = { depId: selected.id, code };
+    validatedFor.current = { depId: selected.id, code, code2 };
     setDiscountState(null);
 
     const subtotal = selected.price * groupSize;
-    validateDiscount({ code, tripSlug: trip.slug, amount: subtotal, departureDate: selected.date })
+    validateDiscount({ code, secondCode: code2 || undefined, tripSlug: trip.slug, amount: subtotal, departureDate: selected.date })
       .then((result) => {
+        setFirstStackable(result.stackable === true || !!code2);
         if (result.valid && result.isCreator) {
           setDiscountState({ valid: true, msg: "Creator code applied — you're in the prize draw! 🎉", amount: 0 });
         } else if (result.valid && result.stackFixed != null && result.stackPercent != null) {
-          // Stacked code: messaging is fixed-first, then % (matches the maths).
+          // Stacked codes: messaging is fixed-first, then % (matches the maths).
           setDiscountState({
             valid: true,
             msg: `Applied — ${formatPrice(result.stackFixed)} off, then ${result.stackPercent}% off the rest: ${formatPrice(result.discountAmount ?? 0)} total${result.capped ? " (max discount reached)" : ""}`,
@@ -117,7 +125,7 @@ export function BookingFlow({ trip }: { trip: Trip }) {
         }
       })
       .finally(() => setDiscountLoading(false));
-  }, [selected, discountCode, discountLoading, groupSize, trip.slug]);
+  }, [selected, discountCode, secondCode, discountLoading, groupSize, trip.slug]);
 
   async function submit() {
     if (!selected) return toast.error("Pick a departure first");
@@ -167,6 +175,7 @@ export function BookingFlow({ trip }: { trip: Trip }) {
         leadBooker: { ...lead, phone: fullPhone },
         travelers: travelerPayload,
         discountCode: discountState?.valid ? discountCode.trim().toUpperCase() : undefined,
+        secondDiscountCode: discountState?.valid && secondCode.trim() ? secondCode.trim().toUpperCase() : undefined,
         friendsMentioned: lead.friends,
         staffRecommendation: lead.staffRec.trim() || undefined,
         utm,
@@ -348,6 +357,21 @@ export function BookingFlow({ trip }: { trip: Trip }) {
                     </span>
                   )}
                 </div>
+                {/* Second code — only for stackable codes (one fixed + one %). */}
+                {(firstStackable || secondCode) && (
+                  <div className="flex gap-3">
+                    <Input
+                      value={secondCode}
+                      onChange={(e) => {
+                        setSecondCode(e.target.value.toUpperCase());
+                        setDiscountState(null);
+                        validatedFor.current = null;
+                      }}
+                      placeholder="SECOND CODE (OPTIONAL)"
+                      className="h-12 flex-1 rounded-none border-[3px] border-mm-black bg-mm-paper text-mm-black uppercase font-display tracking-wide"
+                    />
+                  </div>
+                )}
                 {discountState && (
                   <p
                     className={`font-sticker text-[11px] tracking-[0.15em] ${

@@ -56,6 +56,7 @@ Deno.serve(async (req) => {
     leadBooker?: Record<string, unknown>;
     travelers?: unknown[];
     discountCode?: string;
+    secondDiscountCode?: string;
     friendsMentioned?: string;
     staffRecommendation?: string;
     utm?: Record<string, string>;
@@ -63,7 +64,7 @@ Deno.serve(async (req) => {
   };
   try { payload = await req.json(); } catch { return err("Invalid JSON body"); }
 
-  const { tripSlug, departureId, groupSize, leadBooker, travelers = [], discountCode, friendsMentioned, staffRecommendation, utm = {}, gaClientId } = payload;
+  const { tripSlug, departureId, groupSize, leadBooker, travelers = [], discountCode, secondDiscountCode, friendsMentioned, staffRecommendation, utm = {}, gaClientId } = payload;
   if (!tripSlug || typeof tripSlug !== "string") return err("tripSlug required");
   if (!departureId || typeof departureId !== "string") return err("departureId required");
   if (!groupSize || typeof groupSize !== "number" || groupSize < 1 || groupSize > 5) return err("groupSize must be 1–5");
@@ -128,7 +129,46 @@ Deno.serve(async (req) => {
     let discountRecordId: string | null = null;
     let appliedIsCreator = false;
     let squadCode: string | null = null;
-    if (discountCode) {
+    // Two-code stacking: one fixed + one percent, both stackable — fixed off
+    // first, then the % on the remainder. Validated again server-side here so
+    // the client can't force a combination the rules reject.
+    if (discountCode && secondDiscountCode) {
+      const c1 = String(discountCode).toUpperCase();
+      const c2 = String(secondDiscountCode).toUpperCase();
+      const { data: pair } = await sb
+        .from("discount_codes")
+        .select("*")
+        .in("code", [c1, c2]);
+      const rows = pair ?? [];
+      const d1 = rows.find((r) => r.code === c1);
+      const d2 = rows.find((r) => r.code === c2);
+      const usable = (d: Record<string, unknown> | undefined) => {
+        if (!d || !d.active || d.is_creator === true || d.stackable !== true) return false;
+        if (d.expiry_date && new Date(String(d.expiry_date)) < new Date()) return false;
+        if (typeof d.usage_limit === "number" && (Number(d.used_count) || 0) >= d.usage_limit) return false;
+        const appliesTo = (d.applicable_to as string[] | null) ?? [];
+        if (!appliesTo.includes("All") && !appliesTo.includes(SLUG_TO_LABEL[tripSlug])) return false;
+        const months = (d.applicable_months as number[] | null) ?? [];
+        if (months.length > 0 && !months.includes(new Date(depDate + "T00:00:00Z").getUTCMonth() + 1)) return false;
+        return true;
+      };
+      const types = [d1?.discount_type, d2?.discount_type];
+      if (c1 !== c2 && usable(d1) && usable(d2) && types.includes("fixed") && types.includes("percent")) {
+        const fixedRow = d1!.discount_type === "fixed" ? d1! : d2!;
+        const pctRow = d1!.discount_type === "percent" ? d1! : d2!;
+        const fixed = Number(fixedRow.discount_amount) || 0;
+        const pct = Math.min(100, Math.max(0, Number(pctRow.discount_amount) || 0));
+        discountAmount = Math.round((fixed + Math.max(0, subtotal - fixed) * (pct / 100)) * 100) / 100;
+        const { data: capRow } = await sb
+          .from("app_config").select("value").eq("key", "max_discount_usd").maybeSingle();
+        const cap = Number(capRow?.value) || 0;
+        if (cap > 0 && discountAmount > cap) discountAmount = cap;
+        appliedCode = `${fixedRow.code}+${pctRow.code}`;
+        discountRecordId = fixedRow.id; // bookings FK points at the fixed code
+      }
+      // Any rule failure: fall through and try discountCode alone below.
+    }
+    if (discountCode && !appliedCode) {
       const safe = String(discountCode).toUpperCase();
       const { data: d } = await sb
         .from("discount_codes")

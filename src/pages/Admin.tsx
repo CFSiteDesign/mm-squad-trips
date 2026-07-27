@@ -130,7 +130,7 @@ const COLUMNS: Record<AdminTable, ColumnDef[]> = {
     { key: "code", label: "Code", tooltip: "The discount code customers enter at checkout", type: "text" },
     { key: "discount_type", label: "Type", tooltip: "'fixed' = dollar amount off, 'percent' = percentage of the subtotal off", type: "text" },
     { key: "discount_amount", label: "Amount ($ or %)", tooltip: "Dollar amount for fixed codes, percentage (e.g. 20 = 20%) for percent codes", type: "number" },
-    { key: "stack_percent", label: "Then % Off Rest", tooltip: "Stacked discount: after the fixed amount comes off, this % applies to the remainder (e.g. $150 + 20% on $850 = $290 off). Fixed codes only. Total is capped at the global max discount ($300)", type: "number" },
+    { key: "stackable", label: "Stackable", tooltip: "Allow this code to combine with ONE other stackable code at checkout (one fixed + one percent; fixed comes off first, then the % on the rest). Total capped at the global max discount ($300)", type: "boolean" },
     { key: "active", label: "Active", tooltip: "Whether this code can currently be used", type: "boolean" },
     { key: "usage_limit", label: "Usage Limit", tooltip: "Maximum number of times this code can be redeemed", type: "number" },
     { key: "used_count", label: "Used Count", tooltip: "How many times this code has already been used", type: "number", readOnly: true },

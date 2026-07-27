@@ -41,9 +41,11 @@ export interface DiscountResult {
   reason?: string;
   discountAmount?: number;
   newTotal?: number;
-  /** Stacked code: fixed comes off first, then stackPercent of the remainder. */
+  /** Stacked codes: fixed comes off first, then stackPercent of the remainder. */
   stackFixed?: number;
   stackPercent?: number;
+  /** This code may be combined with one other stackable code. */
+  stackable?: boolean;
   /** True when the discount hit the global max-discount cap. */
   capped?: boolean;
   /** Creator tracking code: $0 off, the booking enters the shared prize draw. */
@@ -53,6 +55,8 @@ export interface DiscountResult {
 
 export async function validateDiscount(input: {
   code: string;
+  /** Optional second code — combines with the first when both are stackable. */
+  secondCode?: string;
   tripSlug: string;
   amount: number;
   /** ISO date of the selected departure — used for month-restricted codes. */
@@ -70,6 +74,8 @@ export interface CreateCheckoutInput {
   leadBooker: unknown;
   travelers: unknown[];
   discountCode?: string;
+  /** Second stackable code — combined server-side (fixed first, then %). */
+  secondDiscountCode?: string;
   friendsMentioned?: string;
   /** Optional "Mad Monkey staff recommendation" name from the booking form. */
   staffRecommendation?: string;
