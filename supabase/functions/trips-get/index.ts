@@ -98,7 +98,11 @@ Deno.serve(async (req) => {
       headers: {
         ...corsHeaders,
         "Content-Type": "application/json",
-        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+        // A code-revealed response contains a squad's private dates — it must
+        // never sit in a shared cache where another visitor could receive it.
+        "Cache-Control": revealCode
+          ? "private, no-store"
+          : "public, s-maxage=300, stale-while-revalidate=600",
       },
     });
   } catch (e) {
