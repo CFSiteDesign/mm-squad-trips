@@ -18,6 +18,7 @@ import {
   squadMemberJoinedEmail,
   squadMilestoneEmail,
 } from "../_shared/email.ts";
+import { triggerCommissionPush } from "../_shared/push-commission.ts";
 
 function envClient() {
   const url = Deno.env.get("SUPABASE_URL");
@@ -57,6 +58,9 @@ Deno.serve(async (req) => {
       } else {
         await writeBookings(session);
       }
+      // Keep the Creator Revenue Hub in sync (new booking → pending
+      // commission; balance paid → confirmed). Fire-and-forget.
+      await triggerCommissionPush(envClient());
     } else {
       console.log("Ignoring event type:", event.type);
     }

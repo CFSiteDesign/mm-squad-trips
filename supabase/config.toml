@@ -2,3 +2,13 @@ project_id = "bilhhkzcmicygufsdfxi"
 
 [functions.stripe-webhook]
 verify_jwt = false
+
+# Called by the Creator Hub (different Supabase project, no JWT) — guarded by
+# CREATOR_HUB_API_SECRET instead.
+[functions.creator-eligibility]
+verify_jwt = false
+
+# Called internally (webhook/cancel/cron) without a JWT — guarded by the
+# Vault CRON_SECRET instead.
+[functions.push-creator-commission]
+verify_jwt = false

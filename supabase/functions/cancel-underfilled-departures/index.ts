@@ -7,6 +7,7 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { APP_URL, departureCancelledEmail, sendEmail } from "../_shared/email.ts";
+import { triggerCommissionPush } from "../_shared/push-commission.ts";
 
 function fmtUsd(cents: number): string {
   return `$${(cents / 100).toFixed(2)} USD`;
@@ -207,6 +208,11 @@ Deno.serve(async (req) => {
       console.error(`departure ${depId} failed:`, msg);
       summary.push({ ...depSummary, error: msg });
     }
+  }
+
+  // Cancellations kill any creator commission — resync the Revenue Hub.
+  if (summary.some((s) => s.outcome === "cancelled")) {
+    await triggerCommissionPush(sb);
   }
 
   return new Response(JSON.stringify({ ok: true, processed: summary.length, summary }), {
