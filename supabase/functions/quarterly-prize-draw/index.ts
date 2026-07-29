@@ -17,6 +17,13 @@ import { sendEmail } from "../_shared/email.ts";
 /** Draws happen at the start of these months (0-indexed): Feb, May, Aug, Nov. */
 const DRAW_MONTHS = [1, 4, 7, 10];
 const DRAW_RECIPIENTS = ["lexie@madmonkeyhostels.com", "cai@madmonkeyhostels.com"];
+/** Set DRAW_RECIPIENTS_OVERRIDE (comma-separated) to divert draw emails when
+ *  rehearsing a draw, so the real recipients aren't sent test winners. */
+function drawRecipients(): string[] {
+  const override = (Deno.env.get("DRAW_RECIPIENTS_OVERRIDE") ?? "").trim();
+  if (!override) return DRAW_RECIPIENTS;
+  return override.split(",").map((s) => s.trim()).filter(Boolean);
+}
 /** Trips shorter than this many days go in the "short" bracket. */
 const SHORT_TRIP_MAX_DAYS = 10;
 
@@ -181,7 +188,7 @@ ${winners.map(card).join("")}
 
     try {
       await sendEmail({
-        to: DRAW_RECIPIENTS,
+        to: drawRecipients(),
         subject: `🎟️ Prize draw winners — ${startIso} to ${endIso}`,
         html,
         templateName: "quarterly_prize_draw",
