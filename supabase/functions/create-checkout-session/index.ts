@@ -389,8 +389,9 @@ Deno.serve(async (req) => {
             custom_text: {
               submit: {
                 message:
+                  // A creator code can also carry a discount — say both.
                   (discountAmount > 0 && appliedCode
-                    ? `Discount ${appliedCode} applied — $${discountAmount.toFixed(0)} off your trip total. `
+                    ? `${appliedIsCreator ? "Creator code" : "Discount"} ${appliedCode} applied — $${discountAmount.toFixed(0)} off your trip total${appliedIsCreator ? ", and this booking is entered into the prize draw" : ""}. `
                     : appliedIsCreator && appliedCode
                     ? `Creator code ${appliedCode} applied — this booking is entered into the prize draw. `
                     : "") +

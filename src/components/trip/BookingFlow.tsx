@@ -224,7 +224,16 @@ export function BookingFlow({ trip }: { trip: Trip }) {
         if (result.valid && result.kind === "squad") {
           setDiscountState({ valid: true, msg: "Squad code applied ✓", amount: 0, kind: "squad" });
         } else if (result.valid && result.isCreator) {
-          setDiscountState({ valid: true, msg: "Creator code applied — you're in the prize draw! 🎉", amount: 0 });
+          // A creator code may ALSO carry a discount (e.g. DUTCHIES10 = $100 off
+          // + prize draw), so never hardcode 0 here — show what the server applied.
+          const creatorOff = result.discountAmount ?? 0;
+          setDiscountState({
+            valid: true,
+            msg: creatorOff > 0
+              ? `Creator code applied — ${formatPrice(creatorOff)} off + you're in the prize draw! 🎉`
+              : "Creator code applied — you're in the prize draw! 🎉",
+            amount: creatorOff,
+          });
         } else if (result.valid && result.stackFixed != null && result.stackPercent != null) {
           // Stacked codes: messaging is fixed-first, then % (matches the maths).
           setDiscountState({
