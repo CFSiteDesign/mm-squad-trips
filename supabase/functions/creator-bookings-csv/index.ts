@@ -14,8 +14,10 @@ const FREE_NIGHTS_VALID_MONTHS = 3;
 
 function csvCell(v: unknown): string {
   const s = v === null || v === undefined ? "" : String(v);
-  // Neutralise spreadsheet formula injection (=, +, -, @ prefixes).
-  const safe = /^[=+\-@]/.test(s) ? `'${s}` : s;
+  // Neutralise spreadsheet formula injection. Only = and @ actually trigger a
+  // formula on import; + and - are excluded so phone numbers ("+44 …") don't
+  // pick up a visible leading apostrophe on every row.
+  const safe = /^[=@]/.test(s) ? `'${s}` : s;
   return `"${safe.replace(/"/g, '""')}"`;
 }
 
