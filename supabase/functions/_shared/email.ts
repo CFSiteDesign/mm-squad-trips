@@ -187,14 +187,17 @@ Mad Monkey Hostels — Squad Trips · Questions? cs@madmonkeyhostels.com
 /** Creator-code perks block — prize draw + 2 free Loyalty nights (3-month validity). */
 export function creatorPerksBlock(creatorCode?: string | null): string {
   if (!creatorCode) return "";
-  return `<div style="margin:18px 0;padding:16px;border:2px solid #0a0a0a;background:#ccff01">
-<div style="font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px">🎟️ Your creator code perks</div>
-<p style="margin:0 0 8px 0;font-size:14px;line-height:1.5">You booked with code <strong>${escapeHtml(String(creatorCode))}</strong>, so:</p>
-<ul style="margin:0 0 0 18px;padding:0;font-size:14px;line-height:1.6">
-<li>You're entered into our prize draw to win a <strong>7-Day Indonesia ALL IN Trip</strong>.</li>
-<li><strong>2 free nights</strong> will be added to your Mad Monkey Loyalty account shortly.</li>
+  // Every element carries an explicit dark colour: some clients (Apple Mail
+  // dark mode) recolour inherited text to white, which is unreadable on lime.
+  const D = "color:#0a0a0a";
+  return `<div style="margin:18px 0;padding:16px;border:2px solid #0a0a0a;background:#ccff01;${D}">
+<div style="font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px;${D}">🎟️ Your creator code perks</div>
+<p style="margin:0 0 8px 0;font-size:14px;line-height:1.5;${D}">You booked with code <strong style="${D}">${escapeHtml(String(creatorCode))}</strong>, so:</p>
+<ul style="margin:0 0 0 18px;padding:0;font-size:14px;line-height:1.6;${D}">
+<li style="${D}">You're entered into our prize draw to win a <strong style="${D}">7-Day Indonesia ALL IN Trip</strong>.</li>
+<li style="${D}"><strong style="${D}">2 free nights</strong> will be added to your Mad Monkey Loyalty account shortly.</li>
 </ul>
-<p style="margin:8px 0 0 0;font-size:12px;line-height:1.5;color:#333">Free nights are valid for <strong>3 months</strong> from your booking date.</p>
+<p style="margin:8px 0 0 0;font-size:12px;line-height:1.5;color:#333">Free nights are valid for <strong style="color:#333">3 months</strong> from your booking date.</p>
 </div>`;
 }
 
@@ -308,6 +311,7 @@ export function soloBookingConfirmedEmail(v: {
   bookingRef: string;
   bookingUrl: string;
   hasBalance: boolean;
+  creatorCode?: string | null;
 }): { subject: string; html: string } {
   const balanceBlock = v.hasBalance
     ? `<p style="margin:0 0 12px 0"><strong>Balance to settle:</strong></p>
@@ -331,11 +335,14 @@ export function soloBookingConfirmedEmail(v: {
 <div style="font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px">✈️ Green light on flights</div>
 <p style="margin:0;font-size:14px;line-height:1.5">Book your flights whenever you're ready — your trip is confirmed. Aim to arrive the day before departure (your free pre-trip night). Shout if you'd like a hand with anything.</p>
 </div>
+{{creatorPerks}}
 ${balanceBlock}
 <p style="margin:0 0 20px 0;font-size:13px;color:#555">Booking ref: <strong>{{bookingRef}}</strong> · <a href="{{bookingUrl}}" style="color:#0a0a0a">View booking</a></p>
 </td></tr>`,
     v as unknown as Record<string, string>,
-  );
+    // creatorPerks is trusted server-built HTML (the code inside is escaped),
+    // so it is injected after render() rather than through it.
+  ).replace("{{creatorPerks}}", creatorPerksBlock(v.creatorCode));
   return {
     subject: `${v.tripCountry} is CONFIRMED ✅ — you're solo & good to book flights`,
     html: shell("You're confirmed", inner),

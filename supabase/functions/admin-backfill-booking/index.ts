@@ -225,6 +225,7 @@ async function processSession(
           bookingRef,
           bookingUrl: `${APP_URL}/booking-success?session_id=${encodeURIComponent(sessionId)}`,
           hasBalance: balanceTotal > 0,
+          creatorCode: m.creator_code || null,
         });
         await sendEmail({ to: m.lead_email as string, subject, html, templateName: "backfill_booking_confirmation" });
         await sb.from("bookings").update({ trip_confirmed_notified_at: new Date().toISOString() }).eq("stripe_session_id", sessionId);

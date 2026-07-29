@@ -465,6 +465,7 @@ async function writeBookings(session: Stripe.Checkout.Session) {
           bookingRef,
           bookingUrl: `${APP_URL}/booking-success?session_id=${encodeURIComponent(sessionId)}`,
           hasBalance: balanceTotal > 0,
+          creatorCode: m.creator_code || null,
         });
         sendEmail({ to: m.lead_email as string, subject, html, templateName: "solo_booking_confirmed" }).catch((e) => console.warn("solo-confirmation email failed", e));
         // Stamp so process-departure-events never double-sends a trip-confirmed email if this departure later hits 5.
