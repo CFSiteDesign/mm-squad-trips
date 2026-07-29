@@ -453,6 +453,68 @@ export type Database = {
           },
         ]
       }
+      prize_draws: {
+        Row: {
+          booking_id: string | null
+          booking_ref: string | null
+          bracket: string
+          code: string | null
+          creator_name: string | null
+          drawn_at: string
+          entries_in_pool: number | null
+          guest_email: string | null
+          guest_name: string | null
+          id: string
+          notified: boolean
+          period_end: string
+          period_start: string
+          trip_days: number | null
+          trip_name: string | null
+        }
+        Insert: {
+          booking_id?: string | null
+          booking_ref?: string | null
+          bracket: string
+          code?: string | null
+          creator_name?: string | null
+          drawn_at?: string
+          entries_in_pool?: number | null
+          guest_email?: string | null
+          guest_name?: string | null
+          id?: string
+          notified?: boolean
+          period_end: string
+          period_start: string
+          trip_days?: number | null
+          trip_name?: string | null
+        }
+        Update: {
+          booking_id?: string | null
+          booking_ref?: string | null
+          bracket?: string
+          code?: string | null
+          creator_name?: string | null
+          drawn_at?: string
+          entries_in_pool?: number | null
+          guest_email?: string | null
+          guest_name?: string | null
+          id?: string
+          notified?: boolean
+          period_end?: string
+          period_start?: string
+          trip_days?: number | null
+          trip_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prize_draws_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       squad_bookings: {
         Row: {
           booker_email: string | null
