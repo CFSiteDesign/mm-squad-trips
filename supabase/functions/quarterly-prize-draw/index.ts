@@ -164,26 +164,30 @@ Deno.serve(async (req) => {
   }
 
   if (winners.length > 0) {
+    // Every element carries an explicit dark colour: some clients (Apple Mail
+    // dark mode) recolour inherited text to white, which is unreadable on lime.
+    const D = "color:#0a0a0a";
     const card = (w: typeof winners[number]) => `
-<div style="margin:0 0 18px 0;padding:16px;border:2px solid #0a0a0a;background:#ccff01">
-<div style="font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.12em">${esc(w.label)} — winner</div>
-<div style="font-size:22px;font-weight:900;margin-top:6px">${esc(w.e.name)}</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:10px;font-size:14px">
-<tr><td style="padding:3px 0"><strong>Email</strong></td><td style="padding:3px 0">${esc(w.e.email)}</td></tr>
-<tr><td style="padding:3px 0"><strong>Phone</strong></td><td style="padding:3px 0">${esc(w.e.phone)}</td></tr>
-<tr><td style="padding:3px 0"><strong>Booking ref</strong></td><td style="padding:3px 0">${esc(w.e.ref)}</td></tr>
-<tr><td style="padding:3px 0"><strong>Trip</strong></td><td style="padding:3px 0">${esc(w.e.trip)} (${esc(w.e.days)} days), departs ${esc(w.e.departure)}</td></tr>
-<tr><td style="padding:3px 0"><strong>Creator code</strong></td><td style="padding:3px 0">${esc(w.e.code)} — ${esc(w.e.creator)}</td></tr>
-<tr><td style="padding:3px 0"><strong>Drawn from</strong></td><td style="padding:3px 0">${w.pool} entr${w.pool === 1 ? "y" : "ies"}</td></tr>
+<div style="margin:0 0 18px 0;padding:16px;border:2px solid #0a0a0a;background:#ccff01;${D}">
+<div style="font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;${D}">${esc(w.label)} — winner</div>
+<div style="font-size:22px;font-weight:900;margin-top:6px;${D}">${esc(w.e.name)}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:10px;font-size:14px;${D}">
+<tr><td style="padding:3px 0;${D}"><strong style="${D}">Email</strong></td><td style="padding:3px 0;${D}">${esc(w.e.email)}</td></tr>
+<tr><td style="padding:3px 0;${D}"><strong style="${D}">Phone</strong></td><td style="padding:3px 0;${D}">${esc(w.e.phone)}</td></tr>
+<tr><td style="padding:3px 0;${D}"><strong style="${D}">Booking ref</strong></td><td style="padding:3px 0;${D}">${esc(w.e.ref)}</td></tr>
+<tr><td style="padding:3px 0;${D}"><strong style="${D}">Trip</strong></td><td style="padding:3px 0;${D}">${esc(w.e.trip)} (${esc(w.e.days)} days), departs ${esc(w.e.departure)}</td></tr>
+<tr><td style="padding:3px 0;${D}"><strong style="${D}">Creator code</strong></td><td style="padding:3px 0;${D}">${esc(w.e.code)} — ${esc(w.e.creator)}</td></tr>
+<tr><td style="padding:3px 0;${D}"><strong style="${D}">Drawn from</strong></td><td style="padding:3px 0;${D}">${w.pool} entr${w.pool === 1 ? "y" : "ies"}</td></tr>
 </table></div>`;
 
-    const html = `<!doctype html><html><body style="margin:0;padding:24px;background:#f5efe2;font-family:Montserrat,Arial,sans-serif;color:#0a0a0a">
-<div style="max-width:600px;margin:0 auto;background:#fff;border:2px solid #0a0a0a;box-shadow:8px 8px 0 #0a0a0a;padding:24px">
-<h1 style="margin:0 0 6px 0;font-size:26px;font-weight:900;text-transform:uppercase">🎟️ Prize draw — winners</h1>
-<p style="margin:0 0 18px 0;font-size:14px;color:#555">Quarter ${esc(startIso)} → ${esc(endIso)} (bookings made with a creator code)</p>
+    const html = `<!doctype html><html><head><meta name="color-scheme" content="light only"><meta name="supported-color-schemes" content="light only"></head>
+<body style="margin:0;padding:24px;background:#f5efe2;font-family:Montserrat,Arial,sans-serif;${D}">
+<div style="max-width:600px;margin:0 auto;background:#ffffff;border:2px solid #0a0a0a;padding:24px;${D}">
+<h1 style="margin:0 0 6px 0;font-size:26px;font-weight:900;text-transform:uppercase;${D}">🎟️ Prize draw — winners</h1>
+<p style="margin:0 0 18px 0;font-size:14px;color:#444">Quarter ${esc(startIso)} → ${esc(endIso)} (bookings made with a creator code)</p>
 ${winners.map(card).join("")}
-<p style="margin:18px 0 0 0;font-size:14px">Please notify the winners personally. Each wins a 7-Day Indonesia ALL IN Trip.</p>
-<p style="margin:10px 0 0 0;font-size:12px;color:#777">Winners are picked at random and recorded, so nobody can win twice.</p>
+<p style="margin:18px 0 0 0;font-size:14px;${D}">Please notify the winners personally. Each wins a 7-Day Indonesia ALL IN Trip.</p>
+<p style="margin:10px 0 0 0;font-size:12px;color:#555">Winners are picked at random and recorded, so nobody can win twice.</p>
 </div></body></html>`;
 
     try {
