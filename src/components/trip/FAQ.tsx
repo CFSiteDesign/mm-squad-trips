@@ -11,6 +11,7 @@ const DEFAULT_FAQS = [
   { q: "What happens after I pay the deposit?", a: "You get an email with your booking reference. Once 5 travellers have booked, your trip is confirmed and we'll email you the green light to book your flights. The remaining balance is then automatically charged to the same card 7 days before departure — no action needed." },
   { q: "When is the balance due?", a: "7 days before departure. We'll email you a reminder with a payment link." },
   { q: "What if my departure doesn't reach the minimum?", a: "Every departure needs at least 5 travellers to run. If it hasn't reached 5 by 30 days before departure, we cancel it and refund your deposit in full, automatically — you don't need to do anything." },
+  { q: "I used a creator code — what do I get?", a: "You're entered into our prize draw to win a 7-Day Indonesia ALL IN Trip, and 2 free nights are added to your Mad Monkey Loyalty account shortly after booking. The free nights are valid for 3 months from your booking date." },
   { q: "What's your refund policy?", a: "If you cancel: your deposit is non-refundable, and the balance is refundable up to 60 days before departure, 50% up to 30 days, none after that. If we cancel because the departure didn't reach its 5-traveller minimum, you get a full refund automatically." },
   { q: "Do I need travel insurance?", a: "Yes — it's a hard requirement. Cheap and easy with SafetyWing or World Nomads." },
 ];
@@ -24,6 +25,7 @@ const STUDENT_FAQS = [
   { q: "What happens after I pay the deposit?", a: "You get an email with your booking reference. You'll receive another email once 5 travellers have booked and your trip is confirmed. Then it's time to book your flights and pay the balance. The balance is due 7 days before departure — we'll send you a reminder." },
   { q: "When is the balance due?", a: "7 days before departure. We'll email you a reminder with a payment link." },
   { q: "What if my departure doesn't reach the minimum?", a: "Every departure needs at least 5 travellers to run. If it hasn't reached 5 by 30 days before departure, we cancel it and refund your deposit in full, automatically — you don't need to do anything." },
+  { q: "I used a creator code — what do I get?", a: "You're entered into our prize draw to win a 7-Day Indonesia ALL IN Trip, and 2 free nights are added to your Mad Monkey Loyalty account shortly after booking. The free nights are valid for 3 months from your booking date." },
   { q: "What's your refund policy?", a: "If you cancel: your deposit is non-refundable, and the balance is refundable up to 60 days before departure, 50% up to 30 days, none after that. If we cancel because the departure didn't reach its 5-traveller minimum, you get a full refund automatically." },
   { q: "Do I need travel insurance?", a: "Yes — it's a hard requirement. Cheap and easy with SafetyWing or World Nomads." },
 ];

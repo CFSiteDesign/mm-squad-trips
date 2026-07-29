@@ -184,6 +184,20 @@ Mad Monkey Hostels — Squad Trips · Questions? cs@madmonkeyhostels.com
 
 // ---------- Templates ----------
 
+/** Creator-code perks block — prize draw + 2 free Loyalty nights (3-month validity). */
+export function creatorPerksBlock(creatorCode?: string | null): string {
+  if (!creatorCode) return "";
+  return `<div style="margin:18px 0;padding:16px;border:2px solid #0a0a0a;background:#ccff01">
+<div style="font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px">🎟️ Your creator code perks</div>
+<p style="margin:0 0 8px 0;font-size:14px;line-height:1.5">You booked with code <strong>${escapeHtml(String(creatorCode))}</strong>, so:</p>
+<ul style="margin:0 0 0 18px;padding:0;font-size:14px;line-height:1.6">
+<li>You're entered into our prize draw to win a <strong>7-Day Indonesia ALL IN Trip</strong>.</li>
+<li><strong>2 free nights</strong> will be added to your Mad Monkey Loyalty account shortly.</li>
+</ul>
+<p style="margin:8px 0 0 0;font-size:12px;line-height:1.5;color:#333">Free nights are valid for <strong>3 months</strong> from your booking date.</p>
+</div>`;
+}
+
 export function bookingConfirmationEmail(v: {
   firstName: string;
   tripCountry: string;
@@ -193,6 +207,7 @@ export function bookingConfirmationEmail(v: {
   amount: string;
   bookingRef: string;
   bookingUrl: string;
+  creatorCode?: string | null;
 }): { subject: string; html: string } {
   const inner = render(
     `<tr><td style="padding:16px 24px 8px 24px">
@@ -213,6 +228,8 @@ export function bookingConfirmationEmail(v: {
 <p style="margin:0;font-size:14px;line-height:1.5"><strong>Don't book your flights yet.</strong> Wait for the official "Trip Confirmed" email from us before locking in dates. Trips only confirm once we hit our 5-traveller minimum.</p>
 </div>
 
+{{creatorPerks}}
+
 <p style="margin:0 0 12px 0"><strong>What happens next:</strong></p>
 <ul style="margin:0 0 16px 18px;padding:0;font-size:14px;line-height:1.6">
 <li>As soon as your departure hits 5 travellers, we'll email you the green light to book flights + the link to settle the balance.</li>
@@ -223,8 +240,10 @@ export function bookingConfirmationEmail(v: {
 <p style="margin:0 0 20px 0">Booking ref: <strong>{{bookingRef}}</strong></p>
 <a href="{{bookingUrl}}" style="display:inline-block;background:#ff6600;color:#0a0a0a;font-weight:900;text-transform:uppercase;padding:14px 22px;border:2px solid #0a0a0a;text-decoration:none">View booking</a>
 </td></tr>`,
-    v as Record<string, string>,
-  );
+    v as unknown as Record<string, string>,
+    // creatorPerks is trusted server-built HTML (the code inside is escaped),
+    // so it is injected after render() rather than through it.
+  ).replace("{{creatorPerks}}", creatorPerksBlock(v.creatorCode));
   return {
     subject: `Deposit in for ${v.tripCountry} 🔒 — hold off on flights`,
     html: shell("Deposit in", inner),

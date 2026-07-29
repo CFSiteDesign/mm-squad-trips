@@ -230,8 +230,8 @@ export function BookingFlow({ trip }: { trip: Trip }) {
           setDiscountState({
             valid: true,
             msg: creatorOff > 0
-              ? `Creator code applied — ${formatPrice(creatorOff)} off + you're in the prize draw! 🎉`
-              : "Creator code applied — you're in the prize draw! 🎉",
+              ? `Creator code applied — ${formatPrice(creatorOff)} off, you're in the prize draw, and your 2 free nights will be added to your Mad Monkey Loyalty account shortly 🎉`
+              : "Creator code applied — you're in the prize draw, and your 2 free nights will be added to your Mad Monkey Loyalty account shortly 🎉",
             amount: creatorOff,
           });
         } else if (result.valid && result.stackFixed != null && result.stackPercent != null) {

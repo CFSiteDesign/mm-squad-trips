@@ -16,3 +16,7 @@ verify_jwt = false
 # Fetched anonymously by Google Sheets IMPORTDATA() — guarded by CREATOR_CSV_KEY.
 [functions.creator-bookings-csv]
 verify_jwt = false
+
+# Called by pg_cron without a JWT — guarded by the Vault CRON_SECRET instead.
+[functions.quarterly-prize-draw]
+verify_jwt = false

@@ -479,6 +479,7 @@ async function writeBookings(session: Stripe.Checkout.Session) {
           amount: `$${amountPaidTotal.toFixed(2)} ${(session.currency || "usd").toUpperCase()}`,
           bookingRef,
           bookingUrl: `${APP_URL}/booking-success?session_id=${encodeURIComponent(sessionId)}`,
+          creatorCode: m.creator_code || null,
         });
         sendEmail({ to: m.lead_email as string, subject, html, templateName: "booking_confirmation" }).catch((e) =>
           console.warn("booking-confirmation email failed", e),

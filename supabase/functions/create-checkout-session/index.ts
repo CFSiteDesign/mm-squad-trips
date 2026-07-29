@@ -311,6 +311,9 @@ Deno.serve(async (req) => {
       subtotal: String(subtotal),
       original_price: String(originalPrice),
       discount_code: appliedCode ?? "",
+      // Set only for creator tracking codes, so the confirmation email can show
+      // the prize-draw + 2-free-nights perks block.
+      creator_code: appliedIsCreator ? (appliedCode ?? "") : "",
       discount_code_id: discountRecordId ?? "",
       discount_amount: String(discountAmount),
       squad_code: squadCode ?? "",
@@ -391,9 +394,9 @@ Deno.serve(async (req) => {
                 message:
                   // A creator code can also carry a discount — say both.
                   (discountAmount > 0 && appliedCode
-                    ? `${appliedIsCreator ? "Creator code" : "Discount"} ${appliedCode} applied — $${discountAmount.toFixed(0)} off your trip total${appliedIsCreator ? ", and this booking is entered into the prize draw" : ""}. `
+                    ? `${appliedIsCreator ? "Creator code" : "Discount"} ${appliedCode} applied — $${discountAmount.toFixed(0)} off your trip total${appliedIsCreator ? ", you're in the prize draw, and 2 free nights will be added to your Mad Monkey Loyalty account (valid 3 months)" : ""}. `
                     : appliedIsCreator && appliedCode
-                    ? `Creator code ${appliedCode} applied — this booking is entered into the prize draw. `
+                    ? `Creator code ${appliedCode} applied — you're in the prize draw, and 2 free nights will be added to your Mad Monkey Loyalty account (valid 3 months). `
                     : "") +
                   `You're paying a $${DEPOSIT_PER_SPOT * groupSize} deposit today. ` +
                   `The remaining balance of $${(fullDue - amountToday).toFixed(0)} will be automatically charged to this card 7 days before departure (${depDate}). ` +
