@@ -20,6 +20,12 @@ export const ITEM_CATEGORY_ALL_IN = "All In";
 export const LIST_ID_ALL_IN = "all-in-trips";
 export const LIST_NAME_ALL_IN = "All In Trips";
 
+// This is the only product line in this app, so item_category4 never varies —
+// static rather than threaded through as an option, mirroring how the main
+// site's frontend/utils/ecommerceDataLayer.ts uses item_category4 to flag a
+// specific product (there: "Surf Camp"; here: every item is "All In").
+export const ITEM_CATEGORY4_ALL_IN = "All In";
+
 /**
  * Top-level GA4 event parameter (sibling to `ecommerce`, not nested inside
  * it) already wired into the shared GTM-KC78NFHD container's ecommerce tag
@@ -42,6 +48,7 @@ export interface Ga4Item {
   item_brand: string;
   item_category: string;
   item_category2?: string;
+  item_category4: string;
   item_variant: string;
   item_list_id: string;
   item_list_name: string;
@@ -86,6 +93,7 @@ export const buildGa4Item = (input: Ga4ItemInput): Ga4Item => {
     index: input.index ?? 0,
     item_brand: MAD_MONKEY_BRAND,
     item_category: input.item_category,
+    item_category4: ITEM_CATEGORY4_ALL_IN,
     item_variant: toTrimmed(input.item_variant),
     item_list_id: input.item_list_id,
     item_list_name: input.item_list_name,
