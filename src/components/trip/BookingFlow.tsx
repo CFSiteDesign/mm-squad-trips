@@ -54,8 +54,8 @@ const emptyTraveler: TravelerFields = { firstName: "", lastName: "", email: "", 
 /** Sentinel id for the not-yet-created custom departure. */
 const CUSTOM_DEPARTURE_ID = "__custom__";
 const WEEKDAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-/** Minimum notice for a custom date. [PENDING: client decision on notice] */
-const MIN_CUSTOM_DATE_NOTICE_DAYS = 0;
+/** Custom dates must start at least 5 days out (client decision, 28 Jul 2026). */
+const MIN_CUSTOM_DATE_NOTICE_DAYS = 5;
 
 /** Next date on `weekday` that is at least `minNoticeDays` away (ISO, UTC). */
 function firstAllowedCustomDate(weekday: number, minNoticeDays: number): string {
@@ -82,6 +82,7 @@ export function BookingFlow({ trip }: { trip: Trip }) {
   const [submitting, setSubmitting] = useState(false);
   const [joinMode, setJoinMode] = useState(false);
   const [joinCode, setJoinCode] = useState("");
+  const oneClickApplied = useRef(false);
 
   // Private departures owned by an entered squad code — invisible to the public,
   // revealed to anyone holding the code so a leader's crew can book their date.
@@ -116,6 +117,36 @@ export function BookingFlow({ trip }: { trip: Trip }) {
   const selected = selectedId === CUSTOM_DEPARTURE_ID
     ? customDeparture
     : visible.find((d) => d.id === selectedId) ?? null;
+
+  // One-click booking links (generated in admin):
+  //   /{slug}?date=YYYY-MM-DD&spots=2&code=XYZ#booking
+  // Only ever preselects a departure that is already listed — a URL can't
+  // conjure a custom date, that stays gated to squad leaders and solo.
+  useEffect(() => {
+    if (oneClickApplied.current) return;
+    const params = new URLSearchParams(window.location.search);
+    const qDate = params.get("date");
+    const qSpots = Number(params.get("spots") || "0");
+    const qCode = params.get("code");
+    if (!qDate && !qSpots && !qCode) return;
+    if (trip.departures.length === 0) return; // wait for trip data
+    oneClickApplied.current = true;
+
+    if (qSpots >= 1 && qSpots <= 5) changeGroup(qSpots);
+    if (qCode) setDiscountCode(qCode.toUpperCase());
+    if (qDate) {
+      const match = trip.departures.find((d) => d.date === qDate);
+      if (match) {
+        setSelectedId(match.id);
+        window.setTimeout(() => {
+          document.getElementById("booking")?.scrollIntoView({ behavior: "smooth" });
+        }, 250);
+      } else {
+        toast.error("That departure date isn't available any more — pick another below.");
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trip.departures]);
 
   const startWeekday = typeof trip.startWeekday === "number" ? trip.startWeekday : null;
 

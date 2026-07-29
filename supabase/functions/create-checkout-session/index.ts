@@ -12,10 +12,9 @@ const DEPOSIT_PER_SPOT = 99;
 const DEPOSIT_THRESHOLD_DAYS = 7;
 const HIDE_WITHIN_DAYS = 0;
 
-// Minimum notice for a guest-created custom departure date. Currently the same
-// as the normal booking cutoff (i.e. no extra restriction) — raise this to give
-// ops more lead time on brand-new dates. [PENDING: client decision on notice]
-const MIN_CUSTOM_DATE_NOTICE_DAYS = 0;
+// Minimum notice for a guest-created custom departure date (client decision,
+// 28 Jul 2026): a custom date must start at least 5 days from today.
+const MIN_CUSTOM_DATE_NOTICE_DAYS = 5;
 const WEEKDAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 // Booking cutoff per trip (mirrors src/lib/trip-helpers.ts):

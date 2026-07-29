@@ -330,6 +330,9 @@ export default function Admin() {
               <TabsTrigger value="creators" className="rounded-none data-[state=active]:bg-mm-pink data-[state=active]:text-mm-bone">
                 Creators
               </TabsTrigger>
+              <TabsTrigger value="links" className="rounded-none data-[state=active]:bg-mm-pink data-[state=active]:text-mm-bone">
+                Booking Links
+              </TabsTrigger>
             </TabsList>
             {TABS.map((t) => (
               <TabsContent key={t.id} value={t.id} className="mt-4">
@@ -341,6 +344,9 @@ export default function Admin() {
             </TabsContent>
             <TabsContent value="creators" className="mt-4">
               <CreatorRevenue refreshKey={refreshKey} />
+            </TabsContent>
+            <TabsContent value="links" className="mt-4">
+              <BookingLinkGenerator refreshKey={refreshKey} />
             </TabsContent>
           </Tabs>
         )}
@@ -1651,6 +1657,190 @@ function PrizeDraw({ entrants }: { entrants: { key: string; ref: string; name: s
             </table>
           </div>
         )
+      )}
+    </div>
+  );
+}
+
+/* ============ ONE-CLICK BOOKING LINK GENERATOR ============ */
+/* Mirrors Dhany's rooms URL builder, for ALL IN trips: pick a trip + a listed
+   departure (+ optional spots and code) and it emits a direct link that lands
+   on the trip page with everything preselected, scrolled to the booking form.
+   Only lists real departures, so a link can never conjure an unsanctioned date. */
+function BookingLinkGenerator({ refreshKey }: { refreshKey: number }) {
+  const [trips, setTrips] = useState<Row[] | null>(null);
+  const [departures, setDepartures] = useState<Row[] | null>(null);
+  const [codes, setCodes] = useState<Row[] | null>(null);
+  const [tripId, setTripId] = useState("");
+  const [depDate, setDepDate] = useState("");
+  const [spots, setSpots] = useState("1");
+  const [code, setCode] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    Promise.all([
+      adminApi.list("trips", { limit: 100 }),
+      adminApi.list("departures", { limit: 2000 }),
+      adminApi.list("discount_codes", { limit: 2000 }),
+    ])
+      .then(([t, d, c]) => { setTrips(t); setDepartures(d); setCodes(c); })
+      .catch((e) => toast.error(e instanceof Error ? e.message : "Could not load data"));
+  }, [refreshKey]);
+
+  const trip = trips?.find((t) => String(t.id) === tripId);
+  const today = new Date().toISOString().slice(0, 10);
+  const tripDepartures = useMemo(() => {
+    if (!departures || !tripId) return [];
+    return departures
+      .filter((d) => String(d.trip_id) === tripId)
+      .filter((d) => String(d.departure_date) >= today)
+      .filter((d) => d.status !== "cancelled" && d.bookable === true)
+      .filter((d) => (d.visibility ?? "public") === "public")
+      .sort((a, b) => (String(a.departure_date) < String(b.departure_date) ? -1 : 1));
+  }, [departures, tripId, today]);
+
+  // Same origin + basename the admin itself is served from, so links work on
+  // both madmonkeyhostels.com/all-in-trips and the lovable.app domain.
+  const base = useMemo(() => {
+    if (typeof window === "undefined") return "";
+    const prefix = window.location.pathname.startsWith("/all-in-trips") ? "/all-in-trips" : "";
+    return `${window.location.origin}${prefix}`;
+  }, []);
+
+  const url = useMemo(() => {
+    if (!trip || !depDate) return "";
+    const qs = new URLSearchParams();
+    qs.set("date", depDate);
+    if (Number(spots) > 1) qs.set("spots", String(Number(spots)));
+    if (code.trim()) qs.set("code", code.trim().toUpperCase());
+    return `${base}/${String(trip.slug)}?${qs.toString()}#booking`;
+  }, [base, trip, depDate, spots, code]);
+
+  async function copy() {
+    if (!url) return;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      toast.success("Link copied");
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Could not copy — select the link and copy manually");
+    }
+  }
+
+  if (!trips || !departures) {
+    return <p className="p-4 font-sticker text-[11px] tracking-[0.15em] text-mm-black/60">LOADING…</p>;
+  }
+
+  const creatorCodes = (codes ?? []).filter((c) => c.is_creator === true && c.active === true);
+  const discountCodes = (codes ?? []).filter((c) => c.is_creator !== true && c.active === true);
+
+  return (
+    <div className="max-w-3xl">
+      <h2 className="font-display text-2xl">ONE-CLICK BOOKING LINKS</h2>
+      <p className="mt-1 text-sm text-mm-black/70">
+        Pick a trip and a departure and you'll get a direct link that opens the booking form with that date
+        already selected. Share it in DMs, emails or bios. Need a date that isn't listed?
+        Add it first under <strong>Departures → + ADD RUN DATE</strong>.
+      </p>
+
+      <div className="mt-5 space-y-4 border-[2px] border-mm-black bg-mm-bone p-5">
+        <div>
+          <Label className="font-sticker text-[10px] tracking-[0.15em]">TRIP</Label>
+          <select
+            value={tripId}
+            onChange={(e) => { setTripId(e.target.value); setDepDate(""); }}
+            className="mt-1 h-11 w-full rounded-none border-[2px] border-mm-black bg-mm-paper px-2 text-sm"
+          >
+            <option value="">Choose a trip…</option>
+            {trips.map((t) => (
+              <option key={String(t.id)} value={String(t.id)}>
+                {String(t.name)} ({String(t.slug)})
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <Label className="font-sticker text-[10px] tracking-[0.15em]">DEPARTURE DATE</Label>
+          <select
+            value={depDate}
+            onChange={(e) => setDepDate(e.target.value)}
+            disabled={!tripId}
+            className="mt-1 h-11 w-full rounded-none border-[2px] border-mm-black bg-mm-paper px-2 text-sm disabled:opacity-50"
+          >
+            <option value="">{tripId ? "Choose a departure…" : "Pick a trip first"}</option>
+            {tripDepartures.map((d) => (
+              <option key={String(d.id)} value={String(d.departure_date)}>
+                {String(d.departure_date)} · {Number(d.spots_remaining ?? 0)} spots left
+              </option>
+            ))}
+          </select>
+          {tripId && tripDepartures.length === 0 && (
+            <p className="mt-1 text-xs text-mm-black/60">
+              No upcoming public departures for this trip — add one under Departures first.
+            </p>
+          )}
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <div>
+            <Label className="font-sticker text-[10px] tracking-[0.15em]">SPOTS PRESELECTED</Label>
+            <select
+              value={spots}
+              onChange={(e) => setSpots(e.target.value)}
+              className="mt-1 h-11 w-full rounded-none border-[2px] border-mm-black bg-mm-paper px-2 text-sm"
+            >
+              {[1, 2, 3, 4, 5].map((n) => <option key={n} value={String(n)}>{n}</option>)}
+            </select>
+          </div>
+          <div>
+            <Label className="font-sticker text-[10px] tracking-[0.15em]">CODE (OPTIONAL)</Label>
+            <select
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              className="mt-1 h-11 w-full rounded-none border-[2px] border-mm-black bg-mm-paper px-2 text-sm"
+            >
+              <option value="">None</option>
+              {creatorCodes.length > 0 && (
+                <optgroup label="Creator tracking codes">
+                  {creatorCodes.map((c) => (
+                    <option key={String(c.id)} value={String(c.code)}>
+                      {String(c.code)}{c.creator_name ? ` — ${String(c.creator_name)}` : ""}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+              {discountCodes.length > 0 && (
+                <optgroup label="Discount codes">
+                  {discountCodes.map((c) => (
+                    <option key={String(c.id)} value={String(c.code)}>{String(c.code)}</option>
+                  ))}
+                </optgroup>
+              )}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {url && (
+        <div className="mt-5 border-[3px] border-mm-black bg-mm-lime p-5 shadow-mm">
+          <p className="font-sticker text-[10px] tracking-[0.18em] text-mm-black/60">GENERATED LINK</p>
+          <p className="mt-2 break-all font-mono text-sm text-mm-black">{url}</p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button onClick={copy} className="rounded-none border-[2px] border-mm-black bg-mm-black font-display text-mm-bone hover:bg-mm-black">
+              <Copy className="mr-2 h-4 w-4" /> {copied ? "COPIED ✓" : "COPY LINK"}
+            </Button>
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center border-[2px] border-mm-black bg-mm-paper px-4 py-2 font-display text-sm text-mm-black"
+            >
+              TEST IT →
+            </a>
+          </div>
+        </div>
       )}
     </div>
   );
