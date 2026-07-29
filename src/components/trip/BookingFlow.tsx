@@ -138,9 +138,19 @@ export function BookingFlow({ trip }: { trip: Trip }) {
       const match = trip.departures.find((d) => d.date === qDate);
       if (match) {
         setSelectedId(match.id);
-        window.setTimeout(() => {
-          document.getElementById("booking")?.scrollIntoView({ behavior: "smooth" });
-        }, 250);
+        // Retry the jump: the page is still loading hero/itinerary images, so a
+        // single scroll lands in the wrong place (or is undone by ScrollToTop).
+        let tries = 0;
+        const jump = window.setInterval(() => {
+          const el = document.getElementById("booking");
+          tries += 1;
+          if (el) {
+            const top = el.getBoundingClientRect().top;
+            if (Math.abs(top) < 120) { window.clearInterval(jump); return; }
+            window.scrollTo({ top: top + window.scrollY - 8, behavior: tries === 1 ? "smooth" : "auto" });
+          }
+          if (tries >= 12) window.clearInterval(jump);
+        }, 300);
       } else {
         toast.error("That departure date isn't available any more — pick another below.");
       }
