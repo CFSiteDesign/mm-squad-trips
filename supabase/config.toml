@@ -12,3 +12,7 @@ verify_jwt = false
 # Vault CRON_SECRET instead.
 [functions.push-creator-commission]
 verify_jwt = false
+
+# Fetched anonymously by Google Sheets IMPORTDATA() — guarded by CREATOR_CSV_KEY.
+[functions.creator-bookings-csv]
+verify_jwt = false
