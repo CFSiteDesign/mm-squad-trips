@@ -69,6 +69,7 @@ async function sendBalancePurchaseToGa4(opts: {
                 item_name: opts.tripName,
                 item_brand: "Mad Monkey",
                 item_category: "All In",
+                item_category4: "All In",
                 item_list_id: "all-in-trips",
                 item_list_name: "All In Trips",
                 item_variant: "Balance",
