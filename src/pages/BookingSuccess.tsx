@@ -17,6 +17,8 @@ import {
 interface BookingInfo {
   bookingRef: string | null;
   tripName: string;
+  tripSlug: string;
+  groupSize: number;
   departureDate: string;
   amountPaid: number;
   balanceDue: number;
@@ -67,13 +69,11 @@ export default function BookingSuccess() {
     return () => { cancelled = true; };
   }, [sessionId]);
 
-  // NOTE (documented limitation): booking-lookup only returns
-  // tripName/departureDate/amountPaid — not trip slug, groupSize, or
-  // per-spot discount — so this item is coarser than view_item/begin_checkout.
-  // For deposit bookings, `amountPaid` is the deposit only ($99/spot), not the
-  // full trip price — the balance auto-charged 7 days before departure has no
-  // client-side moment to report to GA4, so revenue here reads as
-  // deposit-moment revenue, not total revenue collected.
+  // NOTE (documented limitation): for deposit bookings, `amountPaid` is the
+  // deposit only ($99/spot), not the full trip price — the balance
+  // auto-charged 7 days before departure has no client-side moment to report
+  // to GA4, so revenue here reads as deposit-moment revenue, not total
+  // revenue collected.
   useEffect(() => {
     if (!info || !sessionId) return;
     if (!markCheckoutEventOnce("purchase", sessionId)) return;
@@ -86,10 +86,10 @@ export default function BookingSuccess() {
         value: info.amountPaid,
         items: [
           buildGa4Item({
-            item_id: info.tripName,
+            item_id: info.tripSlug || info.tripName,
             item_name: info.tripName,
             price: info.amountPaid,
-            quantity: 1,
+            quantity: info.groupSize,
             item_category: ITEM_CATEGORY_ALL_IN,
             item_variant: info.paymentType,
             item_list_id: LIST_ID_ALL_IN,
