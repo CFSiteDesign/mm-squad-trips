@@ -24,6 +24,8 @@ Deno.serve(async (req) => {
 
     const sessionInfo = {
       tripName: m.trip_name ?? "",
+      tripSlug: m.trip_slug ?? "",
+      groupSize: Number(m.group_size ?? 1),
       departureDate: m.departure_date ?? "",
       amountPaid,
       balanceDue,
