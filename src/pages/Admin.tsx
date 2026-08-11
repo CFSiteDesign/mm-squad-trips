@@ -918,8 +918,9 @@ function AddRunDateDialog({ onClose, onSaved }: { onClose: () => void; onSaved: 
               className="mt-1 h-11 rounded-none border-[2px] border-mm-black bg-mm-bone"
             />
             <p className="mt-1 text-xs text-mm-black/60">
-              Still needs 5 travellers to be confirmed, same as every departure.
+              Guaranteed to run — it ignores the 5-traveller minimum and the booking cut-off.
             </p>
+
           </div>
         </div>
 
