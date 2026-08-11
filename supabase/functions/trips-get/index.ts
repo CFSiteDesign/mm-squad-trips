@@ -36,11 +36,12 @@ Deno.serve(async (req) => {
     if (!trip) return jr({ error: "Trip not found" }, 404);
 
     const minDate = todayPlusDays(7);
+    const today = todayPlusDays(0);
     let depQuery = sb
       .from("departures")
       .select("*")
       .eq("trip_id", trip.id)
-      .gt("departure_date", minDate)
+      .gt("departure_date", today)
       .neq("status", "cancelled");
     // Private (guest-created) dates never appear in public browsing. Supplying a
     // squad code additionally reveals the private dates owned by that code.
@@ -61,7 +62,11 @@ Deno.serve(async (req) => {
       priceByMonth.set(p.month, { price: Number(p.price), strikethrough: p.strikethrough });
     }
 
-    const resolvedDepartures = (deps ?? []).map((d) => {
+    // Normal dates need 7 days' lead time; admin-added run dates override that.
+    const visibleDeps = (deps ?? []).filter(
+      (d) => d.force_bookable === true || (d.departure_date as string) > minDate,
+    );
+    const resolvedDepartures = visibleDeps.map((d) => {
       const month = (d.departure_date as string).slice(0, 7);
       const pm = priceByMonth.get(month);
       return {
@@ -71,6 +76,7 @@ Deno.serve(async (req) => {
         spotsRemaining: d.spots_remaining ?? d.total_spots ?? 0,
         bookable: d.bookable === true,
         isPrivate: d.visibility === "private",
+        forceBookable: d.force_bookable === true,
         price: pm?.price ?? Number(trip.default_price),
         strikethrough: pm?.strikethrough ?? trip.default_strikethrough ?? null,
       };
