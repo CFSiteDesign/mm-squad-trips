@@ -58,6 +58,7 @@ Deno.serve(async (req) => {
     .from("departures")
     .select("id,departure_date,trip_id,trips(name,slug)")
     .eq("status", "pending")
+    .eq("force_bookable", false)
     .lte("departure_date", cutoffIso);
 
   if (depErr) {

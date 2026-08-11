@@ -157,7 +157,8 @@ Deno.serve(async (req) => {
     }
 
     const cutoff = bookingCutoffDays(tripSlug);
-    if (daysUntil(depDate) < cutoff) {
+    // Admin-added run dates (force_bookable) intentionally bypass the cut-off.
+    if (dep?.force_bookable !== true && daysUntil(depDate) < cutoff) {
       const msg = tripSlug === "vietnam"
         ? "Bookings for this departure closed after Tuesday — please pick a later date."
         : "Bookings for this departure closed after the Friday before — please pick a later date.";
