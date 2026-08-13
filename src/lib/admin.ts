@@ -18,6 +18,7 @@ export function isAdminPreview() {
 
 
 export function getAdminToken(): string | null {
+  if (isAdminPreview()) return "preview";
   try { return sessionStorage.getItem(TOKEN_KEY); } catch { return null; }
 }
 export function setAdminToken(token: string | null) {
