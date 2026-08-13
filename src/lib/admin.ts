@@ -35,8 +35,15 @@ export async function adminLogin(password: string, variant?: "student"): Promise
 }
 
 async function call<T = unknown>(body: Record<string, unknown>): Promise<T> {
+  if (previewMode) {
+    const { previewTables } = await import("@/lib/adminPreviewData");
+    const table = body.table as AdminTable;
+    if (body.op === "list") return { rows: previewTables[table] ?? [] } as T;
+    throw new Error("Preview mode is read-only — log in at /admin to make changes.");
+  }
   const token = getAdminToken();
   if (!token) throw new Error("Not authenticated");
+
   const { data, error } = await supabase.functions.invoke("admin-api", {
     body,
     headers: { Authorization: `Bearer ${token}` },
