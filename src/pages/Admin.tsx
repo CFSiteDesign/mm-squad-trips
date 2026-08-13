@@ -253,6 +253,7 @@ const TABS: { id: AdminTable; label: string }[] = [
 
 
 export default function Admin({ preview = false }: { preview?: boolean } = {}) {
+  console.log("[Admin] preview=", preview);
   setAdminPreview(preview);
   const [authed, setAuthed] = useState<boolean>(() => preview || !!getAdminToken());
   const [view, setView] = useState<"database" | "squad">("database");
