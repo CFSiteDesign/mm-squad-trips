@@ -5,12 +5,15 @@ const TOKEN_KEY = "mm_admin_token";
 
 // Preview mode (/adminpreview): serve fake rows so the layout can be reviewed
 // without a login. Never writes to the real database.
-let previewMode = false;
-export function setAdminPreview(on: boolean) {
-  previewMode = on;
+export function setAdminPreview(_on: boolean) {
+  // no-op: preview mode is derived from the URL so it survives module reloads
 }
 export function isAdminPreview() {
-  return previewMode;
+  try {
+    return typeof window !== "undefined" && window.location.pathname.replace(/\/+$/, "").endsWith("/adminpreview");
+  } catch {
+    return false;
+  }
 }
 
 
@@ -35,8 +38,7 @@ export async function adminLogin(password: string, variant?: "student"): Promise
 }
 
 async function call<T = unknown>(body: Record<string, unknown>): Promise<T> {
-  console.log("[adminCall]", body.op, body.table, "preview=", previewMode);
-  if (previewMode) {
+  if (isAdminPreview()) {
     const { previewTables } = await import("@/lib/adminPreviewData");
     const table = body.table as AdminTable;
     if (body.op === "list") return { rows: previewTables[table] ?? [] } as T;
