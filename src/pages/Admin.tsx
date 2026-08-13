@@ -252,12 +252,13 @@ const TABS: { id: AdminTable; label: string }[] = [
 ];
 
 
-export default function Admin() {
-  const [authed, setAuthed] = useState<boolean>(() => !!getAdminToken());
+export default function Admin({ preview = false }: { preview?: boolean } = {}) {
+  const [authed, setAuthed] = useState<boolean>(() => preview || !!getAdminToken());
   const [view, setView] = useState<"database" | "squad">("database");
   const [refreshKey, setRefreshKey] = useState(0);
 
   if (!authed) return <Login onSuccess={() => setAuthed(true)} />;
+
 
   function handleRefresh() {
     // Clear all module-level caches
