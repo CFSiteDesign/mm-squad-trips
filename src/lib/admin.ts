@@ -3,7 +3,22 @@ import { supabase } from "@/integrations/supabase/client";
 
 const TOKEN_KEY = "mm_admin_token";
 
+// Preview mode (/adminpreview): serve fake rows so the layout can be reviewed
+// without a login. Never writes to the real database.
+export function setAdminPreview(_on: boolean) {
+  // no-op: preview mode is derived from the URL so it survives module reloads
+}
+export function isAdminPreview() {
+  try {
+    return typeof window !== "undefined" && window.location.pathname.replace(/\/+$/, "").endsWith("/adminpreview");
+  } catch {
+    return false;
+  }
+}
+
+
 export function getAdminToken(): string | null {
+  if (isAdminPreview()) return "preview";
   try { return sessionStorage.getItem(TOKEN_KEY); } catch { return null; }
 }
 export function setAdminToken(token: string | null) {
@@ -24,8 +39,15 @@ export async function adminLogin(password: string, variant?: "student"): Promise
 }
 
 async function call<T = unknown>(body: Record<string, unknown>): Promise<T> {
+  if (isAdminPreview()) {
+    const { previewTables } = await import("@/lib/adminPreviewData");
+    const table = body.table as AdminTable;
+    if (body.op === "list") return { rows: previewTables[table] ?? [] } as T;
+    throw new Error("Preview mode is read-only — log in at /admin to make changes.");
+  }
   const token = getAdminToken();
   if (!token) throw new Error("Not authenticated");
+
   const { data, error } = await supabase.functions.invoke("admin-api", {
     body,
     headers: { Authorization: `Bearer ${token}` },

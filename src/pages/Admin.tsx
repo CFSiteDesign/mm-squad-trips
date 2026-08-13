@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { RefreshCw, Copy } from "lucide-react";
-import { adminLogin, adminApi, addCompBooking, getAdminToken, setAdminToken, type AdminTable } from "@/lib/admin";
+import { adminLogin, adminApi, addCompBooking, getAdminToken, setAdminToken, setAdminPreview, type AdminTable } from "@/lib/admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -253,6 +253,7 @@ const TABS: { id: AdminTable; label: string }[] = [
 
 
 export default function Admin({ preview = false }: { preview?: boolean } = {}) {
+  setAdminPreview(preview);
   const [authed, setAuthed] = useState<boolean>(() => preview || !!getAdminToken());
   const [view, setView] = useState<"database" | "squad">("database");
   const [refreshKey, setRefreshKey] = useState(0);
@@ -278,7 +279,7 @@ export default function Admin({ preview = false }: { preview?: boolean } = {}) {
         <AdminWalkthrough />
         {preview && (
           <div className="mx-auto mb-4 max-w-7xl border-[2px] border-mm-black bg-mm-lime px-3 py-2 font-sticker text-[10px] tracking-[0.15em] text-mm-black">
-            PREVIEW MODE — LAYOUT ONLY. LIVE DATA NEEDS A LOGIN AT /admin
+            PREVIEW MODE — SHOWING DEMO DATA. LOG IN AT /admin FOR REAL DATA
           </div>
         )}
 
