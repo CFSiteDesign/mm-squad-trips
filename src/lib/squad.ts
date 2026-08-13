@@ -81,6 +81,11 @@ export interface SquadAdminData {
 }
 export async function getSquadAdmin(passwordOrToken: { password?: string; token?: string }): Promise<SquadAdminData> {
   const { password, token } = passwordOrToken;
+  const { isAdminPreview } = await import("@/lib/admin");
+  if (isAdminPreview()) {
+    const { previewSquadAdmin } = await import("@/lib/adminPreviewData");
+    return previewSquadAdmin;
+  }
   const { data, error } = await supabase.functions.invoke("squad-admin", {
     body: token ? {} : { password: password ?? "" },
     headers: token ? { Authorization: `Bearer ${token}` } : undefined,
