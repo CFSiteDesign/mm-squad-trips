@@ -35,6 +35,7 @@ export async function adminLogin(password: string, variant?: "student"): Promise
 }
 
 async function call<T = unknown>(body: Record<string, unknown>): Promise<T> {
+  console.log("[adminCall]", body.op, body.table, "preview=", previewMode);
   if (previewMode) {
     const { previewTables } = await import("@/lib/adminPreviewData");
     const table = body.table as AdminTable;
