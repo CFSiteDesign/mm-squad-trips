@@ -3,6 +3,17 @@ import { supabase } from "@/integrations/supabase/client";
 
 const TOKEN_KEY = "mm_admin_token";
 
+// Preview mode (/adminpreview): serve fake rows so the layout can be reviewed
+// without a login. Never writes to the real database.
+let previewMode = false;
+export function setAdminPreview(on: boolean) {
+  previewMode = on;
+}
+export function isAdminPreview() {
+  return previewMode;
+}
+
+
 export function getAdminToken(): string | null {
   try { return sessionStorage.getItem(TOKEN_KEY); } catch { return null; }
 }
