@@ -276,6 +276,12 @@ export default function Admin({ preview = false }: { preview?: boolean } = {}) {
     <TooltipProvider delayDuration={300}>
       <main className="min-h-screen bg-mm-paper px-4 py-8 text-mm-black md:px-8">
         <AdminWalkthrough />
+        {preview && (
+          <div className="mx-auto mb-4 max-w-7xl border-[2px] border-mm-black bg-mm-lime px-3 py-2 font-sticker text-[10px] tracking-[0.15em] text-mm-black">
+            PREVIEW MODE — LAYOUT ONLY. LIVE DATA NEEDS A LOGIN AT /admin
+          </div>
+        )}
+
         <header className="mx-auto mb-6 flex max-w-7xl flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <h1 className="font-display text-3xl md:text-4xl">ADMIN</h1>
