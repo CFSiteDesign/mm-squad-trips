@@ -90,6 +90,8 @@ const App = () => (
           <Route path="/squad-leader/reset-password" element={<SquadResetPassword />} />
           <Route path="/squad-leader/dashboard" element={<SquadDashboard />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/adminpreview" element={<Admin preview />} />
+
           <Route path="/staff-leaderboard" element={<StaffLeaderboardPage />} />
           <Route path="/vietnam" element={<TripPage />} />
           <Route path="/vietnam-7" element={<TripPage />} />
