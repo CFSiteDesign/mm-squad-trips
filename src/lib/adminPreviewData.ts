@@ -75,7 +75,8 @@ const bookings = bookingNames.map(([name, email, country, age], i) => {
   const tripId = dep === DEP_IDS.v1 || dep === DEP_IDS.v2 ? TRIP_IDS.vietnam : dep === DEP_IDS.i1 ? TRIP_IDS.indonesia : TRIP_IDS.indonesia7;
   const groupSize = i % 3 === 0 ? 2 : 1;
   const price = tripId === TRIP_IDS.indonesia7 ? 465 : tripId === TRIP_IDS.indonesia ? 799 : 850;
-  const discount = i % 4 === 0 ? 100 : 0;
+  const isCreatorBooking = i === 1 || i === 5;
+  const discount = isCreatorBooking ? 80 : i % 4 === 0 ? 100 : 0;
   const final = (price - discount) * groupSize;
   return {
     id: `55555555-5555-4555-8555-5555555555${(10 + i).toString()}`,
@@ -97,7 +98,7 @@ const bookings = bookingNames.map(([name, email, country, age], i) => {
     group_members: groupSize > 1 ? [name, "Travel Buddy"] : [name],
     payment_type: "Deposit",
     original_price: price * groupSize,
-    discount_code_id: discount ? DISCOUNT_IDS.early : null,
+    discount_code_id: isCreatorBooking ? DISCOUNT_IDS.creator : discount ? DISCOUNT_IDS.early : null,
     discount_amount: discount * groupSize,
     final_price: final,
     amount_paid: 99 * groupSize,
