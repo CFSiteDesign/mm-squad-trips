@@ -369,7 +369,9 @@ Deno.serve(async (req) => {
       mode: "payment",
       customer: customerId,
       customer_email: customerId ? undefined : lead.email,
-      ...(isDeposit ? { customer_creation: "always" as const } : {}),
+      // Stripe rejects customer + customer_creation together — only ask Stripe to
+      // create a customer when we don't already have one for this email.
+      ...(isDeposit && !customerId ? { customer_creation: "always" as const } : {}),
       line_items: [{
         price_data: {
           currency: "usd",
