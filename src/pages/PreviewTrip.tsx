@@ -7,15 +7,15 @@
 // for anything not yet supplied.
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Check, X, ChevronDown, Star } from "lucide-react";
+import { Check, X, ChevronDown, Star, ArrowRight } from "lucide-react";
 import { fetchTrip } from "@/lib/api";
 import { getTripFallback } from "@/data/tripFallbacks";
 import { formatPrice } from "@/lib/trip-helpers";
 import { Navbar } from "@/components/Navbar";
 import { BookingFlow } from "@/components/trip/BookingFlow";
 import { SiteFooter } from "@/components/trip/SiteFooter";
-import { Sticker } from "@/components/brand/Sticker";
-import { SubNav, StickyCta, PhotoPending, PendingPanel } from "@/components/preview/PreviewChrome";
+import { Starburst } from "@/components/brand/Sticker";
+import { SubNav, StickyCta, PhotoPending, PendingPanel, SCROLL_OFFSET } from "@/components/preview/PreviewChrome";
 import { getPreviewContent, PREVIEW_SLUGS, type PreviewSlug } from "@/data/preview-content";
 import { useParams } from "react-router-dom";
 import { TRIPS } from "@/data/trips";
@@ -31,7 +31,7 @@ const SECTIONS = [
 const scrollToId = (id: string) => {
   const el = document.getElementById(id);
   if (!el) return;
-  window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 88, behavior: "smooth" });
+  window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - SCROLL_OFFSET, behavior: "smooth" });
 };
 
 function H({ eyebrow, children }: { eyebrow: string; children: React.ReactNode }) {
@@ -82,30 +82,107 @@ export default function PreviewTrip({ slug: slugProp }: { slug?: PreviewSlug }) 
       <Navbar />
 
       {/* ============ HERO ============ */}
-      <section className="relative isolate w-full overflow-hidden border-b-[4px] border-mm-black bg-mm-black">
-        {heroImg ? (
-          <img src={heroImg} alt="" className="absolute inset-0 h-full w-full object-cover" />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-mm-black">
-            <span className="font-sticker text-[11px] tracking-[0.16em] text-mm-bone/50">HERO IMAGE PENDING</span>
+      {/* Mirrors the live trip hero (Hero.tsx): min-h-[100svh], same type scale,
+          eyebrow, day starburst, padding and left offset. What differs is the
+          brief's image treatment (photo masked to fade left, black overlay cut
+          right back) and the brief's CTA pair. */}
+      <section className="relative isolate w-full overflow-hidden border-b-[4px] border-mm-bone bg-mm-black text-mm-bone">
+
+        {/* MOBILE */}
+        <div className="relative w-full md:hidden">
+          <div className="absolute inset-0 z-0">
+            {heroImg ? (
+              <>
+                <img src={heroImg} alt="" className="absolute inset-0 h-full w-full object-cover object-[60%_center]" />
+                <div className="absolute inset-0 bg-gradient-to-b from-mm-black/55 via-mm-black/15 to-mm-black/80" />
+              </>
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center bg-mm-black">
+                <span className="font-sticker text-[10px] tracking-[0.16em] text-mm-bone/40">HERO IMAGE PENDING</span>
+              </div>
+            )}
           </div>
-        )}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.82)_0%,rgba(0,0,0,0.55)_45%,rgba(0,0,0,0.12)_75%,transparent_100%)]" />
-        <div className="relative z-10 mx-auto max-w-6xl px-5 py-20 md:px-6 md:py-28">
-          <Sticker color="lime" rotate={-3}>{SNAPSHOT.days} DAYS · {ITINERARY.length} STOPS</Sticker>
-          <h1 className="mt-4 max-w-2xl font-display text-[clamp(2.5rem,8vw,4.5rem)] leading-[0.9] text-mm-bone">
-            {(meta?.name ?? trip?.name ?? "").toUpperCase()}
-          </h1>
-          <p className="mt-5 max-w-md text-sm leading-snug text-mm-bone/85">
-            {SNAPSHOT.from} → {SNAPSHOT.to} · {SNAPSHOT.days} days · from {formatPrice(price)} · $99 holds your spot
-          </p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <button onClick={() => scrollToId("booking")} className="inline-flex items-center gap-2 border-[3px] border-mm-bone bg-mm-pink px-5 py-3 font-sticker text-xs tracking-[0.14em] text-mm-black shadow-mm-bone">
-              RESERVE FOR $99
-            </button>
-            <button onClick={() => scrollToId("booking")} className="inline-flex items-center gap-2 border-[3px] border-mm-bone px-5 py-3 font-sticker text-xs tracking-[0.14em] text-mm-bone">
-              SEE ALL DATES
-            </button>
+
+          <div className="pointer-events-none absolute right-3 top-[5rem] z-30">
+            <Starburst size={92} color="pink" rotate={-12}>{SNAPSHOT.days}<br />DAYS</Starburst>
+          </div>
+
+          <div className="relative z-10 flex flex-col px-5 pt-[9rem] pb-24">
+            <p className="mb-2 font-display text-2xl tracking-[0.12em] text-mm-lime">
+              {(meta?.name ?? trip?.name ?? "").toUpperCase()}
+            </p>
+            <h1 className="font-display text-[clamp(2.75rem,13vw,4.25rem)] leading-[0.9] text-mm-bone">
+              <span className="block">YOUR GROUP</span>
+              <span className="block whitespace-nowrap text-mm-pink">TRIP,</span>
+              <span className="block text-mm-lime">SORTED.</span>
+            </h1>
+            <p className="mt-5 max-w-[280px] text-[14px] leading-snug text-mm-bone/85">
+              {SNAPSHOT.from} → {SNAPSHOT.to} · {SNAPSHOT.days} days · from {formatPrice(price)} · $99 holds your spot
+            </p>
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              <button onClick={() => scrollToId("booking")} className="inline-flex items-center gap-2 border-[3px] border-mm-bone bg-mm-pink px-5 py-3 font-sticker text-xs tracking-[0.14em] text-mm-black shadow-mm-bone">
+                RESERVE FOR $99 <ArrowRight className="h-4 w-4" />
+              </button>
+              <button onClick={() => scrollToId("booking")} className="inline-flex items-center gap-2 border-[3px] border-mm-bone bg-transparent px-5 py-3 font-sticker text-xs tracking-[0.14em] text-mm-bone">
+                SEE ALL DATES
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* DESKTOP */}
+        <div className="relative hidden min-h-[100svh] w-full md:block">
+          <div className="absolute inset-0 z-0">
+            {heroImg ? (
+              <>
+                <div className="absolute inset-y-0 right-0 w-[72%]">
+                  <img
+                    src={heroImg}
+                    alt=""
+                    className="h-full w-full object-cover object-[58%_40%]"
+                    style={{
+                      WebkitMaskImage: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.35) 15%, rgba(0,0,0,0.85) 36%, #000 55%)",
+                      maskImage: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.35) 15%, rgba(0,0,0,0.85) 36%, #000 55%)",
+                    }}
+                  />
+                </div>
+                <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.55)_0%,rgba(0,0,0,0.32)_30%,rgba(0,0,0,0.06)_55%,transparent_72%)]" />
+              </>
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center bg-mm-black">
+                <span className="font-sticker text-[11px] tracking-[0.16em] text-mm-bone/40">HERO IMAGE PENDING</span>
+              </div>
+            )}
+          </div>
+
+          <div className="pointer-events-none absolute right-8 top-20 z-20 origin-top-right scale-[0.78] lg:right-16 lg:top-20 lg:scale-100">
+            <Starburst size={180} color="pink" rotate={-12} textClassName="text-2xl">
+              {SNAPSHOT.days}<br />DAYS
+            </Starburst>
+          </div>
+
+          <div className="relative z-10 mr-auto flex min-h-[100svh] max-w-6xl flex-col justify-between px-8 pt-24 pb-16 md:pt-40 md:pb-16 lg:pl-20">
+            <div>
+              <p className="mb-3 font-display text-3xl tracking-[0.12em] text-mm-lime lg:text-5xl">
+                {(meta?.name ?? trip?.name ?? "").toUpperCase()}
+              </p>
+              <h1 className="font-display text-[clamp(4rem,12vw,9rem)] leading-[0.88] text-mm-bone">
+                <span className="block">YOUR GROUP</span>
+                <span className="block whitespace-nowrap text-mm-pink">TRIP,</span>
+                <span className="block text-mm-lime">SORTED.</span>
+              </h1>
+              <p className="mt-7 max-w-xl text-lg leading-snug text-mm-bone/85">
+                {SNAPSHOT.from} → {SNAPSHOT.to} · {SNAPSHOT.days} days · from {formatPrice(price)} · $99 deposit holds your spot
+              </p>
+              <div className="mt-10 flex flex-wrap items-center gap-4">
+                <button onClick={() => scrollToId("booking")} className="inline-flex items-center gap-2 border-[3px] border-mm-bone bg-mm-pink px-5 py-3 font-sticker text-sm tracking-[0.14em] text-mm-black shadow-mm-bone transition-transform hover:-translate-x-[3px] hover:-translate-y-[3px]">
+                  RESERVE FOR $99 <ArrowRight className="h-4 w-4" />
+                </button>
+                <button onClick={() => scrollToId("booking")} className="inline-flex items-center gap-2 border-[3px] border-mm-bone bg-transparent px-5 py-3 font-sticker text-sm tracking-[0.14em] text-mm-bone hover:bg-mm-bone hover:text-mm-black">
+                  SEE ALL DATES
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -117,7 +194,7 @@ export default function PreviewTrip({ slug: slugProp }: { slug?: PreviewSlug }) 
         <div className="min-w-0 flex-1">
 
           {/* Overview */}
-          <section id="overview" className="scroll-mt-28">
+          <section id="overview" className="scroll-mt-[116px]">
             <H eyebrow="TOUR OVERVIEW">YOUR ADVENTURE<br />SNAPSHOT</H>
             <dl className="mb-6 grid grid-cols-2 gap-px border-[3px] border-mm-black bg-mm-black sm:grid-cols-5">
               {[["TRIP CODE", SNAPSHOT.tripCode], ["DAYS", String(SNAPSHOT.days)], ["FROM", SNAPSHOT.from], ["TO", SNAPSHOT.to], ["COUNTRIES", SNAPSHOT.countries]].map(([k, v]) => (
@@ -165,7 +242,7 @@ export default function PreviewTrip({ slug: slugProp }: { slug?: PreviewSlug }) 
           </section>
 
           {/* What's included */}
-          <section id="included" className="mt-16 scroll-mt-28">
+          <section id="included" className="mt-16 scroll-mt-[116px]">
             <H eyebrow="WHAT'S INCLUDED">WHAT YOUR $99<br />DEPOSIT UNLOCKS</H>
             <div className="grid gap-px border-[3px] border-mm-black bg-mm-black sm:grid-cols-2">
               {visibleIncluded.map((i) => (
@@ -193,7 +270,7 @@ export default function PreviewTrip({ slug: slugProp }: { slug?: PreviewSlug }) 
           </section>
 
           {/* Itinerary */}
-          <section id="itinerary" className="mt-16 scroll-mt-28">
+          <section id="itinerary" className="mt-16 scroll-mt-[116px]">
             <H eyebrow="THE STORY OF YOUR TRIP">THE<br />BREAKDOWN</H>
             <div className="mb-4 flex items-center justify-center border-[3px] border-dashed border-mm-black/40 bg-mm-black/5 p-6 text-center">
               <span className="font-sticker text-[10px] tracking-[0.14em] text-mm-black/60">ROUTE MAP PENDING</span>
@@ -240,8 +317,13 @@ export default function PreviewTrip({ slug: slugProp }: { slug?: PreviewSlug }) 
         </div>
 
         {/* ============ DESKTOP FLOATING CARD ============ */}
-        <aside className="hidden w-[300px] shrink-0 lg:block">
-          <div className="sticky top-32 border-[3px] border-mm-black bg-mm-bone p-4 shadow-mm-lg">
+        {/* Sticky must sit on the flex item itself. Nested inside the aside it
+            never moves, because with items-start the aside is only as tall as
+            the card and there is no room to travel. On the aside, the
+            containing block is the tall flex row, so it tracks the scroll and
+            releases at the end of that row, which is the countdown section. */}
+        <aside className="hidden w-[300px] shrink-0 lg:sticky lg:top-[132px] lg:block">
+          <div className="border-[3px] border-mm-black bg-mm-bone p-4 shadow-mm-lg">
             {pctOff && (
               <div className="mb-2 flex items-center justify-between">
                 <span className="text-xs text-mm-black/50 line-through">Reg. {formatPrice(strike!)}</span>
@@ -279,7 +361,7 @@ export default function PreviewTrip({ slug: slugProp }: { slug?: PreviewSlug }) 
       </div>
 
       {/* ============ DATES & BOOKING (real flow) ============ */}
-      <section id="booking" className="scroll-mt-28 border-t-[4px] border-mm-black bg-mm-paper py-12">
+      <section id="booking" className="scroll-mt-[116px] border-t-[4px] border-mm-black bg-mm-paper py-12">
         <div className="mx-auto max-w-6xl px-5 md:px-6">
           <H eyebrow="DATES & AVAILABILITY">THE COUNTDOWN<br />STARTS NOW</H>
           <div className="mb-6 grid gap-4 sm:grid-cols-2">
@@ -297,7 +379,7 @@ export default function PreviewTrip({ slug: slugProp }: { slug?: PreviewSlug }) 
       </section>
 
       {/* ============ FAQ ============ */}
-      <section id="faq" className="scroll-mt-28 border-t-[4px] border-mm-black bg-mm-bone py-12">
+      <section id="faq" className="scroll-mt-[116px] border-t-[4px] border-mm-black bg-mm-bone py-12">
         <div className="mx-auto max-w-3xl px-5 md:px-6">
           <H eyebrow="BEFORE YOU ASK">FAQ.</H>
           <div className="border-[3px] border-mm-black">

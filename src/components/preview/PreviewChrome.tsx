@@ -2,6 +2,9 @@
 import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 
+/** Fixed navbar (56px) + this sticky sub-nav (~52px), so anchors clear both. */
+export const SCROLL_OFFSET = 116;
+
 /**
  * Sticky sub-navigation. Horizontal tabs on desktop, a scrollable pill row on
  * mobile. Tracks the section in view and offsets anchor jumps so headings don't
@@ -20,7 +23,7 @@ export function SubNav({ sections }: { sections: { id: string; label: string }[]
       },
       // Top band only, so "active" means "heading is near the top of the screen"
       // rather than "any part of the section is on screen".
-      { rootMargin: "-96px 0px -70% 0px", threshold: 0 },
+      { rootMargin: `-${SCROLL_OFFSET + 8}px 0px -70% 0px`, threshold: 0 },
     );
     for (const s of sections) {
       const el = document.getElementById(s.id);
@@ -32,12 +35,12 @@ export function SubNav({ sections }: { sections: { id: string; label: string }[]
   const go = (id: string) => {
     const el = document.getElementById(id);
     if (!el) return;
-    const y = el.getBoundingClientRect().top + window.scrollY - 88;
+    const y = el.getBoundingClientRect().top + window.scrollY - SCROLL_OFFSET;
     window.scrollTo({ top: y, behavior: "smooth" });
   };
 
   return (
-    <nav className="sticky top-[30px] z-50 border-y-[3px] border-mm-black bg-mm-bone">
+    <nav className="sticky top-14 z-40 border-y-[3px] border-mm-black bg-mm-bone">
       <div className="mx-auto flex max-w-6xl gap-1 overflow-x-auto px-3 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:justify-start md:gap-2 md:px-6">
         {sections.map((s) => (
           <button

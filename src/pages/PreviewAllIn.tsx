@@ -8,9 +8,9 @@ import { formatPrice } from "@/lib/trip-helpers";
 import { TRIPS } from "@/data/trips";
 import { Navbar } from "@/components/Navbar";
 import { SiteFooter } from "@/components/trip/SiteFooter";
-import { Sticker } from "@/components/brand/Sticker";
 import { StickyCta } from "@/components/preview/PreviewChrome";
 import heroImg from "@/assets/preview-hero-allin.jpg";
+import allInLogo from "@/assets/all-in-logo.png";
 
 const DIFFERENT = [
   { icon: BedDouble, title: "NO MYSTERY DORMS.", body: "Sleep in actual Mad Monkey beds every night." },
@@ -79,25 +79,87 @@ export default function PreviewAllIn() {
       <Navbar />
 
       {/* ============ HERO ============ */}
-      <section className="relative isolate w-full overflow-hidden border-b-[4px] border-mm-black bg-mm-black">
-        {/* Photo sits right, faded out to the left so the copy stays legible.
-            Overlay is deliberately lighter than the live hero so the colour shows. */}
-        <img src={heroImg} alt="" className="absolute inset-0 h-full w-full object-cover object-[70%_center]" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.88)_0%,rgba(0,0,0,0.72)_35%,rgba(0,0,0,0.30)_62%,rgba(0,0,0,0.05)_85%,transparent_100%)]" />
-        <div className="absolute inset-0 bg-gradient-to-b from-mm-black/40 via-transparent to-mm-black/55 md:hidden" />
+      {/* Structure, type scale, padding and text placement mirror the live hero
+          in Index.tsx exactly. What changes is the brief's image treatment:
+          the photo itself is masked so it fades out on the left rather than
+          sitting under a heavy scrim, and the black overlay is cut right back
+          so the colour shows. */}
+      <section className="relative isolate w-full overflow-hidden border-b-[4px] border-mm-bone bg-mm-black text-mm-bone">
 
-        <div className="relative z-10 mx-auto max-w-6xl px-5 py-20 md:px-6 md:py-32">
-          <Sticker color="lime" rotate={-3}>ALL IN TRIPS BY MAD MONKEY</Sticker>
-          <h1 className="mt-4 max-w-3xl font-display text-[clamp(2.5rem,8.5vw,5.25rem)] leading-[0.88] text-mm-bone">
-            TRIPS THAT<br />MAKE IT OUT<br /><span className="text-mm-pink">THE GROUP CHAT</span>
-          </h1>
-          <p className="mt-6 max-w-lg text-[15px] leading-snug text-mm-bone/90">
-            Stop herding cats. 7 to 14-day epic adventures across Asia with the ultimate
-            backpacker crew. Real Mad Monkey beds, zero planning, and $99 holds your spot.
-          </p>
-          <button onClick={() => go("trips")} className="mt-7 inline-flex items-center gap-2 border-[3px] border-mm-bone bg-mm-pink px-6 py-4 font-sticker text-sm tracking-[0.14em] text-mm-black shadow-mm-bone">
-            SECURE YOUR SPOT FOR $99 <ArrowRight className="h-4 w-4" />
-          </button>
+        {/* MOBILE */}
+        <div className="relative w-full md:hidden">
+          <div className="absolute inset-0 z-0">
+            <img src={heroImg} alt="" className="absolute inset-0 h-full w-full object-cover object-[60%_center]" />
+            <div className="absolute inset-0 bg-gradient-to-b from-mm-black/55 via-mm-black/15 to-mm-black/80" />
+          </div>
+
+          <div className="pointer-events-none absolute right-3 top-[5rem] z-30">
+            <img src={allInLogo} alt="ALL IN" className="h-12 w-auto" />
+          </div>
+
+          <div className="relative z-10 flex flex-col px-5 pt-[9rem] pb-24">
+            <div>
+              <h1 className="font-display text-[clamp(2.75rem,13vw,4.25rem)] leading-[0.9] text-mm-bone">
+                TRIPS THAT<br />
+                <span className="text-mm-lime">MAKE IT OUT</span><br />
+                <span className="text-mm-pink">THE GROUP CHAT</span>
+              </h1>
+
+              <p className="mt-5 max-w-[280px] text-[14px] leading-snug text-mm-bone/85">
+                Stop herding cats. 7 to 14-day epic adventures across Asia with the ultimate
+                backpacker crew. Real Mad Monkey beds, zero planning, and $99 holds your spot.
+              </p>
+
+              <div className="mt-5 flex flex-wrap items-center gap-3">
+                <button onClick={() => go("trips")} className="inline-flex items-center gap-2 border-[3px] border-mm-bone bg-mm-pink px-5 py-3 font-sticker text-xs tracking-[0.14em] text-mm-black shadow-mm-bone">
+                  SECURE YOUR SPOT FOR $99 <ArrowRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* DESKTOP */}
+        <div className="relative hidden w-full md:block">
+          <div className="absolute inset-0 z-0">
+            <div className="absolute inset-y-0 right-0 w-[72%]">
+              <img
+                src={heroImg}
+                alt=""
+                className="h-full w-full object-cover object-[58%_35%]"
+                style={{
+                  WebkitMaskImage: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.35) 15%, rgba(0,0,0,0.85) 36%, #000 55%)",
+                  maskImage: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.35) 15%, rgba(0,0,0,0.85) 36%, #000 55%)",
+                }}
+              />
+            </div>
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.55)_0%,rgba(0,0,0,0.32)_30%,rgba(0,0,0,0.06)_55%,transparent_72%)]" />
+          </div>
+
+          <div className="pointer-events-none absolute right-8 top-20 z-20 origin-top-right scale-[0.60] lg:right-16 lg:top-20 lg:scale-[0.80]">
+            <img src={allInLogo} alt="ALL IN" className="h-44 w-auto lg:h-56" />
+          </div>
+
+          <div className="relative z-10 mr-auto flex max-w-6xl flex-col justify-center px-8 pt-20 pb-24 lg:pt-40 lg:pl-20">
+            <div>
+              <h1 className="font-display text-[clamp(4rem,12vw,9rem)] leading-[0.88] text-mm-bone">
+                TRIPS THAT<br />
+                <span className="whitespace-nowrap text-mm-lime">MAKE IT OUT</span><br />
+                <span className="text-mm-pink">THE GROUP CHAT</span>
+              </h1>
+
+              <p className="mt-7 max-w-xl text-lg leading-snug text-mm-bone/85">
+                Stop herding cats. 7 to 14-day epic adventures across Asia with the ultimate
+                backpacker crew. Real Mad Monkey beds, zero planning, and $99 holds your spot.
+              </p>
+
+              <div className="mt-10 flex flex-wrap items-center gap-4">
+                <button onClick={() => go("trips")} className="inline-flex items-center gap-2 border-[3px] border-mm-bone bg-mm-pink px-5 py-3 font-sticker text-sm tracking-[0.14em] text-mm-black shadow-mm-bone transition-transform hover:-translate-x-[3px] hover:-translate-y-[3px]">
+                  SECURE YOUR SPOT FOR $99 <ArrowRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
