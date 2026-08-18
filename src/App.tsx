@@ -22,6 +22,10 @@ import StaffLeaderboardPage from "./pages/StaffLeaderboardPage";
 import PayBalance from "./pages/PayBalance";
 
 import NotFound from "./pages/NotFound";
+// Aug 2026 brief demo pages. Single-segment paths on purpose: nested routes
+// break on the lovable.app preview domain, which is the link the client uses.
+import PreviewAllIn from "./pages/PreviewAllIn";
+import PreviewIndonesia from "./pages/PreviewIndonesia";
 import { gtmPushEvent } from "@/utils/gtmTracker";
 
 const queryClient = new QueryClient({
@@ -113,6 +117,8 @@ const App = () => (
           <Route path="/students/squad-leader/dashboard" element={<SquadDashboard />} />
           <Route path="/students/admin" element={<Admin />} />
 
+          <Route path="/preview-all-in" element={<PreviewAllIn />} />
+          <Route path="/preview-indonesia" element={<PreviewIndonesia />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
