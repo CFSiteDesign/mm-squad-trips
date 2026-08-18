@@ -1,6 +1,10 @@
-// /preview-indonesia — the rebuilt trip page from the Aug 2026 brief, modelled
-// on the G Adventures layout. Reads real trip data and reuses the real booking
+// /preview-<slug> — the rebuilt trip page from the Aug 2026 brief, modelled on
+// the G Adventures layout. Reads real trip data and reuses the real booking
 // flow, so approving this demo means shipping it is a routing change.
+//
+// One component for all five trips. Indonesia carries the full brief copy;
+// the others fall back to database content and show explicit "pending" tiles
+// for anything not yet supplied.
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Check, X, ChevronDown, Star } from "lucide-react";
@@ -11,12 +15,10 @@ import { Navbar } from "@/components/Navbar";
 import { BookingFlow } from "@/components/trip/BookingFlow";
 import { SiteFooter } from "@/components/trip/SiteFooter";
 import { Sticker } from "@/components/brand/Sticker";
-import { PreviewBadge, SubNav, StickyCta, PhotoPending } from "@/components/preview/PreviewChrome";
-import heroImg from "@/assets/preview-indo-hero.jpg";
-import {
-  SNAPSHOT, IS_THIS_FOR_ME, HIGHLIGHTS, INCLUDED, NOT_INCLUDED,
-  ITINERARY, REVIEWS, FAQS,
-} from "@/data/preview-indonesia";
+import { SubNav, StickyCta, PhotoPending, PendingPanel } from "@/components/preview/PreviewChrome";
+import { getPreviewContent, PREVIEW_SLUGS, type PreviewSlug } from "@/data/preview-content";
+import { useParams } from "react-router-dom";
+import { TRIPS } from "@/data/trips";
 
 const SECTIONS = [
   { id: "overview", label: "OVERVIEW" },
@@ -41,15 +43,17 @@ function H({ eyebrow, children }: { eyebrow: string; children: React.ReactNode }
   );
 }
 
-export default function PreviewIndonesia() {
+export default function PreviewTrip({ slug: slugProp }: { slug?: PreviewSlug }) {
+  const params = useParams();
+  const slug = (slugProp ?? params.slug ?? "indonesia") as PreviewSlug;
   const [showAllIncluded, setShowAllIncluded] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   const { data: trip } = useQuery({
-    queryKey: ["trip", "indonesia"],
-    queryFn: () => fetchTrip("indonesia"),
+    queryKey: ["trip", slug],
+    queryFn: () => fetchTrip(slug),
     retry: false,
-    placeholderData: getTripFallback("indonesia"),
+    placeholderData: getTripFallback(slug),
   });
 
   useEffect(() => {
@@ -60,25 +64,37 @@ export default function PreviewIndonesia() {
     return () => { document.head.removeChild(m); };
   }, []);
 
-  const price = trip?.departures?.[0]?.price ?? trip?.defaultPrice ?? 700;
+  const content = trip ? getPreviewContent(trip, slug) : null;
+  const meta = TRIPS.find((t) => t.slug === slug);
+  const price = trip?.departures?.[0]?.price ?? trip?.defaultPrice ?? meta?.price ?? 0;
   const strike = trip?.departures?.[0]?.strikethrough ?? trip?.defaultStrikethrough ?? null;
   const next = trip?.departures?.[0];
   const pctOff = strike && strike > price ? Math.round(((strike - price) / strike) * 100) : null;
-  const visibleIncluded = showAllIncluded ? INCLUDED : INCLUDED.slice(0, 6);
+  const visibleIncluded = showAllIncluded ? (content?.included ?? []) : (content?.included ?? []).slice(0, 6);
+
+  if (!content) return <div className="min-h-screen bg-mm-bone" />;
+  const { snapshot: SNAPSHOT, isThisForMe: IS_THIS_FOR_ME, highlights: HIGHLIGHTS,
+          notIncluded: NOT_INCLUDED, itinerary: ITINERARY, reviews: REVIEWS,
+          faqs: FAQS, hero: heroImg } = content;
 
   return (
     <div className="min-h-screen bg-mm-bone pb-24 md:pb-0">
-      <PreviewBadge label="INDONESIA ISLAND HOPPING" />
       <Navbar />
 
       {/* ============ HERO ============ */}
       <section className="relative isolate w-full overflow-hidden border-b-[4px] border-mm-black bg-mm-black">
-        <img src={heroImg} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        {heroImg ? (
+          <img src={heroImg} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center bg-mm-black">
+            <span className="font-sticker text-[11px] tracking-[0.16em] text-mm-bone/50">HERO IMAGE PENDING</span>
+          </div>
+        )}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.82)_0%,rgba(0,0,0,0.55)_45%,rgba(0,0,0,0.12)_75%,transparent_100%)]" />
         <div className="relative z-10 mx-auto max-w-6xl px-5 py-20 md:px-6 md:py-28">
-          <Sticker color="lime" rotate={-3}>12 DAYS · 4 STOPS</Sticker>
+          <Sticker color="lime" rotate={-3}>{SNAPSHOT.days} DAYS · {ITINERARY.length} STOPS</Sticker>
           <h1 className="mt-4 max-w-2xl font-display text-[clamp(2.5rem,8vw,4.5rem)] leading-[0.9] text-mm-bone">
-            INDONESIA<br /><span className="text-mm-pink">ISLAND</span><br /><span className="text-mm-lime">HOPPING.</span>
+            {(meta?.name ?? trip?.name ?? "").toUpperCase()}
           </h1>
           <p className="mt-5 max-w-md text-sm leading-snug text-mm-bone/85">
             {SNAPSHOT.from} → {SNAPSHOT.to} · {SNAPSHOT.days} days · from {formatPrice(price)} · $99 holds your spot
@@ -159,7 +175,7 @@ export default function PreviewIndonesia() {
                 </div>
               ))}
             </div>
-            {INCLUDED.length > 6 && (
+            {content.included.length > 6 && (
               <button onClick={() => setShowAllIncluded((v) => !v)} className="mt-3 inline-flex items-center gap-2 border-[3px] border-mm-black bg-mm-bone px-4 py-2 font-sticker text-[10px] tracking-[0.14em] text-mm-black">
                 {showAllIncluded ? "SHOW LESS" : "SEE ALL"}
                 <ChevronDown className={`h-4 w-4 transition-transform ${showAllIncluded ? "rotate-180" : ""}`} />
@@ -203,6 +219,7 @@ export default function PreviewIndonesia() {
           {/* Reviews */}
           <section className="mt-16">
             <H eyebrow="REVIEWS FROM OUR TRAVELS">DON'T TAKE<br />OUR WORD FOR IT</H>
+            {REVIEWS.length === 0 && <PendingPanel label="Property reviews pending" />}
             <div className="grid gap-4 sm:grid-cols-2">
               {REVIEWS.map((r) => (
                 <blockquote key={r.property} className="border-[3px] border-mm-black bg-mm-bone p-4 shadow-mm-sm">
@@ -298,6 +315,19 @@ export default function PreviewIndonesia() {
           </div>
         </div>
       </section>
+
+      {content.pending.length > 0 && (
+        <section className="border-t-[4px] border-mm-black bg-mm-paper py-10">
+          <div className="mx-auto max-w-3xl px-5 md:px-6">
+            <p className="font-sticker text-[11px] tracking-[0.16em] text-mm-black/60">STILL TO COME</p>
+            <ul className="mt-3 flex flex-wrap gap-2">
+              {content.pending.map((p) => (
+                <li key={p} className="border-[3px] border-dashed border-mm-black/40 bg-mm-black/5 px-3 py-1.5 text-xs text-mm-black/70">{p}</li>
+              ))}
+            </ul>
+          </div>
+        </section>
+      )}
 
       <SiteFooter />
       <StickyCta onClick={() => scrollToId("booking")} />

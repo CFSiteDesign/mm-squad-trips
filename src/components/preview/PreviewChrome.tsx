@@ -2,15 +2,6 @@
 import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 
-/** Banner so nobody mistakes the demo for the live site. */
-export function PreviewBadge({ label }: { label: string }) {
-  return (
-    <div className="sticky top-0 z-[60] w-full border-b-[3px] border-mm-black bg-mm-yellow px-4 py-1.5 text-center font-sticker text-[10px] tracking-[0.16em] text-mm-black">
-      PREVIEW · {label} · NOT LIVE
-    </div>
-  );
-}
-
 /**
  * Sticky sub-navigation. Horizontal tabs on desktop, a scrollable pill row on
  * mobile. Tracks the section in view and offsets anchor jumps so headings don't
@@ -86,6 +77,15 @@ export function PhotoPending({ title }: { title: string }) {
     <div className="flex aspect-[4/5] w-full flex-col items-center justify-center gap-2 border-[3px] border-dashed border-mm-black/40 bg-mm-black/5 p-4 text-center">
       <span className="font-sticker text-[10px] tracking-[0.14em] text-mm-black/60">PHOTO PENDING</span>
       <span className="text-xs text-mm-black/50">{title}</span>
+    </div>
+  );
+}
+
+/** Visible marker for a section with no content supplied yet. */
+export function PendingPanel({ label }: { label: string }) {
+  return (
+    <div className="mb-4 flex items-center justify-center border-[3px] border-dashed border-mm-black/40 bg-mm-black/5 p-6 text-center">
+      <span className="font-sticker text-[10px] tracking-[0.14em] text-mm-black/60">{label.toUpperCase()}</span>
     </div>
   );
 }

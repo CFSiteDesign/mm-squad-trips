@@ -2,7 +2,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Sticker } from "@/components/brand/Sticker";
 import { useSiteVariant } from "@/hooks/use-site-variant";
 
-const DEFAULT_FAQS = [
+export const DEFAULT_FAQS = [
   { q: "Will I be the only solo person?", a: "Definitely not. 82% of our guests come solo. The whole product is designed for it." },
   { q: "What's the age range?", a: "Most guests are 23–31. Nobody under 18, nobody over 39 on these specific trips." },
   { q: "Is this like a guided tour?", a: "No coach buses. No 60-person mega-groups. Max 20 people, real backpacker hostels, free time built in." },

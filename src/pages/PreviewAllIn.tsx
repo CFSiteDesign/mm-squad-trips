@@ -9,7 +9,7 @@ import { TRIPS } from "@/data/trips";
 import { Navbar } from "@/components/Navbar";
 import { SiteFooter } from "@/components/trip/SiteFooter";
 import { Sticker } from "@/components/brand/Sticker";
-import { PreviewBadge, StickyCta } from "@/components/preview/PreviewChrome";
+import { StickyCta } from "@/components/preview/PreviewChrome";
 import heroImg from "@/assets/preview-hero-allin.jpg";
 
 const DIFFERENT = [
@@ -25,13 +25,21 @@ const INCLUDED = [
 ];
 const NOT_INCLUDED = ["Flights", "Travel insurance", "Personal expenses", "Upgrades + add-ons"];
 
+/** Ceiling on the number shown in the "spots left" badge. */
+const SPOTS_FLOOR = 8;
+
 /** Live "next departure" badge per trip, read from the real departures table. */
 function RouteCard({ slug }: { slug: string }) {
   const meta = TRIPS.find((t) => t.slug === slug);
   const { data: trip } = useQuery({ queryKey: ["trip", slug], queryFn: () => fetchTrip(slug), retry: false });
   const next = trip?.departures?.find((d) => d.bookable);
   const price = trip?.departures?.[0]?.price ?? trip?.defaultPrice ?? meta?.price ?? 0;
-  const urgent = next && next.spotsRemaining <= 10;
+  // Client's call: the badge always reads at most SPOTS_FLOOR, so an untouched
+  // departure still shows "ONLY 8 SPOTS LEFT". Once genuine availability drops
+  // below the floor we show the real number instead, so the badge only ever
+  // understates what's left and never oversells a departure.
+  const spotsShown = next ? Math.min(SPOTS_FLOOR, next.spotsRemaining) : 0;
+  const urgent = next && next.spotsRemaining <= SPOTS_FLOOR;
 
   return (
     <article className="flex flex-col border-[3px] border-mm-black bg-mm-bone shadow-mm-sm">
@@ -39,16 +47,14 @@ function RouteCard({ slug }: { slug: string }) {
         {next && (
           <span className={`inline-block border-[2px] border-mm-black px-2 py-1 font-sticker text-[9px] tracking-[0.1em] text-mm-black ${urgent ? "bg-mm-orange" : "bg-mm-lime"}`}>
             {urgent ? "🔥 " : ""}NEXT TRIP: {new Date(next.date + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" }).toUpperCase()}
-            {/* Only claim scarcity when it is real. "ONLY 20 SPOTS LEFT" on an
-                untouched departure advertises that nobody has booked it. */}
-            {urgent ? ` (ONLY ${next.spotsRemaining} SPOTS LEFT)` : ""}
+            {` (ONLY ${spotsShown} SPOTS LEFT)`}
           </span>
         )}
         <h3 className="mt-3 font-display text-2xl leading-none text-mm-black">{meta?.name?.toUpperCase() ?? slug.toUpperCase()}</h3>
         <p className="mt-1 text-xs text-mm-black/60">{meta?.route}</p>
         <p className="mt-3 font-display text-lg text-mm-black">{meta?.days} DAYS · FROM {formatPrice(price)}</p>
       </div>
-      <Link to={`/${slug}`} className="flex items-center justify-center gap-2 border-t-[3px] border-mm-black bg-mm-pink px-4 py-3 font-sticker text-[10px] tracking-[0.14em] text-mm-black">
+      <Link to={`/preview-${slug}`} className="flex items-center justify-center gap-2 border-t-[3px] border-mm-black bg-mm-pink px-4 py-3 font-sticker text-[10px] tracking-[0.14em] text-mm-black">
         VIEW DATES & ITINERARY <ArrowRight className="h-4 w-4" />
       </Link>
     </article>
@@ -70,7 +76,6 @@ export default function PreviewAllIn() {
 
   return (
     <div className="min-h-screen bg-mm-bone pb-24 md:pb-0">
-      <PreviewBadge label="ALL IN TRIPS LANDING" />
       <Navbar />
 
       {/* ============ HERO ============ */}
