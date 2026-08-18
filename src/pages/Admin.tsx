@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { RefreshCw, Copy } from "lucide-react";
-import { adminLogin, adminApi, addCompBooking, getAdminToken, setAdminToken, type AdminTable } from "@/lib/admin";
+import { adminLogin, adminApi, addCompBooking, getAdminToken, setAdminToken, setAdminPreview, type AdminTable } from "@/lib/admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -252,12 +252,14 @@ const TABS: { id: AdminTable; label: string }[] = [
 ];
 
 
-export default function Admin() {
-  const [authed, setAuthed] = useState<boolean>(() => !!getAdminToken());
+export default function Admin({ preview = false }: { preview?: boolean } = {}) {
+  setAdminPreview(preview);
+  const [authed, setAuthed] = useState<boolean>(() => preview || !!getAdminToken());
   const [view, setView] = useState<"database" | "squad">("database");
   const [refreshKey, setRefreshKey] = useState(0);
 
   if (!authed) return <Login onSuccess={() => setAuthed(true)} />;
+
 
   function handleRefresh() {
     // Clear all module-level caches
@@ -275,6 +277,12 @@ export default function Admin() {
     <TooltipProvider delayDuration={300}>
       <main className="min-h-screen bg-mm-paper px-4 py-8 text-mm-black md:px-8">
         <AdminWalkthrough />
+        {preview && (
+          <div className="mx-auto mb-4 max-w-7xl border-[2px] border-mm-black bg-mm-lime px-3 py-2 font-sticker text-[10px] tracking-[0.15em] text-mm-black">
+            PREVIEW MODE — SHOWING DEMO DATA. LOG IN AT /admin FOR REAL DATA
+          </div>
+        )}
+
         <header className="mx-auto mb-6 flex max-w-7xl flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <h1 className="font-display text-3xl md:text-4xl">ADMIN</h1>
@@ -815,17 +823,40 @@ function AddRunDateDialog({ onClose, onSaved }: { onClose: () => void; onSaved: 
     const n = Math.max(1, Number(spots) || 20);
     setSaving(true);
     try {
-      await adminApi.create("departures", {
-        trip_id: tripId,
-        departure_code: `${String(trip?.code ?? "TRIP")}-${date}`,
-        departure_date: date,
+      // Manual run dates always win: they're public, bookable, guaranteed to run
+      // (no 5-traveller minimum) and ignore the normal booking cut-off.
+      const overrides = {
         total_spots: n,
-        spots_remaining: n,
         bookable: true,
-        status: "pending",
+        status: "confirmed",
         visibility: "public",
-      });
-      toast.success("Run date added — it's live on the site now");
+        force_bookable: true,
+        min_bookings_to_confirm: 1,
+        owner_code: null,
+      };
+      // A row for this trip + date may already exist (private/cancelled/hidden) —
+      // reuse it instead of hitting the unique constraint.
+      const existingRows = await adminApi.list<Row>("departures", { limit: 1000 });
+      const existing = existingRows.find(
+        (d) => String(d.trip_id) === tripId && String(d.departure_date).slice(0, 10) === date,
+      );
+      if (existing) {
+        const booked = Math.max(0, Number(existing.total_spots ?? n) - Number(existing.spots_remaining ?? n));
+        await adminApi.update("departures", String(existing.id), {
+          ...overrides,
+          spots_remaining: Math.max(0, n - booked),
+        });
+        toast.success("That date already existed — it's now live and bookable");
+      } else {
+        await adminApi.create("departures", {
+          trip_id: tripId,
+          departure_code: `${String(trip?.code ?? "TRIP")}-${date}`,
+          departure_date: date,
+          spots_remaining: n,
+          ...overrides,
+        });
+        toast.success("Run date added — it's live on the site now");
+      }
       onSaved();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not add the run date");
@@ -833,6 +864,7 @@ function AddRunDateDialog({ onClose, onSaved }: { onClose: () => void; onSaved: 
       setSaving(false);
     }
   }
+
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-mm-black/60 p-4 pt-16">
@@ -894,8 +926,9 @@ function AddRunDateDialog({ onClose, onSaved }: { onClose: () => void; onSaved: 
               className="mt-1 h-11 rounded-none border-[2px] border-mm-black bg-mm-bone"
             />
             <p className="mt-1 text-xs text-mm-black/60">
-              Still needs 5 travellers to be confirmed, same as every departure.
+              Guaranteed to run — it ignores the 5-traveller minimum and the booking cut-off.
             </p>
+
           </div>
         </div>
 

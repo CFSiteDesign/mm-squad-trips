@@ -60,7 +60,7 @@ export function visibleDepartures(deps: Departure[], requestedSpots: number, slu
     (d) =>
       d.bookable &&
       d.spotsRemaining >= requestedSpots &&
-      daysUntil(d.date) >= cutoff,
+      (d.forceBookable === true ? daysUntil(d.date) >= 0 : daysUntil(d.date) >= cutoff),
   );
 }
 
@@ -69,6 +69,7 @@ export function closedDepartures(deps: Departure[], slug?: string): Departure[] 
   return deps.filter(
     (d) =>
       d.bookable &&
+      d.forceBookable !== true &&
       daysUntil(d.date) > 0 &&
       daysUntil(d.date) < cutoff,
   );

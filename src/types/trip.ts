@@ -24,6 +24,8 @@ export interface Departure {
   strikethrough: number | null;
   /** Guest-created custom date — hidden from public browsing. */
   isPrivate?: boolean;
+  /** Admin-added run date: bookable regardless of the normal cut-off. */
+  forceBookable?: boolean;
 }
 
 export interface Trip {

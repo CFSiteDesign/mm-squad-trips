@@ -250,6 +250,7 @@ export type Database = {
           created_at: string
           departure_code: string | null
           departure_date: string
+          force_bookable: boolean
           id: string
           min_bookings_to_confirm: number
           owner_code: string | null
@@ -267,6 +268,7 @@ export type Database = {
           created_at?: string
           departure_code?: string | null
           departure_date: string
+          force_bookable?: boolean
           id?: string
           min_bookings_to_confirm?: number
           owner_code?: string | null
@@ -284,6 +286,7 @@ export type Database = {
           created_at?: string
           departure_code?: string | null
           departure_date?: string
+          force_bookable?: boolean
           id?: string
           min_bookings_to_confirm?: number
           owner_code?: string | null
