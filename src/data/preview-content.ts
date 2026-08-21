@@ -118,7 +118,7 @@ export function getPreviewContent(trip: Trip, slug: PreviewSlug): PreviewContent
       itinerary: INDO_ITINERARY,
       reviews: INDO_REVIEWS,
       faqs: INDO_FAQS,
-      pending: ["Mexican Family Dinner photo", "Bucket List Bike Tour photo", "Route map", "Video testimonials"],
+      pending: [],
     };
   }
   return fromTrip(trip, slug);

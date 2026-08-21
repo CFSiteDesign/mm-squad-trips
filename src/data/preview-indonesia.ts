@@ -7,6 +7,7 @@ import nusaPenida from "@/assets/hl-nusa-penida.jpg";
 import snorkeling from "@/assets/hl-snorkeling.jpg";
 import surfCamp from "@/assets/hl-surf-camp.jpg";
 import mexicanDinner from "@/assets/hl-mexican-dinner.jpg";
+import bikeTour from "@/assets/hl-bike-tour.jpg";
 
 export const SNAPSHOT = {
   tripCode: "IND",
@@ -25,14 +26,15 @@ export const IS_THIS_FOR_ME = [
   { k: "Physical Level", v: "Light to Moderate (some hangovers, some hikes)" },
 ];
 
-/** image: null renders a "photo pending" tile so the gap is visible, not hidden. */
+/** image: null renders a "photo pending" tile so the gap is visible, not hidden.
+ *  All six now have photography as of 21 Aug 2026. */
 export const HIGHLIGHTS: { title: string; image: string | null }[] = [
   { title: "Mt Batur Sunrise Trekking", image: mtBatur },
   { title: "Island Hopping around Nusa Penida", image: nusaPenida },
   { title: "Monkey See, Monkey Do Snorkeling Trip", image: snorkeling },
   { title: "Kuta Lombok Surf Camp", image: surfCamp },
   { title: "Mexican Family Dinner", image: mexicanDinner },
-  { title: "Bucket List Bike Tour", image: null },
+  { title: "Bucket List Bike Tour", image: bikeTour },
 ];
 
 export const INCLUDED = [

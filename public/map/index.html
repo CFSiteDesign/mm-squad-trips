@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mad Monkey Hostels — Network Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/d3@7.9.0/dist/d3.min.js" integrity="sha384-CjloA8y00+1SDAUkjs099PVfnY2KmDC2BZnws9kh8D/lX1s46w6EPhpXdqMfjK6i" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/topojson-client@3.1.0/dist/topojson-client.min.js" integrity="sha384-Ukv1p/xTma6P4/2bY5KzWBw+ydSpXmhCMtyciIQVDJ1RmOxtCYNMF1uXT9T63H67" crossorigin="anonymous"></script>
+<style>
+  html, body { margin: 0; background: #08090b; }
+  #map-wrap {
+    position: relative; width: 100%; max-width: 680px; margin: 0 auto;
+    aspect-ratio: 610 / 646;
+    background: #08090b; overflow: hidden;
+  }
+  #stipple { position: absolute; inset: 0; width: 100%; height: 100%; }
+  #overlay { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .pulse {
+    fill: none; stroke: #ff01aa; stroke-width: 1.2;
+    transform-box: fill-box; transform-origin: center;
+    animation: mm-pulse 2.6s cubic-bezier(0.2, 0.6, 0.4, 1) infinite;
+  }
+  @keyframes mm-pulse {
+    0%   { transform: scale(0.6); opacity: 0.85; }
+    70%  { transform: scale(3.6); opacity: 0; }
+    100% { transform: scale(3.6); opacity: 0; }
+  }
+  #tooltip {
+    position: absolute; pointer-events: none; opacity: 0;
+    transform: translate(-50%, calc(-100% - 14px)) scale(0.96);
+    background: #fff; color: #0a0a0a;
+    font-family: "Montserrat", system-ui, sans-serif;
+    padding: 12px 16px 11px; white-space: nowrap;
+    box-shadow: 5px 5px 0 #ff01aa;
+    transition: opacity 0.14s ease, transform 0.14s ease;
+  }
+  #tooltip.show { opacity: 1; transform: translate(-50%, calc(-100% - 14px)) scale(1); }
+  #tooltip .name { font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.02em; }
+  #tooltip .country { display: block; margin-top: 3px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: #ff01aa; }
+  #tooltip::after {
+    content: ""; position: absolute; left: 50%; bottom: -6px;
+    width: 12px; height: 12px; background: #fff;
+    transform: translateX(-50%) rotate(45deg);
+  }
+  .country-label {
+    fill: #fff; font-family: "Montserrat", system-ui, sans-serif;
+    font-size: 15px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.1em; paint-order: stroke; stroke: #08090b; stroke-width: 5px;
+  }
+  a { color: #ccff01; } a:hover { color: #ff01aa; }
+  @media (prefers-reduced-motion: reduce) {
+    .pulse { animation: none; opacity: 0; }
+  }
+</style>
+</head>
+<body>
+<div id="map-wrap">
+  <canvas id="stipple"></canvas>
+  <svg id="overlay" viewBox="0 0 610 646" preserveAspectRatio="xMidYMid slice" aria-label="Map of Mad Monkey Hostels locations across Southeast Asia">
+    <defs>
+      <filter id="pinGlow" x="-300%" y="-300%" width="700%" height="700%">
+        <feGaussianBlur stdDeviation="2.2"/>
+      </filter>
+      <filter id="dotGlow" x="-300%" y="-300%" width="700%" height="700%">
+        <feGaussianBlur stdDeviation="2.5"/>
+      </filter>
+    </defs>
+    <g id="routes"></g>
+    <g id="labels"></g>
+    <g id="pins"></g>
+    <g id="hits"></g>
+  </svg>
+  <div id="tooltip"></div>
+</div>
+<script>
+/* ============ CONFIG — adjust framing here ============ */
+const CONFIG = {
+  center: [111.5, 6.5],  // [lon, lat] the view is centred on
+  zoom: 1.0,             // 1 = fit the whole region; >1 zooms in
+  bounds: [[92, -10], [131, 23]] // region extent used to compute the base fit
+};
+/* ====================================================== */
+
+const W = 610, H = 646;
+const PINK = "#ff01aa", LIME = "#ccff01";
+
+const LOCATIONS = [
+  ["Phnom Penh", "Cambodia", 11.5564, 104.9282],
+  ["Siem Reap", "Cambodia", 13.3671, 103.8448],
+  ["Koh Rong", "Cambodia", 10.7167, 103.2500],
+  ["Koh Sdach", "Cambodia", 11.2333, 102.9667],
+  ["Manila", "Philippines", 14.5995, 120.9842],
+  ["Nacpan Beach", "Philippines", 11.3167, 119.4167],
+  ["Siargao", "Philippines", 9.8482, 126.0458],
+  ["Panglao", "Philippines", 9.5787, 123.7500],
+  ["Dumaguete", "Philippines", 9.3068, 123.3054],
+  ["Siquijor", "Philippines", 9.1994, 123.5950],
+  ["Bangkok", "Thailand", 13.7563, 100.5018],
+  ["Chiang Mai", "Thailand", 18.7883, 98.9853],
+  ["Pai", "Thailand", 19.3583, 98.4364],
+  ["Phuket", "Thailand", 7.8804, 98.3923],
+  ["Uluwatu", "Indonesia", -8.8290, 115.0850],
+  ["Nusa Lembongan", "Indonesia", -8.6800, 115.4500],
+  ["Gili Trawangan", "Indonesia", -8.3500, 116.0333],
+  ["Kuta Lombok", "Indonesia", -8.8833, 116.2833],
+  ["Luang Prabang", "Laos", 19.8834, 102.1347],
+  ["Vang Vieng", "Laos", 18.9236, 102.4479],
+  ["Hanoi", "Vietnam", 21.0278, 105.8342],
+  ["Hoi An", "Vietnam", 15.8801, 108.3380]
+];
+
+const TRAIL = [
+  ["Uluwatu", "Nusa Lembongan"], ["Nusa Lembongan", "Gili Trawangan"], ["Gili Trawangan", "Kuta Lombok"],
+  ["Uluwatu", "Siargao"], ["Siargao", "Panglao"], ["Panglao", "Dumaguete"], ["Dumaguete", "Siquijor"],
+  ["Siquijor", "Manila"], ["Manila", "Nacpan Beach"], ["Nacpan Beach", "Phuket"],
+  ["Phuket", "Bangkok"], ["Bangkok", "Chiang Mai"], ["Chiang Mai", "Pai"], ["Pai", "Luang Prabang"],
+  ["Luang Prabang", "Vang Vieng"], ["Vang Vieng", "Hanoi"], ["Hanoi", "Hoi An"],
+  ["Hoi An", "Phnom Penh"], ["Phnom Penh", "Siem Reap"],
+  ["Phnom Penh", "Koh Rong"], ["Koh Rong", "Koh Sdach"]
+];
+
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const svgNS = "http://www.w3.org/2000/svg";
+function el(tag, attrs, parent) {
+  const n = document.createElementNS(svgNS, tag);
+  for (const k in attrs) n.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(n);
+  return n;
+}
+
+d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json").then(topology => {
+  const land = topojson.feature(topology, topology.objects.countries);
+
+  // Projection: fit network bounds, then apply zoom + centre nudge
+  const [[w0, s0], [e0, n0]] = CONFIG.bounds;
+  const bboxGeo = { type: "MultiPoint", coordinates: [[w0, s0], [e0, s0], [e0, n0], [w0, n0]] };
+  const proj = d3.geoMercator().fitExtent([[14, 14], [W - 14, H - 14]], bboxGeo);
+  proj.scale(proj.scale() * CONFIG.zoom);
+  const c = proj(CONFIG.center);
+  proj.translate([proj.translate()[0] + (W / 2 - c[0]), proj.translate()[1] + (H / 2 - c[1])]);
+
+  drawStipple(land, proj);
+  drawCountryLabels(proj);
+  const pts = {};
+  LOCATIONS.forEach(([name, country, lat, lon]) => { pts[name] = { name, country, xy: proj([lon, lat]) }; });
+  drawRoutesAndPins(pts);
+});
+
+/* ---- country labels ---- */
+function drawCountryLabels(proj) {
+  const g = document.getElementById("labels");
+  [["Laos", 102.6, 21.6, "middle"], ["Vietnam", 107.6, 16.3, "middle"],
+   ["Thailand", 96.5, 14.2, "middle"], ["Cambodia", 105.9, 11.9, "middle"],
+   ["Philippines", 125.6, 13.6, "middle"], ["Indonesia", 113.6, -7.0, "middle"]]
+  .forEach(([name, lon, lat, anchor]) => {
+    const [x, y] = proj([lon, lat]);
+    const t = el("text", { x: x.toFixed(1), y: y.toFixed(1), "text-anchor": anchor, class: "country-label" }, g);
+    t.textContent = name;
+  });
+}
+
+/* ---- grey dot-matrix land ---- */
+function drawStipple(land, proj) {
+  const mask = document.createElement("canvas");
+  mask.width = W; mask.height = H;
+  const mctx = mask.getContext("2d", { willReadFrequently: true });
+  const path = d3.geoPath(proj, mctx);
+  mctx.fillStyle = "#fff";
+  mctx.beginPath(); path(land); mctx.fill();
+  const img = mctx.getImageData(0, 0, W, H).data;
+
+  const cv = document.getElementById("stipple");
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  cv.width = W * dpr; cv.height = H * dpr;
+  const ctx = cv.getContext("2d");
+  ctx.scale(dpr, dpr);
+  ctx.fillStyle = "rgba(156, 163, 175, 0.5)";
+  const s = 10, rowH = s * 0.866, r = 2;
+  for (let row = 0, y = 2; y < H; row++, y += rowH) {
+    const off = (row % 2) * (s / 2);
+    for (let x = off; x < W; x += s) {
+      const xi = Math.round(x), yi = Math.round(y);
+      if (img[(yi * W + xi) * 4 + 3] > 0) {
+        ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+  }
+}
+
+/* ---- pins, arcs, animation ---- */
+function drawRoutesAndPins(pts) {
+  const routesG = document.getElementById("routes");
+  const pinsG = document.getElementById("pins");
+  const hitsG = document.getElementById("hits");
+  const tooltip = document.getElementById("tooltip");
+  const wrap = document.getElementById("map-wrap");
+  const svg = document.getElementById("overlay");
+
+  // Arcs: quadratic curve, bow scales with distance
+  const arcs = TRAIL.map(([a, b]) => {
+    const [x1, y1] = pts[a].xy, [x2, y2] = pts[b].xy;
+    const dx = x2 - x1, dy = y2 - y1;
+    const dist = Math.hypot(dx, dy);
+    const bow = Math.min(dist * 0.22, 70);
+    const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+    const nx = -dy / dist, ny = dx / dist; // perpendicular
+    const cx = mx + nx * bow * (ny < 0 ? -1 : 1) * -1; // bow upward
+    const cy = my + ny * bow * (ny < 0 ? -1 : 1) * -1;
+    const d = `M ${x1.toFixed(1)} ${y1.toFixed(1)} Q ${cx.toFixed(1)} ${cy.toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)}`;
+    const p = el("path", { d, fill: "none", stroke: LIME, "stroke-width": 1.6, "stroke-linecap": "round", opacity: 0.85 }, routesG);
+    const len = p.getTotalLength();
+    p.setAttribute("stroke-dasharray", len);
+    p.setAttribute("stroke-dashoffset", len);
+    const dotGlow = el("circle", { r: 4.5, fill: LIME, filter: "url(#dotGlow)", opacity: 0 }, routesG);
+    const dot = el("circle", { r: 2.2, fill: LIME, opacity: 0 }, routesG);
+    return { p, len, dot, dotGlow };
+  });
+
+  // Pins
+  Object.values(pts).forEach(({ name, country, xy: [x, y] }, i) => {
+    el("circle", { cx: x, cy: y, r: 5.5, fill: PINK, opacity: 0.35, filter: "url(#pinGlow)" }, pinsG);
+    const ring = el("circle", { cx: x, cy: y, r: 4.5, class: "pulse" }, pinsG);
+    ring.style.animationDelay = (i * 0.21) % 2.6 + "s";
+    el("circle", { cx: x, cy: y, r: 4.2, fill: PINK }, pinsG);
+    const hit = el("circle", { cx: x, cy: y, r: 13, fill: "transparent", cursor: "pointer" }, hitsG);
+    hit.addEventListener("pointerenter", () => {
+      // svg uses slice; map viewBox coords -> wrap px
+      const rect = wrap.getBoundingClientRect();
+      const scale = Math.max(rect.width / W, rect.height / H);
+      const ox = (rect.width - W * scale) / 2, oy = (rect.height - H * scale) / 2;
+      tooltip.innerHTML = '<span class="name">' + name + '</span><span class="country">' + country + "</span>";
+      tooltip.style.left = (x * scale + ox) + "px";
+      tooltip.style.top = (y * scale + oy) + "px";
+      tooltip.classList.add("show");
+    });
+    hit.addEventListener("pointerleave", () => { tooltip.classList.remove("show"); });
+  });
+
+  if (reduceMotion) {
+    arcs.forEach(a => a.p.setAttribute("stroke-dashoffset", 0));
+    return;
+  }
+
+  // Timeline: staggered draw, hold, loop
+  const STAGGER = 0.15, HOLD = 2.4;
+  let t0 = null;
+  const starts = arcs.map((a, i) => i * STAGGER);
+  const durs = arcs.map(a => 0.35 + a.len / 380);
+  const drawEnd = Math.max(...starts.map((s, i) => s + durs[i]));
+  const period = drawEnd + HOLD;
+  const ease = t => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+
+  function frame(now) {
+    if (t0 === null) t0 = now;
+    const t = ((now - t0) / 1000) % period;
+    arcs.forEach((a, i) => {
+      const p = Math.min(Math.max((t - starts[i]) / durs[i], 0), 1);
+      const e = ease(p);
+      a.p.setAttribute("stroke-dashoffset", a.len * (1 - e));
+      const active = p > 0 && p < 1;
+      a.dot.setAttribute("opacity", active ? 1 : 0);
+      a.dotGlow.setAttribute("opacity", active ? 0.7 : 0);
+      if (active) {
+        const pt = a.p.getPointAtLength(a.len * e);
+        a.dot.setAttribute("cx", pt.x); a.dot.setAttribute("cy", pt.y);
+        a.dotGlow.setAttribute("cx", pt.x); a.dotGlow.setAttribute("cy", pt.y);
+      }
+    });
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+</script>
+</body>
+</html>

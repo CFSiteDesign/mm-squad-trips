@@ -274,8 +274,16 @@ export default function PreviewTrip({ slug: slugProp }: { slug?: PreviewSlug }) 
           {/* Itinerary */}
           <section id="itinerary" className="mt-16 scroll-mt-[116px]">
             <H eyebrow="THE STORY OF YOUR TRIP">THE<br />BREAKDOWN</H>
-            <div className="mb-4 flex items-center justify-center border-[3px] border-dashed border-mm-black/40 bg-mm-black/5 p-6 text-center">
-              <span className="font-sticker text-[10px] tracking-[0.14em] text-mm-black/60">ROUTE MAP PENDING</span>
+            {/* Dhany's animated network map, embedded as supplied. It is
+                iframed rather than ported so his file stays the source of
+                truth and its D3 dependency stays out of our bundle. */}
+            <div className="mb-6 border-[3px] border-mm-black bg-[#08090b]">
+              <iframe
+                src="/map/"
+                title="Mad Monkey network map"
+                loading="lazy"
+                className="block h-[646px] w-full max-w-[680px] mx-auto border-0"
+              />
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               {ITINERARY.map((d) => (
