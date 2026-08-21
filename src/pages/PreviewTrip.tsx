@@ -19,6 +19,7 @@ import { SubNav, StickyCta, PhotoPending, PendingPanel, SCROLL_OFFSET } from "@/
 import { getPreviewContent, PREVIEW_SLUGS, type PreviewSlug } from "@/data/preview-content";
 import { useParams } from "react-router-dom";
 import { TRIPS } from "@/data/trips";
+import { SQUAD_BENEFITS } from "@/data/squad-benefits";
 
 const SECTIONS = [
   { id: "overview", label: "OVERVIEW" },
@@ -370,8 +371,13 @@ export default function PreviewTrip({ slug: slugProp }: { slug?: PreviewSlug }) 
               <p className="mt-2 text-sm leading-snug text-mm-black/80">Lock in your spot with total peace of mind. Easy single booking, 100% departure rate, and zero fuss. Just show up and experience all the best bits.</p>
             </div>
             <div className="border-[3px] border-mm-black bg-mm-cyan p-4 shadow-mm-sm">
-              <p className="font-sticker text-[10px] tracking-[0.14em] text-mm-black">✔ BRING YOUR SQUAD (AND GO FOR FREE)</p>
-              <p className="mt-2 text-sm leading-snug text-mm-black/80">Gather your crew for an exclusive group trip. Bring 8 of your mates and you'll travel completely free as the official Squad Leader.</p>
+              <p className="font-sticker text-[10px] tracking-[0.14em] text-mm-black">
+                ✔ {SQUAD_BENEFITS.free.headline} — {SQUAD_BENEFITS.free.subhead}
+              </p>
+              <p className="mt-2 text-sm leading-snug text-mm-black/80">{SQUAD_BENEFITS.free.body}</p>
+              <p className="mt-2 text-sm leading-snug text-mm-black/80">
+                <strong>{SQUAD_BENEFITS.half.headline} — {SQUAD_BENEFITS.half.subhead}.</strong> {SQUAD_BENEFITS.half.body}
+              </p>
             </div>
           </div>
         </div>

@@ -9,6 +9,7 @@ import { TRIPS } from "@/data/trips";
 import { Navbar } from "@/components/Navbar";
 import { SiteFooter } from "@/components/trip/SiteFooter";
 import { StickyCta } from "@/components/preview/PreviewChrome";
+import { SQUAD_BENEFITS } from "@/data/squad-benefits";
 import heroImg from "@/assets/preview-hero-allin.jpg";
 import allInLogo from "@/assets/all-in-logo.png";
 
@@ -247,13 +248,15 @@ export default function PreviewAllIn() {
         <div className="mx-auto max-w-4xl px-5 text-center md:px-6">
           <h2 className="font-display text-[clamp(2rem,6vw,3.5rem)] leading-[0.95] text-mm-bone">TRAVEL FOR FREE<br />WHEN YOU BRING THE CREW</h2>
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            <div className="border-[3px] border-mm-black bg-mm-bone p-5 shadow-mm-sm">
-              <p className="font-display text-4xl text-mm-black">50% OFF</p>
-              <p className="mt-1 text-sm text-mm-black/75">Bring 4 friends and get half off your trip.</p>
+            <div className="border-[3px] border-mm-black bg-mm-bone p-5 text-left shadow-mm-sm">
+              <p className="font-display text-4xl text-mm-black">{SQUAD_BENEFITS.half.headline}</p>
+              <p className="mt-1 font-sticker text-[11px] tracking-[0.14em] text-mm-black">{SQUAD_BENEFITS.half.subhead}</p>
+              <p className="mt-2 text-sm leading-snug text-mm-black/75">{SQUAD_BENEFITS.half.body}</p>
             </div>
-            <div className="border-[3px] border-mm-black bg-mm-lime p-5 shadow-mm-sm">
-              <p className="font-display text-4xl text-mm-black">100% FREE</p>
-              <p className="mt-1 text-sm text-mm-black/75">Bring 8 friends and you travel completely free.</p>
+            <div className="border-[3px] border-mm-black bg-mm-lime p-5 text-left shadow-mm-sm">
+              <p className="font-display text-4xl text-mm-black">{SQUAD_BENEFITS.free.headline}</p>
+              <p className="mt-1 font-sticker text-[11px] tracking-[0.14em] text-mm-black">{SQUAD_BENEFITS.free.subhead}</p>
+              <p className="mt-2 text-sm leading-snug text-mm-black/75">{SQUAD_BENEFITS.free.body}</p>
             </div>
           </div>
           <p className="mt-6 text-[15px] text-mm-bone">You rally the group chat, we handle the logistics.</p>
