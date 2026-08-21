@@ -6,6 +6,7 @@ import mtBatur from "@/assets/hl-mt-batur.jpg";
 import nusaPenida from "@/assets/hl-nusa-penida.jpg";
 import snorkeling from "@/assets/hl-snorkeling.jpg";
 import surfCamp from "@/assets/hl-surf-camp.jpg";
+import mexicanDinner from "@/assets/hl-mexican-dinner.jpg";
 
 export const SNAPSHOT = {
   tripCode: "IND",
@@ -30,7 +31,7 @@ export const HIGHLIGHTS: { title: string; image: string | null }[] = [
   { title: "Island Hopping around Nusa Penida", image: nusaPenida },
   { title: "Monkey See, Monkey Do Snorkeling Trip", image: snorkeling },
   { title: "Kuta Lombok Surf Camp", image: surfCamp },
-  { title: "Mexican Family Dinner", image: null },
+  { title: "Mexican Family Dinner", image: mexicanDinner },
   { title: "Bucket List Bike Tour", image: null },
 ];
 

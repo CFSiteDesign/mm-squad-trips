@@ -66,7 +66,7 @@ function firstAllowedCustomDate(weekday: number, minNoticeDays: number): string 
   return d.toISOString().slice(0, 10);
 }
 
-export function BookingFlow({ trip }: { trip: Trip }) {
+export function BookingFlow({ trip, hideHeading = false }: { trip: Trip; hideHeading?: boolean }) {
   const variant = useSiteVariant();
   const isStudent = variant === "student";
   const showDurationToggle = ["indonesia", "vietnam", "indonesia-7", "vietnam-7"].includes(trip.slug);
@@ -323,12 +323,16 @@ export function BookingFlow({ trip }: { trip: Trip }) {
             <DurationToggle slug={trip.slug} />
           </div>
         )}
-        <div>
-          <Sticker color="yellow" rotate={-4}>STEP UP</Sticker>
-          <h2 className="mt-4 font-display text-[2.5rem] leading-[0.92] text-mm-bone md:mt-6 md:text-7xl lg:text-8xl">
-            BOOK<br />YOUR SPOT.
-          </h2>
-        </div>
+        {/* The Aug 2026 preview supplies its own "Dates & Availability" heading,
+            so it opts out of this one. Defaults to false: live is unchanged. */}
+        {!hideHeading && (
+          <div>
+            <Sticker color="yellow" rotate={-4}>STEP UP</Sticker>
+            <h2 className="mt-4 font-display text-[2.5rem] leading-[0.92] text-mm-bone md:mt-6 md:text-7xl lg:text-8xl">
+              BOOK<br />YOUR SPOT.
+            </h2>
+          </div>
+        )}
 
         {/* Squad booking choice */}
         <div className="space-y-3">

@@ -17,6 +17,7 @@ import { SiteFooter } from "@/components/trip/SiteFooter";
 import { Starburst } from "@/components/brand/Sticker";
 import { SubNav, StickyCta, PhotoPending, PendingPanel, SCROLL_OFFSET } from "@/components/preview/PreviewChrome";
 import { getPreviewContent, PREVIEW_SLUGS, type PreviewSlug } from "@/data/preview-content";
+import { PreviewDates } from "@/components/preview/PreviewDates";
 import { useParams } from "react-router-dom";
 import { TRIPS } from "@/data/trips";
 import { SQUAD_BENEFITS } from "@/data/squad-benefits";
@@ -112,7 +113,7 @@ export default function PreviewTrip({ slug: slugProp }: { slug?: PreviewSlug }) 
             <p className="mb-2 font-display text-2xl tracking-[0.12em] text-mm-lime">
               {(meta?.name ?? trip?.name ?? "").toUpperCase()}
             </p>
-            <h1 className="font-display text-[clamp(2.75rem,13vw,4.25rem)] leading-[0.9] text-mm-bone">
+            <h1 className="font-display text-[clamp(2.4rem,11.4vw,3.75rem)] leading-[0.9] text-mm-bone">
               <span className="block">YOUR GROUP</span>
               <span className="block whitespace-nowrap text-mm-pink">TRIP,</span>
               <span className="block text-mm-lime">SORTED.</span>
@@ -167,7 +168,7 @@ export default function PreviewTrip({ slug: slugProp }: { slug?: PreviewSlug }) 
               <p className="mb-3 font-display text-3xl tracking-[0.12em] text-mm-lime lg:text-5xl">
                 {(meta?.name ?? trip?.name ?? "").toUpperCase()}
               </p>
-              <h1 className="font-display text-[clamp(4rem,12vw,9rem)] leading-[0.88] text-mm-bone">
+              <h1 className="font-display text-[clamp(3.5rem,10.5vw,7.9rem)] leading-[0.88] text-mm-bone">
                 <span className="block">YOUR GROUP</span>
                 <span className="block whitespace-nowrap text-mm-pink">TRIP,</span>
                 <span className="block text-mm-lime">SORTED.</span>
@@ -365,23 +366,11 @@ export default function PreviewTrip({ slug: slugProp }: { slug?: PreviewSlug }) 
       <section id="booking" className="scroll-mt-[116px] border-t-[4px] border-mm-black bg-mm-paper py-12">
         <div className="mx-auto max-w-6xl px-5 md:px-6">
           <H eyebrow="DATES & AVAILABILITY">THE COUNTDOWN<br />STARTS NOW</H>
-          <div className="mb-6 grid gap-4 sm:grid-cols-2">
-            <div className="border-[3px] border-mm-black bg-mm-lime p-4 shadow-mm-sm">
-              <p className="font-sticker text-[10px] tracking-[0.14em] text-mm-black">✔ SOLO TRAVELLER? YOU'RE COVERED</p>
-              <p className="mt-2 text-sm leading-snug text-mm-black/80">Lock in your spot with total peace of mind. Easy single booking, 100% departure rate, and zero fuss. Just show up and experience all the best bits.</p>
-            </div>
-            <div className="border-[3px] border-mm-black bg-mm-cyan p-4 shadow-mm-sm">
-              <p className="font-sticker text-[10px] tracking-[0.14em] text-mm-black">
-                ✔ {SQUAD_BENEFITS.free.headline} — {SQUAD_BENEFITS.free.subhead}
-              </p>
-              <p className="mt-2 text-sm leading-snug text-mm-black/80">{SQUAD_BENEFITS.free.body}</p>
-              <p className="mt-2 text-sm leading-snug text-mm-black/80">
-                <strong>{SQUAD_BENEFITS.half.headline} — {SQUAD_BENEFITS.half.subhead}.</strong> {SQUAD_BENEFITS.half.body}
-              </p>
-            </div>
-          </div>
+          {trip && <PreviewDates trip={trip} onBook={() => scrollToId("book-flow")} />}
         </div>
-        {trip && <BookingFlow trip={trip} />}
+        <div id="book-flow" className="scroll-mt-[116px]">
+          {trip && <BookingFlow trip={trip} hideHeading />}
+        </div>
       </section>
 
       {/* ============ FAQ ============ */}

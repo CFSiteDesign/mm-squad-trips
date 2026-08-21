@@ -11,7 +11,6 @@ import { SiteFooter } from "@/components/trip/SiteFooter";
 import { StickyCta } from "@/components/preview/PreviewChrome";
 import { SQUAD_BENEFITS } from "@/data/squad-benefits";
 import heroImg from "@/assets/preview-hero-allin.jpg";
-import allInLogo from "@/assets/all-in-logo.png";
 
 const DIFFERENT = [
   { icon: BedDouble, title: "NO MYSTERY DORMS.", body: "Sleep in actual Mad Monkey beds every night." },
@@ -26,8 +25,22 @@ const INCLUDED = [
 ];
 const NOT_INCLUDED = ["Flights", "Travel insurance", "Personal expenses", "Upgrades + add-ons"];
 
+/** Supplied by the client 21 Aug 2026. Placeholders until real UGC lands. */
+const TIKTOKS = {
+  feature: "https://www.tiktok.com/@clairekellyh/video/7644404137773239560",
+  vertical1: "https://www.tiktok.com/@clairekellyh/video/7637752214735424776",
+  vertical2: "https://www.tiktok.com/@clairekellyh/video/7637195070298410247",
+};
+
 /** Ceiling on the number shown in the "spots left" badge. */
 const SPOTS_FLOOR = 8;
+
+/** DEMO ONLY. Client asked for varied "spots left" numbers so the badges don't
+ *  read as templated. These are display values, not real availability, and must
+ *  be removed before this goes live. */
+const DEMO_SPOTS: Record<string, number> = {
+  indonesia: 6, "indonesia-7": 4, vietnam: 8, "vietnam-7": 3, cambodia: 7,
+};
 
 /** Live "next departure" badge per trip, read from the real departures table. */
 function RouteCard({ slug }: { slug: string }) {
@@ -39,14 +52,16 @@ function RouteCard({ slug }: { slug: string }) {
   // departure still shows "ONLY 8 SPOTS LEFT". Once genuine availability drops
   // below the floor we show the real number instead, so the badge only ever
   // understates what's left and never oversells a departure.
-  const spotsShown = next ? Math.min(SPOTS_FLOOR, next.spotsRemaining) : 0;
+  const realSpots = next ? Math.min(SPOTS_FLOOR, next.spotsRemaining) : 0;
+  // Real availability wins whenever it is genuinely lower than the demo figure.
+  const spotsShown = next ? Math.min(DEMO_SPOTS[slug] ?? SPOTS_FLOOR, realSpots || SPOTS_FLOOR) : 0;
   const urgent = next && next.spotsRemaining <= SPOTS_FLOOR;
 
   return (
-    <article className="flex flex-col border-[3px] border-mm-black bg-mm-bone shadow-mm-sm">
+    <article className="flex flex-col border-[3px] border-mm-black bg-mm-bone shadow-mm-sm transition-transform duration-200 hover:-translate-y-1.5">
       <div className="flex-1 p-4">
         {next && (
-          <span className={`inline-block border-[2px] border-mm-black px-2 py-1 font-sticker text-[9px] tracking-[0.1em] text-mm-black ${urgent ? "bg-mm-orange" : "bg-mm-lime"}`}>
+          <span className={`inline-block border-[2px] border-mm-black px-2 py-1 font-sans text-[11px] font-bold tracking-[0.02em] text-mm-black ${urgent ? "bg-mm-orange" : "bg-mm-yellow"}`}>
             {urgent ? "🔥 " : ""}NEXT TRIP: {new Date(next.date + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" }).toUpperCase()}
             {` (ONLY ${spotsShown} SPOTS LEFT)`}
           </span>
@@ -94,13 +109,9 @@ export default function PreviewAllIn() {
             <div className="absolute inset-0 bg-gradient-to-b from-mm-black/55 via-mm-black/15 to-mm-black/80" />
           </div>
 
-          <div className="pointer-events-none absolute right-3 top-[5rem] z-30">
-            <img src={allInLogo} alt="ALL IN" className="h-12 w-auto" />
-          </div>
-
           <div className="relative z-10 flex flex-col px-5 pt-[9rem] pb-24">
             <div>
-              <h1 className="font-display text-[clamp(2.75rem,13vw,4.25rem)] leading-[0.9] text-mm-bone">
+              <h1 className="font-display text-[clamp(2.4rem,11.4vw,3.75rem)] leading-[0.9] text-mm-bone">
                 TRIPS THAT<br />
                 <span className="text-mm-lime">MAKE IT OUT</span><br />
                 <span className="text-mm-pink">THE GROUP CHAT</span>
@@ -108,7 +119,7 @@ export default function PreviewAllIn() {
 
               <p className="mt-5 max-w-[280px] text-[14px] leading-snug text-mm-bone/85">
                 Stop herding cats. 7 to 14-day epic adventures across Asia with the ultimate
-                backpacker crew. Real Mad Monkey beds, zero planning, and $99 holds your spot.
+                backpacker crew. Real Mad Monkey beds, zero planning, and flexible payment plans.
               </p>
 
               <div className="mt-5 flex flex-wrap items-center gap-3">
@@ -137,13 +148,9 @@ export default function PreviewAllIn() {
             <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.55)_0%,rgba(0,0,0,0.32)_30%,rgba(0,0,0,0.06)_55%,transparent_72%)]" />
           </div>
 
-          <div className="pointer-events-none absolute right-8 top-20 z-20 origin-top-right scale-[0.60] lg:right-16 lg:top-20 lg:scale-[0.80]">
-            <img src={allInLogo} alt="ALL IN" className="h-44 w-auto lg:h-56" />
-          </div>
-
           <div className="relative z-10 mr-auto flex max-w-6xl flex-col justify-center px-8 pt-20 pb-24 lg:pt-40 lg:pl-20">
             <div>
-              <h1 className="font-display text-[clamp(4rem,12vw,9rem)] leading-[0.88] text-mm-bone">
+              <h1 className="font-display text-[clamp(3.5rem,10.5vw,7.9rem)] leading-[0.88] text-mm-bone">
                 TRIPS THAT<br />
                 <span className="whitespace-nowrap text-mm-lime">MAKE IT OUT</span><br />
                 <span className="text-mm-pink">THE GROUP CHAT</span>
@@ -151,7 +158,7 @@ export default function PreviewAllIn() {
 
               <p className="mt-7 max-w-xl text-lg leading-snug text-mm-bone/85">
                 Stop herding cats. 7 to 14-day epic adventures across Asia with the ultimate
-                backpacker crew. Real Mad Monkey beds, zero planning, and $99 holds your spot.
+                backpacker crew. Real Mad Monkey beds, zero planning, and flexible payment plans.
               </p>
 
               <div className="mt-10 flex flex-wrap items-center gap-4">
@@ -168,11 +175,6 @@ export default function PreviewAllIn() {
       <section className="border-b-[4px] border-mm-black bg-mm-paper py-14">
         <div className="mx-auto max-w-6xl px-5 md:px-6">
           <h2 className="font-display text-[clamp(1.9rem,5vw,3rem)] leading-[0.95] text-mm-black">WHAT MAKES<br />US DIFFERENT?</h2>
-          <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-mm-black/80">
-            Every trip includes our iconic community event, rooted in the location. A Khmer
-            BBQ over locally caught fish, or a jungle party where your group and our local
-            team celebrate side by side.
-          </p>
           <div className="mt-8 grid gap-4 md:grid-cols-3">
             {DIFFERENT.map(({ icon: Icon, title, body }) => (
               <div key={title} className="border-[3px] border-mm-black bg-mm-bone p-5 shadow-mm-sm">
@@ -232,13 +234,40 @@ export default function PreviewAllIn() {
             <Star className="h-4 w-4 fill-mm-black text-mm-black" />
             <span className="font-sticker text-[10px] tracking-[0.12em] text-mm-black">RATED 4.9/5 BY 53,000+ MAD MONKEY TRAVELLERS</span>
           </div>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            {[1, 2].map((n) => (
-              <div key={n} className="flex aspect-[9/12] flex-col items-center justify-center gap-2 border-[3px] border-dashed border-mm-black/40 bg-mm-black/5 p-6 text-center">
-                <span className="font-sticker text-[10px] tracking-[0.14em] text-mm-black/60">VIDEO {n} PENDING</span>
-                <span className="text-xs text-mm-black/50">TikTok / Reels embed, link from Lexie</span>
+          {/* Feature video takes half, two verticals share the other half.
+              TikTok's own embed script is blocked by the cookie banner and adds
+              a third-party tracker, so these are click-through cards that open
+              the post on TikTok in a new tab. Swap to real embeds once consent
+              handling is agreed. */}
+          <div className="mt-8 grid gap-4 lg:grid-cols-2">
+            <a
+              href={TIKTOKS.feature} target="_blank" rel="noopener noreferrer"
+              className="group relative flex min-h-[320px] items-end overflow-hidden border-[3px] border-mm-black bg-mm-black shadow-mm-sm transition-transform duration-200 hover:-translate-y-1.5 lg:min-h-full"
+            >
+              <div className="absolute inset-0 bg-[linear-gradient(135deg,#ff01aa_0%,#0a0a0a_55%,#ccff01_140%)] opacity-90" />
+              <div className="relative z-10 flex w-full items-center justify-between gap-3 p-5">
+                <div>
+                  <p className="font-sticker text-[10px] tracking-[0.14em] text-mm-bone/80">WATCH ON TIKTOK</p>
+                  <p className="mt-1 font-display text-2xl leading-none text-mm-bone">@clairekellyh</p>
+                </div>
+                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full border-[3px] border-mm-bone text-mm-bone transition-transform group-hover:scale-110">▶</span>
               </div>
-            ))}
+            </a>
+
+            <div className="grid grid-cols-2 gap-4">
+              {[TIKTOKS.vertical1, TIKTOKS.vertical2].map((href, i) => (
+                <a
+                  key={href} href={href} target="_blank" rel="noopener noreferrer"
+                  className="group relative flex aspect-[9/16] items-end overflow-hidden border-[3px] border-mm-black bg-mm-black shadow-mm-sm transition-transform duration-200 hover:-translate-y-1.5"
+                >
+                  <div className={`absolute inset-0 opacity-90 ${i === 0 ? "bg-[linear-gradient(160deg,#00fef3_0%,#0a0a0a_60%)]" : "bg-[linear-gradient(160deg,#ffc000_0%,#0a0a0a_60%)]"}`} />
+                  <div className="relative z-10 w-full p-4">
+                    <p className="font-sticker text-[9px] tracking-[0.14em] text-mm-bone/80">WATCH ON TIKTOK</p>
+                    <p className="mt-1 font-display text-lg leading-none text-mm-bone">@clairekellyh</p>
+                  </div>
+                </a>
+              ))}
+            </div>
           </div>
         </div>
       </section>
