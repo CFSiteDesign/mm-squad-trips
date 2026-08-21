@@ -77,7 +77,7 @@
 </div>
 <script>
 /* ============ CONFIG — adjust framing here ============ */
-const CONFIG = {
+let CONFIG = {
   center: [111.5, 6.5],  // [lon, lat] the view is centred on
   zoom: 1.0,             // 1 = fit the whole region; >1 zooms in
   bounds: [[92, -10], [131, 23]] // region extent used to compute the base fit
@@ -122,6 +122,67 @@ const TRAIL = [
   ["Phnom Penh", "Koh Rong"], ["Koh Rong", "Koh Sdach"]
 ];
 
+/* ---- Per-trip filtering (added for the ALL IN preview) ------------------
+   Load with ?trip=<slug> to draw only that trip's stops and the route between
+   them. With no parameter the full network map renders exactly as before.
+
+   Stops not in Dhany's hostel list are trip stops rather than properties, so
+   they are added here rather than to LOCATIONS above. ------------------- */
+const TRIP_EXTRA_STOPS = [
+  ["Ha Giang", "Vietnam", 22.8233, 104.9784],
+  ["Cao Bang", "Vietnam", 22.6657, 106.2570],
+  ["Halong Bay", "Vietnam", 20.9101, 107.1839],
+  ["Ninh Binh", "Vietnam", 20.2506, 105.9745]
+];
+
+/* Ordered route per trip. Names must match LOCATIONS / TRIP_EXTRA_STOPS. */
+const TRIP_ROUTES = {
+  "indonesia":   ["Uluwatu", "Nusa Lembongan", "Gili Trawangan", "Kuta Lombok"],
+  "indonesia-7": ["Gili Trawangan", "Kuta Lombok"],
+  "vietnam":     ["Hanoi", "Ha Giang", "Cao Bang", "Halong Bay", "Hanoi", "Ninh Binh"],
+  "vietnam-7":   ["Hanoi", "Ha Giang"],
+  "cambodia":    ["Phnom Penh", "Siem Reap", "Koh Rong", "Koh Sdach"]
+};
+
+const TRIP_SLUG = new URLSearchParams(location.search).get("trip");
+const TRIP_STOPS = TRIP_SLUG ? TRIP_ROUTES[TRIP_SLUG] : null;
+
+if (TRIP_STOPS) {
+  const all = LOCATIONS.concat(TRIP_EXTRA_STOPS);
+  const unique = TRIP_STOPS.filter((n, i) => TRIP_STOPS.indexOf(n) === i);
+  const picked = unique
+    .map(n => all.find(l => l[0] === n))
+    .filter(Boolean);
+
+  LOCATIONS.length = 0;
+  picked.forEach(l => LOCATIONS.push(l));
+
+  TRAIL.length = 0;
+  for (let i = 0; i < TRIP_STOPS.length - 1; i++) {
+    if (TRIP_STOPS[i] !== TRIP_STOPS[i + 1]) TRAIL.push([TRIP_STOPS[i], TRIP_STOPS[i + 1]]);
+  }
+
+  // Refit the view to just these stops, with enough padding that a two-stop
+  // route doesn't fill the frame edge to edge.
+  const lats = picked.map(l => l[2]), lons = picked.map(l => l[3]);
+  // Tight enough that four close stops fill the frame, with a floor so a
+  // two-stop route still gets some land around it.
+  const spanLat = Math.max(...lats) - Math.min(...lats);
+  const spanLon = Math.max(...lons) - Math.min(...lons);
+  const padLat = Math.max(0.9, spanLat * 0.35);
+  const padLon = Math.max(0.9, spanLon * 0.35);
+  CONFIG.bounds = [
+    [Math.min(...lons) - padLon, Math.min(...lats) - padLat],
+    [Math.max(...lons) + padLon, Math.max(...lats) + padLat]
+  ];
+  CONFIG.center = [(Math.min(...lons) + Math.max(...lons)) / 2,
+                   (Math.min(...lats) + Math.max(...lats)) / 2];
+  CONFIG.zoom = 1.0;
+  // Country labels are positioned for the region-wide view, so they are
+  // meaningless once zoomed into one trip.
+  window.__MM_HIDE_COUNTRY_LABELS = true;
+}
+
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const svgNS = "http://www.w3.org/2000/svg";
 function el(tag, attrs, parent) {
@@ -151,6 +212,7 @@ d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json").th
 
 /* ---- country labels ---- */
 function drawCountryLabels(proj) {
+  if (window.__MM_HIDE_COUNTRY_LABELS) return;
   const g = document.getElementById("labels");
   [["Laos", 102.6, 21.6, "middle"], ["Vietnam", 107.6, 16.3, "middle"],
    ["Thailand", 96.5, 14.2, "middle"], ["Cambodia", 105.9, 11.9, "middle"],

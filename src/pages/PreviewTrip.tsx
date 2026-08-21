@@ -163,7 +163,7 @@ export default function PreviewTrip({ slug: slugProp }: { slug?: PreviewSlug }) 
             </Starburst>
           </div>
 
-          <div className="relative z-10 mr-auto flex min-h-[100svh] max-w-6xl flex-col justify-between px-8 pt-24 pb-16 md:pt-40 md:pb-16 lg:pl-20">
+          <div className="relative z-10 mr-auto flex min-h-[100svh] max-w-6xl flex-col justify-center px-8 pt-28 pb-16 md:pt-32 md:pb-20 lg:pl-20">
             <div>
               <p className="mb-3 font-display text-3xl tracking-[0.12em] text-mm-lime lg:text-5xl">
                 {(meta?.name ?? trip?.name ?? "").toUpperCase()}
@@ -279,8 +279,8 @@ export default function PreviewTrip({ slug: slugProp }: { slug?: PreviewSlug }) 
                 truth and its D3 dependency stays out of our bundle. */}
             <div className="mb-6 border-[3px] border-mm-black bg-[#08090b]">
               <iframe
-                src="/map/"
-                title="Mad Monkey network map"
+                src={`/map/?trip=${slug}`}
+                title={`${meta?.name ?? "Trip"} route map`}
                 loading="lazy"
                 className="block h-[646px] w-full max-w-[680px] mx-auto border-0"
               />
