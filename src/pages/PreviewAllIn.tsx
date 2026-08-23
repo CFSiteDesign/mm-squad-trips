@@ -10,6 +10,7 @@ import { Navbar } from "@/components/Navbar";
 import { SiteFooter } from "@/components/trip/SiteFooter";
 import { StickyCta } from "@/components/preview/PreviewChrome";
 import { SQUAD_BENEFITS } from "@/data/squad-benefits";
+import { TikTokEmbed, useTikTokEmbedScript, type TikTokPost } from "@/components/preview/TikTokEmbed";
 import heroImg from "@/assets/preview-hero-allin.jpg";
 
 const DIFFERENT = [
@@ -25,12 +26,28 @@ const INCLUDED = [
 ];
 const NOT_INCLUDED = ["Flights", "Travel insurance", "Personal expenses", "Upgrades + add-ons"];
 
-/** Supplied by the client 21 Aug 2026. Placeholders until real UGC lands. */
-const TIKTOKS = {
-  feature: "7644404137773239560",
-  vertical1: "7637752214735424776",
-  vertical2: "7637195070298410247",
-};
+/** Supplied by the client as TikTok's own embed code. Placeholders until the
+ *  real UGC lands. */
+const TIKTOK_POSTS: TikTokPost[] = [
+  {
+    id: "7644404137773239560", handle: "clairekellyh",
+    caption: "girls trip to cambodia… music video edition 🇰🇭💃",
+    tags: ["girlstrip", "howcaniexplainmyself", "trendingvideo", "trendingaudio", "backpackingsoutheastasia"],
+    music: { label: "♬ original sound - @pbadvnclaaaa - pbadvnclaaaa", href: "https://www.tiktok.com/music/original-sound-pbadvnclaaaa-7624042173025667848?refer=embed" },
+  },
+  {
+    id: "7637752214735424776", handle: "clairekellyh",
+    caption: "sunset boat cruise in phnom penh 🌞🧡✨",
+    tags: ["sunsetboatcruise", "sunset", "phnompenhcity", "phnomphenh", "cambodia"],
+    music: { label: "♬ original sound - evoyurn", href: "https://www.tiktok.com/music/original-sound-7627798948920445727?refer=embed" },
+  },
+  {
+    id: "7637195070298410247", handle: "clairekellyh",
+    caption: "meet the girls!! 👧🏼👧🏻",
+    tags: ["girlstrip", "grouptrip", "grouptrips", "southeastasia", "backpackingtrip"],
+    music: { label: "♬ original sound - Claire Kelly", href: "https://www.tiktok.com/music/original-sound-7637195077954407189?refer=embed" },
+  },
+];
 
 /** Ceiling on the number shown in the "spots left" badge. */
 const SPOTS_FLOOR = 8;
@@ -78,6 +95,8 @@ function RouteCard({ slug }: { slug: string }) {
 }
 
 export default function PreviewAllIn() {
+  useTikTokEmbedScript([]);
+
   useEffect(() => {
     const m = document.createElement("meta");
     m.name = "robots"; m.content = "noindex, nofollow";
@@ -234,39 +253,16 @@ export default function PreviewAllIn() {
             <Star className="h-4 w-4 fill-mm-black text-mm-black" />
             <span className="font-sticker text-[10px] tracking-[0.12em] text-mm-black">RATED 4.9/5 BY 53,000+ MAD MONKEY TRAVELLERS</span>
           </div>
-          {/* TikTok's embed wraps the video in its own header and caption
-              chrome and lets that scroll. Each tile crops to the video: the
-              iframe is oversized inside an overflow-hidden box and pulled up so
-              the chrome sits outside the frame, with scrolling switched off so
-              the tile can't be moved. */}
-          <div className="mt-8 grid gap-4 lg:grid-cols-2">
-            <div className="relative aspect-[9/16] overflow-hidden border-[3px] border-mm-black bg-mm-black shadow-mm-sm sm:aspect-[4/5] lg:aspect-auto lg:min-h-[560px]">
-              <iframe
-                title="Traveller video 1"
-                src={`https://www.tiktok.com/embed/v2/${TIKTOKS.feature}`}
-                scrolling="no"
-                className="pointer-events-auto absolute left-1/2 top-[-13%] h-[168%] w-[calc(100%+2px)] -translate-x-1/2 border-0"
-                allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-                referrerPolicy="strict-origin-when-cross-origin"
-                loading="lazy"
-              />
+          {/* TikTok's official blockquote embed, upgraded in place by embed.js.
+              The player sizes itself, so the tiles just give it room. */}
+          <div className="mt-8 grid items-start gap-4 lg:grid-cols-2">
+            <div className="tiktok-tile">
+              <TikTokEmbed post={TIKTOK_POSTS[0]} />
             </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              {[TIKTOKS.vertical1, TIKTOKS.vertical2].map((id, i) => (
-                <div
-                  key={id}
-                  className="relative aspect-[9/16] overflow-hidden border-[3px] border-mm-black bg-mm-black shadow-mm-sm"
-                >
-                  <iframe
-                    title={`Traveller video ${i + 2}`}
-                    src={`https://www.tiktok.com/embed/v2/${id}`}
-                    scrolling="no"
-                    className="absolute left-1/2 top-[-13%] h-[168%] w-[calc(100%+2px)] -translate-x-1/2 border-0"
-                    allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-                    referrerPolicy="strict-origin-when-cross-origin"
-                    loading="lazy"
-                  />
+            <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2">
+              {TIKTOK_POSTS.slice(1).map((post) => (
+                <div key={post.id} className="tiktok-tile">
+                  <TikTokEmbed post={post} />
                 </div>
               ))}
             </div>
