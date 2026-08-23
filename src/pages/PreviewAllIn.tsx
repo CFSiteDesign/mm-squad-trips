@@ -27,9 +27,9 @@ const NOT_INCLUDED = ["Flights", "Travel insurance", "Personal expenses", "Upgra
 
 /** Supplied by the client 21 Aug 2026. Placeholders until real UGC lands. */
 const TIKTOKS = {
-  feature: "https://www.tiktok.com/@clairekellyh/video/7644404137773239560",
-  vertical1: "https://www.tiktok.com/@clairekellyh/video/7637752214735424776",
-  vertical2: "https://www.tiktok.com/@clairekellyh/video/7637195070298410247",
+  feature: "7644404137773239560",
+  vertical1: "7637752214735424776",
+  vertical2: "7637195070298410247",
 };
 
 /** Ceiling on the number shown in the "spots left" badge. */
@@ -234,38 +234,34 @@ export default function PreviewAllIn() {
             <Star className="h-4 w-4 fill-mm-black text-mm-black" />
             <span className="font-sticker text-[10px] tracking-[0.12em] text-mm-black">RATED 4.9/5 BY 53,000+ MAD MONKEY TRAVELLERS</span>
           </div>
-          {/* Feature video takes half, two verticals share the other half.
-              TikTok's own embed script is blocked by the cookie banner and adds
-              a third-party tracker, so these are click-through cards that open
-              the post on TikTok in a new tab. Swap to real embeds once consent
-              handling is agreed. */}
+          {/* Real TikTok embeds. Their player exposes no autoplay or loop
+              parameter and browsers block unmuted autoplay anyway, so these
+              start on a tap. See the note to Charlie about self-hosted muted
+              MP4s if true autoplay-and-loop is required. */}
           <div className="mt-8 grid gap-4 lg:grid-cols-2">
-            <a
-              href={TIKTOKS.feature} target="_blank" rel="noopener noreferrer"
-              className="group relative flex min-h-[320px] items-end overflow-hidden border-[3px] border-mm-black bg-mm-black shadow-mm-sm transition-transform duration-200 hover:-translate-y-1.5 lg:min-h-full"
-            >
-              <div className="absolute inset-0 bg-[linear-gradient(135deg,#ff01aa_0%,#0a0a0a_55%,#ccff01_140%)] opacity-90" />
-              <div className="relative z-10 flex w-full items-center justify-between gap-3 p-5">
-                <div>
-                  <p className="font-sticker text-[10px] tracking-[0.14em] text-mm-bone/80">WATCH ON TIKTOK</p>
-                  <p className="mt-1 font-display text-2xl leading-none text-mm-bone">@clairekellyh</p>
-                </div>
-                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full border-[3px] border-mm-bone text-mm-bone transition-transform group-hover:scale-110">▶</span>
-              </div>
-            </a>
+            <div className="overflow-hidden border-[3px] border-mm-black bg-mm-black shadow-mm-sm">
+              <iframe
+                title="Traveller video 1"
+                src={`https://www.tiktok.com/embed/v2/${TIKTOKS.feature}`}
+                className="h-[640px] w-full"
+                allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+                referrerPolicy="strict-origin-when-cross-origin"
+                loading="lazy"
+              />
+            </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              {[TIKTOKS.vertical1, TIKTOKS.vertical2].map((href, i) => (
-                <a
-                  key={href} href={href} target="_blank" rel="noopener noreferrer"
-                  className="group relative flex aspect-[9/16] items-end overflow-hidden border-[3px] border-mm-black bg-mm-black shadow-mm-sm transition-transform duration-200 hover:-translate-y-1.5"
-                >
-                  <div className={`absolute inset-0 opacity-90 ${i === 0 ? "bg-[linear-gradient(160deg,#00fef3_0%,#0a0a0a_60%)]" : "bg-[linear-gradient(160deg,#ffc000_0%,#0a0a0a_60%)]"}`} />
-                  <div className="relative z-10 w-full p-4">
-                    <p className="font-sticker text-[9px] tracking-[0.14em] text-mm-bone/80">WATCH ON TIKTOK</p>
-                    <p className="mt-1 font-display text-lg leading-none text-mm-bone">@clairekellyh</p>
-                  </div>
-                </a>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {[TIKTOKS.vertical1, TIKTOKS.vertical2].map((id, i) => (
+                <div key={id} className="overflow-hidden border-[3px] border-mm-black bg-mm-black shadow-mm-sm">
+                  <iframe
+                    title={`Traveller video ${i + 2}`}
+                    src={`https://www.tiktok.com/embed/v2/${id}`}
+                    className="h-[640px] w-full"
+                    allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    loading="lazy"
+                  />
+                </div>
               ))}
             </div>
           </div>
