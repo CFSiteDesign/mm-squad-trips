@@ -234,16 +234,18 @@ export default function PreviewAllIn() {
             <Star className="h-4 w-4 fill-mm-black text-mm-black" />
             <span className="font-sticker text-[10px] tracking-[0.12em] text-mm-black">RATED 4.9/5 BY 53,000+ MAD MONKEY TRAVELLERS</span>
           </div>
-          {/* Real TikTok embeds. Their player exposes no autoplay or loop
-              parameter and browsers block unmuted autoplay anyway, so these
-              start on a tap. See the note to Charlie about self-hosted muted
-              MP4s if true autoplay-and-loop is required. */}
+          {/* TikTok's embed wraps the video in its own header and caption
+              chrome and lets that scroll. Each tile crops to the video: the
+              iframe is oversized inside an overflow-hidden box and pulled up so
+              the chrome sits outside the frame, with scrolling switched off so
+              the tile can't be moved. */}
           <div className="mt-8 grid gap-4 lg:grid-cols-2">
-            <div className="overflow-hidden border-[3px] border-mm-black bg-mm-black shadow-mm-sm">
+            <div className="relative aspect-[9/16] overflow-hidden border-[3px] border-mm-black bg-mm-black shadow-mm-sm sm:aspect-[4/5] lg:aspect-auto lg:min-h-[560px]">
               <iframe
                 title="Traveller video 1"
                 src={`https://www.tiktok.com/embed/v2/${TIKTOKS.feature}`}
-                className="h-[640px] w-full"
+                scrolling="no"
+                className="pointer-events-auto absolute left-1/2 top-[-13%] h-[168%] w-[calc(100%+2px)] -translate-x-1/2 border-0"
                 allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
                 referrerPolicy="strict-origin-when-cross-origin"
                 loading="lazy"
@@ -252,11 +254,15 @@ export default function PreviewAllIn() {
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {[TIKTOKS.vertical1, TIKTOKS.vertical2].map((id, i) => (
-                <div key={id} className="overflow-hidden border-[3px] border-mm-black bg-mm-black shadow-mm-sm">
+                <div
+                  key={id}
+                  className="relative aspect-[9/16] overflow-hidden border-[3px] border-mm-black bg-mm-black shadow-mm-sm"
+                >
                   <iframe
                     title={`Traveller video ${i + 2}`}
                     src={`https://www.tiktok.com/embed/v2/${id}`}
-                    className="h-[640px] w-full"
+                    scrolling="no"
+                    className="absolute left-1/2 top-[-13%] h-[168%] w-[calc(100%+2px)] -translate-x-1/2 border-0"
                     allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
                     referrerPolicy="strict-origin-when-cross-origin"
                     loading="lazy"
