@@ -30,6 +30,13 @@ const SECTIONS = [
   { id: "faq", label: "FAQ" },
 ];
 
+/** Trips with a hand-framed map from Dhany. Anything else falls back to the
+ *  network map filtered down to that trip's stops, which is close but not
+ *  tuned by eye. */
+const DEDICATED_MAPS = new Set(["indonesia"]);
+const mapSrcFor = (slug: string) =>
+  DEDICATED_MAPS.has(slug) ? `/map/${slug}/` : `/map/?trip=${slug}`;
+
 const scrollToId = (id: string) => {
   const el = document.getElementById(id);
   if (!el) return;
@@ -279,7 +286,7 @@ export default function PreviewTrip({ slug: slugProp }: { slug?: PreviewSlug }) 
                 truth and its D3 dependency stays out of our bundle. */}
             <div className="mb-6 border-[3px] border-mm-black bg-[#08090b]">
               <iframe
-                src={`/map/?trip=${slug}`}
+                src={mapSrcFor(slug)}
                 title={`${meta?.name ?? "Trip"} route map`}
                 loading="lazy"
                 className="block h-[646px] w-full max-w-[680px] mx-auto border-0"

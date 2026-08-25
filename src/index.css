@@ -207,3 +207,6 @@
 .tiktok-tile { width: 100%; }
 .tiktok-tile .tiktok-embed,
 .tiktok-tile iframe { min-width: 0 !important; max-width: 100% !important; width: 100% !important; }
+/* TikTok sizes each player to its own caption length, so the three tiles
+   come out 739-762px tall. Pin them so all three match. */
+.tiktok-tile iframe { height: 760px !important; }

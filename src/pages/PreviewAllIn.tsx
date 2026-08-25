@@ -254,18 +254,13 @@ export default function PreviewAllIn() {
             <span className="font-sticker text-[10px] tracking-[0.12em] text-mm-black">RATED 4.9/5 BY 53,000+ MAD MONKEY TRAVELLERS</span>
           </div>
           {/* TikTok's official blockquote embed, upgraded in place by embed.js.
-              The player sizes itself, so the tiles just give it room. */}
-          <div className="mt-8 grid items-start gap-4 lg:grid-cols-2">
-            <div className="tiktok-tile">
-              <TikTokEmbed post={TIKTOK_POSTS[0]} />
-            </div>
-            <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2">
-              {TIKTOK_POSTS.slice(1).map((post) => (
-                <div key={post.id} className="tiktok-tile">
-                  <TikTokEmbed post={post} />
-                </div>
-              ))}
-            </div>
+              Three equal columns so every player is the same size. */}
+          <div className="mt-8 grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {TIKTOK_POSTS.map((post) => (
+              <div key={post.id} className="tiktok-tile">
+                <TikTokEmbed post={post} />
+              </div>
+            ))}
           </div>
         </div>
       </section>
