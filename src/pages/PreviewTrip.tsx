@@ -35,7 +35,7 @@ const SECTIONS = [
  *  tuned by eye. */
 const DEDICATED_MAPS = new Set(["indonesia"]);
 const mapSrcFor = (slug: string) =>
-  DEDICATED_MAPS.has(slug) ? `/map/${slug}/` : `/map/?trip=${slug}`;
+  DEDICATED_MAPS.has(slug) ? `/map/${slug}/?embed=1` : `/map/?trip=${slug}&embed=1`;
 
 const scrollToId = (id: string) => {
   const el = document.getElementById(id);
@@ -284,12 +284,18 @@ export default function PreviewTrip({ slug: slugProp }: { slug?: PreviewSlug }) 
             {/* Dhany's animated network map, embedded as supplied. It is
                 iframed rather than ported so his file stays the source of
                 truth and its D3 dependency stays out of our bundle. */}
-            <div className="mb-6 border-[3px] border-mm-black bg-[#08090b]">
+            {/* Capped at the map's own 610x646 so it is never upscaled, and
+                cropped to a landscape rectangle. The map's SVG uses
+                preserveAspectRatio="slice", so it fills the box and trims top
+                and bottom rather than letterboxing. Scrolling is off so the
+                frame can't be moved. */}
+            <div className="mb-6 overflow-hidden border-[3px] border-mm-black bg-[#08090b]">
               <iframe
                 src={mapSrcFor(slug)}
                 title={`${meta?.name ?? "Trip"} route map`}
                 loading="lazy"
-                className="block h-[646px] w-full max-w-[680px] mx-auto border-0"
+                scrolling="no"
+                className="mx-auto block h-[420px] w-full max-w-[610px] border-0"
               />
             </div>
             <div className="grid gap-4 md:grid-cols-2">

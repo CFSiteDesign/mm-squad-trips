@@ -11,6 +11,12 @@
 <script src="https://unpkg.com/topojson-client@3.1.0/dist/topojson-client.min.js" integrity="sha384-Ukv1p/xTma6P4/2bY5KzWBw+ydSpXmhCMtyciIQVDJ1RmOxtCYNMF1uXT9T63H67" crossorigin="anonymous"></script>
 <style>
   html, body { margin: 0; background: #08090b; }
+  html, body { overflow: hidden; }
+  /* Embedded (?embed=1): fill whatever box the host iframe gives us instead of
+     holding the 610/646 aspect, which would overflow a shorter frame and make
+     it scroll. The SVG uses preserveAspectRatio="slice", so it crops rather
+     than letterboxes. Standalone viewing is unaffected. */
+  body.is-embed #map-wrap { max-width: none; width: 100vw; height: 100vh; aspect-ratio: auto; }
   #map-wrap {
     position: relative; width: 100%; max-width: 680px; margin: 0 auto;
     aspect-ratio: 610 / 646;
@@ -55,6 +61,11 @@
     .pulse { animation: none; opacity: 0; }
   }
 </style>
+<script>
+  if (new URLSearchParams(location.search).get("embed") === "1") {
+    document.addEventListener("DOMContentLoaded", () => document.body.classList.add("is-embed"));
+  }
+</script>
 </head>
 <body>
 <div id="map-wrap">
