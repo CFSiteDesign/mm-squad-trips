@@ -240,7 +240,7 @@ export default function PreviewTrip({ slug: slugProp }: { slug?: PreviewSlug }) 
                 <figure key={h.title} className="border-[3px] border-mm-black bg-mm-bone shadow-mm-sm">
                   <div className="relative">
                     {h.image ? (
-                      <img src={h.image} alt={h.title} className="aspect-[4/5] w-full object-cover" loading="lazy" />
+                      <img src={h.image} alt={h.title} className={`aspect-[4/5] w-full object-cover ${h.position ?? ""}`} loading="lazy" />
                     ) : (
                       <PhotoPending title={h.title} />
                     )}

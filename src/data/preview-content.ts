@@ -20,6 +20,14 @@ import {
 import {
   VN7_SNAPSHOT, VN7_IS_THIS_FOR_ME, VN7_HIGHLIGHTS, VN7_INCLUDED, VN7_ITINERARY, VN7_FAQ_OVERRIDES,
 } from "@/data/preview-vietnam7";
+import {
+  I7_SNAPSHOT, I7_IS_THIS_FOR_ME, I7_HIGHLIGHTS, I7_INCLUDED, I7_ITINERARY, I7_FAQ_OVERRIDES,
+} from "@/data/preview-indonesia7";
+import indo7Hero from "@/assets/preview-indo7-hero.jpg";
+import khPreviewHero from "@/assets/preview-kh-hero.jpg";
+import {
+  KH_SNAPSHOT, KH_IS_THIS_FOR_ME, KH_HIGHLIGHTS, KH_INCLUDED, KH_ITINERARY, KH_FAQ_OVERRIDES,
+} from "@/data/preview-cambodia";
 import vnHero from "@/assets/vn-hero.jpg";
 import khHero from "@/assets/kh-hero.png";
 
@@ -27,7 +35,7 @@ export const PREVIEW_SLUGS = ["indonesia", "indonesia-7", "vietnam", "vietnam-7"
 export type PreviewSlug = (typeof PREVIEW_SLUGS)[number];
 
 export type Review = { property: string; author: string | null; rating: number; when: string | null; body: string };
-export type Highlight = { title: string; image: string | null };
+export type Highlight = { title: string; image: string | null; /** Tailwind object-position, e.g. "object-right". */ position?: string };
 
 export type PreviewContent = {
   hero: string | null;
@@ -114,6 +122,34 @@ function fromTrip(trip: Trip, slug: PreviewSlug): PreviewContent {
 }
 
 export function getPreviewContent(trip: Trip, slug: PreviewSlug): PreviewContent {
+  if (slug === "cambodia") {
+    return {
+      hero: khPreviewHero,
+      snapshot: KH_SNAPSHOT,
+      isThisForMe: KH_IS_THIS_FOR_ME,
+      highlights: KH_HIGHLIGHTS,
+      included: KH_INCLUDED,
+      notIncluded: GENERIC_NOT_INCLUDED,
+      itinerary: KH_ITINERARY,
+      reviews: [],
+      faqs: DEFAULT_FAQS.map((f) => ({ ...f, a: KH_FAQ_OVERRIDES[f.q] ?? f.a })),
+      pending: ["Private Beach, Koh Sdach photo", "Property reviews", "Route map (Dhany's animated version)"],
+    };
+  }
+  if (slug === "indonesia-7") {
+    return {
+      hero: indo7Hero,
+      snapshot: I7_SNAPSHOT,
+      isThisForMe: I7_IS_THIS_FOR_ME,
+      highlights: I7_HIGHLIGHTS,
+      included: I7_INCLUDED,
+      notIncluded: GENERIC_NOT_INCLUDED,
+      itinerary: I7_ITINERARY,
+      reviews: [],
+      faqs: DEFAULT_FAQS.map((f) => ({ ...f, a: I7_FAQ_OVERRIDES[f.q] ?? f.a })),
+      pending: ["Property reviews", "Route map (Dhany's animated version)"],
+    };
+  }
   if (slug === "vietnam-7") {
     return {
       hero: null, // brief says TBC
