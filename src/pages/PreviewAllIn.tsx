@@ -10,7 +10,7 @@ import { Navbar } from "@/components/Navbar";
 import { SiteFooter } from "@/components/trip/SiteFooter";
 import { StickyCta } from "@/components/preview/PreviewChrome";
 import { SQUAD_BENEFITS } from "@/data/squad-benefits";
-import { TikTokEmbed, useTikTokEmbedScript, type TikTokPost } from "@/components/preview/TikTokEmbed";
+import { VideoTile, type Clip } from "@/components/preview/VideoTile";
 import heroImg from "@/assets/preview-hero-allin.jpg";
 
 const DIFFERENT = [
@@ -26,27 +26,15 @@ const INCLUDED = [
 ];
 const NOT_INCLUDED = ["Flights", "Travel insurance", "Personal expenses", "Upgrades + add-ons"];
 
-/** Supplied by the client as TikTok's own embed code. Placeholders until the
- *  real UGC lands. */
-const TIKTOK_POSTS: TikTokPost[] = [
-  {
-    id: "7644404137773239560", handle: "clairekellyh",
-    caption: "girls trip to cambodia… music video edition 🇰🇭💃",
-    tags: ["girlstrip", "howcaniexplainmyself", "trendingvideo", "trendingaudio", "backpackingsoutheastasia"],
-    music: { label: "♬ original sound - @pbadvnclaaaa - pbadvnclaaaa", href: "https://www.tiktok.com/music/original-sound-pbadvnclaaaa-7624042173025667848?refer=embed" },
-  },
-  {
-    id: "7637752214735424776", handle: "clairekellyh",
-    caption: "sunset boat cruise in phnom penh 🌞🧡✨",
-    tags: ["sunsetboatcruise", "sunset", "phnompenhcity", "phnomphenh", "cambodia"],
-    music: { label: "♬ original sound - evoyurn", href: "https://www.tiktok.com/music/original-sound-7627798948920445727?refer=embed" },
-  },
-  {
-    id: "7637195070298410247", handle: "clairekellyh",
-    caption: "meet the girls!! 👧🏼👧🏻",
-    tags: ["girlstrip", "grouptrip", "grouptrips", "southeastasia", "backpackingtrip"],
-    music: { label: "♬ original sound - Claire Kelly", href: "https://www.tiktok.com/music/original-sound-7637195077954407189?refer=embed" },
-  },
+/** Traveller clips. Files live in /public/videos; the links point back to the
+ *  original posts. Placeholders until Mad Monkey's own UGC lands. */
+const CLIPS: Clip[] = [
+  { file: "allin-feature", handle: "clairekellyh", caption: "girls trip to cambodia… music video edition 🇰🇭💃",
+    href: "https://www.tiktok.com/@clairekellyh/video/7644404137773239560" },
+  { file: "allin-vertical-1", handle: "clairekellyh", caption: "sunset boat cruise in phnom penh 🌞🧡✨",
+    href: "https://www.tiktok.com/@clairekellyh/video/7637752214735424776" },
+  { file: "allin-vertical-2", handle: "clairekellyh", caption: "meet the girls!! 👧🏼👧🏻",
+    href: "https://www.tiktok.com/@clairekellyh/video/7637195070298410247" },
 ];
 
 /** Ceiling on the number shown in the "spots left" badge. */
@@ -95,8 +83,6 @@ function RouteCard({ slug }: { slug: string }) {
 }
 
 export default function PreviewAllIn() {
-  useTikTokEmbedScript([]);
-
   useEffect(() => {
     const m = document.createElement("meta");
     m.name = "robots"; m.content = "noindex, nofollow";
@@ -253,14 +239,12 @@ export default function PreviewAllIn() {
             <Star className="h-4 w-4 fill-mm-black text-mm-black" />
             <span className="font-sticker text-[10px] tracking-[0.12em] text-mm-black">RATED 4.9/5 BY 53,000+ MAD MONKEY TRAVELLERS</span>
           </div>
-          {/* TikTok's official blockquote embed, upgraded in place by embed.js.
-              Three equal columns so every player is the same size. */}
-          <div className="mt-8 grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {TIKTOK_POSTS.map((post) => (
-              <div key={post.id} className="tiktok-tile">
-                <TikTokEmbed post={post} />
-              </div>
-            ))}
+          {/* Layout per the 25 Aug wireframe: one landscape clip on the left,
+              two verticals beside it, all the same height. */}
+          <div className="mt-8 grid gap-4 lg:grid-cols-[1.6fr_1fr_1fr]">
+            <VideoTile clip={CLIPS[0]} className="aspect-video lg:aspect-auto lg:h-[420px]" />
+            <VideoTile clip={CLIPS[1]} className="aspect-[9/16] lg:aspect-auto lg:h-[420px]" />
+            <VideoTile clip={CLIPS[2]} className="aspect-[9/16] lg:aspect-auto lg:h-[420px]" />
           </div>
         </div>
       </section>

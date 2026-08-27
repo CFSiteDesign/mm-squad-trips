@@ -75,8 +75,15 @@ export default function PreviewTrip({ slug: slugProp }: { slug?: PreviewSlug }) 
 
   const content = trip ? getPreviewContent(trip, slug) : null;
   const meta = TRIPS.find((t) => t.slug === slug);
-  const price = trip?.departures?.[0]?.price ?? trip?.defaultPrice ?? meta?.price ?? 0;
-  const strike = trip?.departures?.[0]?.strikethrough ?? trip?.defaultStrikethrough ?? null;
+  // "From" must always be the cheapest bookable departure, not whichever one
+  // happens to sort first — they were showing $700 against a $650 date.
+  const bookable = (trip?.departures ?? []).filter((d) => d.bookable);
+  const priced = (bookable.length ? bookable : trip?.departures ?? []).map((d) => d.price).filter((n) => n > 0);
+  const price = priced.length ? Math.min(...priced) : trip?.defaultPrice ?? meta?.price ?? 0;
+  // Pair the strike price with the same departure the "from" price came from,
+  // otherwise the discount badge is computed across two different dates.
+  const cheapest = (bookable.length ? bookable : trip?.departures ?? []).find((d) => d.price === price);
+  const strike = cheapest?.strikethrough ?? trip?.defaultStrikethrough ?? null;
   const next = trip?.departures?.[0];
   const pctOff = strike && strike > price ? Math.round(((strike - price) / strike) * 100) : null;
   const visibleIncluded = showAllIncluded ? (content?.included ?? []) : (content?.included ?? []).slice(0, 6);
