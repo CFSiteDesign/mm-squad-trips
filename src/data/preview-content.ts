@@ -13,6 +13,13 @@ import {
 } from "@/data/preview-indonesia";
 import { DEFAULT_FAQS } from "@/components/trip/FAQ";
 import indoHero from "@/assets/preview-indo-hero.jpg";
+import vnPreviewHero from "@/assets/preview-vn-hero.jpg";
+import {
+  VN_SNAPSHOT, VN_IS_THIS_FOR_ME, VN_HIGHLIGHTS, VN_INCLUDED, VN_ITINERARY, VN_FAQ_OVERRIDES,
+} from "@/data/preview-vietnam";
+import {
+  VN7_SNAPSHOT, VN7_IS_THIS_FOR_ME, VN7_HIGHLIGHTS, VN7_INCLUDED, VN7_ITINERARY, VN7_FAQ_OVERRIDES,
+} from "@/data/preview-vietnam7";
 import vnHero from "@/assets/vn-hero.jpg";
 import khHero from "@/assets/kh-hero.png";
 
@@ -107,6 +114,35 @@ function fromTrip(trip: Trip, slug: PreviewSlug): PreviewContent {
 }
 
 export function getPreviewContent(trip: Trip, slug: PreviewSlug): PreviewContent {
+  if (slug === "vietnam-7") {
+    return {
+      hero: null, // brief says TBC
+      snapshot: VN7_SNAPSHOT,
+      isThisForMe: VN7_IS_THIS_FOR_ME,
+      highlights: VN7_HIGHLIGHTS,
+      included: VN7_INCLUDED,
+      notIncluded: GENERIC_NOT_INCLUDED,
+      itinerary: VN7_ITINERARY,
+      reviews: [],
+      faqs: DEFAULT_FAQS.map((f) => ({ ...f, a: VN7_FAQ_OVERRIDES[f.q] ?? f.a })),
+      pending: ["Hero image", "Property reviews", "Route map (Dhany's animated version)"],
+    };
+  }
+  if (slug === "vietnam") {
+    return {
+      hero: vnPreviewHero,
+      snapshot: VN_SNAPSHOT,
+      isThisForMe: VN_IS_THIS_FOR_ME,
+      highlights: VN_HIGHLIGHTS,
+      included: VN_INCLUDED,
+      notIncluded: GENERIC_NOT_INCLUDED,
+      itinerary: VN_ITINERARY,
+      reviews: [],
+      // Shared questions, Vietnam answers where the brief supplied them.
+      faqs: DEFAULT_FAQS.map((f) => ({ ...f, a: VN_FAQ_OVERRIDES[f.q] ?? f.a })),
+      pending: ["Property reviews", "Route map (Dhany's animated version)"],
+    };
+  }
   if (slug === "indonesia") {
     return {
       hero: indoHero,

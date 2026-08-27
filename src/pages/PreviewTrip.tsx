@@ -12,12 +12,11 @@ import { fetchTrip } from "@/lib/api";
 import { getTripFallback } from "@/data/tripFallbacks";
 import { formatPrice } from "@/lib/trip-helpers";
 import { Navbar } from "@/components/Navbar";
-import { BookingFlow } from "@/components/trip/BookingFlow";
 import { SiteFooter } from "@/components/trip/SiteFooter";
 import { Starburst } from "@/components/brand/Sticker";
 import { SubNav, StickyCta, PhotoPending, PendingPanel, SCROLL_OFFSET } from "@/components/preview/PreviewChrome";
 import { getPreviewContent, PREVIEW_SLUGS, type PreviewSlug } from "@/data/preview-content";
-import { PreviewDates } from "@/components/preview/PreviewDates";
+import { PreviewBooking } from "@/components/preview/PreviewBooking";
 import { useParams } from "react-router-dom";
 import { TRIPS } from "@/data/trips";
 import { SQUAD_BENEFITS } from "@/data/squad-benefits";
@@ -391,14 +390,12 @@ export default function PreviewTrip({ slug: slugProp }: { slug?: PreviewSlug }) 
       </div>
 
       {/* ============ DATES & BOOKING (real flow) ============ */}
-      <section id="booking" className="scroll-mt-[116px] border-t-[4px] border-mm-black bg-mm-paper py-12">
+      <section id="booking" className="scroll-mt-[116px] border-t-[4px] border-mm-black bg-mm-bone py-12">
         <div className="mx-auto max-w-6xl px-5 md:px-6">
           <H eyebrow="DATES & AVAILABILITY">THE COUNTDOWN<br />STARTS NOW</H>
-          {trip && <PreviewDates trip={trip} onBook={() => scrollToId("book-flow")} />}
+          {trip && <PreviewBooking trip={trip} />}
         </div>
-        <div id="book-flow" className="scroll-mt-[116px]">
-          {trip && <BookingFlow trip={trip} hideHeading />}
-        </div>
+
       </section>
 
       {/* ============ FAQ ============ */}
