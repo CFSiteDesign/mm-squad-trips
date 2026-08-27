@@ -133,7 +133,7 @@ export function getPreviewContent(trip: Trip, slug: PreviewSlug): PreviewContent
       itinerary: KH_ITINERARY,
       reviews: [],
       faqs: DEFAULT_FAQS.map((f) => ({ ...f, a: KH_FAQ_OVERRIDES[f.q] ?? f.a })),
-      pending: ["Private Beach, Koh Sdach photo", "Property reviews", "Route map (Dhany's animated version)"],
+      pending: ["Property reviews", "Route map (Dhany's animated version)"],
     };
   }
   if (slug === "indonesia-7") {

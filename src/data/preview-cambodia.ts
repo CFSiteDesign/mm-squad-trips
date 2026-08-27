@@ -12,6 +12,7 @@ import angkor from "@/assets/kh-hl-angkor.jpg";
 import floating from "@/assets/kh-hl-floating.jpg";
 import nestival from "@/assets/kh-hl-nestival.jpg";
 import fireshow from "@/assets/kh-hl-fireshow.jpg";
+import privateBeach from "@/assets/kh-hl-private-beach.jpg";
 import type { Day } from "@/data/preview-indonesia";
 import type { Highlight } from "@/data/preview-content";
 
@@ -38,7 +39,7 @@ export const KH_HIGHLIGHTS: Highlight[] = [
   { title: "Floating Village", image: floating },
   { title: "Nestival Access", image: nestival },
   { title: "Beach Fireshow", image: fireshow },
-  { title: "Private Beach, Koh Sdach", image: null },
+  { title: "Private Beach, Koh Sdach", image: privateBeach },
 ];
 
 export const KH_INCLUDED = [

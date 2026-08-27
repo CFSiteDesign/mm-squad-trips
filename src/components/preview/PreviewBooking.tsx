@@ -44,7 +44,6 @@ export function PreviewBooking({ trip }: { trip: Trip }) {
   const [month, setMonth] = useState(months[0] ?? "");
   const [chosen, setChosen] = useState<Chosen | null>(null);
   const [spots, setSpots] = useState(1);
-  const [customDate, setCustomDate] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
     firstName: "", lastName: "", email: "", phone: "", squadCode: "", discountCode: "",
@@ -55,18 +54,37 @@ export function PreviewBooking({ trip }: { trip: Trip }) {
   const weekdayName = weekday === null ? null : WEEKDAYS[weekday];
   const basePrice = chosen?.price ?? 0;
 
-  /** Only the trip's start weekday is selectable; anything else is refused. */
-  function onCustomDate(v: string) {
-    setCustomDate(v);
-    if (!v) return;
-    const picked = new Date(v + "T00:00:00Z").getUTCDay();
-    if (weekday !== null && picked !== weekday) {
-      toast.error(`${trip.name} departs on ${weekdayName}s — please pick a ${weekdayName}.`);
-      setCustomDate("");
-      return;
+  /** Calendar state for the custom-date picker. */
+  const [calMonth, setCalMonth] = useState(() => {
+    const d = new Date(); d.setUTCDate(1); return d.toISOString().slice(0, 7);
+  });
+
+  /**
+   * Days of calMonth. Anything that is not the trip's start weekday, or is in
+   * the past, comes back disabled — the brief asks for those to be greyed out
+   * and genuinely unbookable rather than rejected after the fact.
+   */
+  const calDays = useMemo(() => {
+    const [y, m] = calMonth.split("-").map(Number);
+    const first = new Date(Date.UTC(y, m - 1, 1));
+    const daysInMonth = new Date(Date.UTC(y, m, 0)).getUTCDate();
+    const lead = first.getUTCDay();
+    const today = new Date(); today.setUTCHours(0, 0, 0, 0);
+    const out: ({ iso: string; day: number; enabled: boolean } | null)[] = Array(lead).fill(null);
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dt = new Date(Date.UTC(y, m - 1, d));
+      const iso = dt.toISOString().slice(0, 10);
+      const rightDay = weekday === null || dt.getUTCDay() === weekday;
+      out.push({ iso, day: d, enabled: rightDay && dt >= today });
     }
-    setChosen({ id: null, date: v, price: trip.defaultPrice });
-  }
+    return out;
+  }, [calMonth, weekday]);
+
+  const shiftMonth = (delta: number) => {
+    const [y, m] = calMonth.split("-").map(Number);
+    const d = new Date(Date.UTC(y, m - 1 + delta, 1));
+    setCalMonth(d.toISOString().slice(0, 7));
+  };
 
   async function submit() {
     if (!chosen) return;
@@ -253,12 +271,49 @@ export function PreviewBooking({ trip }: { trip: Trip }) {
                 <p className="mt-1 text-sm leading-snug text-mm-black/75">
                   Solo trips are guaranteed to run, so pick any {weekdayName ?? "start day"} that suits you.
                 </p>
-                <input
-                  type="date"
-                  value={customDate}
-                  onChange={(e) => onCustomDate(e.target.value)}
-                  className="mt-3 w-full border-[3px] border-mm-black bg-mm-bone px-3 py-2 text-sm text-mm-black outline-none"
-                />
+                {/* Only the trip's start weekday is clickable. Everything else
+                    is rendered disabled and greyed, so an unbookable day cannot
+                    be selected at all. */}
+                <div className="mt-3 border-[3px] border-mm-black bg-mm-paper p-2">
+                  <div className="mb-2 flex items-center justify-between">
+                    <button
+                      onClick={() => shiftMonth(-1)}
+                      className="border-[2px] border-mm-black bg-mm-bone px-2 py-0.5 font-sans text-[12px] font-bold text-mm-black"
+                      aria-label="Previous month"
+                    >‹</button>
+                    <span className="font-sans text-[12px] font-bold text-mm-black">{monthLabel(calMonth)}</span>
+                    <button
+                      onClick={() => shiftMonth(1)}
+                      className="border-[2px] border-mm-black bg-mm-bone px-2 py-0.5 font-sans text-[12px] font-bold text-mm-black"
+                      aria-label="Next month"
+                    >›</button>
+                  </div>
+                  <div className="grid grid-cols-7 gap-0.5 text-center">
+                    {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
+                      <span key={i} className="font-sans text-[9px] font-bold uppercase text-mm-black/40">{d}</span>
+                    ))}
+                    {calDays.map((c, i) =>
+                      !c ? (
+                        <span key={`x${i}`} />
+                      ) : (
+                        <button
+                          key={c.iso}
+                          disabled={!c.enabled}
+                          onClick={() => setChosen({ id: null, date: c.iso, price: trip.defaultPrice })}
+                          className={`aspect-square text-[12px] transition-colors ${
+                            !c.enabled
+                              ? "cursor-not-allowed text-mm-black/20"
+                              : chosen && !chosen.id && chosen.date === c.iso
+                              ? "border-[2px] border-mm-black bg-mm-pink font-bold text-mm-bone"
+                              : "border-[2px] border-mm-black bg-mm-bone font-bold text-mm-black hover:bg-mm-yellow"
+                          }`}
+                        >
+                          {c.day}
+                        </button>
+                      ),
+                    )}
+                  </div>
+                </div>
                 <p className="mt-1 text-[11px] text-mm-black/55">{weekdayName ? `${weekdayName}s only` : "Start days only"}</p>
               </div>
               <div className="border-[3px] border-mm-black bg-mm-bone p-3">

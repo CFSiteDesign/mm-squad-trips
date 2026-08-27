@@ -189,9 +189,9 @@ if (TRIP_STOPS) {
   CONFIG.center = [(Math.min(...lons) + Math.max(...lons)) / 2,
                    (Math.min(...lats) + Math.max(...lats)) / 2];
   CONFIG.zoom = 1.0;
-  // Country labels are positioned for the region-wide view, so they are
-  // meaningless once zoomed into one trip.
-  window.__MM_HIDE_COUNTRY_LABELS = true;
+  // Labels are positioned by lon/lat, so any country outside the trip's frame
+  // simply falls off screen. Keeping them means the country the route runs
+  // through stays named, which is what the brief asks for.
 }
 
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -223,7 +223,6 @@ d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json").th
 
 /* ---- country labels ---- */
 function drawCountryLabels(proj) {
-  if (window.__MM_HIDE_COUNTRY_LABELS) return;
   const g = document.getElementById("labels");
   [["Laos", 102.6, 21.6, "middle"], ["Vietnam", 107.6, 16.3, "middle"],
    ["Thailand", 96.5, 14.2, "middle"], ["Cambodia", 105.9, 11.9, "middle"],
