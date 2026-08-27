@@ -95,7 +95,17 @@ const CONFIG = {
 };
 /* ====================================================== */
 
-const W = 610, H = 646;
+/* Embedded, the host iframe decides the box. Draw at that aspect rather than
+   at the standalone 610x646: "slice" would otherwise crop away a third of the
+   framing, and — worse — the stipple canvas stretches to its box where the SVG
+   crops, so the coastline drifts out of register with the pins on top of it. */
+let W = 610, H = 646;
+if (new URLSearchParams(location.search).get("embed") === "1") {
+  const vw = document.documentElement.clientWidth, vh = document.documentElement.clientHeight;
+  if (vw > 0 && vh > 0) H = Math.round(W * vh / vw);
+}
+document.getElementById("overlay").setAttribute("viewBox", "0 0 " + W + " " + H);
+
 const PINK = "#ff01aa", LIME = "#ccff01";
 
 const LOCATIONS = [

@@ -29,12 +29,15 @@ const SECTIONS = [
   { id: "faq", label: "FAQ" },
 ];
 
-/** Trips with a hand-framed map from Dhany. Anything else falls back to the
- *  network map filtered down to that trip's stops, which is close but not
- *  tuned by eye. */
+/** Trips with a hand-framed map from Dhany. Everything else runs on the shared
+ *  map, which frames itself on that trip's country and walks its itinerary.
+ *  Both are addressed as /index.html rather than the bare directory: Vercel
+ *  serves either, but the Vite dev server only serves the explicit file. */
 const DEDICATED_MAPS = new Set(["indonesia"]);
 const mapSrcFor = (slug: string) =>
-  DEDICATED_MAPS.has(slug) ? `/map/${slug}/?embed=1` : `/map/?trip=${slug}&embed=1`;
+  DEDICATED_MAPS.has(slug)
+    ? `/map/${slug}/index.html?embed=1`
+    : `/map/index.html?trip=${slug}&embed=1`;
 
 const scrollToId = (id: string) => {
   const el = document.getElementById(id);

@@ -95,7 +95,18 @@ let CONFIG = {
 };
 /* ====================================================== */
 
-const W = 610, H = 646;
+/* Embedded, the host iframe decides the box. Draw at that aspect rather than
+   at the standalone 610x646: "slice" would otherwise crop away a third of the
+   framing we picked, and — worse — the stipple canvas stretches to its box
+   where the SVG crops, so the coastline drifts out of register with the pins
+   sitting on top of it. Matching the aspect makes the two agree. */
+let W = 610, H = 646;
+if (new URLSearchParams(location.search).get("embed") === "1") {
+  const vw = document.documentElement.clientWidth, vh = document.documentElement.clientHeight;
+  if (vw > 0 && vh > 0) H = Math.round(W * vh / vw);
+}
+document.getElementById("overlay").setAttribute("viewBox", "0 0 " + W + " " + H);
+
 const PINK = "#ff01aa", LIME = "#ccff01";
 
 const LOCATIONS = [
@@ -141,22 +152,43 @@ const TRAIL = [
    they are added here rather than to LOCATIONS above. ------------------- */
 const TRIP_EXTRA_STOPS = [
   ["Ha Giang", "Vietnam", 22.8233, 104.9784],
-  ["Cao Bang", "Vietnam", 22.6657, 106.2570],
-  ["Halong Bay", "Vietnam", 20.9101, 107.1839],
-  ["Ninh Binh", "Vietnam", 20.2506, 105.9745]
+  ["Lan Ha Bay", "Vietnam", 20.7500, 107.0700],
+  ["Ninh Binh", "Vietnam", 20.2506, 105.9745],
+  ["Sihanoukville", "Cambodia", 10.6270, 103.5220]
 ];
 
-/* Ordered route per trip. Names must match LOCATIONS / TRIP_EXTRA_STOPS. */
+/* Ordered route per trip, taken stop-for-stop off the itinerary in
+   src/data/preview-*.ts. Repeats are deliberate — these trips return to a hub
+   between legs, and the map should show that rather than a tidy fiction.
+   Names must match LOCATIONS / TRIP_EXTRA_STOPS. */
 const TRIP_ROUTES = {
   "indonesia":   ["Uluwatu", "Nusa Lembongan", "Gili Trawangan", "Kuta Lombok"],
   "indonesia-7": ["Gili Trawangan", "Kuta Lombok"],
-  "vietnam":     ["Hanoi", "Ha Giang", "Cao Bang", "Halong Bay", "Hanoi", "Ninh Binh"],
-  "vietnam-7":   ["Hanoi", "Ha Giang"],
-  "cambodia":    ["Phnom Penh", "Siem Reap", "Koh Rong", "Koh Sdach"]
+  "vietnam":     ["Hanoi", "Lan Ha Bay", "Hanoi", "Ha Giang", "Hanoi", "Ninh Binh", "Hoi An"],
+  "vietnam-7":   ["Hanoi", "Ha Giang", "Hanoi"],
+  "cambodia":    ["Phnom Penh", "Siem Reap", "Sihanoukville", "Koh Rong", "Koh Sdach", "Phnom Penh"]
+};
+
+/* Framing per trip. Auto-fitting to the stops alone crops to a featureless
+   patch of coast — the point of the map is that you recognise the country, so
+   each trip gets a hand-set extent wide enough to read the landmass, plus the
+   labels that belong inside it. */
+const TRIP_VIEWS = {
+  "indonesia":   { country: "Indonesia", bounds: [[114.3, -9.3], [117.1, -8.0]],
+                   labels: [["Bali", 115.15, -8.75], ["Lombok", 116.45, -8.45]] },
+  "indonesia-7": { country: "Indonesia", bounds: [[115.4, -9.3], [117.1, -8.0]],
+                   labels: [["Lombok", 116.45, -8.45]] },
+  "vietnam":     { country: "Vietnam", bounds: [[101.4, 14.4], [111.2, 23.7]],
+                   labels: [["Vietnam", 106.3, 18.3]] },
+  "vietnam-7":   { country: "Vietnam", bounds: [[101.6, 18.6], [109.6, 23.8]],
+                   labels: [["Vietnam", 105.4, 19.5]] },
+  "cambodia":    { country: "Cambodia", bounds: [[101.8, 9.4], [108.1, 15.1]],
+                   labels: [["Cambodia", 105.9, 13.3]] }
 };
 
 const TRIP_SLUG = new URLSearchParams(location.search).get("trip");
 const TRIP_STOPS = TRIP_SLUG ? TRIP_ROUTES[TRIP_SLUG] : null;
+const TRIP_VIEW = TRIP_SLUG ? TRIP_VIEWS[TRIP_SLUG] : null;
 
 if (TRIP_STOPS) {
   const all = LOCATIONS.concat(TRIP_EXTRA_STOPS);
@@ -173,25 +205,22 @@ if (TRIP_STOPS) {
     if (TRIP_STOPS[i] !== TRIP_STOPS[i + 1]) TRAIL.push([TRIP_STOPS[i], TRIP_STOPS[i + 1]]);
   }
 
-  // Refit the view to just these stops, with enough padding that a two-stop
-  // route doesn't fill the frame edge to edge.
-  const lats = picked.map(l => l[2]), lons = picked.map(l => l[3]);
-  // Tight enough that four close stops fill the frame, with a floor so a
-  // two-stop route still gets some land around it.
-  const spanLat = Math.max(...lats) - Math.min(...lats);
-  const spanLon = Math.max(...lons) - Math.min(...lons);
-  const padLat = Math.max(0.9, spanLat * 0.35);
-  const padLon = Math.max(0.9, spanLon * 0.35);
-  CONFIG.bounds = [
-    [Math.min(...lons) - padLon, Math.min(...lats) - padLat],
-    [Math.max(...lons) + padLon, Math.max(...lats) + padLat]
-  ];
-  CONFIG.center = [(Math.min(...lons) + Math.max(...lons)) / 2,
-                   (Math.min(...lats) + Math.max(...lats)) / 2];
+  if (TRIP_VIEW) {
+    CONFIG.bounds = TRIP_VIEW.bounds;
+  } else {
+    // No hand-set extent for this slug: fall back to fitting the stops, with a
+    // floor so a two-stop route still gets some land around it.
+    const lats = picked.map(l => l[2]), lons = picked.map(l => l[3]);
+    const padLat = Math.max(0.9, (Math.max(...lats) - Math.min(...lats)) * 0.35);
+    const padLon = Math.max(0.9, (Math.max(...lons) - Math.min(...lons)) * 0.35);
+    CONFIG.bounds = [
+      [Math.min(...lons) - padLon, Math.min(...lats) - padLat],
+      [Math.max(...lons) + padLon, Math.max(...lats) + padLat]
+    ];
+  }
+  const [[bw, bs], [be, bn]] = CONFIG.bounds;
+  CONFIG.center = [(bw + be) / 2, (bs + bn) / 2];
   CONFIG.zoom = 1.0;
-  // Labels are positioned by lon/lat, so any country outside the trip's frame
-  // simply falls off screen. Keeping them means the country the route runs
-  // through stays named, which is what the brief asks for.
 }
 
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -203,7 +232,11 @@ function el(tag, attrs, parent) {
   return n;
 }
 
-d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json").then(topology => {
+const TOPOLOGY = TRIP_STOPS
+  ? "https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-50m.json"   // country-level zoom needs the detail
+  : "https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json"; // whole-region view does not
+
+d3.json(TOPOLOGY).then(topology => {
   const land = topojson.feature(topology, topology.objects.countries);
 
   // Projection: fit network bounds, then apply zoom + centre nudge
@@ -214,7 +247,14 @@ d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json").th
   const c = proj(CONFIG.center);
   proj.translate([proj.translate()[0] + (W / 2 - c[0]), proj.translate()[1] + (H / 2 - c[1])]);
 
-  drawStipple(land, proj);
+  // Mainland SE Asia is one continuous stipple, so a country only reads as
+  // itself if we pick it out of its neighbours.
+  const focus = TRIP_VIEW && TRIP_VIEW.country
+    ? { type: "FeatureCollection",
+        features: land.features.filter(f => f.properties && f.properties.name === TRIP_VIEW.country) }
+    : null;
+
+  drawStipple(land, focus, proj);
   drawCountryLabels(proj);
   const pts = {};
   LOCATIONS.forEach(([name, country, lat, lon]) => { pts[name] = { name, country, xy: proj([lon, lat]) }; });
@@ -224,9 +264,18 @@ d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json").th
 /* ---- country labels ---- */
 function drawCountryLabels(proj) {
   const g = document.getElementById("labels");
-  [["Laos", 102.6, 21.6, "middle"], ["Vietnam", 107.6, 16.3, "middle"],
-   ["Thailand", 96.5, 14.2, "middle"], ["Cambodia", 105.9, 11.9, "middle"],
-   ["Philippines", 125.6, 13.6, "middle"], ["Indonesia", 113.6, -7.0, "middle"]]
+  const NETWORK_LABELS = [
+    ["Laos", 102.6, 21.6, "middle"], ["Vietnam", 107.6, 16.3, "middle"],
+    ["Thailand", 96.5, 14.2, "middle"], ["Cambodia", 105.9, 11.9, "middle"],
+    ["Philippines", 125.6, 13.6, "middle"], ["Indonesia", 113.6, -7.0, "middle"]
+  ];
+  // A trip view is framed on one country, so it carries its own label set —
+  // the network positions are placed for the whole-region fit and land in the
+  // wrong part of the map (or off it) once we zoom in.
+  const labels = TRIP_VIEW
+    ? TRIP_VIEW.labels.map(([name, lon, lat]) => [name, lon, lat, "middle"])
+    : NETWORK_LABELS;
+  labels
   .forEach(([name, lon, lat, anchor]) => {
     const [x, y] = proj([lon, lat]);
     const t = el("text", { x: x.toFixed(1), y: y.toFixed(1), "text-anchor": anchor, class: "country-label" }, g);
@@ -235,28 +284,36 @@ function drawCountryLabels(proj) {
 }
 
 /* ---- grey dot-matrix land ---- */
-function drawStipple(land, proj) {
-  const mask = document.createElement("canvas");
-  mask.width = W; mask.height = H;
-  const mctx = mask.getContext("2d", { willReadFrequently: true });
-  const path = d3.geoPath(proj, mctx);
-  mctx.fillStyle = "#fff";
-  mctx.beginPath(); path(land); mctx.fill();
-  const img = mctx.getImageData(0, 0, W, H).data;
+function drawStipple(land, focus, proj) {
+  const rasterise = (geo) => {
+    const mask = document.createElement("canvas");
+    mask.width = W; mask.height = H;
+    const mctx = mask.getContext("2d", { willReadFrequently: true });
+    const path = d3.geoPath(proj, mctx);
+    mctx.fillStyle = "#fff";
+    mctx.beginPath(); path(geo); mctx.fill();
+    return mctx.getImageData(0, 0, W, H).data;
+  };
+  const landPx = rasterise(land);
+  const focusPx = focus ? rasterise(focus) : null;
 
   const cv = document.getElementById("stipple");
   const dpr = Math.min(devicePixelRatio || 1, 2);
   cv.width = W * dpr; cv.height = H * dpr;
   const ctx = cv.getContext("2d");
   ctx.scale(dpr, dpr);
-  ctx.fillStyle = "rgba(156, 163, 175, 0.5)";
   const s = 10, rowH = s * 0.866, r = 2;
-  for (let row = 0, y = 2; y < H; row++, y += rowH) {
-    const off = (row % 2) * (s / 2);
-    for (let x = off; x < W; x += s) {
-      const xi = Math.round(x), yi = Math.round(y);
-      if (img[(yi * W + xi) * 4 + 3] > 0) {
-        ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+  // Neighbours stay as context; the trip's country carries the shape.
+  const LAND = focusPx ? "rgba(156, 163, 175, 0.14)" : "rgba(156, 163, 175, 0.5)";
+  const FOCUS = "rgba(156, 163, 175, 0.5)";
+  for (const [fill, hit] of [[LAND, (i) => landPx[i] > 0 && !(focusPx && focusPx[i] > 0)],
+                             [FOCUS, (i) => !!focusPx && focusPx[i] > 0]]) {
+    ctx.fillStyle = fill;
+    for (let row = 0, y = 2; y < H; row++, y += rowH) {
+      const off = (row % 2) * (s / 2);
+      for (let x = off; x < W; x += s) {
+        const i = (Math.round(y) * W + Math.round(x)) * 4 + 3;
+        if (hit(i)) { ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); }
       }
     }
   }
@@ -278,9 +335,13 @@ function drawRoutesAndPins(pts) {
     const dist = Math.hypot(dx, dy);
     const bow = Math.min(dist * 0.22, 70);
     const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+    // Network view: bow upward regardless of which way the leg runs.
+    // Trip view: bow to the left of travel instead, so an out-and-back leg
+    // (Hanoi -> Ha Giang -> Hanoi) draws two visible arcs rather than the
+    // return journey retracing a line that is already on screen.
     const nx = -dy / dist, ny = dx / dist; // perpendicular
-    const cx = mx + nx * bow * (ny < 0 ? -1 : 1) * -1; // bow upward
-    const cy = my + ny * bow * (ny < 0 ? -1 : 1) * -1;
+    const cx = TRIP_STOPS ? mx + (dy / dist) * bow : mx + nx * bow * (ny < 0 ? -1 : 1) * -1;
+    const cy = TRIP_STOPS ? my - (dx / dist) * bow : my + ny * bow * (ny < 0 ? -1 : 1) * -1;
     const d = `M ${x1.toFixed(1)} ${y1.toFixed(1)} Q ${cx.toFixed(1)} ${cy.toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)}`;
     const p = el("path", { d, fill: "none", stroke: LIME, "stroke-width": 1.6, "stroke-linecap": "round", opacity: 0.85 }, routesG);
     const len = p.getTotalLength();
@@ -316,11 +377,17 @@ function drawRoutesAndPins(pts) {
     return;
   }
 
-  // Timeline: staggered draw, hold, loop
+  // Timeline: draw, hold, loop.
+  // Trip view runs one leg at a time — a leg only starts once the travelling
+  // dot on the leg before it has landed on its stop, so the line reads as the
+  // itinerary in order. The full network map keeps its overlapping stagger;
+  // with 21 legs, running them end to end would take most of a minute.
   const STAGGER = 0.15, HOLD = 2.4;
   let t0 = null;
-  const starts = arcs.map((a, i) => i * STAGGER);
   const durs = arcs.map(a => 0.35 + a.len / 380);
+  const starts = [];
+  if (TRIP_STOPS) durs.reduce((acc, d, i) => { starts[i] = acc; return acc + d; }, 0);
+  else arcs.forEach((a, i) => { starts[i] = i * STAGGER; });
   const drawEnd = Math.max(...starts.map((s, i) => s + durs[i]));
   const period = drawEnd + HOLD;
   const ease = t => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
