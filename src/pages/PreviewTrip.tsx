@@ -5,7 +5,7 @@
 // One component for all five trips. Indonesia carries the full brief copy;
 // the others fall back to database content and show explicit "pending" tiles
 // for anything not yet supplied.
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Check, X, ChevronDown, Star, ArrowRight } from "lucide-react";
 import { fetchTrip } from "@/lib/api";
@@ -17,6 +17,7 @@ import { Starburst } from "@/components/brand/Sticker";
 import { SubNav, StickyCta, PhotoPending, PendingPanel, SCROLL_OFFSET } from "@/components/preview/PreviewChrome";
 import { getPreviewContent, PREVIEW_SLUGS, type PreviewSlug } from "@/data/preview-content";
 import { PreviewBooking } from "@/components/preview/PreviewBooking";
+import { previewDepartures, nextDeparture } from "@/data/preview-departures";
 import { useParams } from "react-router-dom";
 import { TRIPS } from "@/data/trips";
 import { SQUAD_BENEFITS } from "@/data/squad-benefits";
@@ -77,16 +78,19 @@ export default function PreviewTrip({ slug: slugProp }: { slug?: PreviewSlug }) 
 
   const content = trip ? getPreviewContent(trip, slug) : null;
   const meta = TRIPS.find((t) => t.slug === slug);
+  // Read the same weekly schedule the booking section shows, so the card's
+  // "next date" and "from" price cannot disagree with the dates listed below.
+  const schedule = useMemo(() => (trip ? previewDepartures(trip) : []), [trip]);
   // "From" must always be the cheapest bookable departure, not whichever one
   // happens to sort first — they were showing $700 against a $650 date.
-  const bookable = (trip?.departures ?? []).filter((d) => d.bookable);
-  const priced = (bookable.length ? bookable : trip?.departures ?? []).map((d) => d.price).filter((n) => n > 0);
+  const bookable = schedule.filter((d) => d.bookable);
+  const priced = (bookable.length ? bookable : schedule).map((d) => d.price).filter((n) => n > 0);
   const price = priced.length ? Math.min(...priced) : trip?.defaultPrice ?? meta?.price ?? 0;
   // Pair the strike price with the same departure the "from" price came from,
   // otherwise the discount badge is computed across two different dates.
-  const cheapest = (bookable.length ? bookable : trip?.departures ?? []).find((d) => d.price === price);
+  const cheapest = (bookable.length ? bookable : schedule).find((d) => d.price === price);
   const strike = cheapest?.strikethrough ?? trip?.defaultStrikethrough ?? null;
-  const next = trip?.departures?.[0];
+  const next = nextDeparture(schedule);
   const pctOff = strike && strike > price ? Math.round(((strike - price) / strike) * 100) : null;
   const visibleIncluded = showAllIncluded ? (content?.included ?? []) : (content?.included ?? []).slice(0, 6);
 
@@ -130,7 +134,7 @@ export default function PreviewTrip({ slug: slugProp }: { slug?: PreviewSlug }) 
               {(meta?.name ?? trip?.name ?? "").toUpperCase()}
             </p>
             <h1 className="font-display text-[clamp(2.4rem,11.4vw,3.75rem)] leading-[0.9] text-mm-bone">
-              <span className="block">YOUR GROUP</span>
+              <span className="block">YOUR</span>
               <span className="block whitespace-nowrap text-mm-pink">TRIP,</span>
               <span className="block text-mm-lime">SORTED.</span>
             </h1>
@@ -185,7 +189,7 @@ export default function PreviewTrip({ slug: slugProp }: { slug?: PreviewSlug }) 
                 {(meta?.name ?? trip?.name ?? "").toUpperCase()}
               </p>
               <h1 className="font-display text-[clamp(3.5rem,10.5vw,7.9rem)] leading-[0.88] text-mm-bone">
-                <span className="block">YOUR GROUP</span>
+                <span className="block">YOUR</span>
                 <span className="block whitespace-nowrap text-mm-pink">TRIP,</span>
                 <span className="block text-mm-lime">SORTED.</span>
               </h1>
@@ -396,7 +400,7 @@ export default function PreviewTrip({ slug: slugProp }: { slug?: PreviewSlug }) 
       <section id="booking" className="scroll-mt-[116px] border-t-[4px] border-mm-black bg-mm-bone py-12">
         <div className="mx-auto max-w-6xl px-5 md:px-6">
           <H eyebrow="DATES & AVAILABILITY">THE COUNTDOWN<br />STARTS NOW</H>
-          {trip && <PreviewBooking trip={trip} />}
+          {trip && <PreviewBooking key={trip.slug} trip={trip} />}
         </div>
 
       </section>

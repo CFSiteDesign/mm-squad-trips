@@ -2,17 +2,22 @@
 //
 // Per the 25 Aug tweaks: no pink panel, no anchor jumps, no repeated blocks.
 // Picking a date opens the form inline underneath that date, so the whole
-// checkout happens in one place. Custom dates are locked to the trip's start
-// weekday so an unbookable day can't be chosen at all.
+// checkout happens in one place.
+//
+// Kyle's Sep review: departures run every week on the trip's agreed day and the
+// next one is promoted to the top so it takes a single click; the custom-date
+// picker is gone, replaced by an advisor callback that only asks for a
+// WhatsApp number or an email.
 import { useMemo, useState } from "react";
-import { ArrowRight, Check, AlertCircle, ChevronDown } from "lucide-react";
+import { ArrowRight, Check, AlertCircle, ChevronDown, MessageCircle, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { formatPrice } from "@/lib/trip-helpers";
 import { createCheckoutSession } from "@/lib/api";
-import type { Trip, Departure } from "@/types/trip";
+import { previewDepartures, nextDeparture, type PreviewDeparture } from "@/data/preview-departures";
+import { submitAdvisorEnquiry, validateContact, type ContactMethod } from "@/lib/preview-advisor";
+import type { Trip } from "@/types/trip";
 import { SQUAD_BENEFITS } from "@/data/squad-benefits";
 
-const CUSTOM_DATES_EMAIL = "creatorhub@madmonkeyhostels.com";
 const DEPOSIT_PER_SPOT = 99;
 const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -28,13 +33,21 @@ function endDate(iso: string, days: number) {
   return d.toISOString().slice(0, 10);
 }
 
-type Chosen = { id: string | null; date: string; price: number };
+/** The row being booked. `departureId` is null for a week the preview filled
+ *  in, which checks out as a custom date instead. */
+type Chosen = { key: string; departureId: string | null; date: string; price: number };
+
+const chosenFrom = (d: PreviewDeparture): Chosen => ({
+  key: d.id,
+  departureId: d.generated ? null : d.id,
+  date: d.date,
+  price: d.price,
+});
 
 export function PreviewBooking({ trip }: { trip: Trip }) {
-  const departures = useMemo(
-    () => [...(trip.departures ?? [])].sort((a, b) => a.date.localeCompare(b.date)),
-    [trip.departures],
-  );
+  const departures = useMemo(() => previewDepartures(trip), [trip]);
+  const next = useMemo(() => nextDeparture(departures), [departures]);
+
   const months = useMemo(() => {
     const seen: string[] = [];
     for (const d of departures) if (!seen.includes(monthKey(d.date))) seen.push(monthKey(d.date));
@@ -49,42 +62,14 @@ export function PreviewBooking({ trip }: { trip: Trip }) {
     firstName: "", lastName: "", email: "", phone: "", squadCode: "", discountCode: "",
   });
 
-  const rows = departures.filter((d) => monthKey(d.date) === (month || months[0]));
+  // The next departure gets its own card at the top, so it is not repeated in
+  // the month list below.
+  const rows = departures.filter(
+    (d) => monthKey(d.date) === (month || months[0]) && d.id !== next?.id,
+  );
   const weekday = trip.startWeekday === null || trip.startWeekday === undefined ? null : Number(trip.startWeekday);
   const weekdayName = weekday === null ? null : WEEKDAYS[weekday];
   const basePrice = chosen?.price ?? 0;
-
-  /** Calendar state for the custom-date picker. */
-  const [calMonth, setCalMonth] = useState(() => {
-    const d = new Date(); d.setUTCDate(1); return d.toISOString().slice(0, 7);
-  });
-
-  /**
-   * Days of calMonth. Anything that is not the trip's start weekday, or is in
-   * the past, comes back disabled — the brief asks for those to be greyed out
-   * and genuinely unbookable rather than rejected after the fact.
-   */
-  const calDays = useMemo(() => {
-    const [y, m] = calMonth.split("-").map(Number);
-    const first = new Date(Date.UTC(y, m - 1, 1));
-    const daysInMonth = new Date(Date.UTC(y, m, 0)).getUTCDate();
-    const lead = first.getUTCDay();
-    const today = new Date(); today.setUTCHours(0, 0, 0, 0);
-    const out: ({ iso: string; day: number; enabled: boolean } | null)[] = Array(lead).fill(null);
-    for (let d = 1; d <= daysInMonth; d++) {
-      const dt = new Date(Date.UTC(y, m - 1, d));
-      const iso = dt.toISOString().slice(0, 10);
-      const rightDay = weekday === null || dt.getUTCDay() === weekday;
-      out.push({ iso, day: d, enabled: rightDay && dt >= today });
-    }
-    return out;
-  }, [calMonth, weekday]);
-
-  const shiftMonth = (delta: number) => {
-    const [y, m] = calMonth.split("-").map(Number);
-    const d = new Date(Date.UTC(y, m - 1 + delta, 1));
-    setCalMonth(d.toISOString().slice(0, 7));
-  };
 
   async function submit() {
     if (!chosen) return;
@@ -96,7 +81,7 @@ export function PreviewBooking({ trip }: { trip: Trip }) {
     try {
       const { url } = await createCheckoutSession({
         tripSlug: trip.slug,
-        ...(chosen.id ? { departureId: chosen.id } : { customDate: chosen.date }),
+        ...(chosen.departureId ? { departureId: chosen.departureId } : { customDate: chosen.date }),
         groupSize: spots,
         leadBooker: {
           name: `${form.firstName} ${form.lastName}`.trim(),
@@ -186,6 +171,47 @@ export function PreviewBooking({ trip }: { trip: Trip }) {
       </div>
     );
 
+  const DateRow = ({ d }: { d: PreviewDeparture }) => {
+    const soldOut = !d.bookable || d.spotsRemaining <= 0;
+    const open = chosen?.key === d.id;
+    return (
+      <div className="border-[3px] border-mm-black bg-mm-bone">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
+          <div className="min-w-[104px]">
+            <p className="font-sans text-[10px] font-bold uppercase tracking-[0.08em] text-mm-black/50">Start date</p>
+            <p className="font-display text-lg leading-none text-mm-black">{dayLabel(d.date)}</p>
+          </div>
+          <div className="min-w-[104px]">
+            <p className="font-sans text-[10px] font-bold uppercase tracking-[0.08em] text-mm-black/50">End date</p>
+            <p className="font-display text-lg leading-none text-mm-black">{dayLabel(endDate(d.date, trip.days))}</p>
+          </div>
+          <div className="flex min-w-[128px] items-center gap-1.5 text-sm">
+            {soldOut
+              ? <><AlertCircle className="h-4 w-4 text-mm-orange" /> <span className="text-mm-black/70">Waitlist</span></>
+              : <><Check className="h-4 w-4 text-mm-black" strokeWidth={3} /> <span className="text-mm-black/80">{d.spotsRemaining} available</span></>}
+          </div>
+          <div className="ml-auto flex items-center gap-4">
+            <div className="text-right">
+              {d.strikethrough && d.strikethrough > d.price && (
+                <span className="mr-2 text-xs text-mm-black/45 line-through">{formatPrice(d.strikethrough)}</span>
+              )}
+              <span className="font-display text-lg text-mm-black">{formatPrice(d.price)}</span>
+              <span className="text-xs text-mm-black/60">/person</span>
+            </div>
+            <button
+              onClick={() => setChosen(open ? null : chosenFrom(d))}
+              className="flex items-center gap-1.5 border-[3px] border-mm-black bg-mm-pink px-4 py-2 font-sticker text-[10px] tracking-[0.12em] text-mm-black transition-transform hover:-translate-y-0.5"
+            >
+              {open ? "CLOSE" : soldOut ? "REQUEST" : "BOOK NOW"}
+              <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
+            </button>
+          </div>
+        </div>
+        {open && <Panel />}
+      </div>
+    );
+  };
+
   return (
     <div className="border-[3px] border-mm-black bg-mm-bone">
       {/* Solo + squad, stacked */}
@@ -203,6 +229,43 @@ export function PreviewBooking({ trip }: { trip: Trip }) {
         </div>
       </div>
 
+      {/* The next departure, promoted so booking it is one click. */}
+      {next && (
+        <div className="border-b-[3px] border-mm-black p-4 md:p-6">
+          <div className="border-[3px] border-mm-black bg-mm-yellow">
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-3 px-4 py-4">
+              <div>
+                <p className="font-sticker text-[10px] tracking-[0.14em] text-mm-black">★ NEXT DEPARTURE</p>
+                <p className="mt-1 font-display text-3xl leading-none text-mm-black">{dayLabel(next.date)}</p>
+                <p className="mt-1.5 text-sm text-mm-black/75">
+                  Back {dayLabel(endDate(next.date, trip.days))} · {next.spotsRemaining} spots left
+                </p>
+              </div>
+              <div className="ml-auto flex items-center gap-4">
+                <div className="text-right">
+                  {next.strikethrough && next.strikethrough > next.price && (
+                    <span className="mr-2 text-xs text-mm-black/45 line-through">{formatPrice(next.strikethrough)}</span>
+                  )}
+                  <span className="font-display text-2xl text-mm-black">{formatPrice(next.price)}</span>
+                  <span className="text-xs text-mm-black/60">/person</span>
+                </div>
+                <button
+                  onClick={() => setChosen(chosen?.key === next.id ? null : chosenFrom(next))}
+                  className="flex items-center gap-1.5 border-[3px] border-mm-black bg-mm-pink px-5 py-3 font-sticker text-[11px] tracking-[0.12em] text-mm-black transition-transform hover:-translate-y-0.5"
+                >
+                  {chosen?.key === next.id ? "CLOSE" : "BOOK THIS ONE"}
+                  <ChevronDown className={`h-3.5 w-3.5 transition-transform ${chosen?.key === next.id ? "rotate-180" : ""}`} />
+                </button>
+              </div>
+            </div>
+            {chosen?.key === next.id && <Panel />}
+          </div>
+          <p className="mt-2 text-[12px] text-mm-black/60">
+            {weekdayName ? `Departs every ${weekdayName} — pick any week below.` : "Pick any week below."}
+          </p>
+        </div>
+      )}
+
       {/* Month toggles */}
       <div className="flex gap-2 overflow-x-auto border-b-[3px] border-mm-black p-4 [scrollbar-width:none] md:px-6 [&::-webkit-scrollbar]:hidden">
         {months.map((m) => (
@@ -218,121 +281,97 @@ export function PreviewBooking({ trip }: { trip: Trip }) {
         ))}
       </div>
 
-      {/* Dates. Choosing one opens the form directly underneath it. */}
+      {/* Every other week. Choosing one opens the form directly underneath it. */}
       <div className="space-y-2 p-4 md:p-6">
-        {rows.map((d: Departure) => {
-          const soldOut = !d.bookable || d.spotsRemaining <= 0;
-          const open = chosen?.id === d.id;
-          return (
-            <div key={d.id} className="border-[3px] border-mm-black bg-mm-bone">
-              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
-                <div className="min-w-[104px]">
-                  <p className="font-sans text-[10px] font-bold uppercase tracking-[0.08em] text-mm-black/50">Start date</p>
-                  <p className="font-display text-lg leading-none text-mm-black">{dayLabel(d.date)}</p>
-                </div>
-                <div className="min-w-[104px]">
-                  <p className="font-sans text-[10px] font-bold uppercase tracking-[0.08em] text-mm-black/50">End date</p>
-                  <p className="font-display text-lg leading-none text-mm-black">{dayLabel(endDate(d.date, trip.days))}</p>
-                </div>
-                <div className="flex min-w-[128px] items-center gap-1.5 text-sm">
-                  {soldOut
-                    ? <><AlertCircle className="h-4 w-4 text-mm-orange" /> <span className="text-mm-black/70">Waitlist</span></>
-                    : <><Check className="h-4 w-4 text-mm-black" strokeWidth={3} /> <span className="text-mm-black/80">{d.spotsRemaining} available</span></>}
-                </div>
-                <div className="ml-auto flex items-center gap-4">
-                  <div className="text-right">
-                    {d.strikethrough && d.strikethrough > d.price && (
-                      <span className="mr-2 text-xs text-mm-black/45 line-through">{formatPrice(d.strikethrough)}</span>
-                    )}
-                    <span className="font-display text-lg text-mm-black">{formatPrice(d.price)}</span>
-                    <span className="text-xs text-mm-black/60">/person</span>
-                  </div>
-                  <button
-                    onClick={() => setChosen(open ? null : { id: d.id, date: d.date, price: d.price })}
-                    className="flex items-center gap-1.5 border-[3px] border-mm-black bg-mm-pink px-4 py-2 font-sticker text-[10px] tracking-[0.12em] text-mm-black transition-transform hover:-translate-y-0.5"
-                  >
-                    {open ? "CLOSE" : soldOut ? "REQUEST" : "BOOK NOW"}
-                    <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
-                  </button>
-                </div>
-              </div>
-              {open && <Panel />}
-            </div>
-          );
-        })}
+        {rows.map((d) => <DateRow key={d.id} d={d} />)}
+        {rows.length === 0 && (
+          <p className="py-2 text-sm text-mm-black/60">
+            The next departure above is the only one left this month.
+          </p>
+        )}
 
-        {/* Custom dates, pinned below every month */}
-        <div className="mt-4 border-[3px] border-mm-black bg-mm-yellow">
-          <div className="p-4">
-            <p className="font-sticker text-[11px] tracking-[0.14em] text-mm-black">✳ CUSTOM DATES</p>
-            <div className="mt-3 grid gap-3 md:grid-cols-2">
-              <div className="border-[3px] border-mm-black bg-mm-bone p-3">
-                <p className="font-sans text-[12px] font-bold text-mm-black">Travelling solo?</p>
-                <p className="mt-1 text-sm leading-snug text-mm-black/75">
-                  Solo trips are guaranteed to run, so pick any {weekdayName ?? "start day"} that suits you.
-                </p>
-                {/* Only the trip's start weekday is clickable. Everything else
-                    is rendered disabled and greyed, so an unbookable day cannot
-                    be selected at all. */}
-                <div className="mt-3 border-[3px] border-mm-black bg-mm-paper p-2">
-                  <div className="mb-2 flex items-center justify-between">
-                    <button
-                      onClick={() => shiftMonth(-1)}
-                      className="border-[2px] border-mm-black bg-mm-bone px-2 py-0.5 font-sans text-[12px] font-bold text-mm-black"
-                      aria-label="Previous month"
-                    >‹</button>
-                    <span className="font-sans text-[12px] font-bold text-mm-black">{monthLabel(calMonth)}</span>
-                    <button
-                      onClick={() => shiftMonth(1)}
-                      className="border-[2px] border-mm-black bg-mm-bone px-2 py-0.5 font-sans text-[12px] font-bold text-mm-black"
-                      aria-label="Next month"
-                    >›</button>
-                  </div>
-                  <div className="grid grid-cols-7 gap-0.5 text-center">
-                    {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
-                      <span key={i} className="font-sans text-[9px] font-bold uppercase text-mm-black/40">{d}</span>
-                    ))}
-                    {calDays.map((c, i) =>
-                      !c ? (
-                        <span key={`x${i}`} />
-                      ) : (
-                        <button
-                          key={c.iso}
-                          disabled={!c.enabled}
-                          onClick={() => setChosen({ id: null, date: c.iso, price: trip.defaultPrice })}
-                          className={`aspect-square text-[12px] transition-colors ${
-                            !c.enabled
-                              ? "cursor-not-allowed text-mm-black/20"
-                              : chosen && !chosen.id && chosen.date === c.iso
-                              ? "border-[2px] border-mm-black bg-mm-pink font-bold text-mm-bone"
-                              : "border-[2px] border-mm-black bg-mm-bone font-bold text-mm-black hover:bg-mm-yellow"
-                          }`}
-                        >
-                          {c.day}
-                        </button>
-                      ),
-                    )}
-                  </div>
-                </div>
-                <p className="mt-1 text-[11px] text-mm-black/55">{weekdayName ? `${weekdayName}s only` : "Start days only"}</p>
-              </div>
-              <div className="border-[3px] border-mm-black bg-mm-bone p-3">
-                <p className="font-sans text-[12px] font-bold text-mm-black">Got a squad?</p>
-                <p className="mt-1 text-sm leading-snug text-mm-black/75">
-                  We can open a date just for your crew. Tell us when you want to go and we'll set it up.
-                </p>
-                <a
-                  href={`mailto:${CUSTOM_DATES_EMAIL}?subject=${encodeURIComponent(`Custom date request — ${trip.name}`)}`}
-                  className="mt-3 inline-flex items-center gap-2 border-[3px] border-mm-black bg-mm-lime px-4 py-2 font-sticker text-[10px] tracking-[0.12em] text-mm-black transition-transform hover:-translate-y-0.5"
-                >
-                  REQUEST TO BOOK <ArrowRight className="h-3.5 w-3.5" />
-                </a>
-              </div>
-            </div>
-          </div>
-          {chosen && !chosen.id && <Panel />}
-        </div>
+        <AdvisorBox trip={trip} />
       </div>
+    </div>
+  );
+}
+
+/**
+ * Replaces the custom-date picker. Kyle wanted one way to reach a human that
+ * asks for a WhatsApp number or an email and nothing else, landing in the same
+ * database as the bookings.
+ */
+function AdvisorBox({ trip }: { trip: Trip }) {
+  const [method, setMethod] = useState<ContactMethod>("whatsapp");
+  const [value, setValue] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  async function send() {
+    const problem = validateContact(method, value);
+    if (problem) {
+      toast.error(problem);
+      return;
+    }
+    setSending(true);
+    try {
+      await submitAdvisorEnquiry({ tripSlug: trip.slug, tripName: trip.name, method, value });
+      setSent(true);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not send that just now");
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <div className="mt-4 border-[3px] border-mm-black bg-mm-cyan p-4">
+      <p className="font-sticker text-[11px] tracking-[0.14em] text-mm-black">✳ WANT TO TALK IT THROUGH?</p>
+      <p className="mt-2 max-w-xl text-sm leading-snug text-mm-black/80">
+        Leave a WhatsApp number or an email and one of our advisors will get back to you about
+        dates, group bookings and anything else on your mind.
+      </p>
+
+      {sent ? (
+        <div className="mt-3 flex items-center gap-2 border-[3px] border-mm-black bg-mm-lime px-4 py-3">
+          <Check className="h-4 w-4 text-mm-black" strokeWidth={3} />
+          <p className="text-sm font-bold text-mm-black">Got it — an advisor will be in touch.</p>
+        </div>
+      ) : (
+        <div className="mt-3 flex flex-wrap items-stretch gap-2">
+          <div className="flex">
+            {([["whatsapp", "WHATSAPP", MessageCircle], ["email", "EMAIL", Mail]] as const).map(
+              ([m, label, Icon], i) => (
+                <button
+                  key={m}
+                  onClick={() => { setMethod(m); setValue(""); }}
+                  className={`flex items-center gap-1.5 border-[3px] border-mm-black px-3 py-2 font-sticker text-[10px] tracking-[0.12em] transition-colors ${i === 1 ? "border-l-0" : ""} ${
+                    method === m ? "bg-mm-pink text-mm-bone" : "bg-mm-bone text-mm-black hover:bg-mm-yellow"
+                  }`}
+                >
+                  <Icon className="h-3.5 w-3.5" /> {label}
+                </button>
+              ),
+            )}
+          </div>
+          <input
+            type={method === "email" ? "email" : "tel"}
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") void send(); }}
+            placeholder={method === "email" ? "you@email.com" : "+44 7700 900000"}
+            aria-label={method === "email" ? "Your email" : "Your WhatsApp number"}
+            className="min-w-[200px] flex-1 border-[3px] border-mm-black bg-mm-bone px-3 py-2 text-sm text-mm-black outline-none focus:bg-mm-yellow/20"
+          />
+          <button
+            onClick={send}
+            disabled={sending}
+            className="flex items-center gap-2 border-[3px] border-mm-black bg-mm-lime px-4 py-2 font-sticker text-[10px] tracking-[0.12em] text-mm-black transition-transform hover:-translate-y-0.5 disabled:opacity-60"
+          >
+            {sending ? "SENDING…" : "TALK TO AN ADVISOR"} <ArrowRight className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
