@@ -1,4 +1,4 @@
-// Content for the /preview-indonesia demo page, straight from the
+// Content for the Indonesia trip page, straight from the
 // "ALL IN Trips Edits - Aug 2026" brief. Lives here rather than in the database
 // so the demo can be built and reviewed before we commit to a schema (see
 // Phase 5 of IMPLEMENTATION_PLAN_AUG2026.md).

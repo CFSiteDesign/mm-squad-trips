@@ -1,4 +1,4 @@
-// Shared furniture for the /preview-* demo pages.
+// Shared furniture for the ALL IN pages.
 import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 
@@ -70,25 +70,6 @@ export function StickyCta({ onClick, label = "RESERVE FOR $99" }: { onClick: () 
       >
         {label} <ArrowRight className="h-4 w-4" />
       </button>
-    </div>
-  );
-}
-
-/** Placeholder tile for a highlight whose photo hasn't been supplied yet. */
-export function PhotoPending({ title }: { title: string }) {
-  return (
-    <div className="flex aspect-[4/5] w-full flex-col items-center justify-center gap-2 border-[3px] border-dashed border-mm-black/40 bg-mm-black/5 p-4 text-center">
-      <span className="font-sticker text-[10px] tracking-[0.14em] text-mm-black/60">PHOTO PENDING</span>
-      <span className="text-xs text-mm-black/50">{title}</span>
-    </div>
-  );
-}
-
-/** Visible marker for a section with no content supplied yet. */
-export function PendingPanel({ label }: { label: string }) {
-  return (
-    <div className="mb-4 flex items-center justify-center border-[3px] border-dashed border-mm-black/40 bg-mm-black/5 p-6 text-center">
-      <span className="font-sticker text-[10px] tracking-[0.14em] text-mm-black/60">{label.toUpperCase()}</span>
     </div>
   );
 }

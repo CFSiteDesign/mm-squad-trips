@@ -1,4 +1,4 @@
-// "Talk to an advisor" enquiries for the Aug 2026 preview.
+// "Talk to an advisor" enquiries from the trip pages.
 //
 // Kyle's note: custom dates come out, replaced by an advisor option where you
 // leave a WhatsApp number or an email only — "this then sends to the same
@@ -38,7 +38,8 @@ export async function submitAdvisorEnquiry(input: AdvisorEnquiry): Promise<void>
     trip_name: input.tripName,
     contact_method: input.method,
     contact_value: input.value.trim(),
-    source: "preview",
+    // Distinguishes real enquiries from the demo's; the table defaults to "preview".
+    source: "site",
   });
   if (error) throw new Error(error.message || "Could not send that just now");
 }

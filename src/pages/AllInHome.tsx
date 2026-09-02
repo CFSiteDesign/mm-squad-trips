@@ -1,16 +1,14 @@
-// /preview-all-in — the rebuilt ALL IN landing page from the Aug 2026 brief.
-import { useEffect } from "react";
+// The ALL IN landing page — the Aug 2026 redesign, live from 1 Sep 2026.
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { ArrowRight, Check, X, BedDouble, Users, Sparkles, Star } from "lucide-react";
 import { fetchTrip } from "@/lib/api";
 import { formatPrice } from "@/lib/trip-helpers";
 import { TRIPS } from "@/data/trips";
-import { Navbar } from "@/components/Navbar";
 import { SiteFooter } from "@/components/trip/SiteFooter";
-import { StickyCta } from "@/components/preview/PreviewChrome";
+import { StickyCta } from "@/components/allin/Chrome";
 import { SQUAD_BENEFITS } from "@/data/squad-benefits";
-import { VideoTile, type Clip } from "@/components/preview/VideoTile";
+import { VideoTile, type Clip } from "@/components/allin/VideoTile";
 import heroImg from "@/assets/preview-hero-allin.jpg";
 
 const DIFFERENT = [
@@ -37,29 +35,21 @@ const CLIPS: Clip[] = [
     href: "https://www.tiktok.com/@clairekellyh/video/7637195070298410247" },
 ];
 
-/** Ceiling on the number shown in the "spots left" badge. */
+/** Ceiling on the number shown in the "spots left" badge. Client's call: the
+ *  badge reads at most this, so an untouched departure still says "ONLY 8
+ *  SPOTS LEFT"; once real availability drops below it the real number shows.
+ *  It only ever understates what's left, never oversells. */
 const SPOTS_FLOOR = 8;
-
-/** DEMO ONLY. Client asked for varied "spots left" numbers so the badges don't
- *  read as templated. These are display values, not real availability, and must
- *  be removed before this goes live. */
-const DEMO_SPOTS: Record<string, number> = {
-  indonesia: 6, "indonesia-7": 4, vietnam: 8, "vietnam-7": 3, cambodia: 7,
-};
 
 /** Live "next departure" badge per trip, read from the real departures table. */
 function RouteCard({ slug }: { slug: string }) {
   const meta = TRIPS.find((t) => t.slug === slug);
   const { data: trip } = useQuery({ queryKey: ["trip", slug], queryFn: () => fetchTrip(slug), retry: false });
-  const next = trip?.departures?.find((d) => d.bookable);
-  const price = trip?.departures?.[0]?.price ?? trip?.defaultPrice ?? meta?.price ?? 0;
-  // Client's call: the badge always reads at most SPOTS_FLOOR, so an untouched
-  // departure still shows "ONLY 8 SPOTS LEFT". Once genuine availability drops
-  // below the floor we show the real number instead, so the badge only ever
-  // understates what's left and never oversells a departure.
-  const realSpots = next ? Math.min(SPOTS_FLOOR, next.spotsRemaining) : 0;
-  // Real availability wins whenever it is genuinely lower than the demo figure.
-  const spotsShown = next ? Math.min(DEMO_SPOTS[slug] ?? SPOTS_FLOOR, realSpots || SPOTS_FLOOR) : 0;
+  const next = trip?.departures?.find((d) => d.bookable && d.spotsRemaining > 0);
+  // "From" is the cheapest bookable departure, same rule as the trip page.
+  const priced = (trip?.departures ?? []).filter((d) => d.bookable).map((d) => d.price).filter((n) => n > 0);
+  const price = priced.length ? Math.min(...priced) : trip?.defaultPrice ?? meta?.price ?? 0;
+  const spotsShown = next ? Math.min(SPOTS_FLOOR, next.spotsRemaining) : 0;
   const urgent = next && next.spotsRemaining <= SPOTS_FLOOR;
 
   return (
@@ -75,21 +65,14 @@ function RouteCard({ slug }: { slug: string }) {
         <p className="mt-1 text-xs text-mm-black/60">{meta?.route}</p>
         <p className="mt-3 font-display text-lg text-mm-black">{meta?.days} DAYS · FROM {formatPrice(price)}</p>
       </div>
-      <Link to={`/preview-${slug}`} className="flex items-center justify-center gap-2 border-t-[3px] border-mm-black bg-mm-pink px-4 py-3 font-sticker text-[10px] tracking-[0.14em] text-mm-black">
+      <Link to={`/${slug}`} className="flex items-center justify-center gap-2 border-t-[3px] border-mm-black bg-mm-pink px-4 py-3 font-sticker text-[10px] tracking-[0.14em] text-mm-black">
         VIEW DATES & ITINERARY <ArrowRight className="h-4 w-4" />
       </Link>
     </article>
   );
 }
 
-export default function PreviewAllIn() {
-  useEffect(() => {
-    const m = document.createElement("meta");
-    m.name = "robots"; m.content = "noindex, nofollow";
-    document.head.appendChild(m);
-    return () => { document.head.removeChild(m); };
-  }, []);
-
+export default function AllInHome() {
   const go = (id: string) => {
     const el = document.getElementById(id);
     if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 60, behavior: "smooth" });
@@ -97,8 +80,6 @@ export default function PreviewAllIn() {
 
   return (
     <div className="min-h-screen bg-mm-bone pb-24 md:pb-0">
-      <Navbar />
-
       {/* ============ HERO ============ */}
       {/* Structure, type scale, padding and text placement mirror the live hero
           in Index.tsx exactly. What changes is the brief's image treatment:

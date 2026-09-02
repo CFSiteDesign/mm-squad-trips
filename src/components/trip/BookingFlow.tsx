@@ -25,20 +25,9 @@ import { buildTripEcommerceItem, CONVERSION_TYPE_ALL_IN, markCheckoutEventOnce }
 import { Sticker } from "@/components/brand/Sticker";
 import { COUNTRIES } from "@/lib/countries";
 import { useSiteVariant, squadPath } from "@/hooks/use-site-variant";
+import { readGaClientId } from "@/lib/ga";
 
 const SOURCES = ["TikTok", "Instagram", "Friend", "Other"] as const;
-
-/**
- * Pull the GA4 client id out of the `_ga` cookie (format `GA1.1.<id>.<ts>`).
- * The client id is the `<id>.<ts>` tail. Returns "" if the cookie is absent —
- * which is the case when the visitor declined analytics cookies, so the later
- * server-side balance charge is then reported without attribution (or skipped).
- */
-function readGaClientId(): string {
-  if (typeof document === "undefined") return "";
-  const m = document.cookie.match(/_ga=GA\d+\.\d+\.(\d+\.\d+)/);
-  return m ? m[1] : "";
-}
 
 interface LeadFields {
   name: string; email: string; phone: string; phoneDial: string; country: string; age: string;

@@ -10,35 +10,35 @@ import {
   SNAPSHOT as INDO_SNAPSHOT, IS_THIS_FOR_ME as INDO_FOR_ME, HIGHLIGHTS as INDO_HIGHLIGHTS,
   INCLUDED as INDO_INCLUDED, NOT_INCLUDED as INDO_NOT_INCLUDED, ITINERARY as INDO_ITINERARY,
   REVIEWS as INDO_REVIEWS, FAQS as INDO_FAQS, type Day,
-} from "@/data/preview-indonesia";
+} from "@/data/trip-content-indonesia";
 import { DEFAULT_FAQS } from "@/components/trip/FAQ";
 import indoHero from "@/assets/preview-indo-hero.jpg";
 import vnPreviewHero from "@/assets/preview-vn-hero.jpg";
 import {
   VN_SNAPSHOT, VN_IS_THIS_FOR_ME, VN_HIGHLIGHTS, VN_INCLUDED, VN_ITINERARY, VN_FAQ_OVERRIDES,
-} from "@/data/preview-vietnam";
+} from "@/data/trip-content-vietnam";
 import {
   VN7_SNAPSHOT, VN7_IS_THIS_FOR_ME, VN7_HIGHLIGHTS, VN7_INCLUDED, VN7_ITINERARY, VN7_FAQ_OVERRIDES,
-} from "@/data/preview-vietnam7";
+} from "@/data/trip-content-vietnam7";
 import {
   I7_SNAPSHOT, I7_IS_THIS_FOR_ME, I7_HIGHLIGHTS, I7_INCLUDED, I7_ITINERARY, I7_FAQ_OVERRIDES,
-} from "@/data/preview-indonesia7";
+} from "@/data/trip-content-indonesia7";
 import indo7Hero from "@/assets/preview-indo7-hero.jpg";
 import khPreviewHero from "@/assets/preview-kh-hero.jpg";
 import {
   KH_SNAPSHOT, KH_IS_THIS_FOR_ME, KH_HIGHLIGHTS, KH_INCLUDED, KH_ITINERARY, KH_FAQ_OVERRIDES,
-} from "@/data/preview-cambodia";
+} from "@/data/trip-content-cambodia";
 import vnHero from "@/assets/vn-hero.jpg";
 import khHero from "@/assets/kh-hero.png";
 
-export const PREVIEW_SLUGS = ["indonesia", "indonesia-7", "vietnam", "vietnam-7", "cambodia"] as const;
-export type PreviewSlug = (typeof PREVIEW_SLUGS)[number];
+export const TRIP_CONTENT_SLUGS = ["indonesia", "indonesia-7", "vietnam", "vietnam-7", "cambodia"] as const;
+export type TripSlug = (typeof TRIP_CONTENT_SLUGS)[number];
 
 export type Review = { property: string; author: string | null; rating: number; when: string | null; body: string };
 export type Highlight = { title: string; image: string | null; /** Tailwind object-position, e.g. "object-right". */ position?: string };
 
-export type PreviewContent = {
-  hero: string | null;
+export type TripContent = {
+  hero: string;
   snapshot: { tripCode: string; days: number; from: string; to: string; countries: string; blurb: string };
   isThisForMe: { k: string; v: string }[];
   highlights: Highlight[];
@@ -51,7 +51,7 @@ export type PreviewContent = {
   pending: string[];
 };
 
-const HEROES: Partial<Record<PreviewSlug, string>> = {
+const HEROES: Partial<Record<TripSlug, string>> = {
   indonesia: indoHero,
   vietnam: vnHero,
   "vietnam-7": vnHero,
@@ -62,7 +62,7 @@ const HEROES: Partial<Record<PreviewSlug, string>> = {
 const GENERIC_NOT_INCLUDED = ["Flights", "Travel insurance", "Personal expenses", "Upgrades + add-ons"];
 
 /** Builds a credible page from database content when no brief copy exists. */
-function fromTrip(trip: Trip, slug: PreviewSlug): PreviewContent {
+function fromTrip(trip: Trip, slug: TripSlug): TripContent {
   const meta = TRIPS.find((t) => t.slug === slug);
   const stops = Array.isArray(trip.stops) ? trip.stops : [];
   const pending: string[] = [];
@@ -87,7 +87,7 @@ function fromTrip(trip: Trip, slug: PreviewSlug): PreviewContent {
   if (!HEROES[slug]) pending.push("Hero image");
 
   return {
-    hero: HEROES[slug] ?? null,
+    hero: HEROES[slug] ?? indoHero,
     snapshot: {
       tripCode: trip.code,
       days: trip.days,
@@ -121,7 +121,7 @@ function fromTrip(trip: Trip, slug: PreviewSlug): PreviewContent {
   };
 }
 
-export function getPreviewContent(trip: Trip, slug: PreviewSlug): PreviewContent {
+export function getTripContent(trip: Trip, slug: TripSlug): TripContent {
   if (slug === "cambodia") {
     return {
       hero: khPreviewHero,
@@ -152,7 +152,7 @@ export function getPreviewContent(trip: Trip, slug: PreviewSlug): PreviewContent
   }
   if (slug === "vietnam-7") {
     return {
-      hero: null, // brief says TBC
+      hero: vnHero, // no dedicated 7-day shot yet; the stock Vietnam hero stands in
       snapshot: VN7_SNAPSHOT,
       isThisForMe: VN7_IS_THIS_FOR_ME,
       highlights: VN7_HIGHLIGHTS,

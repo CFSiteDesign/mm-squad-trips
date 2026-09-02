@@ -1,12 +1,12 @@
 // Vietnam 14-day content, from the 28 Aug brief. Same shape as the Indonesia
-// file so the shared preview trip template can render either.
+// file so the shared trip page can render either.
 import oldQuarter from "@/assets/vn-hl-old-quarter.jpg";
 import trainStreet from "@/assets/vn-hl-train-street.jpg";
 import maPiLeng from "@/assets/vn-hl-ma-pi-leng.jpg";
 import ninhBinh from "@/assets/vn-hl-ninh-binh.jpg";
 import bambooBoats from "@/assets/vn-hl-bamboo-boats.jpg";
 import riverCruise from "@/assets/vn-hl-river-cruise.jpg";
-import type { Day } from "@/data/preview-indonesia";
+import type { Day } from "@/data/trip-content-indonesia";
 
 export const VN_SNAPSHOT = {
   tripCode: "VIET14",

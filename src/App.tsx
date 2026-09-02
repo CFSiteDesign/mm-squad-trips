@@ -5,7 +5,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
-import Index from "./pages/Index";
 import StudentIndex from "./pages/StudentIndex";
 import TripPage from "./pages/TripPage";
 import BookingSuccess from "./pages/BookingSuccess";
@@ -22,11 +21,12 @@ import StaffLeaderboardPage from "./pages/StaffLeaderboardPage";
 import PayBalance from "./pages/PayBalance";
 
 import NotFound from "./pages/NotFound";
-// Aug 2026 brief demo pages. Single-segment paths on purpose: nested routes
-// break on the lovable.app preview domain, which is the link the client uses.
-import PreviewAllIn from "./pages/PreviewAllIn";
-import PreviewTrip from "./pages/PreviewTrip";
+// The Aug 2026 redesign, approved 1 Sep 2026. Single-segment trip paths on
+// purpose: nested routes break on the lovable.app domain.
+import AllInHome from "./pages/AllInHome";
+import AllInTrip from "./pages/AllInTrip";
 import { gtmPushEvent } from "@/utils/gtmTracker";
+import { BASE_PATH } from "@/lib/base-path";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -80,12 +80,12 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter basename={typeof window !== "undefined" && window.location.pathname.startsWith("/all-in-trips") ? "/all-in-trips" : "/"}>
+      <BrowserRouter basename={BASE_PATH || "/"}>
         <ConditionalNavbar />
         <ScrollToTop />
         <RouteChangeTracker />
         <Routes>
-          <Route path="/" element={<Index />} />
+          <Route path="/" element={<AllInHome />} />
           <Route path="/booking-success" element={<BookingSuccess />} />
           <Route path="/pay-balance" element={<PayBalance />} />
           <Route path="/squad-leader" element={<SquadHub />} />
@@ -98,11 +98,11 @@ const App = () => (
           <Route path="/adminpreview" element={<Admin preview />} />
 
           <Route path="/staff-leaderboard" element={<StaffLeaderboardPage />} />
-          <Route path="/vietnam" element={<TripPage />} />
-          <Route path="/vietnam-7" element={<TripPage />} />
-          <Route path="/cambodia" element={<TripPage />} />
-          <Route path="/indonesia" element={<TripPage />} />
-          <Route path="/indonesia-7" element={<TripPage />} />
+          <Route path="/vietnam" element={<AllInTrip slug="vietnam" />} />
+          <Route path="/vietnam-7" element={<AllInTrip slug="vietnam-7" />} />
+          <Route path="/cambodia" element={<AllInTrip slug="cambodia" />} />
+          <Route path="/indonesia" element={<AllInTrip slug="indonesia" />} />
+          <Route path="/indonesia-7" element={<AllInTrip slug="indonesia-7" />} />
 
           {/* Student variant */}
           <Route path="/students" element={<StudentIndex />} />
@@ -120,12 +120,13 @@ const App = () => (
           <Route path="/students/squad-leader/dashboard" element={<SquadDashboard />} />
           <Route path="/students/admin" element={<Admin />} />
 
-          <Route path="/preview-all-in" element={<PreviewAllIn />} />
-          <Route path="/preview-indonesia" element={<PreviewTrip slug="indonesia" />} />
-          <Route path="/preview-indonesia-7" element={<PreviewTrip slug="indonesia-7" />} />
-          <Route path="/preview-vietnam" element={<PreviewTrip slug="vietnam" />} />
-          <Route path="/preview-vietnam-7" element={<PreviewTrip slug="vietnam-7" />} />
-          <Route path="/preview-cambodia" element={<PreviewTrip slug="cambodia" />} />
+          {/* The demo links that were circulated for sign-off keep working. */}
+          <Route path="/preview-all-in" element={<Navigate to="/" replace />} />
+          <Route path="/preview-indonesia" element={<Navigate to="/indonesia" replace />} />
+          <Route path="/preview-indonesia-7" element={<Navigate to="/indonesia-7" replace />} />
+          <Route path="/preview-vietnam" element={<Navigate to="/vietnam" replace />} />
+          <Route path="/preview-vietnam-7" element={<Navigate to="/vietnam-7" replace />} />
+          <Route path="/preview-cambodia" element={<Navigate to="/cambodia" replace />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

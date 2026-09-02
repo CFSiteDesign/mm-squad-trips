@@ -5,7 +5,7 @@ import hoanKiem from "@/assets/vn-hl-hoan-kiem.jpg";
 import khauLan from "@/assets/vn-hl-khau-lan.jpg";
 import maPiLeng from "@/assets/vn-hl-ma-pi-leng.jpg";
 import ancientVillage from "@/assets/vn-hl-ancient-village.jpg";
-import type { Day } from "@/data/preview-indonesia";
+import type { Day } from "@/data/trip-content-indonesia";
 
 export const VN7_SNAPSHOT = {
   tripCode: "VIET07",

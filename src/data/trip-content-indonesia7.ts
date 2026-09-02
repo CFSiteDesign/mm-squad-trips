@@ -5,8 +5,8 @@ import boatParty from "@/assets/i7-hl-boat-party.jpg";
 import surfCamp from "@/assets/i7-hl-surf-camp.jpg";
 import videoAnalysis from "@/assets/i7-hl-video-analysis.jpg";
 import bikeTour from "@/assets/i7-hl-bike-tour.jpg";
-import type { Day } from "@/data/preview-indonesia";
-import type { Highlight } from "@/data/preview-content";
+import type { Day } from "@/data/trip-content-indonesia";
+import type { Highlight } from "@/data/trip-content";
 
 export const I7_SNAPSHOT = {
   tripCode: "INDO07",

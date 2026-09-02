@@ -6,6 +6,7 @@
 // "pending" state that still links to TikTok, rather than rendering an empty
 // black box.
 import { useEffect, useRef, useState } from "react";
+import { publicUrl } from "@/lib/base-path";
 
 export type Clip = {
   /** File under /public/videos, without the extension. */
@@ -41,7 +42,7 @@ export function VideoTile({ clip, className = "" }: { clip: Clip; className?: st
         <video
           ref={ref}
           className="h-full w-full object-cover"
-          src={`/videos/${clip.file}.mp4`}
+          src={publicUrl(`videos/${clip.file}.mp4`)}
           muted
           loop
           autoPlay

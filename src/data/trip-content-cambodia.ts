@@ -13,8 +13,8 @@ import floating from "@/assets/kh-hl-floating.jpg";
 import nestival from "@/assets/kh-hl-nestival.jpg";
 import fireshow from "@/assets/kh-hl-fireshow.jpg";
 import privateBeach from "@/assets/kh-hl-private-beach.jpg";
-import type { Day } from "@/data/preview-indonesia";
-import type { Highlight } from "@/data/preview-content";
+import type { Day } from "@/data/trip-content-indonesia";
+import type { Highlight } from "@/data/trip-content";
 
 export const KH_SNAPSHOT = {
   tripCode: "CAM07",

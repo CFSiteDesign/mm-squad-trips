@@ -81,6 +81,10 @@ export interface CreateCheckoutInput {
   discountCode?: string;
   /** Second stackable code — combined server-side (fixed first, then %). */
   secondDiscountCode?: string;
+  /** Squad leader code, sent separately so it can sit alongside a discount
+   *  code. On its own it may also travel in discountCode, which is how the
+   *  server recognised squad codes before this field existed. */
+  squadCode?: string;
   friendsMentioned?: string;
   /** Optional "Mad Monkey staff recommendation" name from the booking form. */
   staffRecommendation?: string;

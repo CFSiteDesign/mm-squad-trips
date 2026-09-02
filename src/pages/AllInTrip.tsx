@@ -1,26 +1,26 @@
-// /preview-<slug> — the rebuilt trip page from the Aug 2026 brief, modelled on
-// the G Adventures layout. Reads real trip data and reuses the real booking
-// flow, so approving this demo means shipping it is a routing change.
+// The ALL IN trip page — the Aug 2026 redesign, live from 1 Sep 2026. One
+// component for all five trips; the copy per trip lives in src/data/trip-content*.
 //
-// One component for all five trips. Indonesia carries the full brief copy;
-// the others fall back to database content and show explicit "pending" tiles
-// for anything not yet supplied.
+// Anything a trip's content hasn't supplied yet (a review set, a highlight
+// photo) is left out rather than shown as a placeholder — this page faces
+// customers. The /students variant still runs on TripPage.tsx.
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Check, X, ChevronDown, Star, ArrowRight } from "lucide-react";
 import { fetchTrip } from "@/lib/api";
 import { getTripFallback } from "@/data/tripFallbacks";
 import { formatPrice } from "@/lib/trip-helpers";
-import { Navbar } from "@/components/Navbar";
 import { SiteFooter } from "@/components/trip/SiteFooter";
 import { Starburst } from "@/components/brand/Sticker";
-import { SubNav, StickyCta, PhotoPending, PendingPanel, SCROLL_OFFSET } from "@/components/preview/PreviewChrome";
-import { getPreviewContent, PREVIEW_SLUGS, type PreviewSlug } from "@/data/preview-content";
-import { PreviewBooking } from "@/components/preview/PreviewBooking";
-import { previewDepartures, nextDeparture } from "@/data/preview-departures";
+import { SubNav, StickyCta, SCROLL_OFFSET } from "@/components/allin/Chrome";
+import { getTripContent, type TripSlug } from "@/data/trip-content";
+import { Booking } from "@/components/allin/Booking";
+import { nextDeparture } from "@/lib/departures";
 import { useParams } from "react-router-dom";
 import { TRIPS } from "@/data/trips";
-import { SQUAD_BENEFITS } from "@/data/squad-benefits";
+import { publicUrl } from "@/lib/base-path";
+import { gtmClearEcommerce, gtmPushEvent } from "@/utils/gtmTracker";
+import { buildTripEcommerceItem, CONVERSION_TYPE_ALL_IN, markCheckoutEventOnce } from "@/utils/ecommerceDataLayer";
 
 const SECTIONS = [
   { id: "overview", label: "OVERVIEW" },
@@ -36,9 +36,7 @@ const SECTIONS = [
  *  serves either, but the Vite dev server only serves the explicit file. */
 const DEDICATED_MAPS = new Set(["indonesia"]);
 const mapSrcFor = (slug: string) =>
-  DEDICATED_MAPS.has(slug)
-    ? `/map/${slug}/index.html?embed=1`
-    : `/map/index.html?trip=${slug}&embed=1`;
+  publicUrl(DEDICATED_MAPS.has(slug) ? `map/${slug}/index.html?embed=1` : `map/index.html?trip=${slug}&embed=1`);
 
 const scrollToId = (id: string) => {
   const el = document.getElementById(id);
@@ -55,54 +53,60 @@ function H({ eyebrow, children }: { eyebrow: string; children: React.ReactNode }
   );
 }
 
-export default function PreviewTrip({ slug: slugProp }: { slug?: PreviewSlug }) {
+export default function AllInTrip({ slug: slugProp }: { slug?: TripSlug }) {
   const params = useParams();
-  const slug = (slugProp ?? params.slug ?? "indonesia") as PreviewSlug;
+  const slug = (slugProp ?? params.slug ?? "indonesia") as TripSlug;
   const [showAllIncluded, setShowAllIncluded] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
-  const { data: trip } = useQuery({
+  const { data: trip, isPlaceholderData } = useQuery({
     queryKey: ["trip", slug],
     queryFn: () => fetchTrip(slug),
     retry: false,
     placeholderData: getTripFallback(slug),
   });
 
+  // Only fire once real data has arrived — the placeholder carries dummy
+  // pricing, and firing on that would log fabricated prices into GA4.
   useEffect(() => {
-    const m = document.createElement("meta");
-    m.name = "robots";
-    m.content = "noindex, nofollow";
-    document.head.appendChild(m);
-    return () => { document.head.removeChild(m); };
-  }, []);
+    if (!trip || isPlaceholderData) return;
+    if (!markCheckoutEventOnce("view_item", trip.slug)) return;
+    gtmClearEcommerce();
+    gtmPushEvent("view_item", {
+      conversion_type: CONVERSION_TYPE_ALL_IN,
+      ecommerce: {
+        currency: "USD",
+        value: trip.defaultPrice,
+        items: [buildTripEcommerceItem(trip, { price: trip.defaultPrice })],
+      },
+    });
+  }, [trip, isPlaceholderData]);
 
-  const content = trip ? getPreviewContent(trip, slug) : null;
+  const content = trip ? getTripContent(trip, slug) : null;
   const meta = TRIPS.find((t) => t.slug === slug);
-  // Read the same weekly schedule the booking section shows, so the card's
-  // "next date" and "from" price cannot disagree with the dates listed below.
-  const schedule = useMemo(() => (trip ? previewDepartures(trip) : []), [trip]);
+  const departures = useMemo(() => trip?.departures ?? [], [trip]);
   // "From" must always be the cheapest bookable departure, not whichever one
   // happens to sort first — they were showing $700 against a $650 date.
-  const bookable = schedule.filter((d) => d.bookable);
-  const priced = (bookable.length ? bookable : schedule).map((d) => d.price).filter((n) => n > 0);
+  const bookable = departures.filter((d) => d.bookable && d.spotsRemaining > 0);
+  const priced = (bookable.length ? bookable : departures).map((d) => d.price).filter((n) => n > 0);
   const price = priced.length ? Math.min(...priced) : trip?.defaultPrice ?? meta?.price ?? 0;
   // Pair the strike price with the same departure the "from" price came from,
   // otherwise the discount badge is computed across two different dates.
-  const cheapest = (bookable.length ? bookable : schedule).find((d) => d.price === price);
+  const cheapest = (bookable.length ? bookable : departures).find((d) => d.price === price);
   const strike = cheapest?.strikethrough ?? trip?.defaultStrikethrough ?? null;
-  const next = nextDeparture(schedule);
+  const next = nextDeparture(departures);
   const pctOff = strike && strike > price ? Math.round(((strike - price) / strike) * 100) : null;
   const visibleIncluded = showAllIncluded ? (content?.included ?? []) : (content?.included ?? []).slice(0, 6);
 
   if (!content) return <div className="min-h-screen bg-mm-bone" />;
-  const { snapshot: SNAPSHOT, isThisForMe: IS_THIS_FOR_ME, highlights: HIGHLIGHTS,
+  const { snapshot: SNAPSHOT, isThisForMe: IS_THIS_FOR_ME,
           notIncluded: NOT_INCLUDED, itinerary: ITINERARY, reviews: REVIEWS,
           faqs: FAQS, hero: heroImg } = content;
+  // Customers see finished tiles only.
+  const HIGHLIGHTS = content.highlights.filter((h) => h.image);
 
   return (
     <div className="min-h-screen bg-mm-bone pb-24 md:pb-0">
-      <Navbar />
-
       {/* ============ HERO ============ */}
       {/* Mirrors the live trip hero (Hero.tsx): min-h-[100svh], same type scale,
           eyebrow, day starburst, padding and left offset. What differs is the
@@ -113,16 +117,8 @@ export default function PreviewTrip({ slug: slugProp }: { slug?: PreviewSlug }) 
         {/* MOBILE */}
         <div className="relative w-full md:hidden">
           <div className="absolute inset-0 z-0">
-            {heroImg ? (
-              <>
-                <img src={heroImg} alt="" className="absolute inset-0 h-full w-full object-cover object-[60%_center]" />
-                <div className="absolute inset-0 bg-gradient-to-b from-mm-black/55 via-mm-black/15 to-mm-black/80" />
-              </>
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center bg-mm-black">
-                <span className="font-sticker text-[10px] tracking-[0.16em] text-mm-bone/40">HERO IMAGE PENDING</span>
-              </div>
-            )}
+            <img src={heroImg} alt="" className="absolute inset-0 h-full w-full object-cover object-[60%_center]" />
+            <div className="absolute inset-0 bg-gradient-to-b from-mm-black/55 via-mm-black/15 to-mm-black/80" />
           </div>
 
           <div className="pointer-events-none absolute right-3 top-[5rem] z-30">
@@ -155,8 +151,6 @@ export default function PreviewTrip({ slug: slugProp }: { slug?: PreviewSlug }) 
         {/* DESKTOP */}
         <div className="relative hidden min-h-[100svh] w-full md:block">
           <div className="absolute inset-0 z-0">
-            {heroImg ? (
-              <>
                 <div className="absolute inset-y-0 right-0 w-[72%]">
                   <img
                     src={heroImg}
@@ -169,12 +163,6 @@ export default function PreviewTrip({ slug: slugProp }: { slug?: PreviewSlug }) 
                   />
                 </div>
                 <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.55)_0%,rgba(0,0,0,0.32)_30%,rgba(0,0,0,0.06)_55%,transparent_72%)]" />
-              </>
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center bg-mm-black">
-                <span className="font-sticker text-[11px] tracking-[0.16em] text-mm-bone/40">HERO IMAGE PENDING</span>
-              </div>
-            )}
           </div>
 
           <div className="pointer-events-none absolute right-8 top-20 z-20 origin-top-right scale-[0.78] lg:right-16 lg:top-20 lg:scale-100">
@@ -240,17 +228,14 @@ export default function PreviewTrip({ slug: slugProp }: { slug?: PreviewSlug }) 
           </section>
 
           {/* Highlights */}
+          {HIGHLIGHTS.length > 0 && (
           <section className="mt-16">
             <H eyebrow="TOUR HIGHLIGHTS">BUCKET-LIST MOMENTS<br />MADE FOR THE GROUP CHAT</H>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {HIGHLIGHTS.map((h) => (
                 <figure key={h.title} className="border-[3px] border-mm-black bg-mm-bone shadow-mm-sm">
                   <div className="relative">
-                    {h.image ? (
-                      <img src={h.image} alt={h.title} className={`aspect-[4/5] w-full object-cover ${h.position ?? ""}`} loading="lazy" />
-                    ) : (
-                      <PhotoPending title={h.title} />
-                    )}
+                    <img src={h.image!} alt={h.title} className={`aspect-[4/5] w-full object-cover ${h.position ?? ""}`} loading="lazy" />
                     <span className="absolute left-2 top-2 border-[2px] border-mm-black bg-mm-lime px-2 py-1 font-sticker text-[9px] tracking-[0.12em] text-mm-black">
                       INCLUDED
                     </span>
@@ -262,6 +247,7 @@ export default function PreviewTrip({ slug: slugProp }: { slug?: PreviewSlug }) 
               ))}
             </div>
           </section>
+          )}
 
           {/* What's included */}
           <section id="included" className="mt-16 scroll-mt-[116px]">
@@ -330,9 +316,9 @@ export default function PreviewTrip({ slug: slugProp }: { slug?: PreviewSlug }) 
           </section>
 
           {/* Reviews */}
+          {REVIEWS.length > 0 && (
           <section className="mt-16">
             <H eyebrow="REVIEWS FROM OUR TRAVELS">DON'T TAKE<br />OUR WORD FOR IT</H>
-            {REVIEWS.length === 0 && <PendingPanel label="Property reviews pending" />}
             <div className="grid gap-4 sm:grid-cols-2">
               {REVIEWS.map((r) => (
                 <blockquote key={r.property} className="border-[3px] border-mm-black bg-mm-bone p-4 shadow-mm-sm">
@@ -350,6 +336,7 @@ export default function PreviewTrip({ slug: slugProp }: { slug?: PreviewSlug }) 
               ))}
             </div>
           </section>
+          )}
         </div>
 
         {/* ============ DESKTOP FLOATING CARD ============ */}
@@ -396,11 +383,11 @@ export default function PreviewTrip({ slug: slugProp }: { slug?: PreviewSlug }) 
         </aside>
       </div>
 
-      {/* ============ DATES & BOOKING (real flow) ============ */}
+      {/* ============ DATES & BOOKING ============ */}
       <section id="booking" className="scroll-mt-[116px] border-t-[4px] border-mm-black bg-mm-bone py-12">
         <div className="mx-auto max-w-6xl px-5 md:px-6">
           <H eyebrow="DATES & AVAILABILITY">THE COUNTDOWN<br />STARTS NOW</H>
-          {trip && <PreviewBooking key={trip.slug} trip={trip} />}
+          {trip && <Booking key={trip.slug} trip={trip} />}
         </div>
 
       </section>
@@ -424,19 +411,6 @@ export default function PreviewTrip({ slug: slugProp }: { slug?: PreviewSlug }) 
           </div>
         </div>
       </section>
-
-      {content.pending.length > 0 && (
-        <section className="border-t-[4px] border-mm-black bg-mm-paper py-10">
-          <div className="mx-auto max-w-3xl px-5 md:px-6">
-            <p className="font-sticker text-[11px] tracking-[0.16em] text-mm-black/60">STILL TO COME</p>
-            <ul className="mt-3 flex flex-wrap gap-2">
-              {content.pending.map((p) => (
-                <li key={p} className="border-[3px] border-dashed border-mm-black/40 bg-mm-black/5 px-3 py-1.5 text-xs text-mm-black/70">{p}</li>
-              ))}
-            </ul>
-          </div>
-        </section>
-      )}
 
       <SiteFooter />
       <StickyCta onClick={() => scrollToId("booking")} />
