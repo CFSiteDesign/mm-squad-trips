@@ -717,6 +717,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      extend_weekly_departures: {
+        Args: { weeks_ahead?: number }
+        Returns: {
+          departure_date: string
+          trip_slug: string
+        }[]
+      }
       get_cron_secret: { Args: never; Returns: string }
       normalize_cron_secret: { Args: { _value: string }; Returns: string }
       recompute_departure_spots: {
