@@ -84,7 +84,7 @@ export default function SquadRegister() {
           </h1>
           <p className="mt-4 max-w-xl text-mm-black/80">
             Your unique Squad Code is ready. Share it with your crew — every booking gets
-            tracked on your dashboard, and you'll unlock 50% off at 4 bookings and a free trip at 8.
+            tracked on your dashboard, and you'll unlock 50% off at 3 bookings and a free trip at 6.
           </p>
 
           <div className="mt-8 border-mm-thick bg-mm-bone p-6 shadow-mm md:p-8">
@@ -220,7 +220,7 @@ export default function SquadRegister() {
           </div>
 
           <div className="border-[2px] border-dashed border-mm-black/40 bg-mm-bone/60 p-4 text-xs text-mm-black/80">
-            <strong className="font-display tracking-wide">REWARDS:</strong> Get 4 mates to book with your code → your trip is <strong>50% OFF</strong>. Get 8 → your trip is <strong>FREE</strong>.
+            <strong className="font-display tracking-wide">REWARDS:</strong> Get 3 mates to book with your code → your trip is <strong>50% OFF</strong>. Get 6 → your trip is <strong>FREE</strong>.
           </div>
 
           <Button

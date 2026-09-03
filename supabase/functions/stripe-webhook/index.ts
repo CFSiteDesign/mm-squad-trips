@@ -380,15 +380,16 @@ async function writeBookings(session: Stripe.Checkout.Session) {
             : `${APP_URL}/squad-leader/login`;
           if (full?.email) {
             const leaderFirst = (full.name as string | null)?.split(" ")[0] || "captain";
-            const goal = isStudent ? 10 : 8;
+            // Squad tiers: 50% at 3 bookings, free at 6 (Aug 2026 copy; was 4 / 8).
+            const goal = isStudent ? 10 : 6;
             const nextRewardObj = isStudent
               ? bookingsCount < 10
                 ? { at: 10, text: "2 free squad leader spots" }
                 : { at: bookingsCount, text: "the next perk" }
-              : bookingsCount < 4
-                ? { at: 4, text: "50% off your trip" }
-                : bookingsCount < 8
-                  ? { at: 8, text: "a free trip" }
+              : bookingsCount < 3
+                ? { at: 3, text: "50% off your trip" }
+                : bookingsCount < 6
+                  ? { at: 6, text: "a free trip" }
                   : { at: bookingsCount, text: "the next perk" };
             const joined = squadMemberJoinedEmail({
               leaderName: leaderFirst,
@@ -405,7 +406,7 @@ async function writeBookings(session: Stripe.Checkout.Session) {
             );
             const milestoneHit = isStudent
               ? bookingsCount === 10
-              : bookingsCount === 4 || bookingsCount === 8;
+              : bookingsCount === 3 || bookingsCount === 6;
             if (milestoneHit) {
               const milestone = squadMilestoneEmail({
                 leaderName: leaderFirst,
@@ -413,19 +414,19 @@ async function writeBookings(session: Stripe.Checkout.Session) {
                 bookingsCount,
                 milestoneHeadline: isStudent
                   ? "2 free spots unlocked"
-                  : bookingsCount === 8
+                  : bookingsCount === 6
                     ? "Free trip unlocked"
                     : "50% off unlocked",
                 rewardText: isStudent
                   ? "2 FREE SQUAD LEADER SPOTS"
-                  : bookingsCount === 8
+                  : bookingsCount === 6
                     ? "Your trip is on the house"
                     : "Your trip is half price",
                 nextStepText: isStudent
                   ? "Email hayley@madmonkeyhostels.com to book in your 2 free squad leader spots."
-                  : bookingsCount === 8
+                  : bookingsCount === 6
                     ? "We'll be in touch to lock in your free trip."
-                    : "Keep going — 4 more bookings unlocks a free trip.",
+                    : "Keep going — 3 more bookings unlocks a free trip.",
                 dashboardUrl,
               });
               sendEmail({ to: full.email as string, subject: milestone.subject, html: milestone.html, templateName: "squad_milestone" })

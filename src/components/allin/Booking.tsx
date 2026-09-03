@@ -1,15 +1,15 @@
 // The booking section on every ALL IN trip page.
 //
 // One white panel, no anchor jumps: picking a date opens the form inline
-// underneath it. Departures run every week on the trip's start day and the
-// soonest is promoted to its own card, so booking it is a single click. There
-// is no custom-date picker; people who need something else reach an advisor.
+// underneath it. The soonest departure is promoted to its own card so booking
+// it is a single click. There is no custom-date picker; people who need
+// something else reach an advisor.
 //
-// Payment rules are the live ones, shared with the server and the student
-// flow in BookingFlow.tsx: $99 a spot holds a departure 7+ days out, otherwise
-// it's pay in full; discount and squad codes are validated server-side before
-// the summary shows a price; a 1-spot booking is a solo booking, which is
-// guaranteed to run.
+// A frontend change only. It reads the same departures and talks to the same
+// checkout function as BookingFlow.tsx (still serving /students), on the same
+// rules: $99 a spot holds a departure 7+ days out, otherwise it's pay in full;
+// codes are validated server-side before the summary shows a price; one code
+// applies per booking; "travelling solo" is an explicit opt-in.
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, Check, AlertCircle, ChevronDown, MessageCircle, Mail } from "lucide-react";
 import { toast } from "sonner";
@@ -66,6 +66,9 @@ export function Booking({ trip }: { trip: Trip }) {
   const [form, setForm] = useState({
     firstName: "", lastName: "", email: "", phone: "", squadCode: "", discountCode: "", secondCode: "",
   });
+  // Same opt-in as the old form's TRAVELLING SOLO? switch: a solo booking is
+  // guaranteed to run, so it has to be the guest's own call, not inferred.
+  const [solo, setSolo] = useState(false);
   const [squadStatus, setSquadStatus] = useState<CodeStatus | null>(null);
   const [discountStatus, setDiscountStatus] = useState<CodeStatus | null>(null);
   const advisorRef = useRef<HTMLDivElement>(null);
@@ -191,6 +194,10 @@ export function Booking({ trip }: { trip: Trip }) {
   const discountAmount = discountStatus?.valid ? discountStatus.amount : 0;
   const appliedDiscount = discountStatus?.valid ? form.discountCode.trim().toUpperCase() : "";
   const appliedSquad = squadStatus?.valid ? form.squadCode.trim().toUpperCase() : "";
+  // The checkout function takes one code. A discount changes the price, so it
+  // wins; a squad code on its own credits the leader. Same rule as the old page.
+  const codeToSend = appliedDiscount || appliedSquad || undefined;
+  const squadDropped = Boolean(appliedDiscount && appliedSquad);
 
   async function submit() {
     if (!chosen) return;
@@ -230,16 +237,11 @@ export function Booking({ trip }: { trip: Trip }) {
           name: `${form.firstName} ${form.lastName}`.trim(),
           email: form.email.trim(),
           phone: form.phone.trim(),
-          // One spot is a solo booking: guaranteed to run, never cancelled for
-          // numbers. That is the promise on the page, so it is the flag we send.
-          solo: spots === 1,
+          solo: spots === 1 && solo,
         },
         travelers: [],
-        // The server only ever applied one code before squadCode existed, so a
-        // squad code still travels in discountCode when it is the only one.
-        discountCode: appliedDiscount || appliedSquad || undefined,
+        discountCode: codeToSend,
         secondDiscountCode: appliedDiscount && form.secondCode.trim() ? form.secondCode.trim().toUpperCase() : undefined,
-        squadCode: appliedSquad || undefined,
         utm: readUtm(),
         gaClientId: readGaClientId(),
       });
@@ -328,6 +330,25 @@ export function Booking({ trip }: { trip: Trip }) {
             <div className="sm:col-start-2">{codeField("secondCode", "Second code (optional)", null)}</div>
           )}
         </div>
+        {squadDropped && (
+          <p className="mt-2 text-[11px] leading-snug text-mm-black/60">
+            One code applies per booking. Your discount will be used; clear it if you'd rather the booking count toward {appliedSquad}'s squad.
+          </p>
+        )}
+        {spots === 1 && (
+          <label className="mt-3 flex cursor-pointer items-center justify-between gap-3 border-[3px] border-mm-black bg-mm-lime px-3 py-2">
+            <span>
+              <span className="block font-sticker text-[10px] tracking-[0.12em] text-mm-black">TRAVELLING SOLO?</span>
+              <span className="block text-[11px] leading-snug text-mm-black/75">Just you, nobody booking separately. Solo trips are guaranteed to run.</span>
+            </span>
+            <input
+              type="checkbox"
+              checked={solo}
+              onChange={(e) => setSolo(e.target.checked)}
+              className="h-5 w-5 shrink-0 accent-mm-pink"
+            />
+          </label>
+        )}
 
         {/* 3 — summary */}
         <p className="mt-6 font-sticker text-[10px] tracking-[0.14em] text-mm-black">3 · YOU'RE ABOUT TO BOOK</p>
@@ -461,7 +482,7 @@ export function Booking({ trip }: { trip: Trip }) {
             {chosen?.id === next.id && <Panel />}
           </div>
           <p className="mt-2 text-[12px] text-mm-black/60">
-            {weekdayName ? `Departs every ${weekdayName} — pick any week below.` : "Pick any week below."}
+            {weekdayName ? `Departs on ${weekdayName}s — more dates below.` : "More dates below."}
           </p>
         </div>
       ) : (
@@ -492,7 +513,7 @@ export function Booking({ trip }: { trip: Trip }) {
         {rows.map((d) => <DateRow key={d.id} d={d} />)}
         {rows.length === 0 && next && (
           <p className="py-2 text-sm text-mm-black/60">
-            The next departure above is the only one left this month.
+            The next departure above is the only date this month.
           </p>
         )}
 

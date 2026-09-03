@@ -7,12 +7,12 @@ const STEPS = [
   { n: 1, t: "REGISTER", d: "Get your unique squad code in seconds." },
   { n: 2, t: "PICK YOUR TRIP", d: "Choose any departure you'd like to lead." },
   { n: 3, t: "SHARE THE VIBE", d: "Send your code to mates, followers, anyone." },
-  { n: 4, t: "EARN YOUR SPOT", d: "Hit 8 bookings and your trip is on us." },
+  { n: 4, t: "EARN YOUR SPOT", d: "Hit 6 bookings and your trip is on us." },
 ];
 
 
 const FAQS = [
-  { q: "What if I get fewer than 4 bookings?", a: "No discount applies, but you'll still travel at the standard price with the squad you brought along." },
+  { q: "What if I get fewer than 3 bookings?", a: "No discount applies, but you'll still travel at the standard price with the squad you brought along." },
   { q: "When does my discount get applied?", a: "It locks in automatically as soon as bookings tick over each milestone." },
   { q: "Can I lead more than one trip?", a: "Yes — after your first successful trip you can apply for additional departures." },
   { q: "How long does my code stay active?", a: "12 months from registration, or until your chosen trip departs." },

@@ -495,7 +495,7 @@ export function squadCreatedEmail(v: {
 <div style="font-size:12px;text-transform:uppercase;letter-spacing:.15em">Your squad code</div>
 <div style="font-size:32px;font-weight:900;letter-spacing:.1em;margin-top:6px">{{squadCode}}</div>
 </div>
-<p style="margin:0 0 12px 0"><strong>The deal:</strong> 50% off your trip at 4 bookings · free trip at 8.</p>
+<p style="margin:0 0 12px 0"><strong>The deal:</strong> 50% off your trip at 3 bookings · free trip at 6.</p>
 <p style="margin:0 0 20px 0">Track your crew anytime from your dashboard:</p>
 <a href="{{dashboardUrl}}" style="display:inline-block;background:#ff6600;color:#0a0a0a;font-weight:900;text-transform:uppercase;padding:14px 22px;border:2px solid #0a0a0a;text-decoration:none">Open your dashboard</a>
 </td></tr>`,
@@ -514,7 +514,7 @@ export function squadMemberJoinedEmail(v: {
   dashboardUrl: string;
   progressGoal?: number;
 }): { subject: string; html: string } {
-  const goal = v.progressGoal ?? 8;
+  const goal = v.progressGoal ?? 6;
   const inner = render(
     `<tr><td style="padding:16px 24px 8px 24px">
 <h1 style="margin:0;font-size:28px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em">SQUAD JUST GREW 🚀</h1>

@@ -4,8 +4,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { verifyAdminToken, adminAuthHeaderToken } from "../_shared/admin-auth.ts";
 import { APP_URL, sendEmail, squadCreatedEmail } from "../_shared/email.ts";
 
-const TIER_HALF = 4;
-const TIER_FREE = 8;
+// Per the Aug 2026 squad copy (RALLY 3 MATES / RALLY 6 MATES), changed 3 Sep 2026 from 4 / 8.
+const TIER_HALF = 3;
+const TIER_FREE = 6;
 const STUDENT_TIER_FREE = 10;
 
 function jr(body: unknown, status = 200) {

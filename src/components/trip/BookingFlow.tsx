@@ -339,7 +339,7 @@ export function BookingFlow({ trip, hideHeading = false }: { trip: Trip; hideHea
               <span className="mt-1 text-xs text-mm-black/70">
                 {isStudent
                   ? "Groups of 10+ get 2 free organiser spots."
-                  : "Lead your crew — 50% off at 4 bookings, free trip at 8."}
+                  : "Lead your crew — 50% off at 3 bookings, free trip at 6."}
               </span>
             </Link>
             <button
