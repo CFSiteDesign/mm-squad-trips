@@ -251,6 +251,9 @@ async function writeBookings(session: Stripe.Checkout.Session) {
     utm_medium: m.utm_medium || null,
     utm_campaign: m.utm_campaign || null,
     utm_content: m.utm_content || null,
+    // Adventure Advisors link token, on every row: their commission is per
+    // traveller, so each spot has to be findable by the link that sold it.
+    advisor_ref: m.advisor_ref || null,
   });
   // Members
   for (let i = 1; i < groupSize; i++) {
@@ -272,6 +275,7 @@ async function writeBookings(session: Stripe.Checkout.Session) {
       amount_paid: Math.round(perSpotPaid * 100) / 100,
       status: "Confirmed",
       stripe_session_id: sessionId,
+      advisor_ref: m.advisor_ref || null,
     });
   }
 

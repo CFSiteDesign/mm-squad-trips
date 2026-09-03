@@ -72,10 +72,16 @@ Deno.serve(async (req) => {
      *  code: the discount changes the price, the squad code credits the leader.
      *  Before this field existed the two shared one input. */
     squadCode?: string;
+    /** Adventure Advisors per-link token. Opaque, [A-Za-z0-9_-]{1,32},
+     *  case-sensitive; stored untouched so their side can match the sale. */
+    advisorRef?: string;
   };
   try { payload = await req.json(); } catch { return err("Invalid JSON body"); }
 
   const { tripSlug, departureId, groupSize, leadBooker, travelers = [], discountCode, secondDiscountCode, friendsMentioned, staffRecommendation, utm = {}, gaClientId, customDate, squadCode: squadCodeInput } = payload;
+  // Charset + length only. Never uppercased, never parsed — it's their key.
+  const advisorRef = typeof payload.advisorRef === "string" && /^[A-Za-z0-9_-]{1,32}$/.test(payload.advisorRef)
+    ? payload.advisorRef : "";
   if (!tripSlug || typeof tripSlug !== "string") return err("tripSlug required");
   if (!departureId && !customDate) return err("departureId or customDate required");
   if (!groupSize || typeof groupSize !== "number" || groupSize < 1 || groupSize > 5) return err("groupSize must be 1–5");
@@ -360,6 +366,8 @@ Deno.serve(async (req) => {
       // GA4 client id — lets charge-trip-balances attribute the later balance
       // charge to the same GA4 session/campaign via Measurement Protocol.
       ga_client_id: gaClientId ?? "",
+      // Adventure Advisors link token. Empty for organic bookings.
+      advisor_ref: advisorRef,
     };
 
     (travelers as Array<Record<string, string>>).slice(0, 4).forEach((t, i) => {

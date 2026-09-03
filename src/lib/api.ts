@@ -84,6 +84,9 @@ export interface CreateCheckoutInput {
   /** Squad leader code, sent separately so it can sit alongside a discount
    *  code: the discount changes the price, the squad code credits the leader. */
   squadCode?: string;
+  /** Adventure Advisors link token (their format, case-sensitive). Rides in
+   *  the Stripe metadata so the sale can be matched back to the link. */
+  advisorRef?: string;
   friendsMentioned?: string;
   /** Optional "Mad Monkey staff recommendation" name from the booking form. */
   staffRecommendation?: string;

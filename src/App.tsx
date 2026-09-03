@@ -25,6 +25,7 @@ import NotFound from "./pages/NotFound";
 // purpose: nested routes break on the lovable.app domain.
 import AllInHome from "./pages/AllInHome";
 import AllInTrip from "./pages/AllInTrip";
+import AllInCheckout from "./pages/AllInCheckout";
 import { gtmPushEvent } from "@/utils/gtmTracker";
 import { BASE_PATH } from "@/lib/base-path";
 
@@ -86,6 +87,8 @@ const App = () => (
         <RouteChangeTracker />
         <Routes>
           <Route path="/" element={<AllInHome />} />
+          {/* Advisor links land here: /checkout?trip=&date=&spots=&...&aa= */}
+          <Route path="/checkout" element={<AllInCheckout />} />
           <Route path="/booking-success" element={<BookingSuccess />} />
           <Route path="/pay-balance" element={<PayBalance />} />
           <Route path="/squad-leader" element={<SquadHub />} />
