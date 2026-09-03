@@ -14,6 +14,7 @@ export const OPS_NOTIFY_EMAILS = [
   "hayley@madmonkeyhostels.com",
   "cai@madmonkeyhostels.com",
   "lexie@madmonkeyhostels.com",
+  "ewan@madmonkeyhostels.com",
 ];
 
 // Trip-specific CCs on ops notifications (matched by trip slug/name substring, case-insensitive)
