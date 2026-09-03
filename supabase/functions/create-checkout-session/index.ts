@@ -68,10 +68,14 @@ Deno.serve(async (req) => {
     gaClientId?: string;
     /** ISO date for a guest-created custom departure (alternative to departureId). */
     customDate?: string;
+    /** Squad leader code, sent on its own so it can sit alongside a discount
+     *  code: the discount changes the price, the squad code credits the leader.
+     *  Before this field existed the two shared one input. */
+    squadCode?: string;
   };
   try { payload = await req.json(); } catch { return err("Invalid JSON body"); }
 
-  const { tripSlug, departureId, groupSize, leadBooker, travelers = [], discountCode, secondDiscountCode, friendsMentioned, staffRecommendation, utm = {}, gaClientId, customDate } = payload;
+  const { tripSlug, departureId, groupSize, leadBooker, travelers = [], discountCode, secondDiscountCode, friendsMentioned, staffRecommendation, utm = {}, gaClientId, customDate, squadCode: squadCodeInput } = payload;
   if (!tripSlug || typeof tripSlug !== "string") return err("tripSlug required");
   if (!departureId && !customDate) return err("departureId or customDate required");
   if (!groupSize || typeof groupSize !== "number" || groupSize < 1 || groupSize > 5) return err("groupSize must be 1–5");
@@ -273,6 +277,20 @@ Deno.serve(async (req) => {
       }
     }
 
+    // 4b. Explicit squad code. Same lookup as the fallback above, so an unknown
+    //     code is silently ignored rather than blocking the payment.
+    if (!squadCode && squadCodeInput && typeof squadCodeInput === "string") {
+      const safe = squadCodeInput.trim().toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 40);
+      if (safe) {
+        const { data: squad } = await sb
+          .from("squad_leaders")
+          .select("code")
+          .eq("code", safe)
+          .maybeSingle();
+        if (squad?.code) squadCode = squad.code as string;
+      }
+    }
+
     // 5. 60-day rule
     const isDeposit = daysUntil(depDate) >= DEPOSIT_THRESHOLD_DAYS;
     const fullDue = Math.max(0, subtotal - discountAmount);
@@ -328,7 +346,11 @@ Deno.serve(async (req) => {
       lead_country: lead.country ?? "",
       lead_age: lead.age ?? "",
       lead_source: lead.source ?? "",
-      lead_solo: String(lead.solo ?? ""),
+      // A single booking is a solo booking. The site promises solo travellers a
+      // 100% departure rate, and lead_solo is what keeps the departure from
+      // being cancelled for numbers, so it follows from the spot count rather
+      // than a checkbox the guest might miss.
+      lead_solo: String(groupSize === 1 || String(lead.solo) === "true"),
       friends_mentioned: friendsMentioned ?? "",
       staff_recommendation: (staffRecommendation ?? "").slice(0, 200),
       utm_source: utm.utm_source ?? "",
