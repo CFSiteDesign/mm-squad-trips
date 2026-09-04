@@ -21,8 +21,8 @@ import StaffLeaderboardPage from "./pages/StaffLeaderboardPage";
 import PayBalance from "./pages/PayBalance";
 
 import NotFound from "./pages/NotFound";
-// The Aug 2026 redesign, approved 1 Sep 2026. Single-segment trip paths on
-// purpose: nested routes break on the lovable.app domain.
+// Single-segment trip paths on purpose: nested routes break on the
+// lovable.app domain.
 import AllInHome from "./pages/AllInHome";
 import AllInTrip from "./pages/AllInTrip";
 import AllInCheckout from "./pages/AllInCheckout";
@@ -123,13 +123,6 @@ const App = () => (
           <Route path="/students/squad-leader/dashboard" element={<SquadDashboard />} />
           <Route path="/students/admin" element={<Admin />} />
 
-          {/* The demo links that were circulated for sign-off keep working. */}
-          <Route path="/preview-all-in" element={<Navigate to="/" replace />} />
-          <Route path="/preview-indonesia" element={<Navigate to="/indonesia" replace />} />
-          <Route path="/preview-indonesia-7" element={<Navigate to="/indonesia-7" replace />} />
-          <Route path="/preview-vietnam" element={<Navigate to="/vietnam" replace />} />
-          <Route path="/preview-vietnam-7" element={<Navigate to="/vietnam-7" replace />} />
-          <Route path="/preview-cambodia" element={<Navigate to="/cambodia" replace />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
