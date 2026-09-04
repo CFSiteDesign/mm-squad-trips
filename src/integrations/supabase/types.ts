@@ -68,6 +68,7 @@ export type Database = {
       bookings: {
         Row: {
           additional_travelers: Json | null
+          advisor_ref: string | null
           amount_paid: number | null
           balance_amount: number | null
           balance_attempts: number
@@ -118,6 +119,7 @@ export type Database = {
         }
         Insert: {
           additional_travelers?: Json | null
+          advisor_ref?: string | null
           amount_paid?: number | null
           balance_amount?: number | null
           balance_attempts?: number
@@ -168,6 +170,7 @@ export type Database = {
         }
         Update: {
           additional_travelers?: Json | null
+          advisor_ref?: string | null
           amount_paid?: number | null
           balance_amount?: number | null
           balance_attempts?: number
