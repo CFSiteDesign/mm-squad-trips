@@ -20,3 +20,8 @@ verify_jwt = false
 # Called by pg_cron without a JWT — guarded by the Vault CRON_SECRET instead.
 [functions.quarterly-prize-draw]
 verify_jwt = false
+
+# Polled by Adventure Advisors' server (no JWT) — guarded by the shared key in
+# app_config('advisor_api_key') instead.
+[functions.advisor-bookings]
+verify_jwt = false
