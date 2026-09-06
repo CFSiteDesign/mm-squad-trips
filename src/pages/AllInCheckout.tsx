@@ -18,11 +18,11 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Check, AlertCircle } from "lucide-react";
 import { fetchTrip } from "@/lib/api";
 import { formatPrice, paymentLine } from "@/lib/trip-helpers";
-import { dayLabel, endDate } from "@/lib/trip-dates";
+import { dayLabel, tripEndDate } from "@/lib/trip-dates";
 import { useCheckout, ADVISOR_REF_PATTERN, type CheckoutFields } from "@/lib/use-checkout";
 import { CheckoutPanel } from "@/components/allin/CheckoutPanel";
 import { SiteFooter } from "@/components/trip/SiteFooter";
-import { TRIPS } from "@/data/trips";
+import { TRIPS, tripNights } from "@/data/trips";
 import { gtmClearEcommerce, gtmPushEvent } from "@/utils/gtmTracker";
 import { buildTripEcommerceItem, CONVERSION_TYPE_ALL_IN, markCheckoutEventOnce } from "@/utils/ecommerceDataLayer";
 import type { Trip, Departure } from "@/types/trip";
@@ -157,7 +157,7 @@ function CheckoutBody({ trip, link }: { trip: Trip; link: LinkParams }) {
         <p className="font-sticker text-[11px] tracking-[0.16em] text-mm-black/60">BOOKING WITH {link.advisorName.toUpperCase()}</p>
       )}
       <h1 className="mt-1 font-display text-[clamp(2rem,6vw,3.25rem)] leading-[0.95] text-mm-black">{(meta?.name ?? trip.name).toUpperCase()}</h1>
-      <p className="mt-2 text-sm text-mm-black/70">{trip.days} days · {meta?.route ?? ""}</p>
+      <p className="mt-2 text-sm text-mm-black/70">{trip.days} days · {tripNights(trip)} nights · {meta?.route ?? ""}</p>
 
       {chosen ? (
         <section className="mt-6 border-[3px] border-mm-black bg-mm-bone shadow-mm-sm">
@@ -169,7 +169,7 @@ function CheckoutBody({ trip, link }: { trip: Trip; link: LinkParams }) {
             </div>
             <div className="min-w-[104px]">
               <p className="font-sticker text-[9px] tracking-[0.14em] text-mm-black/60">END DATE</p>
-              <p className="font-display text-2xl leading-none text-mm-black">{dayLabel(endDate(chosen.date, trip.days))}</p>
+              <p className="font-display text-2xl leading-none text-mm-black">{dayLabel(tripEndDate(chosen.date, trip))}</p>
             </div>
             <div className="flex items-center gap-1.5 text-sm text-mm-black/80">
               <Check className="h-4 w-4 text-mm-black" strokeWidth={3} /> {chosen.spotsRemaining} available
@@ -214,7 +214,7 @@ function CheckoutBody({ trip, link }: { trip: Trip; link: LinkParams }) {
                 onClick={() => setPickedId(d.id)}
                 className="flex w-full flex-wrap items-center gap-x-6 gap-y-1 border-[3px] border-mm-black bg-mm-bone px-4 py-3 text-left transition-colors hover:bg-mm-yellow"
               >
-                <span className="font-display text-lg text-mm-black">{dayLabel(d.date)} → {dayLabel(endDate(d.date, trip.days))}</span>
+                <span className="font-display text-lg text-mm-black">{dayLabel(d.date)} → {dayLabel(tripEndDate(d.date, trip))}</span>
                 <span className="text-sm text-mm-black/70">{d.spotsRemaining} available</span>
                 <span className="ml-auto font-display text-lg text-mm-black">{formatPrice(d.price)}<span className="text-xs text-mm-black/60">/person</span></span>
               </button>

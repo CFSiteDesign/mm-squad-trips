@@ -3,7 +3,8 @@
 // for and where it sits on the page.
 import { ArrowRight } from "lucide-react";
 import { formatPrice, paymentLine } from "@/lib/trip-helpers";
-import { dayLabel, endDate } from "@/lib/trip-dates";
+import { dayLabel, tripEndDate } from "@/lib/trip-dates";
+import { tripNights } from "@/data/trips";
 import { MAX_SPOTS, type Checkout, type CheckoutFields, type CodeStatus } from "@/lib/use-checkout";
 import type { Trip, Departure } from "@/types/trip";
 
@@ -95,7 +96,7 @@ export function CheckoutPanel({ trip, departure, checkout }: { trip: Trip; depar
           {trip.name} · {trip.days} days
         </p>
         <p className="mt-1 text-sm text-mm-black/70">
-          {dayLabel(departure.date)} → {dayLabel(endDate(departure.date, trip.days))} · {spots} spot{spots === 1 ? "" : "s"}
+          {dayLabel(departure.date)} → {dayLabel(tripEndDate(departure.date, trip))} · {tripNights(trip)} nights · {spots} spot{spots === 1 ? "" : "s"}
         </p>
         <dl className="mt-3 space-y-1 border-t-[2px] border-mm-black/15 pt-3 text-sm">
           <div className="flex justify-between"><dt className="text-mm-black/70">Trip total</dt><dd className="text-mm-black">{formatPrice(total)}</dd></div>

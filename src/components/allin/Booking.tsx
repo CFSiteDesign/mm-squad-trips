@@ -12,7 +12,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, Check, AlertCircle, ChevronDown, MessageCircle, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { formatPrice, paymentLine } from "@/lib/trip-helpers";
-import { dayLabel, endDate, monthKey, monthLabel } from "@/lib/trip-dates";
+import { dayLabel, monthKey, monthLabel, tripEndDate } from "@/lib/trip-dates";
+import { tripNights } from "@/data/trips";
 import { nextDeparture } from "@/lib/departures";
 import { useCheckout, MAX_SPOTS } from "@/lib/use-checkout";
 import { CheckoutPanel } from "@/components/allin/CheckoutPanel";
@@ -104,8 +105,8 @@ export function Booking({ trip }: { trip: Trip }) {
             <p className="font-display text-lg leading-none text-mm-black">{dayLabel(d.date)}</p>
           </div>
           <div className="min-w-[104px]">
-            <p className="font-sans text-[10px] font-bold uppercase tracking-[0.08em] text-mm-black/50">End date</p>
-            <p className="font-display text-lg leading-none text-mm-black">{dayLabel(endDate(d.date, trip.days))}</p>
+            <p className="font-sans text-[10px] font-bold uppercase tracking-[0.08em] text-mm-black/50">End date · {tripNights(trip)} nights</p>
+            <p className="font-display text-lg leading-none text-mm-black">{dayLabel(tripEndDate(d.date, trip))}</p>
           </div>
           <div className="flex min-w-[128px] items-center gap-1.5 text-sm">
             {soldOut
@@ -161,7 +162,7 @@ export function Booking({ trip }: { trip: Trip }) {
                 <p className="font-sticker text-[10px] tracking-[0.14em] text-mm-black">★ NEXT DEPARTURE</p>
                 <p className="mt-1 font-display text-3xl leading-none text-mm-black">{dayLabel(next.date)}</p>
                 <p className="mt-1.5 text-sm text-mm-black/75">
-                  Back {dayLabel(endDate(next.date, trip.days))} · {next.spotsRemaining} spot{next.spotsRemaining === 1 ? "" : "s"} left
+                  Back {dayLabel(tripEndDate(next.date, trip))} · {tripNights(trip)} nights · {next.spotsRemaining} spot{next.spotsRemaining === 1 ? "" : "s"} left
                 </p>
               </div>
               <div className="ml-auto flex items-center gap-4">
