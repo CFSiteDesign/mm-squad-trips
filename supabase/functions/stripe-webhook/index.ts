@@ -507,6 +507,7 @@ async function writeBookings(session: Stripe.Checkout.Session) {
           staffRecommendation: (m.staff_recommendation as string) || undefined,
           discountCode: (m.discount_code as string) || undefined,
           bookingUrl: `${APP_URL}/admin`,
+          bookingType: isSoloLead || groupSize === 1 ? "solo" : "group",
         });
         const cc = opsCcForTrip(m.trip_name as string | null, m.trip_slug as string | null);
         sendEmail({ to: OPS_NOTIFY_EMAILS, cc: cc.length ? cc : undefined, subject: ops.subject, html: ops.html, templateName: "booking_ops_notification" }).catch((e) =>

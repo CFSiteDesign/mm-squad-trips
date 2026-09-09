@@ -256,6 +256,7 @@ async function processSession(
           squadCode: (m.squad_code as string) || undefined,
           discountCode: (m.discount_code as string) || undefined,
           bookingUrl: `${APP_URL}/admin`,
+          bookingType: isSolo || m.lead_solo === "true" ? "solo" : "group",
         });
         const cc = opsCcForTrip(m.trip_name as string | null, m.trip_slug as string | null);
         await sendEmail({

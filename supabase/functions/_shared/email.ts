@@ -443,14 +443,32 @@ export function bookingOpsNotificationEmail(v: {
   discountCode?: string;
   staffRecommendation?: string;
   bookingUrl: string;
+  /** Solo = one traveller, guaranteed to run. Group = several spots on one
+   *  booking. Falls back to the spot count when a caller doesn't say. */
+  bookingType?: "solo" | "group";
 }): { subject: string; html: string } {
+  // Ops asked (9 Sep 2026) for the type to be unmissable: it is the first
+  // word of the subject, the headline, a colour block and the first row.
+  const solo = v.bookingType ? v.bookingType === "solo" : String(v.spots) === "1";
+  const spots = Number(v.spots) || 1;
+  const typeLabel = solo ? "Solo" : "Group";
+  const typeDetail = solo ? "1 traveller · departure guaranteed to run" : `${spots} travellers booked together`;
+  const badge = solo
+    ? `<div style="margin:0 0 16px 0;padding:14px 16px;border:3px solid #0a0a0a;background:#ccff01">
+<div style="font-size:22px;font-weight:900;text-transform:uppercase;letter-spacing:.04em">🧍 SOLO BOOKING</div>
+<div style="font-size:13px;margin-top:4px">{{typeDetail}}</div></div>`
+    : `<div style="margin:0 0 16px 0;padding:14px 16px;border:3px solid #0a0a0a;background:#ff6600">
+<div style="font-size:22px;font-weight:900;text-transform:uppercase;letter-spacing:.04em">👥 GROUP BOOKING · {{spots}} SPOTS</div>
+<div style="font-size:13px;margin-top:4px">{{typeDetail}}</div></div>`;
   const inner = render(
     `<tr><td style="padding:16px 24px 8px 24px">
-<h1 style="margin:0;font-size:24px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em">NEW BOOKING 🎒</h1>
+<h1 style="margin:0;font-size:24px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em">NEW {{typeLabel}} BOOKING 🎒</h1>
 </td></tr>
 <tr><td style="padding:0 24px 16px 24px;font-size:15px;line-height:1.5">
+${badge}
 <p style="margin:0 0 12px 0"><strong>{{leadName}}</strong> just booked <strong>{{tripName}}</strong>.</p>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #0a0a0a;margin:0 0 16px 0">
+<tr><td style="padding:8px 12px;border-bottom:1px solid #0a0a0a;background:${solo ? "#ccff01" : "#ff6600"}"><strong>Type</strong></td><td style="padding:8px 12px;border-bottom:1px solid #0a0a0a;background:${solo ? "#ccff01" : "#ff6600"}"><strong>{{typeLabel}}</strong> · {{typeDetail}}</td></tr>
 <tr><td style="padding:8px 12px;border-bottom:1px solid #0a0a0a"><strong>Lead</strong></td><td style="padding:8px 12px;border-bottom:1px solid #0a0a0a">{{leadName}}</td></tr>
 <tr><td style="padding:8px 12px;border-bottom:1px solid #0a0a0a"><strong>Email</strong></td><td style="padding:8px 12px;border-bottom:1px solid #0a0a0a">{{leadEmail}}</td></tr>
 <tr><td style="padding:8px 12px;border-bottom:1px solid #0a0a0a"><strong>Phone</strong></td><td style="padding:8px 12px;border-bottom:1px solid #0a0a0a">{{leadPhone}}</td></tr>
@@ -467,15 +485,19 @@ export function bookingOpsNotificationEmail(v: {
 </td></tr>`,
     {
       ...v,
+      spots,
+      typeLabel,
+      typeDetail,
       leadPhone: v.leadPhone || "—",
       squadCode: v.squadCode || "—",
       discountCode: v.discountCode || "—",
       staffRecommendation: v.staffRecommendation || "—",
-    } as Record<string, string>,
+    } as Record<string, string | number>,
   );
+  const type = solo ? "SOLO booking" : `GROUP booking (${spots} spots)`;
   return {
-    subject: `New booking: ${v.leadName} — ${v.tripName} (${v.spots} spot${String(v.spots) === "1" ? "" : "s"})`,
-    html: shell("New booking", inner),
+    subject: `${type}: ${v.leadName} · ${v.tripName} · ${v.departureDate}`,
+    html: shell(`New ${typeLabel.toLowerCase()} booking`, inner),
   };
 }
 
