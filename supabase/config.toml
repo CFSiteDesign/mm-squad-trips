@@ -25,3 +25,7 @@ verify_jwt = false
 # app_config('advisor_api_key') instead.
 [functions.advisor-bookings]
 verify_jwt = false
+
+# Called by pg_cron without a JWT — guarded by the Vault CRON_SECRET instead.
+[functions.departure-team-reminders]
+verify_jwt = false

@@ -715,3 +715,68 @@ export function departureCancelledEmail(v: {
     html: shell("Trip cancelled — refund issued", inner),
   };
 }
+
+// Property-team reminder, 7 days and 1 day before a departure. Charlie, 10 Sep
+// 2026: to the country GM list, reception@, and for Vietnam the travel desks.
+// The manifest is built by hand (escapeHtml per cell) because render() only
+// fills scalars.
+export type TeamReminderBooking = {
+  ref: string;
+  leadName: string;
+  email: string;
+  phone: string;
+  spots: number;
+  type: "Solo" | "Group";
+  payment: string;
+  members: string;
+};
+
+export function departureTeamReminderEmail(v: {
+  daysOut: number;
+  tripName: string;
+  tripDays: number | null;
+  departureDate: string;
+  departureStatus: string;
+  departureCode?: string | null;
+  travellers: number;
+  bookings: TeamReminderBooking[];
+  adminUrl: string;
+}): { subject: string; html: string } {
+  const when = v.daysOut <= 0 ? "TODAY" : v.daysOut === 1 ? "TOMORROW" : `IN ${v.daysOut} DAYS`;
+  const whenLower = v.daysOut <= 0 ? "today" : v.daysOut === 1 ? "tomorrow" : `in ${v.daysOut} days`;
+  const soon = v.daysOut <= 1;
+  const cell = (s: string, extra = "") =>
+    `<td style="padding:6px 8px;border-bottom:1px solid #0a0a0a;font-size:13px;vertical-align:top;${extra}">${escapeHtml(s)}</td>`;
+  const rows = v.bookings
+    .map(
+      (b) =>
+        `<tr>${cell(b.ref)}${cell(b.leadName)}${cell(`${b.email}${b.phone ? `\n${b.phone}` : ""}`, "white-space:pre-line")}${cell(
+          `${b.spots} · ${b.type}${b.members ? `\n${b.members}` : ""}`,
+          "white-space:pre-line",
+        )}${cell(b.payment)}</tr>`,
+    )
+    .join("");
+  const head = (s: string) =>
+    `<th align="left" style="padding:6px 8px;border-bottom:2px solid #0a0a0a;font-size:11px;text-transform:uppercase;letter-spacing:.08em">${s}</th>`;
+  const inner = `<tr><td style="padding:16px 24px 8px 24px">
+<h1 style="margin:0;font-size:24px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em">ALL IN DEPARTS ${escapeHtml(when)} 🎒</h1>
+</td></tr>
+<tr><td style="padding:0 24px 16px 24px;font-size:15px;line-height:1.5">
+<div style="margin:0 0 16px 0;padding:14px 16px;border:3px solid #0a0a0a;background:${soon ? "#ff6600" : "#ccff01"}">
+<div style="font-size:20px;font-weight:900;text-transform:uppercase;letter-spacing:.02em">${escapeHtml(v.tripName)}</div>
+<div style="font-size:14px;margin-top:4px"><strong>${escapeHtml(v.departureDate)}</strong> · departs ${escapeHtml(whenLower)}${v.tripDays ? ` · ${v.tripDays}-day trip` : ""}</div>
+<div style="font-size:14px;margin-top:2px"><strong>${v.travellers} traveller${v.travellers === 1 ? "" : "s"}</strong> across ${v.bookings.length} booking${v.bookings.length === 1 ? "" : "s"} · departure ${escapeHtml(v.departureStatus)}${v.departureCode ? ` · ${escapeHtml(v.departureCode)}` : ""}</div>
+</div>
+<p style="margin:0 0 12px 0">Heads up from ALL IN: this group ${whenLower === "today" ? "arrives" : "is arriving"} ${escapeHtml(whenLower)}. Here is who is on it.</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #0a0a0a;margin:0 0 16px 0;border-collapse:collapse">
+<tr>${head("Ref")}${head("Lead")}${head("Contact")}${head("Spots")}${head("Payment")}</tr>
+${rows}
+</table>
+<a href="${escapeHtml(v.adminUrl)}" style="display:inline-block;background:#0a0a0a;color:#ccff01;font-weight:900;text-transform:uppercase;padding:12px 18px;border:2px solid #0a0a0a;text-decoration:none">View in admin</a>
+<p style="margin:16px 0 0 0;font-size:12px;color:#555">Automatic reminder, sent 7 days and 1 day before every ALL IN departure with bookings. Questions: reply to this email.</p>
+</td></tr>`;
+  return {
+    subject: `ALL IN · ${v.tripName} departs ${when} · ${v.departureDate} · ${v.travellers} traveller${v.travellers === 1 ? "" : "s"}`,
+    html: shell(`ALL IN departs ${whenLower}`, inner),
+  };
+}
