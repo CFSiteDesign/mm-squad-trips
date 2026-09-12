@@ -9,11 +9,17 @@ import { SiteFooter } from "@/components/trip/SiteFooter";
 import { StickyCta } from "@/components/allin/Chrome";
 import { SQUAD_BENEFITS } from "@/data/squad-benefits";
 import { VideoTile, type Clip } from "@/components/allin/VideoTile";
+import { useTravellerMode } from "@/lib/traveller-mode";
 import heroImg from "@/assets/preview-hero-allin.jpg";
 
-const DIFFERENT = [
+const DIFFERENT_CREW = [
   { icon: BedDouble, title: "NO MYSTERY DORMS.", body: "Sleep in actual Mad Monkey beds every night." },
   { icon: Users, title: "SOLO? NOT FOR LONG.", body: "Join a crew of 20 like-minded backpackers." },
+  { icon: Sparkles, title: "ZERO PLANNING STRESS.", body: "We handle the routes, the boats, and the beds." },
+];
+const DIFFERENT_INDEPENDENT = [
+  { icon: BedDouble, title: "NO MYSTERY DORMS.", body: "Sleep in actual Mad Monkey beds every night." },
+  { icon: Users, title: "YOUR TRIP, YOUR PACE.", body: "No group to keep up with. Meet people at every hostel, on your terms." },
   { icon: Sparkles, title: "ZERO PLANNING STRESS.", body: "We handle the routes, the boats, and the beds." },
 ];
 
@@ -42,7 +48,7 @@ const CLIPS: Clip[] = [
 const SPOTS_FLOOR = 8;
 
 /** Live "next departure" badge per trip, read from the real departures table. */
-function RouteCard({ slug }: { slug: string }) {
+function RouteCard({ slug, solo }: { slug: string; solo: boolean }) {
   const meta = TRIPS.find((t) => t.slug === slug);
   const { data: trip } = useQuery({ queryKey: ["trip", slug], queryFn: () => fetchTrip(slug), retry: false });
   const next = trip?.departures?.find((d) => d.bookable && d.spotsRemaining > 0);
@@ -50,7 +56,8 @@ function RouteCard({ slug }: { slug: string }) {
   const priced = (trip?.departures ?? []).filter((d) => d.bookable).map((d) => d.price).filter((n) => n > 0);
   const price = priced.length ? Math.min(...priced) : trip?.defaultPrice ?? meta?.price ?? 0;
   const spotsShown = next ? Math.min(SPOTS_FLOOR, next.spotsRemaining) : 0;
-  const urgent = next && next.spotsRemaining <= SPOTS_FLOOR;
+  // Spots only matter to a crew; an independent booking runs regardless.
+  const urgent = !solo && next && next.spotsRemaining <= SPOTS_FLOOR;
 
   return (
     <article className="flex flex-col border-[3px] border-mm-black bg-mm-bone shadow-mm-sm transition-transform duration-200 hover:-translate-y-1.5">
@@ -58,7 +65,7 @@ function RouteCard({ slug }: { slug: string }) {
         {next && (
           <span className={`inline-block border-[2px] border-mm-black px-2 py-1 font-sans text-[11px] font-bold tracking-[0.02em] text-mm-black ${urgent ? "bg-mm-orange" : "bg-mm-yellow"}`}>
             {urgent ? "🔥 " : ""}NEXT TRIP: {new Date(next.date + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" }).toUpperCase()}
-            {` (ONLY ${spotsShown} SPOTS LEFT)`}
+            {solo ? "" : ` (ONLY ${spotsShown} SPOTS LEFT)`}
           </span>
         )}
         <h3 className="mt-3 font-display text-2xl leading-none text-mm-black">{meta?.name?.toUpperCase() ?? slug.toUpperCase()}</h3>
@@ -73,6 +80,8 @@ function RouteCard({ slug }: { slug: string }) {
 }
 
 export default function AllInHome() {
+  const { mode } = useTravellerMode();
+  const solo = mode === "independent";
   const go = (id: string) => {
     const el = document.getElementById(id);
     if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 60, behavior: "smooth" });
@@ -98,14 +107,15 @@ export default function AllInHome() {
           <div className="relative z-10 flex flex-col px-5 pt-[9rem] pb-24">
             <div>
               <h1 className="font-display text-[clamp(2.4rem,11.4vw,3.75rem)] leading-[0.9] text-mm-bone">
-                TRIPS THAT<br />
+                {solo ? (<>THE ROUTE'S<br /><span className="text-mm-lime">SORTED.</span><br /><span className="text-mm-pink">YOU JUST TURN UP.</span></>) : (<>TRIPS THAT<br />
                 <span className="text-mm-lime">MAKE IT OUT</span><br />
-                <span className="text-mm-pink">THE GROUP CHAT</span>
+                <span className="text-mm-pink">THE GROUP CHAT</span></>)}
               </h1>
 
               <p className="mt-5 max-w-[280px] text-[14px] leading-snug text-mm-bone/85">
-                Stop herding cats. 7 to 14-day epic adventures across Asia with the ultimate
-                backpacker crew. Real Mad Monkey beds, zero planning, and flexible payment plans.
+                {solo
+                  ? "Stop planning. 7 to 14-day adventures across Asia with the route, boats and beds sorted for you. Real Mad Monkey hostels, guaranteed to run, flexible payment plans."
+                  : "Stop herding cats. 7 to 14-day epic adventures across Asia with the ultimate backpacker crew. Real Mad Monkey beds, zero planning, and flexible payment plans."}
               </p>
 
               <div className="mt-5 flex flex-wrap items-center gap-3">
@@ -137,14 +147,15 @@ export default function AllInHome() {
           <div className="relative z-10 mr-auto flex max-w-6xl flex-col justify-center px-8 pt-24 pb-20 lg:pt-32 lg:pb-24 lg:pl-20">
             <div>
               <h1 className="font-display text-[clamp(3.5rem,10.5vw,7.9rem)] leading-[0.88] text-mm-bone">
-                TRIPS THAT<br />
+                {solo ? (<>THE ROUTE'S<br /><span className="whitespace-nowrap text-mm-lime">SORTED.</span><br /><span className="text-mm-pink">YOU JUST TURN UP.</span></>) : (<>TRIPS THAT<br />
                 <span className="whitespace-nowrap text-mm-lime">MAKE IT OUT</span><br />
-                <span className="text-mm-pink">THE GROUP CHAT</span>
+                <span className="text-mm-pink">THE GROUP CHAT</span></>)}
               </h1>
 
               <p className="mt-7 max-w-xl text-lg leading-snug text-mm-bone/85">
-                Stop herding cats. 7 to 14-day epic adventures across Asia with the ultimate
-                backpacker crew. Real Mad Monkey beds, zero planning, and flexible payment plans.
+                {solo
+                  ? "Stop planning. 7 to 14-day adventures across Asia with the route, boats and beds sorted for you. Real Mad Monkey hostels, guaranteed to run, flexible payment plans."
+                  : "Stop herding cats. 7 to 14-day epic adventures across Asia with the ultimate backpacker crew. Real Mad Monkey beds, zero planning, and flexible payment plans."}
               </p>
 
               <div className="mt-10 flex flex-wrap items-center gap-4">
@@ -162,7 +173,7 @@ export default function AllInHome() {
         <div className="mx-auto max-w-6xl px-5 md:px-6">
           <h2 className="font-display text-[clamp(1.9rem,5vw,3rem)] leading-[0.95] text-mm-black">WHAT MAKES<br />US DIFFERENT?</h2>
           <div className="mt-8 grid gap-4 md:grid-cols-3">
-            {DIFFERENT.map(({ icon: Icon, title, body }) => (
+            {(solo ? DIFFERENT_INDEPENDENT : DIFFERENT_CREW).map(({ icon: Icon, title, body }) => (
               <div key={title} className="border-[3px] border-mm-black bg-mm-bone p-5 shadow-mm-sm">
                 <Icon className="h-8 w-8 text-mm-black" strokeWidth={2.5} />
                 <h3 className="mt-3 font-display text-xl leading-none text-mm-black">{title}</h3>
@@ -178,7 +189,7 @@ export default function AllInHome() {
         <div className="mx-auto max-w-6xl px-5 md:px-6">
           <h2 className="font-display text-[clamp(1.9rem,5vw,3rem)] leading-[0.95] text-mm-black">WHERE'S YOUR<br />ADVENTURE?</h2>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {["indonesia", "indonesia-7", "vietnam", "vietnam-7", "cambodia"].map((s) => <RouteCard key={s} slug={s} />)}
+            {["indonesia", "indonesia-7", "vietnam", "vietnam-7", "cambodia"].map((s) => <RouteCard key={s} slug={s} solo={solo} />)}
           </div>
         </div>
       </section>
@@ -230,7 +241,8 @@ export default function AllInHome() {
         </div>
       </section>
 
-      {/* ============ TRAVEL FOR FREE ============ */}
+      {/* ============ TRAVEL FOR FREE (crew only) ============ */}
+      {!solo && (
       <section className="border-b-[4px] border-mm-black bg-mm-pink py-14">
         <div className="mx-auto max-w-4xl px-5 text-center md:px-6">
           <h2 className="font-display text-[clamp(2rem,6vw,3.5rem)] leading-[0.95] text-mm-bone">TRAVEL FOR FREE<br />WHEN YOU BRING THE CREW</h2>
@@ -252,6 +264,7 @@ export default function AllInHome() {
           </Link>
         </div>
       </section>
+      )}
 
       <SiteFooter />
       <StickyCta onClick={() => go("trips")} label="RESERVE FOR $99" />

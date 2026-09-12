@@ -28,6 +28,9 @@ import AllInTrip from "./pages/AllInTrip";
 import AllInCheckout from "./pages/AllInCheckout";
 import { gtmPushEvent } from "@/utils/gtmTracker";
 import { BASE_PATH } from "@/lib/base-path";
+import { TravellerModeProvider } from "@/lib/traveller-mode";
+import { ModeGate } from "@/components/allin/ModeGate";
+import { DemoBanner } from "@/components/allin/DemoBanner";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -82,9 +85,12 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter basename={BASE_PATH || "/"}>
+        <TravellerModeProvider>
         <ConditionalNavbar />
         <ScrollToTop />
         <RouteChangeTracker />
+        <ModeGate />
+        {import.meta.env.MODE === "preview-demo" && <DemoBanner />}
         <Routes>
           <Route path="/" element={<AllInHome />} />
           {/* Advisor links land here: /checkout?trip=&date=&spots=&...&aa= */}
@@ -125,6 +131,7 @@ const App = () => (
 
           <Route path="*" element={<NotFound />} />
         </Routes>
+        </TravellerModeProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
