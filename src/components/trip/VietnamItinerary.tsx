@@ -11,7 +11,7 @@ type Day = {
   day: number;
   title: string;
   image: string;
-  body: string;
+  body: string | React.ReactNode;
   meals: string;
 };
 
