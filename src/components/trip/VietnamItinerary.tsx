@@ -150,8 +150,12 @@ const STOPS: Stop[] = [
     name: "Hanoi",
     nights: "2 nights",
     image: hanoiImg,
-    body:
-      "Land in the capital and dive straight into the chaos. Welcome drinks at the hostel, then out into the Old Quarter for bia hoi, street food and karaoke down Hanoi's famous beer street. Day two it's Hoan Kiem Lake, St. Joseph's Cathedral, egg coffee and Train Street as the carriages rattle past your cup, with a music quiz and pub crawl waiting if you've still got legs.",
+    body: (
+      <>
+        Land in the capital and dive straight into the chaos. Welcome drinks at the hostel, then out into the Old Quarter for bia hoi, street food and karaoke down Hanoi's famous beer street. Day two it's Hoan Kiem Lake, St. Joseph's Cathedral, and Train Street as the carriages rattle past your cup, with a music quiz and pub crawl waiting if you've still got legs.{" "}
+        <em>(Vietnamese coffee tasting — optional add-on)</em>.
+      </>
+    ),
     meals: "1 dinner, 1 breakfast",
   },
   {
