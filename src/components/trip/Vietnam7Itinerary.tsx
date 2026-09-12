@@ -2,7 +2,7 @@ import { Sticker } from "@/components/brand/Sticker";
 import hanoiImg from "@/assets/vn-hanoi.jpg";
 import hagiangImg from "@/assets/vn-hagiang.jpg";
 
-type Day = { day: number; title: string; image: string; body: string; meals: string };
+type Day = { day: number; title: string; image: string; body: string | React.ReactNode; meals: string };
 
 const DAYS: Day[] = [
   {
