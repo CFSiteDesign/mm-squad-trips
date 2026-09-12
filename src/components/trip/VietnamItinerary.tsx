@@ -140,7 +140,7 @@ type Stop = {
   name: string;
   nights: string;
   image: string;
-  body: string;
+  body: string | React.ReactNode;
   meals: string;
 };
 
