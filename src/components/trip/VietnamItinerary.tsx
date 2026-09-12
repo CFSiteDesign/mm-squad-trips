@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { useLocation } from "react-router-dom";
 import { Sticker } from "@/components/brand/Sticker";
 import hanoiImg from "@/assets/vn-hanoi.jpg";
