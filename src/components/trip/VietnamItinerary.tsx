@@ -141,7 +141,7 @@ type Stop = {
   name: string;
   nights: string;
   image: string;
-  body: string | React.ReactNode;
+  body: string | ReactNode;
   meals: string;
 };
 
