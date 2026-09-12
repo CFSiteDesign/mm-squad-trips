@@ -75,7 +75,7 @@ export const VN7_FAQ_OVERRIDES: Record<string, string> = {
   "What's included?":
     "7 days across 2 destinations, all scheduled transport to and from Ha Giang, 24/7 local crew, a free pre-trip night, 7 breakfasts, 3 lunches and 4 dinners, lots of free drinks, every activity in the itinerary, and dorm beds at Mad Monkey.",
   "What are the main highlights of this trip?":
-    "Hanoi street food and bia hoi night, the guided Hanoi walking tour with Vietnamese coffee tasting and Train Street, Mad Monkey nightly events like karaoke, the pub crawl and music quiz, the 4D3N Ha Giang Loop motorbike tour, and local homestay experiences.",
+    "Hanoi street food and bia hoi night, the guided Hanoi walking tour with Train Street (Vietnamese coffee tasting available as an optional add-on), Mad Monkey nightly events like karaoke, the pub crawl and music quiz, the 4D3N Ha Giang Loop motorbike tour, and local homestay experiences.",
   "What meals are included?": "7 breakfasts, 3 lunches and 4 dinners, plus lots of free drinks.",
   "What are the modes of transportation?": "Private shuttles and buses, plus motorbikes on the Ha Giang Loop.",
   "Where will we stay during the trip?":
