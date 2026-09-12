@@ -1,8 +1,9 @@
+import type { ReactNode } from "react";
 import { Sticker } from "@/components/brand/Sticker";
 import hanoiImg from "@/assets/vn-hanoi.jpg";
 import hagiangImg from "@/assets/vn-hagiang.jpg";
 
-type Day = { day: number; title: string; image: string; body: string; meals: string };
+type Day = { day: number; title: string; image: string; body: string | ReactNode; meals: string };
 
 const DAYS: Day[] = [
   {
@@ -17,8 +18,13 @@ const DAYS: Day[] = [
     day: 2,
     title: "Explore Hanoi",
     image: hanoiImg,
-    body:
-      "Get under the skin of the city with our local crew leading the way. Hoan Kiem Lake, St. Joseph's Cathedral, a proper egg coffee, and a finish at Train Street as the carriages rattle past inches from your cup. The rest of the day is open. Jump on the music quiz and pub crawl, or take the evening to roam Hanoi at your own pace.",
+    body: (
+      <>
+        Get under the skin of the city with our local crew leading the way. Hoan Kiem Lake, St. Joseph's Cathedral, and a finish at Train Street as the carriages rattle past inches from your cup.{" "}
+        <em>(Vietnamese coffee tasting — optional add-on)</em>.{" "}
+        The rest of the day is open. Jump on the music quiz and pub crawl, or take the evening to roam Hanoi at your own pace.
+      </>
+    ),
     meals: "Breakfast",
   },
   {

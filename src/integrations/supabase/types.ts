@@ -292,6 +292,8 @@ export type Database = {
           owner_code: string | null
           spots_remaining: number
           status: string
+          team_reminder_1d_sent_at: string | null
+          team_reminder_7d_sent_at: string | null
           total_spots: number
           trip_id: string
           updated_at: string
@@ -310,6 +312,8 @@ export type Database = {
           owner_code?: string | null
           spots_remaining?: number
           status?: string
+          team_reminder_1d_sent_at?: string | null
+          team_reminder_7d_sent_at?: string | null
           total_spots?: number
           trip_id: string
           updated_at?: string
@@ -328,6 +332,8 @@ export type Database = {
           owner_code?: string | null
           spots_remaining?: number
           status?: string
+          team_reminder_1d_sent_at?: string | null
+          team_reminder_7d_sent_at?: string | null
           total_spots?: number
           trip_id?: string
           updated_at?: string

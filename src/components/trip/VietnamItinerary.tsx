@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { useLocation } from "react-router-dom";
 import { Sticker } from "@/components/brand/Sticker";
 import hanoiImg from "@/assets/vn-hanoi.jpg";
@@ -11,7 +12,7 @@ type Day = {
   day: number;
   title: string;
   image: string;
-  body: string;
+  body: string | ReactNode;
   meals: string;
 };
 
@@ -28,8 +29,13 @@ const DAYS: Day[] = [
     day: 2,
     title: "Hanoi on foot",
     image: hanoi2Img,
-    body:
-      "Get under the skin of the city with our local crew leading the way. Hoan Kiem Lake, St. Joseph's Cathedral, a proper egg coffee, and a finish at Train Street as the carriages rattle past inches from your cup. The rest of the day is open. Jump on the music quiz and pub crawl, or take the evening to roam Hanoi at your own pace.",
+    body: (
+      <>
+        Get under the skin of the city with our local crew leading the way. Hoan Kiem Lake, St. Joseph's Cathedral, and a finish at Train Street as the carriages rattle past inches from your cup.{" "}
+        <em>(Vietnamese coffee tasting — optional add-on)</em>.{" "}
+        The rest of the day is open. Jump on the music quiz and pub crawl, or take the evening to roam Hanoi at your own pace.
+      </>
+    ),
     meals: "Breakfast",
   },
   {
@@ -135,7 +141,7 @@ type Stop = {
   name: string;
   nights: string;
   image: string;
-  body: string;
+  body: string | ReactNode;
   meals: string;
 };
 
@@ -145,8 +151,12 @@ const STOPS: Stop[] = [
     name: "Hanoi",
     nights: "2 nights",
     image: hanoiImg,
-    body:
-      "Land in the capital and dive straight into the chaos. Welcome drinks at the hostel, then out into the Old Quarter for bia hoi, street food and karaoke down Hanoi's famous beer street. Day two it's Hoan Kiem Lake, St. Joseph's Cathedral, egg coffee and Train Street as the carriages rattle past your cup, with a music quiz and pub crawl waiting if you've still got legs.",
+    body: (
+      <>
+        Land in the capital and dive straight into the chaos. Welcome drinks at the hostel, then out into the Old Quarter for bia hoi, street food and karaoke down Hanoi's famous beer street. Day two it's Hoan Kiem Lake, St. Joseph's Cathedral, and Train Street as the carriages rattle past your cup, with a music quiz and pub crawl waiting if you've still got legs.{" "}
+        <em>(Vietnamese coffee tasting — optional add-on)</em>.
+      </>
+    ),
     meals: "1 dinner, 1 breakfast",
   },
   {
