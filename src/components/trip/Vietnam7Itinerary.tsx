@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Sticker } from "@/components/brand/Sticker";
 import hanoiImg from "@/assets/vn-hanoi.jpg";
 import hagiangImg from "@/assets/vn-hagiang.jpg";
