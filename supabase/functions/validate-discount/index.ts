@@ -8,6 +8,7 @@ const SLUG_TO_LABEL: Record<string, string> = {
   cambodia: "Cambodia",
   vietnam: "Vietnam",
   "vietnam-7": "Vietnam",
+  thailand: "Thailand",
 };
 
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];

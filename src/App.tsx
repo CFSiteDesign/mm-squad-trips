@@ -106,6 +106,8 @@ const App = () => (
           <Route path="/cambodia" element={<AllInTrip slug="cambodia" />} />
           <Route path="/indonesia" element={<AllInTrip slug="indonesia" />} />
           <Route path="/indonesia-7" element={<AllInTrip slug="indonesia-7" />} />
+          {/* Unlisted: link-only, noindex, not on the home page. */}
+          <Route path="/thailand" element={<AllInTrip slug="thailand" unlisted />} />
 
           {/* Student variant */}
           <Route path="/students" element={<StudentIndex />} />

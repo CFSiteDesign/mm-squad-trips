@@ -29,9 +29,13 @@ import {
   KH_SNAPSHOT, KH_IS_THIS_FOR_ME, KH_HIGHLIGHTS, KH_INCLUDED, KH_ITINERARY, KH_FAQ_OVERRIDES,
 } from "@/data/trip-content-cambodia";
 import vnHero from "@/assets/vn-hero.jpg";
+import allInHero from "@/assets/preview-hero-allin.jpg";
+import {
+  TH_SNAPSHOT, TH_IS_THIS_FOR_ME, TH_HIGHLIGHTS, TH_INCLUDED, TH_ITINERARY, TH_FAQ_OVERRIDES,
+} from "@/data/trip-content-thailand";
 import khHero from "@/assets/kh-hero.png";
 
-export const TRIP_CONTENT_SLUGS = ["indonesia", "indonesia-7", "vietnam", "vietnam-7", "cambodia"] as const;
+export const TRIP_CONTENT_SLUGS = ["indonesia", "indonesia-7", "vietnam", "vietnam-7", "cambodia", "thailand"] as const;
 export type TripSlug = (typeof TRIP_CONTENT_SLUGS)[number];
 
 export type Review = { property: string; author: string | null; rating: number; when: string | null; body: string };
@@ -148,6 +152,20 @@ export function getTripContent(trip: Trip, slug: TripSlug): TripContent {
       reviews: [],
       faqs: DEFAULT_FAQS.map((f) => ({ ...f, a: I7_FAQ_OVERRIDES[f.q] ?? f.a })),
       pending: ["Property reviews", "Route map (Dhany's animated version)"],
+    };
+  }
+  if (slug === "thailand") {
+    return {
+      hero: allInHero, // no Thailand shot yet; the ALL IN home hero stands in
+      snapshot: TH_SNAPSHOT,
+      isThisForMe: TH_IS_THIS_FOR_ME,
+      highlights: TH_HIGHLIGHTS,
+      included: TH_INCLUDED,
+      notIncluded: GENERIC_NOT_INCLUDED,
+      itinerary: TH_ITINERARY,
+      reviews: [],
+      faqs: DEFAULT_FAQS.map((f) => ({ ...f, a: TH_FAQ_OVERRIDES[f.q] ?? f.a })),
+      pending: ["Hero image", "Highlight photography", "Property reviews"],
     };
   }
   if (slug === "vietnam-7") {

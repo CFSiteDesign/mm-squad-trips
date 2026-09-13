@@ -53,11 +53,21 @@ function H({ eyebrow, children }: { eyebrow: string; children: React.ReactNode }
   );
 }
 
-export default function AllInTrip({ slug: slugProp }: { slug?: TripSlug }) {
+export default function AllInTrip({ slug: slugProp, unlisted = false }: { slug?: TripSlug ; unlisted?: boolean }) {
   const params = useParams();
   const slug = (slugProp ?? params.slug ?? "indonesia") as TripSlug;
   const [showAllIncluded, setShowAllIncluded] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+
+  // Link-only trips stay out of search results.
+  useEffect(() => {
+    if (!unlisted) return;
+    const meta = document.createElement("meta");
+    meta.name = "robots";
+    meta.content = "noindex, nofollow";
+    document.head.appendChild(meta);
+    return () => { document.head.removeChild(meta); };
+  }, [unlisted]);
 
   const { data: trip, isPlaceholderData } = useQuery({
     queryKey: ["trip", slug],
