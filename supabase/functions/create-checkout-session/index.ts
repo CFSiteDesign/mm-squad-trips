@@ -76,16 +76,22 @@ Deno.serve(async (req) => {
     /** Adventure Advisors per-link token. Opaque, [A-Za-z0-9_-]{1,32},
      *  case-sensitive; stored untouched so their side can match the sale. */
     advisorRef?: string;
+    /** From the "how are you travelling?" gate. Independent = one traveller,
+     *  guaranteed to run. Crew = waits on the 5-booking minimum, whatever the
+     *  spot count. Absent on older pages, which keep the spot-count rule. */
+    travellerMode?: "independent" | "crew";
   };
   try { payload = await req.json(); } catch { return err("Invalid JSON body"); }
 
   const { tripSlug, departureId, groupSize, leadBooker, travelers = [], discountCode, secondDiscountCode, friendsMentioned, staffRecommendation, utm = {}, gaClientId, customDate, squadCode: squadCodeInput } = payload;
   // Charset + length only. Never uppercased, never parsed — it's their key.
+  const travellerMode = payload.travellerMode === "independent" || payload.travellerMode === "crew" ? payload.travellerMode : "";
   const advisorRef = typeof payload.advisorRef === "string" && /^[A-Za-z0-9_-]{1,32}$/.test(payload.advisorRef)
     ? payload.advisorRef : "";
   if (!tripSlug || typeof tripSlug !== "string") return err("tripSlug required");
   if (!departureId && !customDate) return err("departureId or customDate required");
   if (!groupSize || typeof groupSize !== "number" || groupSize < 1 || groupSize > 5) return err("groupSize must be 1–5");
+  if (travellerMode === "independent" && groupSize !== 1) return err("Independent bookings are for one traveller");
   if (!leadBooker || typeof leadBooker !== "object") return err("leadBooker required");
   const lead = leadBooker as Record<string, string>;
   if (!lead.name || !lead.email || !lead.phone) return err("Lead booker name, email, phone required");
@@ -357,7 +363,12 @@ Deno.serve(async (req) => {
       // 100% departure rate, and lead_solo is what keeps the departure from
       // being cancelled for numbers, so it follows from the spot count rather
       // than a checkbox the guest might miss.
-      lead_solo: String(groupSize === 1 || String(lead.solo) === "true"),
+      // With the gate, the traveller says which they are: a crew booking of one
+      // spot still waits on the minimum, so it is not solo.
+      lead_solo: String(
+        travellerMode ? travellerMode === "independent" : groupSize === 1 || String(lead.solo) === "true",
+      ),
+      traveller_mode: travellerMode,
       friends_mentioned: friendsMentioned ?? "",
       staff_recommendation: (staffRecommendation ?? "").slice(0, 200),
       utm_source: utm.utm_source ?? "",

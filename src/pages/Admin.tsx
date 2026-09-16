@@ -150,12 +150,19 @@ const COLUMNS: Record<AdminTable, ColumnDef[]> = {
     { key: "trip_duration", label: "Duration", tooltip: "Length of the trip the guest booked", readOnly: true, compute: (r, ctx) => {
         const code = String(ctx.trip[String(r.trip_id ?? "")] ?? "").toUpperCase();
         if (!code) return "";
-        const DAYS: Record<string, number> = { IND7: 7, VIE7: 7, VIE: 14, CAM: 14, IND: 12 };
+        const DAYS: Record<string, number> = { IND7: 7, VIE7: 7, VIE: 14, CAM: 14, IND: 12, THA: 11 };
         const d = DAYS[code];
         return d ? `${d} days` : code;
       } },
     { key: "departure_id", label: "Departure", tooltip: "Which departure date was selected", readOnly: true, lookup: "departure" },
     { key: "booking_type", label: "Booking Type", tooltip: "Lead traveler or group member", readOnly: true },
+    { key: "traveller_mode", label: "Travelling", tooltip: "Independent = guaranteed to run. With a crew = waiting on 5 bookings; tell them when the date confirms.", readOnly: true, compute: (r) => {
+        const m = String(r.traveller_mode ?? "");
+        if (m === "independent") return "Independent (guaranteed)";
+        if (m === "crew") return "With a crew";
+        if (r.booking_type === "Group member") return "";
+        return r.lead_solo ? "Solo (guaranteed)" : "Group";
+      } },
     { key: "group_size", label: "Group Size", tooltip: "Total number of people in this booking group", readOnly: true },
     { key: "group_members", label: "Group Members", tooltip: "Names of all travelers in this group", readOnly: true, compute: (r, ctx) => {
         const gid = r.group_id ? String(r.group_id) : "";
