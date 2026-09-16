@@ -46,8 +46,8 @@ export const VN7_INCLUDED = [
 
 export const VN7_ITINERARY: Day[] = [
   { label: "Day 1", place: "Hanoi",
-    body: "Welcome to Vietnam! Touch down in historic Hanoi, check into the hostel, and enjoy some free time to get your bearings. Tonight, kick things off with a welcome drink at the hostel to meet your crew, then head out into the bustling streets for ice-cold bia hoi and authentic local street food. End the night with optional free karaoke and a pub crawl.",
-    activities: "Welcome drinks, Hanoi street food & bia hoi night", meals: "Welcome dinner & drinks" },
+    body: "Welcome to Vietnam! Touch down in historic Hanoi, check into the hostel, and enjoy some free time to settle in. Tonight, kick things off with a welcome drink at the hostel to meet your crew. End the night with optional free karaoke and a pub crawl.",
+    activities: "Welcome drinks, Hanoi street food & bia hoi night" },
   { label: "Day 2", place: "Hanoi",
     body: "Get to know the dynamic energy of Hanoi on a guided walking tour led by the local team. Stroll around Hoan Kiem Lake, marvel at St. Joseph's Cathedral, and finish up watching trains squeeze down famous Train Street. (Vietnamese coffee tasting — optional add-on). Tonight, test your trivia skills with a music quiz before hitting the nightlife.",
     activities: "Guided Hanoi walking tour (Hoan Kiem Lake, St. Joseph's Cathedral, Train Street, Vietnamese coffee tasting (optional add-on))", meals: "Breakfast" },

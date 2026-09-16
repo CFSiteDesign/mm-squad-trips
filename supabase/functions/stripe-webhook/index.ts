@@ -254,6 +254,7 @@ async function writeBookings(session: Stripe.Checkout.Session) {
     // Adventure Advisors link token, on every row: their commission is per
     // traveller, so each spot has to be findable by the link that sold it.
     advisor_ref: m.advisor_ref || null,
+    traveller_mode: m.traveller_mode || null,
   });
   // Members
   for (let i = 1; i < groupSize; i++) {
@@ -276,6 +277,7 @@ async function writeBookings(session: Stripe.Checkout.Session) {
       status: "Confirmed",
       stripe_session_id: sessionId,
       advisor_ref: m.advisor_ref || null,
+      traveller_mode: m.traveller_mode || null,
     });
   }
 
@@ -508,6 +510,7 @@ async function writeBookings(session: Stripe.Checkout.Session) {
           discountCode: (m.discount_code as string) || undefined,
           bookingUrl: `${APP_URL}/admin`,
           bookingType: isSoloLead || groupSize === 1 ? "solo" : "group",
+          travellerMode: m.traveller_mode === "independent" || m.traveller_mode === "crew" ? m.traveller_mode : undefined,
         });
         const cc = opsCcForTrip(m.trip_name as string | null, m.trip_slug as string | null);
         sendEmail({ to: OPS_NOTIFY_EMAILS, cc: cc.length ? cc : undefined, subject: ops.subject, html: ops.html, templateName: "booking_ops_notification" }).catch((e) =>

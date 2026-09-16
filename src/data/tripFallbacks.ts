@@ -138,6 +138,25 @@ const FALLBACKS: Record<string, Trip> = {
     defaultStrikethrough: 500,
     departures: [],
   },
+  thailand: {
+    ...BASE,
+    testimonials: DUMMY_TESTIMONIALS,
+    id: "placeholder-thailand",
+    code: "THA",
+    name: "ALL IN · Thailand",
+    slug: "thailand",
+    days: 11,
+    stops: [
+      { name: "Bangkok", nights: 2, description: "", photos: [], activities: [] },
+      { name: "Chiang Mai", nights: 4, description: "", photos: [], activities: [] },
+      { name: "Pai", nights: 3, description: "", photos: [], activities: [] },
+    ],
+    activityCount: 12,
+    heroVideoUrl: "",
+    defaultPrice: 340,
+    defaultStrikethrough: 0,
+    departures: [],
+  },
 };
 
 

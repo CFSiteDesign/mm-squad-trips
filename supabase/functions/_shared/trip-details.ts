@@ -60,7 +60,23 @@ const VIETNAM7_CHATS: PropertyChat[] = [
   // Ha Giang Loop chat: pending verification
 ];
 
+// Bangkok / Chiang Mai / Pai chats: none verified yet, so the chats block is
+// left out of the Thailand email until they are.
+const THAILAND_CHATS: PropertyChat[] = [];
+
 const TRIP_DETAILS: Record<string, TripFinalDetails> = {
+  thailand: {
+    whatsappUrl: "https://chat.whatsapp.com/ISFzdY6OEfPEnfhG6N8Jsa",
+    finalDetailsHtml:
+      block("Final details — Thailand", [
+        "<strong>Meeting point:</strong> Mad Monkey Bangkok. Check-in from 2pm on departure day (a Tuesday).",
+        "<strong>Day-1 kick-off:</strong> Beats + Bingo at 8pm at the hostel. Don't miss it, that's where you meet your crew.",
+        "<strong>Heading north:</strong> Day 3 is the overnight bus to Chiang Mai (departs 5pm), then minivans to Pai and back. 762 bends on the Pai road, so pack motion sickness tablets if that's you.",
+        "<strong>What to pack:</strong> swimwear for the water park and tubing, sandals + trainers, a light layer for the mountains at night, a dry bag, and a small day bag for the bus.",
+        "<strong>Cash:</strong> bring ~$150 USD or equivalent THB for drinks, street food, tips and anything not in the plan. Pai has fewer ATMs.",
+        "<strong>Airports:</strong> arrive into BKK or DMK (Bangkok). The trip ends in Chiang Mai, so depart from CNX or take the bus back to Bangkok.",
+      ]) + (THAILAND_CHATS.length ? chatsBlock(THAILAND_CHATS) : ""),
+  },
   vietnam: {
     whatsappUrl: VIETNAM_CHATS[0].url,
     finalDetailsHtml:
@@ -148,6 +164,7 @@ export function tripCountryFromSlug(slug: string | null | undefined): string {
   const map: Record<string, string> = {
     vietnam: "Vietnam",
     "vietnam-7": "Vietnam",
+    thailand: "Thailand",
     indonesia: "Indonesia",
     "indonesia-7": "Indonesia",
     cambodia: "Cambodia",

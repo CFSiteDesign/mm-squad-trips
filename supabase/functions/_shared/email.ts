@@ -446,23 +446,33 @@ export function bookingOpsNotificationEmail(v: {
   /** Solo = one traveller, guaranteed to run. Group = several spots on one
    *  booking. Falls back to the spot count when a caller doesn't say. */
   bookingType?: "solo" | "group";
+  /** From the gate. When present it decides the label: an independent
+   *  booking always runs, a crew booking waits on 5 whatever its size. */
+  travellerMode?: "independent" | "crew";
 }): { subject: string; html: string } {
   // Ops asked (9 Sep 2026) for the type to be unmissable: it is the first
   // word of the subject, the headline, a colour block and the first row.
-  const solo = v.bookingType ? v.bookingType === "solo" : String(v.spots) === "1";
   const spots = Number(v.spots) || 1;
-  const typeLabel = solo ? "Solo" : "Group";
-  const typeDetail = solo ? "1 traveller · departure guaranteed to run" : `${spots} travellers booked together`;
-  const badge = solo
-    ? `<div style="margin:0 0 16px 0;padding:14px 16px;border:3px solid #0a0a0a;background:#ccff01">
-<div style="font-size:22px;font-weight:900;text-transform:uppercase;letter-spacing:.04em">🧍 SOLO BOOKING</div>
-<div style="font-size:13px;margin-top:4px">{{typeDetail}}</div></div>`
-    : `<div style="margin:0 0 16px 0;padding:14px 16px;border:3px solid #0a0a0a;background:#ff6600">
-<div style="font-size:22px;font-weight:900;text-transform:uppercase;letter-spacing:.04em">👥 GROUP BOOKING · {{spots}} SPOTS</div>
+  const mode = v.travellerMode;
+  const solo = mode ? mode === "independent" : v.bookingType ? v.bookingType === "solo" : String(v.spots) === "1";
+  const spotsText = `${spots} spot${spots === 1 ? "" : "s"}`;
+  const typeLabel = mode ? (solo ? "Independent" : "With a crew") : solo ? "Solo" : "Group";
+  const typeDetail = mode
+    ? solo
+      ? "1 traveller · guaranteed to run, no minimum"
+      : `${spotsText} · expecting a crew · runs once 5 have booked, tell them when it does`
+    : solo
+      ? "1 traveller · departure guaranteed to run"
+      : `${spots} travellers booked together`;
+  const heading = mode
+    ? solo ? "🧍 INDEPENDENT BOOKING" : `👥 WITH A CREW · ${spotsText.toUpperCase()}`
+    : solo ? "🧍 SOLO BOOKING" : `👥 GROUP BOOKING · ${spots} SPOTS`;
+  const badge = `<div style="margin:0 0 16px 0;padding:14px 16px;border:3px solid #0a0a0a;background:${solo ? "#ccff01" : "#ff6600"}">
+<div style="font-size:22px;font-weight:900;text-transform:uppercase;letter-spacing:.04em">${heading}</div>
 <div style="font-size:13px;margin-top:4px">{{typeDetail}}</div></div>`;
   const inner = render(
     `<tr><td style="padding:16px 24px 8px 24px">
-<h1 style="margin:0;font-size:24px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em">NEW {{typeLabel}} BOOKING 🎒</h1>
+<h1 style="margin:0;font-size:24px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em">{{headline}}</h1>
 </td></tr>
 <tr><td style="padding:0 24px 16px 24px;font-size:15px;line-height:1.5">
 ${badge}
@@ -488,13 +498,16 @@ ${badge}
       spots,
       typeLabel,
       typeDetail,
+      headline: mode ? `NEW BOOKING · ${typeLabel.toUpperCase()} 🎒` : `NEW ${typeLabel} BOOKING 🎒`,
       leadPhone: v.leadPhone || "—",
       squadCode: v.squadCode || "—",
       discountCode: v.discountCode || "—",
       staffRecommendation: v.staffRecommendation || "—",
     } as Record<string, string | number>,
   );
-  const type = solo ? "SOLO booking" : `GROUP booking (${spots} spots)`;
+  const type = mode
+    ? solo ? "INDEPENDENT booking" : `WITH A CREW booking (${spotsText})`
+    : solo ? "SOLO booking" : `GROUP booking (${spots} spots)`;
   return {
     subject: `${type}: ${v.leadName} · ${v.tripName} · ${v.departureDate}`,
     html: shell(`New ${typeLabel.toLowerCase()} booking`, inner),
@@ -726,7 +739,8 @@ export type TeamReminderBooking = {
   email: string;
   phone: string;
   spots: number;
-  type: "Solo" | "Group";
+  /** Independent / Crew from the gate; Solo / Group for older bookings. */
+  type: string;
   payment: string;
   members: string;
 };

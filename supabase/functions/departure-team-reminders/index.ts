@@ -54,6 +54,8 @@ type BookingRow = {
   balance_amount: number | null;
   balance_status: string | null;
   balance_due_date: string | null;
+  traveller_mode: string | null;
+  lead_solo: boolean | null;
 };
 
 function paymentLabel(lead: BookingRow, spots: number): string {
@@ -116,7 +118,7 @@ Deno.serve(async (req) => {
 
     const { data: rows, error: bErr } = await sb
       .from("bookings")
-      .select("stripe_session_id,booking_ref,lead_name,lead_email,lead_phone,spot_number,group_size,group_members,balance_amount,balance_status,balance_due_date")
+      .select("stripe_session_id,booking_ref,lead_name,lead_email,lead_phone,spot_number,group_size,group_members,balance_amount,balance_status,balance_due_date,traveller_mode,lead_solo")
       .eq("departure_id", dep.id)
       .eq("status", "Confirmed");
     if (bErr) {
@@ -142,7 +144,10 @@ Deno.serve(async (req) => {
         email: lead.lead_email || "",
         phone: lead.lead_phone || "",
         spots,
-        type: spots === 1 ? "Solo" : "Group",
+        type:
+          lead.traveller_mode === "independent" ? "Independent (guaranteed)"
+          : lead.traveller_mode === "crew" ? "With a crew"
+          : lead.lead_solo ? "Solo (guaranteed)" : "Group",
         payment: paymentLabel(lead, spots),
         members: (lead.group_members ?? []).filter(Boolean).join(", "),
       });
