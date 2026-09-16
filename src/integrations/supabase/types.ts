@@ -109,6 +109,7 @@ export type Database = {
           stripe_payment_method_id: string | null
           stripe_refund_id: string | null
           stripe_session_id: string
+          traveller_mode: string | null
           trip_confirmed_notified_at: string | null
           trip_id: string | null
           updated_at: string
@@ -160,6 +161,7 @@ export type Database = {
           stripe_payment_method_id?: string | null
           stripe_refund_id?: string | null
           stripe_session_id: string
+          traveller_mode?: string | null
           trip_confirmed_notified_at?: string | null
           trip_id?: string | null
           updated_at?: string
@@ -211,6 +213,7 @@ export type Database = {
           stripe_payment_method_id?: string | null
           stripe_refund_id?: string | null
           stripe_session_id?: string
+          traveller_mode?: string | null
           trip_confirmed_notified_at?: string | null
           trip_id?: string | null
           updated_at?: string
