@@ -43,6 +43,8 @@ export interface UseCheckoutOptions {
   utm?: Record<string, string>;
   /** Independent travellers book for one; the crew version allows up to MAX_SPOTS. */
   maxSpots?: number;
+  /** Sent only when the visitor actually picked on the gate. */
+  travellerMode?: "independent" | "crew";
 }
 
 export function useCheckout(trip: Trip, departure: Departure | null, opts: UseCheckoutOptions = {}) {
@@ -197,6 +199,7 @@ export function useCheckout(trip: Trip, departure: Departure | null, opts: UseCh
         secondDiscountCode: appliedDiscount && form.secondCode.trim() ? form.secondCode.trim().toUpperCase() : undefined,
         squadCode: appliedSquad || undefined,
         advisorRef,
+        travellerMode: opts.travellerMode,
         utm: opts.utm ?? readUtm(),
         gaClientId: readGaClientId(),
       });

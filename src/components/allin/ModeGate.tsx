@@ -42,10 +42,10 @@ export function ModeGate() {
           >
             <span className="font-sticker text-[10px] tracking-[0.16em] text-mm-black">INDEPENDENTLY</span>
             <span className="mt-2 font-display text-2xl leading-[0.95] text-mm-black sm:text-[1.7rem]">
-              SORT MY ROUTE AND BEDS, I'LL DO MY OWN THING
+              SORT MY ROUTE AND BEDS, I'LL DO MY OWN THING.
             </span>
             <span className="mt-3 text-sm leading-snug text-mm-black/80">
-              Fixed itinerary, real Mad Monkey beds, guaranteed to run. Book for one and meet people at every hostel.
+              Fixed route, guaranteed hostel beds, total freedom. Book solo and meet people along the way.
             </span>
             <span className="mt-4 inline-flex items-center gap-2 font-sticker text-[10px] tracking-[0.14em] text-mm-black">
               THAT'S ME <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />

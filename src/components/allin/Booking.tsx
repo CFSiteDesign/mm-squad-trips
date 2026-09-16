@@ -27,8 +27,9 @@ const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Frida
 export function Booking({ trip }: { trip: Trip }) {
   const [chosen, setChosen] = useState<Departure | null>(null);
   // Independent travellers book for one; that is what makes the date guaranteed.
-  const solo = useTravellerMode().mode === "independent";
-  const checkout = useCheckout(trip, chosen, { maxSpots: solo ? 1 : undefined });
+  const { mode, chosen: modeChosen } = useTravellerMode();
+  const solo = mode === "independent";
+  const checkout = useCheckout(trip, chosen, { maxSpots: solo ? 1 : undefined, travellerMode: modeChosen ? mode : undefined });
 
   const departures = useMemo(() => {
     const known = new Set(trip.departures.map((d) => d.id));
