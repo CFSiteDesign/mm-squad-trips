@@ -15,7 +15,7 @@ import { Starburst } from "@/components/brand/Sticker";
 import { SubNav, StickyCta, SCROLL_OFFSET } from "@/components/allin/Chrome";
 import { getTripContent, type TripSlug } from "@/data/trip-content";
 import { Booking } from "@/components/allin/Booking";
-import { independentFaqs, modeParams, useTravellerMode } from "@/lib/traveller-mode";
+import { independentContent, modeParams, useTravellerMode } from "@/lib/traveller-mode";
 import { nextDeparture } from "@/lib/departures";
 import { useParams } from "react-router-dom";
 import { TRIPS } from "@/data/trips";
@@ -96,7 +96,9 @@ export default function AllInTrip({ slug: slugProp, unlisted = false }: { slug?:
     });
   }, [trip, isPlaceholderData]);
 
-  const content = trip ? getTripContent(trip, slug) : null;
+  const crewContent = trip ? getTripContent(trip, slug) : null;
+  // Independent visitors get the same page with the group messaging taken out.
+  const content = crewContent && solo ? independentContent(crewContent) : crewContent;
   const meta = TRIPS.find((t) => t.slug === slug);
   const departures = useMemo(() => trip?.departures ?? [], [trip]);
   // "From" must always be the cheapest bookable departure, not whichever one
@@ -118,7 +120,6 @@ export default function AllInTrip({ slug: slugProp, unlisted = false }: { slug?:
           faqs: FAQS, hero: heroImg } = content;
   // Customers see finished tiles only.
   const HIGHLIGHTS = content.highlights.filter((h) => h.image);
-  const faqs = solo ? independentFaqs(FAQS) : FAQS;
 
   return (
     <div className="min-h-screen bg-mm-bone pb-24 md:pb-0">
@@ -390,10 +391,13 @@ export default function AllInTrip({ slug: slugProp, unlisted = false }: { slug?:
             <button onClick={() => scrollToId("booking")} className="mt-2 w-full border-[3px] border-mm-black bg-mm-bone px-4 py-2.5 font-sticker text-[10px] tracking-[0.14em] text-mm-black">
               SEE ALL DATES
             </button>
-            <div className="mt-3 border-[3px] border-mm-black bg-mm-lime p-2">
-              <p className="font-sticker text-[9px] tracking-[0.12em] text-mm-black">{solo ? "GUARANTEED TO RUN" : "SOLO? YOU'RE COVERED"}</p>
-              <p className="mt-1 text-[11px] leading-snug text-mm-black/80">{solo ? "Independent bookings never get cancelled. Book for one, pay $99 now." : "Easy single booking, 100% departure rate, zero fuss."}</p>
-            </div>
+            {/* Crew visitors don't get the solo box (Kyle, 18 Sep 2026). */}
+            {solo && (
+              <div className="mt-3 border-[3px] border-mm-black bg-mm-lime p-2">
+                <p className="font-sticker text-[9px] tracking-[0.12em] text-mm-black">GUARANTEED TO RUN</p>
+                <p className="mt-1 text-[11px] leading-snug text-mm-black/80">Independent bookings never get cancelled. Book for one, pay $99 now.</p>
+              </div>
+            )}
           </div>
         </aside>
       </div>
@@ -412,7 +416,7 @@ export default function AllInTrip({ slug: slugProp, unlisted = false }: { slug?:
         <div className="mx-auto max-w-3xl px-5 md:px-6">
           <H eyebrow="BEFORE YOU ASK">FAQ.</H>
           <div className="border-[3px] border-mm-black">
-            {faqs.map((f, i) => (
+            {FAQS.map((f, i) => (
               <div key={f.q} className={i > 0 ? "border-t-[3px] border-mm-black" : ""}>
                 <button onClick={() => setOpenFaq(openFaq === i ? null : i)} className="flex w-full items-center justify-between gap-3 bg-mm-bone p-4 text-left">
                   <span className="font-display text-base leading-tight text-mm-black">{f.q}</span>

@@ -135,7 +135,7 @@ export function Booking({ trip }: { trip: Trip }) {
             </button>
           </div>
         </div>
-        {open && chosen && <CheckoutPanel trip={trip} departure={chosen} checkout={checkout} />}
+        {open && chosen && <CheckoutPanel trip={trip} departure={chosen} checkout={checkout} independent={solo} />}
       </div>
     );
   };
@@ -189,7 +189,7 @@ export function Booking({ trip }: { trip: Trip }) {
                 </button>
               </div>
             </div>
-            {chosen?.id === next.id && <CheckoutPanel trip={trip} departure={next} checkout={checkout} />}
+            {chosen?.id === next.id && <CheckoutPanel trip={trip} departure={next} checkout={checkout} independent={solo} />}
           </div>
           <p className="mt-2 text-[12px] text-mm-black/60">
             {weekdayName ? `Departs every ${weekdayName} — pick any week below.` : "Pick any week below."}
@@ -240,6 +240,7 @@ export function Booking({ trip }: { trip: Trip }) {
  * number or an email, nothing else, into the same database as the bookings.
  */
 function AdvisorBox({ trip }: { trip: Trip }) {
+  const solo = useTravellerMode().mode === "independent";
   const [method, setMethod] = useState<ContactMethod>("whatsapp");
   const [value, setValue] = useState("");
   const [sending, setSending] = useState(false);
@@ -267,7 +268,7 @@ function AdvisorBox({ trip }: { trip: Trip }) {
       <p className="font-sticker text-[11px] tracking-[0.14em] text-mm-black">✳ WANT TO TALK IT THROUGH?</p>
       <p className="mt-2 max-w-xl text-sm leading-snug text-mm-black/80">
         Leave a WhatsApp number or an email and one of our advisors will get back to you about
-        dates, group bookings and anything else on your mind.
+        dates, {solo ? "custom plans" : "group bookings"} and anything else on your mind.
       </p>
 
       {sent ? (

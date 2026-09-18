@@ -10,6 +10,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { gtmPushEvent } from "@/utils/gtmTracker";
+import type { TripContent } from "@/data/trip-content";
 
 export type TravellerMode = "independent" | "crew";
 
@@ -99,18 +100,77 @@ export function TravellerModeProvider({ children }: { children: ReactNode }) {
   return <ModeContext.Provider value={value}>{children}</ModeContext.Provider>;
 }
 
+// Kyle, 18 Sep 2026: the independent version is "basically the same page but
+// removes the messaging about a group". The trip content is written once, for
+// crews, so these rewrites take the crew out of each sentence for independent
+// visitors. Specific phrases first, exactly as they appear in the content
+// files; traveller-mode.test.ts fails if a group phrase slips through.
+// "24/7 local crew" and "the crew always plans…" mean Mad Monkey staff and stay.
+const INDEPENDENT_REWRITES: Array<[RegExp | string, string]> = [
+  ["Settle in before meeting up with your crew for a Welcome Khmer Family Dinner", "Settle in before the Welcome Khmer Family Dinner"],
+  ["regroup with the squad for", "head back for"],
+  ["then regroup in the evening for", "then in the evening it's"],
+  ["a final make-your-own pizza night with your crew", "a final make-your-own pizza night"],
+  ["Settle into your home base before meeting up with your crew for a Welcome Sunset session", "Settle into your home base before a Welcome Sunset session"],
+  ["regroup with the crew back at the hostel for", "head back to the hostel for"],
+  ["Say farewell to your group of newfound friends", "Say farewell to the friends you've made"],
+  ["before joining the crew for a traditional Mexican family dinner", "before a traditional Mexican family dinner"],
+  ["grab lunch with the crew, and regroup at the hostel tonight", "grab lunch, and head back to the hostel tonight"],
+  ["Say farewell to your crew!", "Say your farewells!"],
+  ["Say farewell to your squad!", "Say your farewells!"],
+  ["then meet your crew at 8pm for Beats + Bingo", "then head to Beats + Bingo at 8pm"],
+  ["with your new travel family", "with the people you've met"],
+  ["a welcome drink at the hostel to meet your crew", "a welcome drink at the hostel"],
+  ["Wake up in Ha Giang, rally your crew, and ride", "Wake up in Ha Giang and ride"],
+  ["with a crew that now feels like family", "with new friends who now feel like family"],
+  ["Enjoy one last breakfast with your crew and swap contacts", "Enjoy one last breakfast and swap contacts with the friends you've made"],
+  ["we've sorted the beds, the transport, the crew and the good times", "we've sorted the beds, the transport, the local team and the good times"],
+  ["No coach buses. No 60-person mega-groups. Max 20 people, real backpacker hostels, free time built in.", "No coach buses. Real backpacker hostels, a fixed route and free time built in."],
+  [/\s*If we cancel because the departure didn't reach its 5-traveller minimum, you get a full refund automatically\./, ""],
+];
+
+export function independentText(s: string): string {
+  let out = s;
+  for (const [from, to] of INDEPENDENT_REWRITES) out = out.replace(from, to);
+  return out;
+}
+
+/** FAQ entries that only make sense for a crew. */
+const CREW_ONLY_FAQ = /reach the minimum|leading the group|number of participants|group size|squad/i;
+
 /** The trip FAQ, minus the group promises, for independent travellers. */
 export function independentFaqs<T extends { q: string; a: string }>(faqs: T[]): T[] {
   return faqs
-    .filter((f) => !/reach the minimum/i.test(f.q))
+    .filter((f) => !CREW_ONLY_FAQ.test(f.q))
     .map((f) =>
       /after I pay (my|the) deposit/i.test(f.q)
         ? {
             ...f,
             a: "You get an email with your booking reference and your trip is confirmed straight away. Independent bookings always run, so book your flights whenever you're ready. The remaining balance is charged automatically to the same card 7 days before departure, no action needed.",
           }
-        : f,
+        : { ...f, q: independentText(f.q), a: independentText(f.a) },
     );
+}
+
+/** The same trip page content with every group promise taken out. */
+export function independentContent(c: TripContent): TripContent {
+  const t = independentText;
+  return {
+    ...c,
+    snapshot: { ...c.snapshot, blurb: t(c.snapshot.blurb) },
+    isThisForMe: c.isThisForMe.map((r) => (/group size/i.test(r.k) ? { k: "Booking", v: "Just you. Every date runs." } : { k: t(r.k), v: t(r.v) })),
+    highlights: c.highlights.map((h) => ({ ...h, title: t(h.title) })),
+    included: c.included.filter((i) => !/instant crew|ready-made group/i.test(i)).map(t),
+    itinerary: c.itinerary.map((d) => ({
+      ...d,
+      place: t(d.place),
+      body: t(d.body),
+      transport: d.transport ? t(d.transport) : d.transport,
+      activities: d.activities ? t(d.activities) : d.activities,
+      meals: d.meals ? t(d.meals) : d.meals,
+    })),
+    faqs: independentFaqs(c.faqs),
+  };
 }
 
 const FALLBACK: ModeContextValue = { mode: "crew", chosen: true, gateOpen: false, choose: () => {}, openGate: () => {}, closeGate: () => {} };

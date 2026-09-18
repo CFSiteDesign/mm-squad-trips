@@ -8,7 +8,7 @@ import { tripNights } from "@/data/trips";
 import { type Checkout, type CheckoutFields, type CodeStatus } from "@/lib/use-checkout";
 import type { Trip, Departure } from "@/types/trip";
 
-export function CheckoutPanel({ trip, departure, checkout }: { trip: Trip; departure: Departure; checkout: Checkout }) {
+export function CheckoutPanel({ trip, departure, checkout, independent = false }: { trip: Trip; departure: Departure; checkout: Checkout; independent?: boolean }) {
   const { form, setField, spots, setSpots, maxSpots, submitting, codesPending, squadStatus, discountStatus, discountAmount, appliedDiscount, submit } = checkout;
 
   const pay = paymentLine(departure.date, spots, departure.price);
@@ -85,7 +85,7 @@ export function CheckoutPanel({ trip, departure, checkout }: { trip: Trip; depar
         {field("lastName", "Second name")}
         {field("email", "Email", "email")}
         {field("phone", "Phone (with country code)", "tel", "+44 7700 900000")}
-        {codeField("squadCode", "Squad code (optional)", squadStatus)}
+        {!independent && codeField("squadCode", "Squad code (optional)", squadStatus)}
         {codeField("discountCode", "Discount code (optional)", discountStatus)}
         {discountStatus?.valid && (discountStatus.stackable || form.secondCode) && (
           <div className="sm:col-start-2">{codeField("secondCode", "Second code (optional)", null)}</div>
