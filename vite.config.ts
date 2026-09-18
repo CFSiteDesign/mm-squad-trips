@@ -6,9 +6,8 @@ import { componentTagger } from "lovable-tagger";
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   // Lovable + the Cloudflare rewrite at madmonkeyhostels.com/all-in-trips
-  // need relative asset paths. The Vercel demo serves from a domain root,
-  // where relative paths break nested routes, so that build gets "/".
-  base: mode === "preview-demo" ? "/" : "./",
+  // need relative asset paths.
+  base: "./",
   server: {
     host: "::",
     port: 8080,
