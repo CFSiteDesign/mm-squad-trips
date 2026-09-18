@@ -5,11 +5,12 @@
 // checkout page, so the deposit rule, code validation, solo flag and analytics
 // events cannot drift between the two. The parent owns which departure is
 // chosen; this owns everything typed into the form.
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
 import { formatPrice } from "@/lib/trip-helpers";
 import { createCheckoutSession, validateDiscount, fetchTrip } from "@/lib/api";
 import { gtmClearEcommerce, gtmPushEvent } from "@/utils/gtmTracker";
+import { modeParams } from "@/lib/traveller-mode";
 import { buildTripEcommerceItem, CONVERSION_TYPE_ALL_IN, markCheckoutEventOnce } from "@/utils/ecommerceDataLayer";
 import { readGaClientId, readUtm } from "@/lib/ga";
 import type { Trip, Departure } from "@/types/trip";
@@ -30,7 +31,7 @@ const EMPTY: CheckoutFields = {
   firstName: "", lastName: "", email: "", phone: "", squadCode: "", discountCode: "", secondCode: "",
 };
 
-const clampSpots = (n: number) => Math.min(MAX_SPOTS, Math.max(1, Math.round(n) || 1));
+const clampSpots = (n: number, max = MAX_SPOTS) => Math.min(max, Math.max(1, Math.round(n) || 1));
 
 export interface UseCheckoutOptions {
   /** Prefill, e.g. from an advisor link. Applied once, on mount. */
@@ -40,11 +41,20 @@ export interface UseCheckoutOptions {
   advisorRef?: string;
   /** Captured at page load when the URL is going to be cleaned afterwards. */
   utm?: Record<string, string>;
+  /** Independent travellers book for one; the crew version allows up to MAX_SPOTS. */
+  maxSpots?: number;
+  /** Sent only when the visitor actually picked on the gate. */
+  travellerMode?: "independent" | "crew";
 }
 
 export function useCheckout(trip: Trip, departure: Departure | null, opts: UseCheckoutOptions = {}) {
   const [form, setForm] = useState<CheckoutFields>(() => ({ ...EMPTY, ...opts.initial }));
-  const [spots, setSpots] = useState(() => clampSpots(opts.initialSpots ?? 1));
+  const maxSpots = opts.maxSpots ?? MAX_SPOTS;
+  const [spots, setSpotsRaw] = useState(() => clampSpots(opts.initialSpots ?? 1, maxSpots));
+  const setSpots = useCallback((n: number) => setSpotsRaw(clampSpots(n, maxSpots)), [maxSpots]);
+  useEffect(() => {
+    if (spots > maxSpots) setSpotsRaw(maxSpots);
+  }, [maxSpots, spots]);
   const [submitting, setSubmitting] = useState(false);
   const [squadStatus, setSquadStatus] = useState<CodeStatus | null>(null);
   const [discountStatus, setDiscountStatus] = useState<CodeStatus | null>(null);
@@ -58,7 +68,7 @@ export function useCheckout(trip: Trip, departure: Departure | null, opts: UseCh
   // Spots can't exceed what the chosen departure has left.
   useEffect(() => {
     if (departure && spots > departure.spotsRemaining) setSpots(Math.max(1, departure.spotsRemaining));
-  }, [departure, spots]);
+  }, [departure, spots, setSpots]);
 
   const subtotal = (departure?.price ?? trip.defaultPrice) * spots;
 
@@ -161,6 +171,7 @@ export function useCheckout(trip: Trip, departure: Departure | null, opts: UseCh
       gtmClearEcommerce();
       gtmPushEvent("begin_checkout", {
         conversion_type: CONVERSION_TYPE_ALL_IN,
+        ...modeParams(),
         ecommerce: {
           currency: "USD",
           value: departure.price * spots - discountAmount,
@@ -188,6 +199,7 @@ export function useCheckout(trip: Trip, departure: Departure | null, opts: UseCh
         secondDiscountCode: appliedDiscount && form.secondCode.trim() ? form.secondCode.trim().toUpperCase() : undefined,
         squadCode: appliedSquad || undefined,
         advisorRef,
+        travellerMode: opts.travellerMode,
         utm: opts.utm ?? readUtm(),
         gaClientId: readGaClientId(),
       });
@@ -200,7 +212,7 @@ export function useCheckout(trip: Trip, departure: Departure | null, opts: UseCh
 
   return {
     form, setForm, setField,
-    spots, setSpots,
+    spots, setSpots, maxSpots,
     submitting, codesPending,
     squadStatus, discountStatus,
     revealed,

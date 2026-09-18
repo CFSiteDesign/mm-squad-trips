@@ -20,12 +20,16 @@ import { CheckoutPanel } from "@/components/allin/CheckoutPanel";
 import { submitAdvisorEnquiry, validateContact, type ContactMethod } from "@/lib/advisor";
 import type { Trip, Departure } from "@/types/trip";
 import { SQUAD_BENEFITS } from "@/data/squad-benefits";
+import { useTravellerMode } from "@/lib/traveller-mode";
 
 const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 export function Booking({ trip }: { trip: Trip }) {
   const [chosen, setChosen] = useState<Departure | null>(null);
-  const checkout = useCheckout(trip, chosen);
+  // Independent travellers book for one; that is what makes the date guaranteed.
+  const { mode, chosen: modeChosen } = useTravellerMode();
+  const solo = mode === "independent";
+  const checkout = useCheckout(trip, chosen, { maxSpots: solo ? 1 : undefined, travellerMode: modeChosen ? mode : undefined });
 
   const departures = useMemo(() => {
     const known = new Set(trip.departures.map((d) => d.id));
@@ -111,7 +115,7 @@ export function Booking({ trip }: { trip: Trip }) {
           <div className="flex min-w-[128px] items-center gap-1.5 text-sm">
             {soldOut
               ? <><AlertCircle className="h-4 w-4 text-mm-orange" /> <span className="text-mm-black/70">Sold out</span></>
-              : <><Check className="h-4 w-4 text-mm-black" strokeWidth={3} /> <span className="text-mm-black/80">{d.spotsRemaining} available{d.isPrivate ? " · your squad's date" : ""}</span></>}
+              : <><Check className="h-4 w-4 text-mm-black" strokeWidth={3} /> <span className="text-mm-black/80">{solo ? "Guaranteed to run" : `${d.spotsRemaining} available${d.isPrivate ? " · your squad's date" : ""}`}</span></>}
           </div>
           <div className="ml-auto flex items-center gap-4">
             <div className="text-right">
@@ -138,19 +142,22 @@ export function Booking({ trip }: { trip: Trip }) {
 
   return (
     <div className="border-[3px] border-mm-black bg-mm-bone">
-      {/* Solo + squad, stacked */}
+      {/* One promise per audience: guaranteed for independents, squad perks for crews. */}
       <div className="space-y-3 border-b-[3px] border-mm-black p-4 md:p-6">
-        <div className="border-[3px] border-mm-black bg-mm-lime p-4">
-          <p className="font-sticker text-[10px] tracking-[0.14em] text-mm-black">✔ SOLO TRAVELLER? YOU'RE COVERED</p>
-          <p className="mt-2 text-sm leading-snug text-mm-black/80">
-            Lock in your spot with total peace of mind. Easy single booking, 100% departure rate,
-            and zero fuss. Just show up and experience all the best bits.
-          </p>
-        </div>
-        <div className="border-[3px] border-mm-black bg-mm-cyan p-4">
-          <p className="font-sticker text-[10px] tracking-[0.14em] text-mm-black">✔ BRING YOUR SQUAD (AND GO FOR FREE)</p>
-          <p className="mt-2 text-sm leading-snug text-mm-black/80">{SQUAD_BENEFITS.free.body}</p>
-        </div>
+        {solo ? (
+          <div className="border-[3px] border-mm-black bg-mm-lime p-4">
+            <p className="font-sticker text-[10px] tracking-[0.14em] text-mm-black">✔ INDEPENDENT BOOKING · GUARANTEED TO RUN</p>
+            <p className="mt-2 text-sm leading-snug text-mm-black/80">
+              Book for one and every date runs. No minimum, no waiting on a group. The route, boats and beds are
+              sorted; you do your own thing and meet people at every hostel along the way.
+            </p>
+          </div>
+        ) : (
+          <div className="border-[3px] border-mm-black bg-mm-cyan p-4">
+            <p className="font-sticker text-[10px] tracking-[0.14em] text-mm-black">✔ BRING YOUR SQUAD (AND GO FOR FREE)</p>
+            <p className="mt-2 text-sm leading-snug text-mm-black/80">{SQUAD_BENEFITS.free.body}</p>
+          </div>
+        )}
       </div>
 
       {/* The next departure, promoted so booking it is one click. */}
@@ -162,7 +169,7 @@ export function Booking({ trip }: { trip: Trip }) {
                 <p className="font-sticker text-[10px] tracking-[0.14em] text-mm-black">★ NEXT DEPARTURE</p>
                 <p className="mt-1 font-display text-3xl leading-none text-mm-black">{dayLabel(next.date)}</p>
                 <p className="mt-1.5 text-sm text-mm-black/75">
-                  Back {dayLabel(tripEndDate(next.date, trip))} · {tripNights(trip)} nights · {next.spotsRemaining} spot{next.spotsRemaining === 1 ? "" : "s"} left
+                  Back {dayLabel(tripEndDate(next.date, trip))} · {tripNights(trip)} nights · {solo ? "guaranteed to run" : `${next.spotsRemaining} spot${next.spotsRemaining === 1 ? "" : "s"} left`}
                 </p>
               </div>
               <div className="ml-auto flex items-center gap-4">

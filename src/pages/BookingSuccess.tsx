@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Share2 } from "lucide-react";
 import { Sticker } from "@/components/brand/Sticker";
 import { gtmClearEcommerce, gtmPushEvent } from "@/utils/gtmTracker";
+import { modeParams } from "@/lib/traveller-mode";
 import {
   buildGa4Item,
   CONVERSION_TYPE_ALL_IN,
@@ -80,6 +81,7 @@ export default function BookingSuccess() {
     gtmClearEcommerce();
     gtmPushEvent("purchase", {
       conversion_type: CONVERSION_TYPE_ALL_IN,
+      ...modeParams(),
       ecommerce: {
         transaction_id: sessionId,
         currency: "USD",

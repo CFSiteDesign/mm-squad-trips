@@ -87,6 +87,8 @@ export interface CreateCheckoutInput {
   /** Adventure Advisors link token (their format, case-sensitive). Rides in
    *  the Stripe metadata so the sale can be matched back to the link. */
   advisorRef?: string;
+  /** From the gate; decides guaranteed vs waits-on-5 on the server. */
+  travellerMode?: "independent" | "crew";
   friendsMentioned?: string;
   /** Optional "Mad Monkey staff recommendation" name from the booking form. */
   staffRecommendation?: string;

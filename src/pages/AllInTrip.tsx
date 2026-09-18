@@ -15,6 +15,7 @@ import { Starburst } from "@/components/brand/Sticker";
 import { SubNav, StickyCta, SCROLL_OFFSET } from "@/components/allin/Chrome";
 import { getTripContent, type TripSlug } from "@/data/trip-content";
 import { Booking } from "@/components/allin/Booking";
+import { independentFaqs, modeParams, useTravellerMode } from "@/lib/traveller-mode";
 import { nextDeparture } from "@/lib/departures";
 import { useParams } from "react-router-dom";
 import { TRIPS } from "@/data/trips";
@@ -58,6 +59,8 @@ export default function AllInTrip({ slug: slugProp, unlisted = false }: { slug?:
   const slug = (slugProp ?? params.slug ?? "indonesia") as TripSlug;
   const [showAllIncluded, setShowAllIncluded] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const { mode } = useTravellerMode();
+  const solo = mode === "independent";
 
   // Link-only trips stay out of search results.
   useEffect(() => {
@@ -84,6 +87,7 @@ export default function AllInTrip({ slug: slugProp, unlisted = false }: { slug?:
     gtmClearEcommerce();
     gtmPushEvent("view_item", {
       conversion_type: CONVERSION_TYPE_ALL_IN,
+      ...modeParams(),
       ecommerce: {
         currency: "USD",
         value: trip.defaultPrice,
@@ -114,6 +118,7 @@ export default function AllInTrip({ slug: slugProp, unlisted = false }: { slug?:
           faqs: FAQS, hero: heroImg } = content;
   // Customers see finished tiles only.
   const HIGHLIGHTS = content.highlights.filter((h) => h.image);
+  const faqs = solo ? independentFaqs(FAQS) : FAQS;
 
   return (
     <div className="min-h-screen bg-mm-bone pb-24 md:pb-0">
@@ -240,7 +245,7 @@ export default function AllInTrip({ slug: slugProp, unlisted = false }: { slug?:
           {/* Highlights */}
           {HIGHLIGHTS.length > 0 && (
           <section className="mt-16">
-            <H eyebrow="TOUR HIGHLIGHTS">BUCKET-LIST MOMENTS<br />MADE FOR THE GROUP CHAT</H>
+            <H eyebrow="TOUR HIGHLIGHTS">BUCKET-LIST MOMENTS<br />{solo ? "SORTED FOR YOU" : "MADE FOR THE GROUP CHAT"}</H>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {HIGHLIGHTS.map((h) => (
                 <figure key={h.title} className="border-[3px] border-mm-black bg-mm-bone shadow-mm-sm">
@@ -386,8 +391,8 @@ export default function AllInTrip({ slug: slugProp, unlisted = false }: { slug?:
               SEE ALL DATES
             </button>
             <div className="mt-3 border-[3px] border-mm-black bg-mm-lime p-2">
-              <p className="font-sticker text-[9px] tracking-[0.12em] text-mm-black">SOLO? YOU'RE COVERED</p>
-              <p className="mt-1 text-[11px] leading-snug text-mm-black/80">Easy single booking, 100% departure rate, zero fuss.</p>
+              <p className="font-sticker text-[9px] tracking-[0.12em] text-mm-black">{solo ? "GUARANTEED TO RUN" : "SOLO? YOU'RE COVERED"}</p>
+              <p className="mt-1 text-[11px] leading-snug text-mm-black/80">{solo ? "Independent bookings never get cancelled. Book for one, pay $99 now." : "Easy single booking, 100% departure rate, zero fuss."}</p>
             </div>
           </div>
         </aside>
@@ -407,7 +412,7 @@ export default function AllInTrip({ slug: slugProp, unlisted = false }: { slug?:
         <div className="mx-auto max-w-3xl px-5 md:px-6">
           <H eyebrow="BEFORE YOU ASK">FAQ.</H>
           <div className="border-[3px] border-mm-black">
-            {FAQS.map((f, i) => (
+            {faqs.map((f, i) => (
               <div key={f.q} className={i > 0 ? "border-t-[3px] border-mm-black" : ""}>
                 <button onClick={() => setOpenFaq(openFaq === i ? null : i)} className="flex w-full items-center justify-between gap-3 bg-mm-bone p-4 text-left">
                   <span className="font-display text-base leading-tight text-mm-black">{f.q}</span>

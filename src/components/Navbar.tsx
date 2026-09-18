@@ -1,10 +1,13 @@
 import { Link, useLocation } from "react-router-dom";
 import { Wordmark } from "@/components/brand/Wordmark";
 import { cn } from "@/lib/utils";
+import { useTravellerMode } from "@/lib/traveller-mode";
+import { ModePill } from "@/components/allin/ModeGate";
 
 export function Navbar() {
   const { pathname } = useLocation();
   const isHome = pathname === "/";
+  const { mode, chosen } = useTravellerMode();
 
   return (
     <header className="fixed left-0 right-0 top-0 z-50 bg-mm-black/95 backdrop-blur-sm">
@@ -14,23 +17,28 @@ export function Navbar() {
           <Wordmark size={36} className="hidden md:block" />
         </Link>
 
-        <nav className="flex items-center gap-4 md:gap-6">
+        <nav className="flex items-center gap-3 md:gap-6">
+          <ModePill />
           <Link
             to="/"
             className={cn(
               "font-display text-xs tracking-[0.12em] transition-colors md:text-sm",
-              isHome ? "text-mm-lime" : "text-mm-bone hover:text-mm-lime"
+              isHome ? "text-mm-lime" : "text-mm-bone hover:text-mm-lime",
+              // The wordmark already goes home; on a phone the pill needs the room.
+              chosen && "hidden sm:inline"
             )}
           >
             HOME
           </Link>
 
+          {mode !== "independent" && (
           <Link
             to="/squad-leader"
             className="inline-flex items-center border-[3px] border-mm-bone bg-mm-pink px-2.5 py-1.5 font-display text-[10px] text-mm-bone shadow-mm transition-transform hover:-translate-x-[2px] hover:-translate-y-[2px] md:px-4 md:py-2 md:text-sm"
           >
             BECOME A SQUAD LEADER →
           </Link>
+          )}
         </nav>
       </div>
     </header>

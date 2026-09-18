@@ -5,11 +5,11 @@ import { ArrowRight } from "lucide-react";
 import { formatPrice, paymentLine } from "@/lib/trip-helpers";
 import { dayLabel, tripEndDate } from "@/lib/trip-dates";
 import { tripNights } from "@/data/trips";
-import { MAX_SPOTS, type Checkout, type CheckoutFields, type CodeStatus } from "@/lib/use-checkout";
+import { type Checkout, type CheckoutFields, type CodeStatus } from "@/lib/use-checkout";
 import type { Trip, Departure } from "@/types/trip";
 
 export function CheckoutPanel({ trip, departure, checkout }: { trip: Trip; departure: Departure; checkout: Checkout }) {
-  const { form, setField, spots, setSpots, submitting, codesPending, squadStatus, discountStatus, discountAmount, appliedDiscount, submit } = checkout;
+  const { form, setField, spots, setSpots, maxSpots, submitting, codesPending, squadStatus, discountStatus, discountAmount, appliedDiscount, submit } = checkout;
 
   const pay = paymentLine(departure.date, spots, departure.price);
   const total = departure.price * spots;
@@ -50,9 +50,12 @@ export function CheckoutPanel({ trip, departure, checkout }: { trip: Trip; depar
   return (
     <div className="border-t-[3px] border-mm-black bg-mm-bone p-4 md:p-5">
       {/* 1 — spots */}
-      <p className="font-sticker text-[10px] tracking-[0.14em] text-mm-black">1 · HOW MANY SPOTS?</p>
+      <p className="font-sticker text-[10px] tracking-[0.14em] text-mm-black">{maxSpots === 1 ? "1 · BOOKING FOR ONE" : "1 · HOW MANY SPOTS?"}</p>
+      {maxSpots === 1 && (
+        <p className="mt-1 text-[12px] leading-snug text-mm-black/60">Independent bookings are for one traveller. Bringing mates? Switch to With a crew at the top of the page.</p>
+      )}
       <div className="mt-2 flex flex-wrap gap-2">
-        {Array.from({ length: MAX_SPOTS }, (_, i) => i + 1).map((n) => {
+        {Array.from({ length: maxSpots }, (_, i) => i + 1).map((n) => {
           const available = n <= departure.spotsRemaining;
           return (
             <button
