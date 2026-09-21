@@ -1,3 +1,4 @@
 # Roadmap
 
-- [ ] Decide between migrating to TanStack Start or adding static SEO pages.
+- [x] Keep the current React/Vite stack; do not migrate to TanStack Start.
+- [ ] Improve SEO using static crawlable route pages within the current stack.
