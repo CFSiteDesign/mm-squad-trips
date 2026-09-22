@@ -12,7 +12,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, Check, AlertCircle, ChevronDown, MessageCircle, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { formatPrice, paymentLine } from "@/lib/trip-helpers";
-import { dayLabel, monthKey, monthLabel, tripEndDate } from "@/lib/trip-dates";
+import { dayLabel, monthKey, monthLabel, tripEndDate, weekdayName as weekdayNameOf } from "@/lib/trip-dates";
 import { tripNights } from "@/data/trips";
 import { nextDeparture } from "@/lib/departures";
 import { useCheckout, MAX_SPOTS } from "@/lib/use-checkout";
@@ -22,7 +22,6 @@ import type { Trip, Departure } from "@/types/trip";
 import { SQUAD_BENEFITS } from "@/data/squad-benefits";
 import { useTravellerMode } from "@/lib/traveller-mode";
 
-const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 export function Booking({ trip }: { trip: Trip }) {
   const [chosen, setChosen] = useState<Departure | null>(null);
@@ -52,8 +51,7 @@ export function Booking({ trip }: { trip: Trip }) {
 
   // The next departure has its own card, so it is not repeated in the list.
   const rows = departures.filter((d) => monthKey(d.date) === activeMonth && d.id !== next?.id);
-  const weekday = trip.startWeekday === null || trip.startWeekday === undefined ? null : Number(trip.startWeekday);
-  const weekdayName = weekday === null ? null : WEEKDAYS[weekday];
+  const weekdayName = weekdayNameOf(trip.startWeekday);
 
   // One-click booking links generated in admin:
   //   /{slug}?date=YYYY-MM-DD&spots=2&code=XYZ#booking
@@ -146,10 +144,12 @@ export function Booking({ trip }: { trip: Trip }) {
       <div className="space-y-3 border-b-[3px] border-mm-black p-4 md:p-6">
         {solo ? (
           <div className="border-[3px] border-mm-black bg-mm-lime p-4">
-            <p className="font-sticker text-[10px] tracking-[0.14em] text-mm-black">✔ INDEPENDENT BOOKING · GUARANTEED TO RUN</p>
+            {/* Copy per Kyle, 22 Sep 2026. */}
+            <p className="font-sticker text-[10px] tracking-[0.14em] text-mm-black">INDEPENDENT SOLO TRAVEL · 100% DEPARTURE CONFIRMATION</p>
             <p className="mt-2 text-sm leading-snug text-mm-black/80">
-              Book for one and every date runs. No minimum, no waiting on a group. The route, boats and beds are
-              sorted; you do your own thing and meet people at every hostel along the way.
+              Book whenever you want on a {weekdayName ?? "departure day"}. Every single date is confirmed to go. You don't need to wait for
+              a group to fill the trip. We handle the route, transport, and hostels; you set your own pace and meet fellow
+              travellers along the way!
             </p>
           </div>
         ) : (
@@ -169,7 +169,7 @@ export function Booking({ trip }: { trip: Trip }) {
                 <p className="font-sticker text-[10px] tracking-[0.14em] text-mm-black">★ NEXT DEPARTURE</p>
                 <p className="mt-1 font-display text-3xl leading-none text-mm-black">{dayLabel(next.date)}</p>
                 <p className="mt-1.5 text-sm text-mm-black/75">
-                  Back {dayLabel(tripEndDate(next.date, trip))} · {tripNights(trip)} nights · {solo ? "guaranteed to run" : `${next.spotsRemaining} spot${next.spotsRemaining === 1 ? "" : "s"} left`}
+                  Back {dayLabel(tripEndDate(next.date, trip))} · {tripNights(trip)} nights · {solo ? "independent solo travel" : `${next.spotsRemaining} spot${next.spotsRemaining === 1 ? "" : "s"} left`}
                 </p>
               </div>
               <div className="ml-auto flex items-center gap-4">

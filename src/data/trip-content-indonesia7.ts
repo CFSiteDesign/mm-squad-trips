@@ -4,7 +4,7 @@ import mexican from "@/assets/i7-hl-mexican.jpg";
 import boatParty from "@/assets/i7-hl-boat-party.jpg";
 import surfCamp from "@/assets/i7-hl-surf-camp.jpg";
 import videoAnalysis from "@/assets/i7-hl-video-analysis.jpg";
-import bikeTour from "@/assets/i7-hl-bike-tour.jpg";
+import foamParty from "@/assets/hl-foam-party.jpg";
 import type { Day } from "@/data/trip-content-indonesia";
 import type { Highlight } from "@/data/trip-content";
 
@@ -32,7 +32,7 @@ export const I7_HIGHLIGHTS: Highlight[] = [
   { title: "Kuta Lombok Surf Camp", image: surfCamp },
   // Brief asks for this one right-justified so the staff and laptop stay in frame.
   { title: "Surf Video Analysis", image: videoAnalysis, position: "object-right" },
-  { title: "Bucket List Bike Tour", image: bikeTour },
+  { title: "Mad Monkey Foam Party", image: foamParty },
 ];
 
 export const I7_INCLUDED = [
@@ -51,8 +51,8 @@ export const I7_ITINERARY: Day[] = [
     body: "Welcome to Gili T! Arrive on the island, shake off the travel day with an ice-cold beer, and dive straight into the pool to cool off. Check into Mad Monkey Gili T, explore the beach, or hang out at the hostel before joining the crew for a traditional Mexican family dinner and drinks.",
     activities: "Welcome drink & pool chill", meals: "Mexican family dinner (plus 2 free drinks)" },
   { label: "Day 2", place: "Gili Trawangan",
-    body: "Hop on two wheels for the Gili T Bucket List Bike Tour to explore the island's best hidden spots. Head back to Mad Monkey in the afternoon as the energy turns up for an epic Pool Party featuring a live DJ set.",
-    activities: "Gili T Bucket List Bike Tour, Mad Monkey Pool Party with live DJ" },
+    body: "Enjoy a chill morning to relax and explore the island at your own pace. Head back to Mad Monkey in the afternoon as the energy turns up for an epic Pool Party featuring a live DJ set.",
+    activities: "Mad Monkey Foam Party with live DJ" },
   { label: "Day 3", place: "Gili Trawangan",
     body: "Set sail for the iconic Mad Monkey Boat Party (2:00 PM – 6:00 PM). Dance, swim, and soak up the tropical vibes out on the water. Keep the night going back at the hostel with an unlimited BBQ feast and drinks.",
     activities: "Mad Monkey Boat Party", meals: "Unlimited hostel BBQ & drinks" },

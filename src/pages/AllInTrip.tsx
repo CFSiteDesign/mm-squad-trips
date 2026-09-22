@@ -17,6 +17,7 @@ import { getTripContent, type TripSlug } from "@/data/trip-content";
 import { Booking } from "@/components/allin/Booking";
 import { independentContent, modeParams, useTravellerMode } from "@/lib/traveller-mode";
 import { nextDeparture } from "@/lib/departures";
+import { weekdayName } from "@/lib/trip-dates";
 import { useParams } from "react-router-dom";
 import { TRIPS } from "@/data/trips";
 import { publicUrl } from "@/lib/base-path";
@@ -394,8 +395,10 @@ export default function AllInTrip({ slug: slugProp, unlisted = false }: { slug?:
             {/* Crew visitors don't get the solo box (Kyle, 18 Sep 2026). */}
             {solo && (
               <div className="mt-3 border-[3px] border-mm-black bg-mm-lime p-2">
-                <p className="font-sticker text-[9px] tracking-[0.12em] text-mm-black">GUARANTEED TO RUN</p>
-                <p className="mt-1 text-[11px] leading-snug text-mm-black/80">Independent bookings never get cancelled. Book for one, pay $99 now.</p>
+                <p className="font-sticker text-[9px] tracking-[0.12em] text-mm-black">INDEPENDENT SOLO TRAVEL</p>
+                <p className="mt-1 text-[11px] leading-snug text-mm-black/80">
+                  Book whenever you want on a {weekdayName(trip?.startWeekday) ?? "departure day"}. Every single date is confirmed to go. Only $99 deposit.
+                </p>
               </div>
             )}
           </div>

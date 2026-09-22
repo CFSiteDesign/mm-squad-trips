@@ -22,4 +22,9 @@ export function endDate(iso: string, nights: number) {
   return d.toISOString().slice(0, 10);
 }
 
+const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+/** "Wednesday" for a trip whose departures fall on weekday 3; null when unset. */
+export const weekdayName = (d: number | string | null | undefined) =>
+  d === null || d === undefined || d === "" ? null : WEEKDAYS[Number(d)] ?? null;
+
 export const tripEndDate = (iso: string, trip: { slug: string; days: number }) => endDate(iso, tripNights(trip));

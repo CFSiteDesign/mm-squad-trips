@@ -7,7 +7,9 @@ import nusaPenida from "@/assets/hl-nusa-penida.jpg";
 import snorkeling from "@/assets/hl-snorkeling.jpg";
 import surfCamp from "@/assets/hl-surf-camp.jpg";
 import mexicanDinner from "@/assets/hl-mexican-dinner.jpg";
-import bikeTour from "@/assets/hl-bike-tour.jpg";
+// Foam party at Mad Monkey Gili T, Charlie 22 Sep 2026; replaced the bike tour
+// tile when the bike tour left the itinerary the same day.
+import foamParty from "@/assets/hl-foam-party.jpg";
 
 export const SNAPSHOT = {
   tripCode: "IND",
@@ -34,7 +36,7 @@ export const HIGHLIGHTS: { title: string; image: string | null }[] = [
   { title: "Monkey See, Monkey Do Snorkeling Trip", image: snorkeling },
   { title: "Kuta Lombok Surf Camp", image: surfCamp },
   { title: "Mexican Family Dinner", image: mexicanDinner },
-  { title: "Bucket List Bike Tour", image: bikeTour },
+  { title: "Mad Monkey Foam Party", image: foamParty },
 ];
 
 export const INCLUDED = [
@@ -90,8 +92,8 @@ export const ITINERARY: Day[] = [
   },
   {
     label: "Day 5", place: "Nusa Lembongan & Nusa Penida",
-    body: "Hop on a boat for a full day of island hopping around the stunning landscapes and dramatic cliffs of Nusa Penida (8:30 AM to 5:00 PM). After taking in the sights, head back to Mad Monkey to turn up the energy at the famous Mad Monkey Pool Party (6:00 PM to 10:00 PM).",
-    activities: "Nusa Penida Island Hopping Day Trip, Mad Monkey Pool Party",
+    body: "Hop on a boat for a full day of island hopping around the stunning landscapes and dramatic cliffs of Nusa Penida (8:30 AM to 5:00 PM). After taking in the sights, head back to Mad Monkey for Karaoke Night (8:00 PM to 10:00 PM).",
+    activities: "Nusa Penida Island Hopping Day Trip, Karaoke Night",
   },
   {
     label: "Day 6", place: "Nusa Lembongan → Gili Trawangan",
@@ -101,8 +103,8 @@ export const ITINERARY: Day[] = [
   },
   {
     label: "Day 7", place: "Gili Trawangan",
-    body: "Hop on two wheels for the ultimate Gili T Bucket List Bike Tour to explore the best spots around the island. Afterwards, the party comes to you back at Mad Monkey. Get ready for an epic Foam Party featuring a live DJ set.",
-    activities: "Gili T Bucket List Bike Tour, Mad Monkey Foam Party with live DJ",
+    body: "Enjoy a chill morning to relax and explore the island at your own pace. Afterwards, the party comes to you back at Mad Monkey. Get ready for an epic Foam Party featuring a live DJ set.",
+    activities: "Mad Monkey Foam Party with live DJ",
   },
   {
     label: "Day 8", place: "Gili Trawangan",
