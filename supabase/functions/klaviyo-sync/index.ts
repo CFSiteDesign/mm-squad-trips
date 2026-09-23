@@ -2,7 +2,7 @@
 //   off      nothing sent, outbox accumulates                     (default)
 //   dry_run  payloads built and returned, nothing sent
 //   test     only klaviyo_test_emails, always to klaviyo_list_test
-//   live     everyone, to klaviyo_list_<trip slug>
+//   live     everyone, to klaviyo_list_<trip slug> plus klaviyo_list_all ("ALL IN - Bookers")
 //
 // Runs from pg_cron every 15 minutes with {} (drain). Other actions, all
 // behind the cron secret:
@@ -141,20 +141,23 @@ async function processRow(sb: SupabaseClient, row: Row, cfg: Cfg, dry: boolean):
   }
   if (cfg.mode === "test" && !cfg.testEmails.has(profile.email)) return { ...base, result: "held", detail: `${profile.email} not in test allowlist` };
 
-  const listId = cfg.mode === "test" ? cfg.lists.test : cfg.lists[slug];
+  // Live: the trip list plus the master "ALL IN - Bookers" list. Test: only the test list.
+  const listIds = cfg.mode === "test" ? [cfg.lists.test] : [cfg.lists[slug], cfg.lists.all];
+  const lists = [...new Set(listIds.filter((l): l is string => Boolean(l)))];
+  const listId = lists[0];
   const metric = event === "profile_sync" ? null : METRIC_NAMES[event];
   const payload = (row.payload as Record<string, unknown>) ?? {};
   const value = typeof payload.amount === "number" ? payload.amount : undefined;
-  const plan = { email: profile.email, listId: listId ?? null, metric, properties: profile.properties, eventProps: { ...eventProps, ...payload } };
+  const plan = { email: profile.email, lists, metric, properties: profile.properties, eventProps: { ...eventProps, ...payload } };
   if (dry) return { ...base, result: "would send", detail: plan };
 
   try {
     const profileId = await upsertProfile(profile);
-    if (listId) await addToList(listId, profileId);
+    for (const l of lists) await addToList(l, profileId);
     if (metric) await trackEvent({ metric, email: profile.email, properties: plan.eventProps, value, uniqueId: `${event}:${id}` });
     await sb.from("klaviyo_outbox").update({ status: "sent", sent_at: new Date().toISOString(), last_error: null }).eq("id", id);
     await sb.from("bookings").update({ klaviyo_synced_at: new Date().toISOString(), klaviyo_last_error: null }).eq("stripe_session_id", session);
-    return { ...base, result: "sent", detail: { email: profile.email, listId: listId ?? null, metric } };
+    return { ...base, result: "sent", detail: { email: profile.email, lists, metric } };
   } catch (e) {
     return fail(e instanceof Error ? e.message : String(e), false);
   }

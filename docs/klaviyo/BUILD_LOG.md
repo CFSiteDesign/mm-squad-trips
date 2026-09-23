@@ -102,3 +102,10 @@ _(written at the end, from the log above)_
   day for every trip. No change needed.
 - For Mich: send times in flows are Singapore time, so "8am on departure day"
   reaches Vietnam, Cambodia and Thailand guests at 7am local.
+
+### 2026-09-23 · Mich's list ids cross-checked, plus a master list
+- Charlie's ids from Mich match the five I read through the API exactly.
+- New: "ALL IN - Bookers" `RsVDpj`, a master list of every booker on top of
+  the trip lists. Config key `klaviyo_list_all`; live mode adds each guest to
+  their trip list and this one. Test mode still only touches the test list.
+- Still no Thailand list.
