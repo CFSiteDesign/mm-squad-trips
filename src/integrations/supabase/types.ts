@@ -89,6 +89,8 @@ export type Database = {
           group_members: string[] | null
           group_size: number
           id: string
+          klaviyo_last_error: string | null
+          klaviyo_synced_at: string | null
           lead_age: number | null
           lead_country: string | null
           lead_email: string | null
@@ -141,6 +143,8 @@ export type Database = {
           group_members?: string[] | null
           group_size?: number
           id?: string
+          klaviyo_last_error?: string | null
+          klaviyo_synced_at?: string | null
           lead_age?: number | null
           lead_country?: string | null
           lead_email?: string | null
@@ -193,6 +197,8 @@ export type Database = {
           group_members?: string[] | null
           group_size?: number
           id?: string
+          klaviyo_last_error?: string | null
+          klaviyo_synced_at?: string | null
           lead_age?: number | null
           lead_country?: string | null
           lead_email?: string | null
@@ -457,6 +463,42 @@ export type Database = {
           status?: string
           subject?: string | null
           template_name?: string
+        }
+        Relationships: []
+      }
+      klaviyo_outbox: {
+        Row: {
+          attempts: number
+          booking_session: string
+          created_at: string
+          event: string
+          id: string
+          last_error: string | null
+          payload: Json
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          attempts?: number
+          booking_session: string
+          created_at?: string
+          event: string
+          id?: string
+          last_error?: string | null
+          payload?: Json
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          attempts?: number
+          booking_session?: string
+          created_at?: string
+          event?: string
+          id?: string
+          last_error?: string | null
+          payload?: Json
+          sent_at?: string | null
+          status?: string
         }
         Relationships: []
       }
