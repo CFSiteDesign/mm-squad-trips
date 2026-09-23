@@ -154,17 +154,22 @@ export async function inspectProfile(email: string): Promise<null | {
   if (!p) return null;
   const lists = (await call("GET", `/profiles/${p.id}/lists/?fields[list]=name`)) as { data?: Array<{ attributes?: { name?: string } }> };
   const evFilter = encodeURIComponent(`equals(profile_id,"${p.id}")`);
-  const ev = (await call("GET", `/events/?filter=${evFilter}&include=metric&fields[metric]=name&sort=datetime`)) as {
+  type Events = {
     data?: Array<{ attributes?: { datetime?: string; event_properties?: Record<string, unknown> }; relationships?: { metric?: { data?: { id?: string } } } }>;
     included?: Array<{ id: string; attributes?: { name?: string } }>;
   };
+  const evPath = `/events/?filter=${evFilter}&sort=datetime`;
+  // Metric names need the metrics:read scope, which the current key lacks
+  // (BUILD_LOG 23 Sep). Without it we fall back to metric ids.
+  const ev = (await call("GET", `${evPath}&include=metric&fields[metric]=name`).catch((e) =>
+    String(e).includes("metrics:read") ? call("GET", evPath) : Promise.reject(e))) as Events;
   const metricName = new Map((ev?.included ?? []).map((m) => [m.id, m.attributes?.name ?? ""]));
   return {
     id: p.id,
     properties: p.attributes?.properties ?? {},
     lists: (lists?.data ?? []).map((l) => l.attributes?.name ?? ""),
     events: (ev?.data ?? []).map((e) => ({
-      metric: metricName.get(e.relationships?.metric?.data?.id ?? "") ?? "",
+      metric: metricName.get(e.relationships?.metric?.data?.id ?? "") || `metric ${e.relationships?.metric?.data?.id ?? "?"}`,
       time: e.attributes?.datetime ?? "",
       properties: e.attributes?.event_properties ?? {},
     })),
