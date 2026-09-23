@@ -116,4 +116,42 @@ export async function addCompBooking(values: {
   return (data as { row: Record<string, unknown> }).row;
 }
 
+export async function sendTestKlaviyo(values: {
+  email: string;
+  name?: string;
+  phone?: string;
+  country?: string;
+  tripSlug?: string;
+  tripName?: string;
+  departureDate?: string;
+}) {
+  const token = getAdminToken();
+  if (!token) throw new Error("Not authenticated");
+  const { data, error } = await supabase.functions.invoke("send-test-klaviyo", {
+    body: values,
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (error) {
+    const ctx = (error as Error & { context?: Response | string }).context;
+    let detail: string | undefined;
+    if (ctx && typeof (ctx as Response).text === "function") {
+      try {
+        const text = await (ctx as Response).text();
+        try { detail = (JSON.parse(text) as { error?: string }).error; }
+        catch { detail = text; }
+      } catch { /* ignore */ }
+    }
+    throw new Error(detail || error.message);
+  }
+  if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
+  return data as {
+    ok: true;
+    email: string;
+    departureLabel: string;
+    phone: string | null;
+    listId: string;
+    metric: string;
+  };
+}
+
 
