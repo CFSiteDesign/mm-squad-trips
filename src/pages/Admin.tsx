@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { RefreshCw, Copy } from "lucide-react";
-import { adminLogin, adminApi, addCompBooking, getAdminToken, setAdminToken, setAdminPreview, type AdminTable } from "@/lib/admin";
+import { adminLogin, adminApi, addCompBooking, sendTestKlaviyo, getAdminToken, setAdminToken, setAdminPreview, type AdminTable } from "@/lib/admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -445,6 +445,7 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
   const [editing, setEditing] = useState<Row | null>(null);
   const [creating, setCreating] = useState(false);
   const [compOpen, setCompOpen] = useState(false);
+  const [klaviyoOpen, setKlaviyoOpen] = useState(false);
   const [runDateOpen, setRunDateOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
@@ -635,12 +636,21 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
             REFRESH
           </Button>
           {table === "bookings" && (
-            <Button
-              onClick={() => setCompOpen(true)}
-              className="rounded-none border-[2px] border-mm-black bg-mm-lime text-mm-black hover:bg-mm-lime"
-            >
-              + ADD COMP
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                onClick={() => setKlaviyoOpen(true)}
+                className="rounded-none border-[2px] border-mm-black"
+              >
+                TEST KLAVIYO
+              </Button>
+              <Button
+                onClick={() => setCompOpen(true)}
+                className="rounded-none border-[2px] border-mm-black bg-mm-lime text-mm-black hover:bg-mm-lime"
+              >
+                + ADD COMP
+              </Button>
+            </>
           )}
           {table === "departures" && (
             <Button
@@ -783,6 +793,9 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
         />
       )}
 
+      {klaviyoOpen && (
+        <TestKlaviyoDialog onClose={() => setKlaviyoOpen(false)} />
+      )}
       {compOpen && (
         <CompBookingDialog
           onClose={() => setCompOpen(false)}
@@ -1104,6 +1117,78 @@ function RowEditor({ table, row, isNew, onClose, onSaved }: {
             className="rounded-none border-[2px] border-mm-black bg-mm-pink text-mm-bone hover:bg-mm-pink"
           >
             {saving ? "SAVING…" : "SAVE"}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TestKlaviyoDialog({ onClose }: { onClose: () => void }) {
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    country: "United Kingdom",
+  });
+
+  async function submit() {
+    if (!form.email.trim()) return toast.error("Email is required");
+    setSaving(true);
+    try {
+      const res = await sendTestKlaviyo({
+        email: form.email.trim(),
+        name: form.name.trim() || undefined,
+        phone: form.phone.trim() || undefined,
+        country: form.country.trim() || undefined,
+      });
+      toast.success(`Klaviyo: ${res.email} → ${res.departureLabel}. Check list ${res.listId} and metric ${res.metric}.`);
+      onClose();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Klaviyo test failed");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-mm-black/60 p-4">
+      <div className="w-full max-w-lg border-[3px] border-mm-black bg-mm-paper p-5 shadow-mm-lg">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="font-display text-2xl">TEST KLAVIYO</h2>
+          <button onClick={onClose} className="text-mm-black/60 hover:text-mm-black">✕</button>
+        </div>
+        <p className="mb-4 text-xs text-mm-black/70">
+          Creates or updates a Klaviyo profile, adds it to list RsVDpj, and sends a Booked ALL IN Trip event.
+          Does not create a booking or charge a card. Uses a dummy Indonesia 22 Sep 2026 departure.
+        </p>
+        <div className="space-y-3">
+          <div>
+            <Label className="font-sticker text-[10px] tracking-[0.15em]">NAME</Label>
+            <Input value={form.name} onChange={(e) => setForm((s) => ({ ...s, name: e.target.value }))} className="mt-1 h-10 rounded-none border-[2px] border-mm-black bg-mm-paper" />
+          </div>
+          <div>
+            <Label className="font-sticker text-[10px] tracking-[0.15em]">EMAIL *</Label>
+            <Input type="email" value={form.email} onChange={(e) => setForm((s) => ({ ...s, email: e.target.value }))} className="mt-1 h-10 rounded-none border-[2px] border-mm-black bg-mm-paper" />
+          </div>
+          <div>
+            <Label className="font-sticker text-[10px] tracking-[0.15em]">PHONE (E.164, FOR WHATSAPP)</Label>
+            <Input value={form.phone} onChange={(e) => setForm((s) => ({ ...s, phone: e.target.value }))} placeholder="+447700900000" className="mt-1 h-10 rounded-none border-[2px] border-mm-black bg-mm-paper" />
+          </div>
+          <div>
+            <Label className="font-sticker text-[10px] tracking-[0.15em]">COUNTRY</Label>
+            <Input value={form.country} onChange={(e) => setForm((s) => ({ ...s, country: e.target.value }))} className="mt-1 h-10 rounded-none border-[2px] border-mm-black bg-mm-paper" />
+          </div>
+        </div>
+        <div className="mt-5 flex justify-end gap-2">
+          <Button variant="outline" onClick={onClose} className="rounded-none border-[2px] border-mm-black">CANCEL</Button>
+          <Button
+            onClick={submit}
+            disabled={saving}
+            className="rounded-none border-[2px] border-mm-black bg-mm-pink text-mm-bone hover:bg-mm-pink"
+          >
+            {saving ? "SENDING…" : "SEND TO KLAVIYO"}
           </Button>
         </div>
       </div>

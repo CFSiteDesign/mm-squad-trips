@@ -103,6 +103,7 @@ export async function trackEvent(v: {
   email: string;
   properties: Record<string, unknown>;
   value?: number;
+  valueCurrency?: string;
   uniqueId: string;
   time?: string;
 }): Promise<void> {
@@ -112,7 +113,7 @@ export async function trackEvent(v: {
       attributes: {
         properties: v.properties,
         time: v.time ?? new Date().toISOString(),
-        ...(v.value !== undefined ? { value: v.value } : {}),
+        ...(v.value !== undefined ? { value: v.value, value_currency: (v.valueCurrency || "USD").toUpperCase() } : {}),
         unique_id: v.uniqueId,
         metric: { data: { type: "metric", attributes: { name: v.metric } } },
         profile: { data: { type: "profile", attributes: { email: v.email } } },
