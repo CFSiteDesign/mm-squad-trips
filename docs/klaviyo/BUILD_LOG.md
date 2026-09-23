@@ -95,3 +95,10 @@ _(written at the end, from the log above)_
   names. Left as is.
 - Not yet deployed: the outbox hooks in the four lifecycle functions
   (stage 2). Waiting for Charlie's go, since that touches stripe-webhook.
+
+### 2026-09-23 · Klaviyo account time zone confirmed: Singapore (UTC+8)
+- One hour ahead of Vietnam, Cambodia and Thailand; same as Bali and Lombok.
+  Date-property flows on `allin_departure_date` land on the right calendar
+  day for every trip. No change needed.
+- For Mich: send times in flows are Singapore time, so "8am on departure day"
+  reaches Vietnam, Cambodia and Thailand guests at 7am local.
