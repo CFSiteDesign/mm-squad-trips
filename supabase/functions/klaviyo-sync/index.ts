@@ -104,9 +104,13 @@ function buildProfile(ctx: Ctx, opts: { test: boolean }): { profile: KlaviyoProf
   const nights = days ? (NIGHTS[slug] ?? days) : null;
   const departureDate = str(dep?.departure_date) || null;
   const travellerMode = str(lead.traveller_mode) || (lead.lead_solo ? "independent" : "crew");
+  // DB trip names are all over the place ("Vietnam", "7 Day Gili T + Lombok"),
+  // so the name guests read is built the way Mich named her lists: "Vietnam 14 Days".
+  const country = slug ? slug.split("-")[0].replace(/^./, (c) => c.toUpperCase()) : "";
   const properties: Record<string, unknown> = {
     allin_trip: slug,
-    allin_trip_name: str(trip?.name).replace(/^ALL IN\s*[·\-–]\s*/i, ""),
+    allin_trip_name: country && days ? `${country} ${days} Days` : str(trip?.name),
+    allin_country: country || null,
     allin_trip_code: str(trip?.code),
     allin_departure_date: departureDate,
     allin_end_date: departureDate && nights !== null ? plusDays(departureDate, nights) : null,
