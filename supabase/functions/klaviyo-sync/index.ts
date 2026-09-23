@@ -140,6 +140,33 @@ function buildProfile(ctx: Ctx, opts: { test: boolean }): { profile: KlaviyoProf
   return { profile: { email, phone: str(lead.lead_phone).replace(/[\s()-]/g, ""), firstName, lastName: rest.join(" "), properties }, eventProps, slug };
 }
 
+const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);
+
+/** booking_placed value = full trip due (order). Other events = cash moved this step. Always USD. */
+function eventMoney(event: OutboxEvent, payload: Record<string, unknown>, lead: Row): {
+  value?: number;
+  currency: string;
+  props: Record<string, unknown>;
+} {
+  const spots = Number(lead.group_size ?? payload.spots ?? 1) || 1;
+  const fromRow = (perSpot: unknown) => {
+    const n = Number(perSpot);
+    return Number.isFinite(n) ? Math.round(n * spots * 100) / 100 : null;
+  };
+  const amountPaid = num(payload.amount_paid) ?? num(payload.amount) ?? fromRow(lead.amount_paid);
+  const fullDue = num(payload.full_due) ?? fromRow(lead.final_price);
+  const balanceDue = num(payload.balance_due) ??
+    (fullDue != null && amountPaid != null ? Math.max(0, Math.round((fullDue - amountPaid) * 100) / 100) : fromRow(lead.balance_amount));
+  const currency = (str(payload.currency) || "USD").toUpperCase();
+  const props: Record<string, unknown> = { currency };
+  if (amountPaid != null) props.amount_paid = amountPaid;
+  if (fullDue != null) props.full_due = fullDue;
+  if (balanceDue != null) props.balance_due = balanceDue;
+  const cash = num(payload.amount) ?? amountPaid ?? undefined;
+  const value = event === "booking_placed" ? (fullDue ?? cash) : cash;
+  return { value: value ?? undefined, currency, props };
+}
+
 type Outcome = { id: string; session: string; event: string; result: string; detail?: unknown };
 
 async function processRow(sb: SupabaseClient, row: Row, cfg: Cfg, dry: boolean): Promise<Outcome> {
@@ -170,14 +197,31 @@ async function processRow(sb: SupabaseClient, row: Row, cfg: Cfg, dry: boolean):
   const listId = lists[0];
   const metric = event === "profile_sync" ? null : METRIC_NAMES[event];
   const payload = (row.payload as Record<string, unknown>) ?? {};
-  const value = typeof payload.amount === "number" ? payload.amount : undefined;
-  const plan = { email: profile.email, lists, metric, properties: profile.properties, eventProps: { ...eventProps, ...payload } };
+  const money = eventMoney(event, payload, ctx.lead);
+  const plan = {
+    email: profile.email,
+    lists,
+    metric,
+    properties: profile.properties,
+    eventProps: { ...eventProps, ...payload, ...money.props },
+    time: str(row.created_at) || undefined,
+  };
   if (dry) return { ...base, result: "would send", detail: plan };
 
   try {
     const profileId = await upsertProfile(profile);
     for (const l of lists) await addToList(l, profileId);
-    if (metric) await trackEvent({ metric, email: profile.email, properties: plan.eventProps, value, uniqueId: `${event}:${id}` });
+    if (metric) {
+      await trackEvent({
+        metric,
+        email: profile.email,
+        properties: plan.eventProps,
+        value: money.value,
+        valueCurrency: money.currency,
+        uniqueId: `${event}:${id}`,
+        time: plan.time,
+      });
+    }
     await sb.from("klaviyo_outbox").update({ status: "sent", sent_at: new Date().toISOString(), last_error: null }).eq("id", id);
     await sb.from("bookings").update({ klaviyo_synced_at: new Date().toISOString(), klaviyo_last_error: null }).eq("stripe_session_id", session);
     return { ...base, result: "sent", detail: { email: profile.email, lists, metric } };
@@ -250,7 +294,7 @@ Deno.serve(async (req) => {
       if (cfg.mode !== "test") return json({ error: `test_profile needs klaviyo_mode = test (it is ${cfg.mode})` }, 400);
       if (!email || !allowlisted(cfg, email)) return json({ error: "email must be in klaviyo_test_emails" }, 400);
       const slug = str(body.trip) || "vietnam-7";
-      const { data: trip } = await sb.from("trips").select("slug,name,code,days").eq("slug", slug).maybeSingle();
+      const { data: trip } = await sb.from("trips").select("slug,name,code,days,default_price").eq("slug", slug).maybeSingle();
       if (!trip) return json({ error: `unknown trip ${slug}` }, 400);
       const departureDate = str(body.date) || plusDays(new Date().toISOString().slice(0, 10), 14);
       const ctx: Ctx = {
@@ -262,7 +306,16 @@ Deno.serve(async (req) => {
       if (body.dry_run === true) return json({ ok: true, dry: true, profile, eventProps, listId: cfg.lists.test ?? null });
       const profileId = await upsertProfile(profile);
       if (cfg.lists.test) await addToList(cfg.lists.test, profileId);
-      await trackEvent({ metric: METRIC_NAMES.booking_placed, email, properties: { ...eventProps, amount: 99 }, value: 99, uniqueId: `test:${profile.properties.allin_booking_ref}` });
+      const deposit = 99;
+      const fullDue = Number((trip as { default_price?: number }).default_price) || deposit;
+      await trackEvent({
+        metric: METRIC_NAMES.booking_placed,
+        email,
+        properties: { ...eventProps, amount: deposit, amount_paid: deposit, full_due: fullDue, balance_due: Math.max(0, fullDue - deposit), currency: "USD" },
+        value: fullDue,
+        valueCurrency: "USD",
+        uniqueId: `test:${profile.properties.allin_booking_ref}`,
+      });
       return json({ ok: true, sent: true, profileId, listId: cfg.lists.test ?? null, profile: profile.properties });
     }
 
@@ -304,7 +357,7 @@ Deno.serve(async (req) => {
         for (const [i, step] of j.steps.entries()) {
           let event: Exclude<OutboxEvent, "profile_sync"> = step === "balance_failed_final" ? "balance_failed" : step;
           let payload: Record<string, unknown> = {};
-          if (step === "booking_placed") payload = { amount: deposit, spots: j.spots, payment_type: "Deposit" };
+          if (step === "booking_placed") payload = { amount: deposit, amount_paid: deposit, full_due: price * j.spots, balance_due: balance, spots: j.spots, payment_type: "Deposit", currency: "USD" };
           if (step === "departure_confirmed") { dep.status = "confirmed"; payload = { departure_date: departureDate }; }
           if (step === "balance_paid") { lead.balance_status = "charged"; payload = { amount: balance, via: "auto" }; }
           if (step === "balance_failed") { lead.balance_status = "failed"; payload = { amount: balance, attempts: 1, final: false }; }
@@ -320,8 +373,8 @@ Deno.serve(async (req) => {
           if (dry) { sent.push({ metric, props, profile: profile.properties }); continue; }
           profileId = await upsertProfile(profile);
           if (i === 0) await addToList(cfg.lists.test, profileId);
-          const value = typeof payload.amount === "number" ? payload.amount : undefined;
-          await trackEvent({ metric, email: guestEmail, properties: props, value, uniqueId: `test:${ref}:${i}:${step}` });
+          const value = step === "booking_placed" ? price * j.spots : (typeof payload.amount === "number" ? payload.amount : undefined);
+          await trackEvent({ metric, email: guestEmail, properties: props, value, valueCurrency: "USD", uniqueId: `test:${ref}:${i}:${step}` });
           sent.push(metric);
         }
         out.push({ trip: slug, email: guestEmail, story: j.story, departureDate, bookingRef: ref, profileId: profileId || null, events: sent });

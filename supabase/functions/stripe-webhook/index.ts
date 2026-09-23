@@ -286,7 +286,15 @@ async function writeBookings(session: Stripe.Checkout.Session) {
   if (insErr) throw new Error(`bookings insert: ${insErr.message}`);
   console.log(`Created ${inserted?.length ?? 0} booking row(s) for ${sessionId} group ${groupId}`);
   // Klaviyo hears about it via the outbox; never blocks the booking.
-  await enqueueKlaviyo(sb, sessionId, "booking_placed", { amount: amountPaidTotal, spots: groupSize, payment_type: paymentType });
+  await enqueueKlaviyo(sb, sessionId, "booking_placed", {
+    amount: amountPaidTotal,
+    amount_paid: amountPaidTotal,
+    full_due: fullDue,
+    balance_due: Math.max(0, fullDue - amountPaidTotal),
+    spots: groupSize,
+    payment_type: paymentType,
+    currency: "USD",
+  });
 
   // Link group members (best-effort)
   if (!isSolo && (inserted?.length ?? 0) > 1) {
