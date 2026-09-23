@@ -109,3 +109,51 @@ _(written at the end, from the log above)_
   the trip lists. Config key `klaviyo_list_all`; live mode adds each guest to
   their trip list and this one. Test mode still only touches the test list.
 - Still no Thailand list.
+
+### 2026-09-23 · Stage 2 deployed, still locked in test mode
+- Charlie: run stage 2 "in the controlled environment" so the team can test in
+  Klaviyo (he has no Klaviyo login himself).
+- Deployed as-is through Lovable: stripe-webhook, process-departure-events,
+  charge-trip-balances, cancel-underfilled-departures, klaviyo-sync. Mode
+  stays `test`. Real bookings now write to `klaviyo_outbox`; in test mode a
+  real guest's row is "held" (stays pending, nothing sent). At go-live,
+  `skip_stale` retires them and `backfill` syncs the profiles.
+- Thailand list from Mich: "ALL IN - Thailand" `XyHQCX`, confirmed by name
+  through the API, stored in `klaviyo_list_thailand`.
+
+### 2026-09-23 · DB trip names are inconsistent
+- Dry run showed `allin_trip_name` values "Vietnam", "Vietnam 7-Day Adventure",
+  "Indonesia Island Hopping", "7 Day Gili T + Lombok". Useless in an email.
+- Fix: `allin_trip_name` is now built as "{Country} {days} Days", the way Mich
+  named her lists ("Vietnam 14 Days", "Indonesia 7 Days", "Thailand 11 Days").
+  New `allin_country` for per-country flows. Caught before anyone built on it.
+
+### 2026-09-23 · test_journey: every event, fake guests only
+- New action `test_journey`: one fake guest per trip, each down a different
+  path, so all five metrics and every state exist on the test list. No
+  bookings rows, no Stripe, no outbox, test list only.
+- Trick: plus addressing. `me+allin-vietnam@gmail.com` is its own Klaviyo
+  profile but lands in `me@gmail.com`'s inbox, and plus variants of an
+  allowlisted address count as allowlisted. One inbox, six guests.
+- Result: 6 profiles, 16 events, all five metrics created in the account.
+  Trip lists and "ALL IN - Bookers" untouched.
+
+### 2026-09-23 · Read-back 403: key lacks metrics:read
+- Tried: new `check` action reads a test profile, its lists and events back
+  from Klaviyo, so we can verify without a Klaviyo login.
+- What happened: `GET /events/?include=metric` -> 403 "missing required
+  scopes: metrics:read". Profile and list reads were fine.
+- Why: the private key was made without that scope. Sending never needs it.
+- Fix: `check` falls back to metric ids when names are refused. Five distinct
+  ids across the 16 events, matching the five metrics. If names are wanted,
+  add read-only `metrics:read` to the key; not required.
+
+### Known limits (for the runbook)
+- One Klaviyo profile per email. A guest with two ALL IN bookings keeps the
+  properties of whichever booking synced last. Rare; revisit if it happens.
+- In test mode the drain reads the oldest 100 pending rows. Held rows for
+  real guests stay pending, so a long test period with 100+ bookings would
+  crowd out allowlisted rows. Not close today; `skip_stale` clears it.
+- After go-live the test profiles still exist with `allin_test = true` and
+  future dates. Live flows need the filter "allin_test is not true".
+
