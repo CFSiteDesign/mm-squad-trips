@@ -77,3 +77,21 @@ _(written at the end, from the log above)_
 - Finding: the key opens the MAIN Mad Monkey Klaviyo account (dozens of
   lists: Cloudbeds reservations, newsletter, loyalty…). Test mode + allowlist
   is the only thing standing between a bug and real guests. Keep it.
+
+### 2026-09-23 · Test mode on, first profile landed in Klaviyo
+- Mich's lists found by name through the API (no need for anyone to copy ids):
+  Vietnam 14 `RXTTAR`, Vietnam 7 `UJt79T`, Indonesia 12 `WdctkB`,
+  Indonesia 7 `Ui8jkd`, Cambodia 14 `XjKN29`. No Thailand list yet.
+- Decision: did not reuse any existing "Test" list (four of them exist, any
+  could have a flow attached that sends email). `create_test_list` made
+  "ALL IN - Sync Test" (`VpCVDs`) and stored the id itself.
+- Config through Lovable: mode `test`, allowlist = Charlie's email only.
+- `test_profile` (synthetic vietnam-7 booking, no DB rows) worked first time:
+  profile created, added to the test list, "ALL IN Booking Placed" event
+  accepted. Profile import, add-to-list and events endpoints all fine on
+  revision 2025-07-15.
+- Cosmetic: synthetic name "ALL IN Test" splits into first "ALL" / last "IN
+  Test". Real bookings split on the first space, which is right for most
+  names. Left as is.
+- Not yet deployed: the outbox hooks in the four lifecycle functions
+  (stage 2). Waiting for Charlie's go, since that touches stripe-webhook.
