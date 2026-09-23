@@ -8,6 +8,7 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { APP_URL, balanceFailedEmail, balancePaidEmail, sendEmail } from "../_shared/email.ts";
+import { enqueueKlaviyo } from "../_shared/klaviyo.ts";
 
 function fmtUsd(n: number): string {
   return `$${n.toFixed(2)} USD`;
@@ -154,6 +155,7 @@ Deno.serve(async (req) => {
       await sb.from("bookings")
         .update({ balance_status: "failed_final", balance_last_error: "departure passed without successful charge", balance_next_attempt_at: null })
         .eq("stripe_session_id", sessionId);
+      await enqueueKlaviyo(sb, sessionId, "balance_failed", { amount: totalCents / 100, final: true });
       results.push({ sessionId, skipped: "past_departure" });
       continue;
     }
@@ -162,6 +164,7 @@ Deno.serve(async (req) => {
       await sb.from("bookings")
         .update({ balance_status: "failed_final", balance_last_error: "missing card-on-file", balance_next_attempt_at: null })
         .eq("stripe_session_id", sessionId);
+      await enqueueKlaviyo(sb, sessionId, "balance_failed", { amount: totalCents / 100, final: true });
       results.push({ sessionId, skipped: "no_card" });
       continue;
     }
@@ -206,6 +209,7 @@ Deno.serve(async (req) => {
         await sb.from("bookings").update({ amount_paid: Math.round(paid * 100) / 100 }).eq("id", r.id);
       }
 
+      await enqueueKlaviyo(sb, sessionId, "balance_paid", { amount: totalCents / 100, via: "auto" });
       results.push({ sessionId, charged: totalCents });
       console.log(`✓ charged ${totalCents} for ${sessionId} (pi ${pi.id})`);
 
@@ -263,6 +267,7 @@ Deno.serve(async (req) => {
         balance_next_attempt_at: next.toISOString(),
       }).eq("stripe_session_id", sessionId);
 
+      await enqueueKlaviyo(sb, sessionId, "balance_failed", { amount: totalCents / 100, attempts, final: false });
       results.push({ sessionId, error: msg, attempts, nextAttempt: next.toISOString() });
       console.warn(`✗ charge failed for ${sessionId}: ${msg} (attempt ${attempts}, retry ${next.toISOString()})`);
 

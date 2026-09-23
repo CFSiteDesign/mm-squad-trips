@@ -8,6 +8,7 @@ import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { APP_URL, departureCancelledEmail, sendEmail } from "../_shared/email.ts";
 import { triggerCommissionPush } from "../_shared/push-commission.ts";
+import { enqueueKlaviyo } from "../_shared/klaviyo.ts";
 
 function fmtUsd(cents: number): string {
   return `$${(cents / 100).toFixed(2)} USD`;
@@ -174,6 +175,7 @@ Deno.serve(async (req) => {
           })
           .eq("stripe_session_id", sessionId);
         if (updErr) errors.push(`db update: ${updErr.message}`);
+        await enqueueKlaviyo(sb, sessionId, "departure_cancelled", { departure_date: departureDate, refunded: refundedCents / 100 });
 
         // Email the lead booker (best-effort; failure doesn't block others).
         if (lead?.lead_email) {

@@ -12,6 +12,7 @@ import {
   sendEmail,
   tripConfirmedEmail,
 } from "../_shared/email.ts";
+import { enqueueKlaviyo } from "../_shared/klaviyo.ts";
 import { tripCountryFromSlug } from "../_shared/trip-details.ts";
 
 function fmtDate(d: string | null | undefined): string {
@@ -161,6 +162,7 @@ Deno.serve(async (req) => {
         .from("bookings")
         .update({ trip_confirmed_notified_at: new Date().toISOString() })
         .eq("stripe_session_id", lead.stripe_session_id);
+      await enqueueKlaviyo(sb, lead.stripe_session_id as string, "departure_confirmed", { departure_date: depDate });
 
       sent++;
     }

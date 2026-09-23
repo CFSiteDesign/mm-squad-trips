@@ -19,6 +19,7 @@ import {
   squadMilestoneEmail,
 } from "../_shared/email.ts";
 import { triggerCommissionPush } from "../_shared/push-commission.ts";
+import { enqueueKlaviyo } from "../_shared/klaviyo.ts";
 
 function envClient() {
   const url = Deno.env.get("SUPABASE_URL");
@@ -284,6 +285,8 @@ async function writeBookings(session: Stripe.Checkout.Session) {
   const { data: inserted, error: insErr } = await sb.from("bookings").insert(rows).select("id");
   if (insErr) throw new Error(`bookings insert: ${insErr.message}`);
   console.log(`Created ${inserted?.length ?? 0} booking row(s) for ${sessionId} group ${groupId}`);
+  // Klaviyo hears about it via the outbox; never blocks the booking.
+  await enqueueKlaviyo(sb, sessionId, "booking_placed", { amount: amountPaidTotal, spots: groupSize, payment_type: paymentType });
 
   // Link group members (best-effort)
   if (!isSolo && (inserted?.length ?? 0) > 1) {
@@ -540,7 +543,7 @@ async function markBalancePaid(session: Stripe.Checkout.Session) {
 
   const baseSelect = sb
     .from("bookings")
-    .select("id,amount_paid,balance_amount,balance_status");
+    .select("id,stripe_session_id,amount_paid,balance_amount,balance_status");
   const { data: rows } = originalSessionId
     ? await baseSelect.eq("stripe_session_id", originalSessionId)
     : await baseSelect.eq("booking_ref", bookingRef);
@@ -569,5 +572,6 @@ async function markBalancePaid(session: Stripe.Checkout.Session) {
     await sb.from("bookings").update({ amount_paid: Math.round(paid * 100) / 100 }).eq("id", r.id);
   }
 
+  await enqueueKlaviyo(sb, originalSessionId ?? String(rows[0].stripe_session_id ?? ""), "balance_paid", { amount: (session.amount_total ?? 0) / 100, via: "link" });
   console.log(`✓ balance link paid for ${originalSessionId ?? bookingRef}`);
 }

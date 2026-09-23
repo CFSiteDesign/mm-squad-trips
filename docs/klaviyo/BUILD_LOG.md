@@ -36,7 +36,29 @@ day-by-day itinerary flows off `allin_departure_date`.
 - Fix / decision:
 -->
 
-_(nothing yet, build not started)_
+### 2026-09-23 · Build started, locked off by design
+- Charlie: "make sure this doesn't go live straight away… locked off environment
+  so no data can be disrupted or false emails/bookings."
+- Decision: `app_config('klaviyo_mode')` = off | dry_run | test | live, default
+  off. Nothing reaches Klaviyo until Charlie flips it. `test` sends only the
+  emails in `klaviyo_test_emails`, always to `klaviyo_list_test`.
+- Decision: no real-time push from the Stripe webhook. The lifecycle functions
+  only append to `klaviyo_outbox`; `klaviyo-sync` drains it every 15 minutes.
+  Smaller blast radius in the payment functions; 15 min is fine for itinerary
+  messaging. Real-time can be added later if Mich needs it.
+- Decision: deploy in two stages. Stage 1 = migration + klaviyo-sync (nothing
+  else changes). Stage 2 = the outbox hooks in stripe-webhook,
+  process-departure-events, charge-trip-balances, cancel-underfilled-departures,
+  after stage 1 answers `status` and `lists` correctly.
+- Known guess to verify: Klaviyo API revision header `2025-07-15`. If `lists`
+  returns a revision error, that is the first log entry.
+- Known duplication: nights per trip (`vietnam` 13, `thailand` 10, else = days)
+  copied from src/data/trips.ts into klaviyo-sync. Backend has no `nights`
+  column. If a trip's length changes, both must change.
+- Decision: profiles are added to lists with the plain add-to-list call, not
+  the subscribe call, because checkout collects no marketing consent. Mich's
+  flows must be marked transactional.
+
 
 ## Runbook: the plan that works
 
