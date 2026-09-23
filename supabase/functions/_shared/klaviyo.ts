@@ -140,3 +140,33 @@ export async function listLists(): Promise<Array<{ id: string; name: string }>> 
   }
   return out;
 }
+
+/** Read-back for checks without a Klaviyo login: the profile, its lists, its events. */
+export async function inspectProfile(email: string): Promise<null | {
+  id: string;
+  properties: Record<string, unknown>;
+  lists: string[];
+  events: Array<{ metric: string; time: string; properties: Record<string, unknown> }>;
+}> {
+  const filter = encodeURIComponent(`equals(email,"${email}")`);
+  const found = (await call("GET", `/profiles/?filter=${filter}`)) as { data?: Array<{ id: string; attributes?: { properties?: Record<string, unknown> } }> };
+  const p = found?.data?.[0];
+  if (!p) return null;
+  const lists = (await call("GET", `/profiles/${p.id}/lists/?fields[list]=name`)) as { data?: Array<{ attributes?: { name?: string } }> };
+  const evFilter = encodeURIComponent(`equals(profile_id,"${p.id}")`);
+  const ev = (await call("GET", `/events/?filter=${evFilter}&include=metric&fields[metric]=name&sort=datetime`)) as {
+    data?: Array<{ attributes?: { datetime?: string; event_properties?: Record<string, unknown> }; relationships?: { metric?: { data?: { id?: string } } } }>;
+    included?: Array<{ id: string; attributes?: { name?: string } }>;
+  };
+  const metricName = new Map((ev?.included ?? []).map((m) => [m.id, m.attributes?.name ?? ""]));
+  return {
+    id: p.id,
+    properties: p.attributes?.properties ?? {},
+    lists: (lists?.data ?? []).map((l) => l.attributes?.name ?? ""),
+    events: (ev?.data ?? []).map((e) => ({
+      metric: metricName.get(e.relationships?.metric?.data?.id ?? "") ?? "",
+      time: e.attributes?.datetime ?? "",
+      properties: e.attributes?.event_properties ?? {},
+    })),
+  };
+}

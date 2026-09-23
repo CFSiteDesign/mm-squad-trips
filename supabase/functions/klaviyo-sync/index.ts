@@ -11,6 +11,8 @@
 //   {"action":"create_test_list"}               make "ALL IN - Sync Test" and store its id
 //   {"action":"dry_run"}                        what a drain would send
 //   {"action":"test_profile","email":"…"}       synthetic booking -> test list (test mode only)
+//   {"action":"test_journey","email":"…"}       one synthetic guest per trip, every event (test mode only)
+//   {"action":"check","email":"…"}              read a profile, its lists and events back from Klaviyo
 //   {"action":"backfill"}                       queue profile_sync for future bookings
 //   {"action":"skip_stale","hours":24}          retire old pending rows before go-live
 //
@@ -22,6 +24,7 @@ import {
   addToList,
   createList,
   enqueueKlaviyo,
+  inspectProfile,
   listLists,
   METRIC_NAMES,
   trackEvent,
@@ -51,6 +54,22 @@ const plusDays = (ymd: string, n: number) => {
   return d.toISOString().slice(0, 10);
 };
 const str = (v: unknown) => (v === null || v === undefined ? "" : String(v));
+// me+anything@x.com is the same inbox as me@x.com, so a plus variant of an
+// allowlisted address is allowlisted too. Lets one inbox hold a test guest per trip.
+const baseAddress = (email: string) => email.replace(/\+[^@]*@/, "@");
+const allowlisted = (cfg: Cfg, email: string) => cfg.testEmails.has(email) || cfg.testEmails.has(baseAddress(email));
+
+type Step = "booking_placed" | "departure_confirmed" | "balance_paid" | "balance_failed" | "balance_failed_final" | "departure_cancelled";
+// test_journey: one synthetic guest per trip, each down a different path, so
+// every metric and every state a flow can branch on exists on the test list.
+const JOURNEYS: Record<string, { story: string; mode: "independent" | "crew"; spots: number; steps: Step[] }> = {
+  vietnam: { story: "crew of 2, departure confirmed, balance paid", mode: "crew", spots: 2, steps: ["booking_placed", "departure_confirmed", "balance_paid"] },
+  "vietnam-7": { story: "independent, balance paid", mode: "independent", spots: 1, steps: ["booking_placed", "balance_paid"] },
+  indonesia: { story: "crew, balance failed then paid", mode: "crew", spots: 1, steps: ["booking_placed", "departure_confirmed", "balance_failed", "balance_paid"] },
+  "indonesia-7": { story: "crew, balance failed for good", mode: "crew", spots: 1, steps: ["booking_placed", "departure_confirmed", "balance_failed", "balance_failed_final"] },
+  cambodia: { story: "crew, departure cancelled and refunded", mode: "crew", spots: 1, steps: ["booking_placed", "departure_cancelled"] },
+  thailand: { story: "independent, just booked (deposit paid)", mode: "independent", spots: 1, steps: ["booking_placed"] },
+};
 
 async function loadConfig(sb: SupabaseClient): Promise<Cfg> {
   const { data } = await sb.from("app_config").select("key,value").like("key", "klaviyo_%");
@@ -139,7 +158,7 @@ async function processRow(sb: SupabaseClient, row: Row, cfg: Cfg, dry: boolean):
     await sb.from("klaviyo_outbox").update({ status: "skipped", last_error: "no lead email" }).eq("id", id);
     return { ...base, result: "skipped", detail: "no lead email" };
   }
-  if (cfg.mode === "test" && !cfg.testEmails.has(profile.email)) return { ...base, result: "held", detail: `${profile.email} not in test allowlist` };
+  if (cfg.mode === "test" && !allowlisted(cfg, profile.email)) return { ...base, result: "held", detail: `${profile.email} not in test allowlist` };
 
   // Live: the trip list plus the master "ALL IN - Bookers" list. Test: only the test list.
   const listIds = cfg.mode === "test" ? [cfg.lists.test] : [cfg.lists[slug], cfg.lists.all];
@@ -225,7 +244,7 @@ Deno.serve(async (req) => {
     if (action === "test_profile") {
       const email = str(body.email).trim().toLowerCase();
       if (cfg.mode !== "test") return json({ error: `test_profile needs klaviyo_mode = test (it is ${cfg.mode})` }, 400);
-      if (!email || !cfg.testEmails.has(email)) return json({ error: "email must be in klaviyo_test_emails" }, 400);
+      if (!email || !allowlisted(cfg, email)) return json({ error: "email must be in klaviyo_test_emails" }, 400);
       const slug = str(body.trip) || "vietnam-7";
       const { data: trip } = await sb.from("trips").select("slug,name,code,days").eq("slug", slug).maybeSingle();
       if (!trip) return json({ error: `unknown trip ${slug}` }, 400);
@@ -241,6 +260,79 @@ Deno.serve(async (req) => {
       if (cfg.lists.test) await addToList(cfg.lists.test, profileId);
       await trackEvent({ metric: METRIC_NAMES.booking_placed, email, properties: { ...eventProps, amount: 99 }, value: 99, uniqueId: `test:${profile.properties.allin_booking_ref}` });
       return json({ ok: true, sent: true, profileId, listId: cfg.lists.test ?? null, profile: profile.properties });
+    }
+
+    if (action === "test_journey") {
+      // Fake guests only: no bookings rows, no Stripe, no outbox, test list only.
+      // Event payloads match what the lifecycle functions put in the outbox.
+      const email = str(body.email).trim().toLowerCase();
+      if (cfg.mode !== "test") return json({ error: `test_journey needs klaviyo_mode = test (it is ${cfg.mode})` }, 400);
+      if (!email || !cfg.testEmails.has(email)) return json({ error: "email must be in klaviyo_test_emails" }, 400);
+      if (!cfg.lists.test) return json({ error: "no klaviyo_list_test; run create_test_list first" }, 400);
+      const wanted = Array.isArray(body.trips) ? (body.trips as unknown[]).map(str) : Object.keys(JOURNEYS);
+      const dry = body.dry_run === true;
+      const today = new Date().toISOString().slice(0, 10);
+      const run = Date.now().toString(36).toUpperCase();
+      const [local, domain] = email.split("@");
+      const out: unknown[] = [];
+
+      for (const slug of wanted) {
+        const j = JOURNEYS[slug];
+        if (!j) { out.push({ trip: slug, error: "no journey for this trip" }); continue; }
+        const { data: trip } = await sb.from("trips").select("id,slug,name,code,days,default_price").eq("slug", slug).maybeSingle();
+        if (!trip) { out.push({ trip: slug, error: "trip not in database" }); continue; }
+        // A real upcoming departure date for the trip, so dates look like the real thing.
+        const { data: nextDep } = await sb.from("departures").select("departure_date").eq("trip_id", trip.id).neq("status", "cancelled").gte("departure_date", plusDays(today, 10)).order("departure_date").limit(1).maybeSingle();
+        const departureDate = str(body.date) || str(nextDep?.departure_date) || plusDays(today, 14);
+        const guestEmail = `${local.split("+")[0]}+allin-${slug}@${domain}`;
+        const price = Number(trip.default_price ?? 0);
+        const deposit = 99 * j.spots;
+        const balance = Math.max(0, price * j.spots - deposit);
+        const ref = `TEST-${str(trip.code)}-${run}`;
+        const lead: Row = {
+          lead_email: guestEmail, lead_name: `Test ${str(trip.name).replace(/^ALL IN\s*[·\-–]\s*/i, "")}`, lead_phone: "",
+          group_size: j.spots, booking_ref: ref, status: "Confirmed", traveller_mode: j.mode, lead_solo: j.mode === "independent",
+          balance_status: "scheduled", balance_due_date: plusDays(departureDate, -7),
+        };
+        const dep: Row = { departure_date: departureDate, status: "pending" };
+        const sent: unknown[] = [];
+        let profileId = "";
+        for (const [i, step] of j.steps.entries()) {
+          let event: Exclude<OutboxEvent, "profile_sync"> = step === "balance_failed_final" ? "balance_failed" : step;
+          let payload: Record<string, unknown> = {};
+          if (step === "booking_placed") payload = { amount: deposit, spots: j.spots, payment_type: "Deposit" };
+          if (step === "departure_confirmed") { dep.status = "confirmed"; payload = { departure_date: departureDate }; }
+          if (step === "balance_paid") { lead.balance_status = "charged"; payload = { amount: balance, via: "auto" }; }
+          if (step === "balance_failed") { lead.balance_status = "failed"; payload = { amount: balance, attempts: 1, final: false }; }
+          if (step === "balance_failed_final") { lead.balance_status = "failed_final"; payload = { amount: balance, final: true }; }
+          if (step === "departure_cancelled") {
+            event = "departure_cancelled";
+            lead.status = "Cancelled"; lead.balance_status = "cancelled"; dep.status = "cancelled";
+            payload = { departure_date: departureDate, refunded: deposit };
+          }
+          const { profile, eventProps } = buildProfile({ lead, trip: trip as Row, dep }, { test: true });
+          const metric = METRIC_NAMES[event];
+          const props = { ...eventProps, ...payload };
+          if (dry) { sent.push({ metric, props, profile: profile.properties }); continue; }
+          profileId = await upsertProfile(profile);
+          if (i === 0) await addToList(cfg.lists.test, profileId);
+          const value = typeof payload.amount === "number" ? payload.amount : undefined;
+          await trackEvent({ metric, email: guestEmail, properties: props, value, uniqueId: `test:${ref}:${i}:${step}` });
+          sent.push(metric);
+        }
+        out.push({ trip: slug, email: guestEmail, story: j.story, departureDate, bookingRef: ref, profileId: profileId || null, events: sent });
+      }
+      return json({ ok: true, dry, list: cfg.lists.test, guests: out });
+    }
+
+    if (action === "check") {
+      const email = str(body.email).trim().toLowerCase();
+      if (!email) return json({ error: "email required" }, 400);
+      if (!keyPresent) return json({ error: "KLAVIYO_PRIVATE_KEY is not set" }, 503);
+      // Read-only; limited to test addresses so this is never a lookup tool for guests.
+      if (!allowlisted(cfg, email)) return json({ error: "check is limited to klaviyo_test_emails and their plus variants" }, 400);
+      const found = await inspectProfile(email);
+      return json({ ok: true, email, found: Boolean(found), profile: found });
     }
 
     if (action === "backfill") {
