@@ -8,6 +8,7 @@
 // behind the cron secret:
 //   {"action":"status"}                         mode, lists, outbox counts
 //   {"action":"lists"}                          the lists in the Klaviyo account
+//   {"action":"create_test_list"}               make "ALL IN - Sync Test" and store its id
 //   {"action":"dry_run"}                        what a drain would send
 //   {"action":"test_profile","email":"…"}       synthetic booking -> test list (test mode only)
 //   {"action":"backfill"}                       queue profile_sync for future bookings
@@ -19,6 +20,7 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import {
   addToList,
+  createList,
   enqueueKlaviyo,
   listLists,
   METRIC_NAMES,
@@ -204,6 +206,17 @@ Deno.serve(async (req) => {
     if (action === "lists") {
       if (!keyPresent) return json({ error: "KLAVIYO_PRIVATE_KEY is not set" }, 503);
       return json({ ok: true, lists: await listLists() });
+    }
+
+    if (action === "create_test_list") {
+      // Our own empty list, so no pre-existing flow can ever fire on a test.
+      if (cfg.lists.test) return json({ ok: true, existing: true, listId: cfg.lists.test });
+      const name = str(body.name) || "ALL IN - Sync Test";
+      const existing = (await listLists()).find((l) => l.name === name);
+      const listId = existing?.id ?? (await createList(name));
+      const { error } = await sb.from("app_config").upsert({ key: "klaviyo_list_test", value: listId, updated_at: new Date().toISOString() });
+      if (error) return json({ error: `list ${listId} created but app_config write failed: ${error.message}` }, 500);
+      return json({ ok: true, created: !existing, listId, name });
     }
 
     if (action === "test_profile") {

@@ -121,6 +121,14 @@ export async function trackEvent(v: {
   });
 }
 
+/** Create an empty list. Used once, for the sync's own test list. */
+export async function createList(name: string): Promise<string> {
+  const res = (await call("POST", "/lists/", { data: { type: "list", attributes: { name } } })) as { data?: { id?: string } };
+  const id = res?.data?.id;
+  if (!id) throw new Error("Klaviyo list create returned no id");
+  return id;
+}
+
 export async function listLists(): Promise<Array<{ id: string; name: string }>> {
   const out: Array<{ id: string; name: string }> = [];
   let path: string | null = "/lists/?fields[list]=name";
