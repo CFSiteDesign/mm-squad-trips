@@ -157,3 +157,36 @@ _(written at the end, from the log above)_
 - After go-live the test profiles still exist with `allin_test = true` and
   future dates. Live flows need the filter "allin_test is not true".
 
+### 2026-09-25 · Mich's first test flow did not fire
+- Tried: Mich built a flow triggered by "added to list ALL IN - Sync Test",
+  filtered to Indonesia, three push notifications 30 minutes apart.
+- What happened: nothing fired. The Indonesia test guests show only our 4
+  events each.
+- Why: a list-triggered flow only fires for profiles added AFTER it goes
+  live. The six test guests were added on 23 Sep, before the flow existed.
+  Re-adding an existing member does not re-trigger it either.
+- Fix: a fresh plus address makes a brand new list member.
+  `test_profile` with `charlieboyy02+allin-indonesia-flowtest1@gmail.com`,
+  trip indonesia, added 25 Sep 01:07 UTC. Lesson for the runbook: every
+  list-trigger test needs a new address, and real guests are fine because a
+  new booker is always a new list member.
+- Second catch: the test guests are email-only profiles with no app device,
+  so push steps will be skipped even when the flow fires. A real push test
+  needs a team member's email that is logged into the Mad Monkey app.
+  Same question for go-live: guests only get pushes if the app knows them by
+  the email they booked with.
+
+### 2026-09-25 · A second Klaviyo integration exists on a branch
+- Found `origin/feature/klaviyo-functionality` (Ayush, 23 Sep): an admin-only
+  `send-test-klaviyo` function that adds a fake booker straight to
+  "ALL IN - Bookers" with metric "Booked ALL IN Trip" and a different secret
+  name (`KLAVIYO_PRIVATE_API_KEY`). It imports a `syncBookerToKlaviyo` helper
+  that is not in the repo, so it cannot build as pushed. Not on main, not
+  deployed through Lovable.
+- Charlie's own profile is now on "ALL IN - Bookers" and got four extra
+  "ALL IN Booking Placed" test events on 23 Sep 07:10 to 07:31 UTC, one with
+  fields our code never sends (`amount_paid`, `balance_due`, `full_due`).
+  Not from klaviyo-sync on main. Most likely local testing on that branch.
+- Risk: two pipelines would double every booking under two metric names,
+  and that branch has no test/live gate. Needs one owner. Raised with Charlie.
+
