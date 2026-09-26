@@ -8,6 +8,11 @@ verify_jwt = false
 [functions.creator-eligibility]
 verify_jwt = false
 
+# Called by the UNI Advisors desk (different Supabase project, no JWT): registers
+# ambassador codes as creator tracking codes. Guarded by app_config('uni_advisors_api_key').
+[functions.ambassador-code]
+verify_jwt = false
+
 # Called internally (webhook/cancel/cron) without a JWT — guarded by the
 # Vault CRON_SECRET instead.
 [functions.push-creator-commission]
