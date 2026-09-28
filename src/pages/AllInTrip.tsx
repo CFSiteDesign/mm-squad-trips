@@ -23,6 +23,8 @@ import { TRIPS } from "@/data/trips";
 import { publicUrl } from "@/lib/base-path";
 import { gtmClearEcommerce, gtmPushEvent } from "@/utils/gtmTracker";
 import { buildTripEcommerceItem, CONVERSION_TYPE_ALL_IN, markCheckoutEventOnce } from "@/utils/ecommerceDataLayer";
+import { HOME_SEO, TRIP_SEO } from "@/seo/site";
+import { usePageTitle } from "@/seo/use-page-title";
 
 const SECTIONS = [
   { id: "overview", label: "OVERVIEW" },
@@ -62,6 +64,7 @@ export default function AllInTrip({ slug: slugProp, unlisted = false }: { slug?:
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const { mode } = useTravellerMode();
   const solo = mode === "independent";
+  usePageTitle(TRIP_SEO[slug]?.title ?? HOME_SEO.title);
 
   // Link-only trips stay out of search results.
   useEffect(() => {

@@ -11,24 +11,11 @@ import { SQUAD_BENEFITS } from "@/data/squad-benefits";
 import { VideoTile, type Clip } from "@/components/allin/VideoTile";
 import { useTravellerMode } from "@/lib/traveller-mode";
 import heroImg from "@/assets/preview-hero-allin.jpg";
+import { DIFFERENT_CREW, DIFFERENT_INDEPENDENT, HERO_SUB, INCLUDED, NOT_INCLUDED, RATING_LINE } from "@/data/home-content";
+import { HOME_SEO, LISTED_SLUGS } from "@/seo/site";
+import { usePageTitle } from "@/seo/use-page-title";
 
-const DIFFERENT_CREW = [
-  { icon: BedDouble, title: "NO MYSTERY DORMS.", body: "Sleep in actual Mad Monkey beds every night." },
-  { icon: Users, title: "SOLO? NOT FOR LONG.", body: "Join a crew of 20 like-minded backpackers." },
-  { icon: Sparkles, title: "ZERO PLANNING STRESS.", body: "We handle the routes, the boats, and the beds." },
-];
-const DIFFERENT_INDEPENDENT = [
-  { icon: BedDouble, title: "NO MYSTERY DORMS.", body: "Sleep in actual Mad Monkey beds every night." },
-  { icon: Users, title: "YOUR TRIP, YOUR PACE.", body: "No group to keep up with. Meet people at every hostel, on your terms." },
-  { icon: Sparkles, title: "ZERO PLANNING STRESS.", body: "We handle the routes, the boats, and the beds." },
-];
-
-const INCLUDED = [
-  "All transfers + island boats", "24/7 local crew", "Free pre-trip night",
-  "Breakfasts, lunches + dinners", "Loads of free drinks", "Every activity in the itinerary",
-  "Dorm beds at Mad Monkey",
-];
-const NOT_INCLUDED = ["Flights", "Travel insurance", "Personal expenses", "Upgrades + add-ons"];
+const DIFFERENT_ICONS = [BedDouble, Users, Sparkles];
 
 /** Traveller clips. Files live in /public/videos; the links point back to the
  *  original posts. Placeholders until Mad Monkey's own UGC lands. */
@@ -82,6 +69,7 @@ function RouteCard({ slug, solo }: { slug: string; solo: boolean }) {
 export default function AllInHome() {
   const { mode } = useTravellerMode();
   const solo = mode === "independent";
+  usePageTitle(HOME_SEO.title);
   const go = (id: string) => {
     const el = document.getElementById(id);
     if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 60, behavior: "smooth" });
@@ -113,9 +101,7 @@ export default function AllInHome() {
               </h1>
 
               <p className="mt-5 max-w-[280px] text-[14px] leading-snug text-mm-bone/85">
-                {solo
-                  ? "Stop planning. 7 to 14-day adventures across Asia with the route, boats and beds sorted for you. Real Mad Monkey hostels, guaranteed to run, flexible payment plans."
-                  : "Stop herding cats. 7 to 14-day epic adventures across Asia with the ultimate backpacker crew. Real Mad Monkey beds, zero planning, and flexible payment plans."}
+                {solo ? HERO_SUB.independent : HERO_SUB.crew}
               </p>
 
               <div className="mt-5 flex flex-wrap items-center gap-3">
@@ -153,9 +139,7 @@ export default function AllInHome() {
               </h1>
 
               <p className="mt-7 max-w-xl text-lg leading-snug text-mm-bone/85">
-                {solo
-                  ? "Stop planning. 7 to 14-day adventures across Asia with the route, boats and beds sorted for you. Real Mad Monkey hostels, guaranteed to run, flexible payment plans."
-                  : "Stop herding cats. 7 to 14-day epic adventures across Asia with the ultimate backpacker crew. Real Mad Monkey beds, zero planning, and flexible payment plans."}
+                {solo ? HERO_SUB.independent : HERO_SUB.crew}
               </p>
 
               <div className="mt-10 flex flex-wrap items-center gap-4">
@@ -173,13 +157,13 @@ export default function AllInHome() {
         <div className="mx-auto max-w-6xl px-5 md:px-6">
           <h2 className="font-display text-[clamp(1.9rem,5vw,3rem)] leading-[0.95] text-mm-black">WHAT MAKES<br />US DIFFERENT?</h2>
           <div className="mt-8 grid gap-4 md:grid-cols-3">
-            {(solo ? DIFFERENT_INDEPENDENT : DIFFERENT_CREW).map(({ icon: Icon, title, body }) => (
+            {(solo ? DIFFERENT_INDEPENDENT : DIFFERENT_CREW).map(({ title, body }, i) => { const Icon = DIFFERENT_ICONS[i]; return (
               <div key={title} className="border-[3px] border-mm-black bg-mm-bone p-5 shadow-mm-sm">
                 <Icon className="h-8 w-8 text-mm-black" strokeWidth={2.5} />
                 <h3 className="mt-3 font-display text-xl leading-none text-mm-black">{title}</h3>
                 <p className="mt-2 text-sm leading-snug text-mm-black/75">{body}</p>
               </div>
-            ))}
+            ); })}
           </div>
         </div>
       </section>
@@ -189,7 +173,7 @@ export default function AllInHome() {
         <div className="mx-auto max-w-6xl px-5 md:px-6">
           <h2 className="font-display text-[clamp(1.9rem,5vw,3rem)] leading-[0.95] text-mm-black">WHERE'S YOUR<br />ADVENTURE?</h2>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {["indonesia", "indonesia-7", "vietnam", "vietnam-7", "cambodia"].map((s) => <RouteCard key={s} slug={s} solo={solo} />)}
+            {LISTED_SLUGS.map((s) => <RouteCard key={s} slug={s} solo={solo} />)}
           </div>
         </div>
       </section>
@@ -229,7 +213,7 @@ export default function AllInHome() {
           <h2 className="font-display text-[clamp(1.9rem,5vw,3rem)] leading-[0.95] text-mm-black">DON'T TAKE<br />OUR WORD FOR IT</h2>
           <div className="mt-4 inline-flex items-center gap-2 border-[3px] border-mm-black bg-mm-yellow px-3 py-2 shadow-mm-sm">
             <Star className="h-4 w-4 fill-mm-black text-mm-black" />
-            <span className="font-sticker text-[10px] tracking-[0.12em] text-mm-black">RATED 4.9/5 BY 53,000+ MAD MONKEY TRAVELLERS</span>
+            <span className="font-sticker text-[10px] tracking-[0.12em] text-mm-black">{RATING_LINE}</span>
           </div>
           {/* Layout per the 25 Aug wireframe: one landscape clip on the left,
               two verticals beside it, all the same height. */}
