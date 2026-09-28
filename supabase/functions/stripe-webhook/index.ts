@@ -20,6 +20,7 @@ import {
 } from "../_shared/email.ts";
 import { triggerCommissionPush } from "../_shared/push-commission.ts";
 import { enqueueKlaviyo } from "../_shared/klaviyo.ts";
+import { allInReminderProperties, enqueueAllInToMmk } from "../_shared/mmk-reminders.ts";
 
 function envClient() {
   const url = Deno.env.get("SUPABASE_URL");
@@ -295,6 +296,35 @@ async function writeBookings(session: Stripe.Checkout.Session) {
     payment_type: paymentType,
     currency: "USD",
   });
+  const leadName = String(m.lead_name ?? "").trim();
+  const [firstName, ...restName] = leadName.split(/\s+/);
+  const leadId = inserted?.[0]?.id != null ? String(inserted[0].id) : null;
+  const departureDate = String(m.departure_date ?? m.custom_date ?? "");
+  // Fire-and-forget: MMK must not delay Stripe, emails, or the T-7 card-on-file setup.
+  enqueueAllInToMmk({
+    bookingRef,
+    email: String(m.lead_email ?? ""),
+    firstName: firstName || undefined,
+    lastName: restName.join(" ") || undefined,
+    departureDate,
+    tripSlug: String(m.trip_slug ?? ""),
+    properties: allInReminderProperties({
+      bookingId: leadId,
+      bookingRef,
+      email: String(m.lead_email ?? ""),
+      firstName,
+      lastName: restName.join(" ") || null,
+      tripSlug: m.trip_slug,
+      tripName: m.trip_name,
+      tripDays: m.trip_days ? Number(m.trip_days) : null,
+      departureDate,
+      bookedAt: new Date().toISOString(),
+      amountPaid: amountPaidTotal,
+      fullDue,
+      spots: groupSize,
+      stripeSessionId: sessionId,
+    }),
+  }).catch((e) => console.warn("MMK reminder enqueue failed:", e instanceof Error ? e.message : e));
 
   // Link group members (best-effort)
   if (!isSolo && (inserted?.length ?? 0) > 1) {

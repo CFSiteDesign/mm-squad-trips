@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { RefreshCw, Copy } from "lucide-react";
-import { adminLogin, adminApi, addCompBooking, sendTestKlaviyo, getAdminToken, setAdminToken, setAdminPreview, type AdminTable } from "@/lib/admin";
+import { adminLogin, adminApi, addCompBooking, queueMmkReminder, backfillMmkReminders, listMmkReminderJobs, getAdminToken, setAdminToken, setAdminPreview, type AdminTable, type MmkQueueJob } from "@/lib/admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -642,7 +642,7 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
                 onClick={() => setKlaviyoOpen(true)}
                 className="rounded-none border-[2px] border-mm-black"
               >
-                TEST KLAVIYO
+                QUEUE REMINDER
               </Button>
               <Button
                 onClick={() => setCompOpen(true)}
@@ -1126,27 +1126,37 @@ function RowEditor({ table, row, isNew, onClose, onSaved }: {
 
 function TestKlaviyoDialog({ onClose }: { onClose: () => void }) {
   const [saving, setSaving] = useState(false);
+  const [jobs, setJobs] = useState<MmkQueueJob[]>([]);
   const [form, setForm] = useState({
-    name: "",
+    name: "ALL IN Test",
     email: "",
-    phone: "",
-    country: "United Kingdom",
+    departureDate: "",
   });
+
+  useEffect(() => {
+    listMmkReminderJobs()
+      .then(setJobs)
+      .catch(() => { /* secrets may not be set yet */ });
+  }, []);
 
   async function submit() {
     if (!form.email.trim()) return toast.error("Email is required");
     setSaving(true);
     try {
-      const res = await sendTestKlaviyo({
+      const res = await queueMmkReminder({
         email: form.email.trim(),
         name: form.name.trim() || undefined,
-        phone: form.phone.trim() || undefined,
-        country: form.country.trim() || undefined,
+        departureDate: form.departureDate.trim() || undefined,
       });
-      toast.success(`Klaviyo: ${res.email} → ${res.departureLabel}. Check list ${res.listId} and metric ${res.metric}.`);
-      onClose();
+      setJobs(res.jobs ?? []);
+      const n = res.queued?.length ?? 0;
+      if (n === 0) {
+        toast.error("Queued 0 jobs. On MMK Check-in reminder, add an enabled timer and check “Send this timer to ALL IN trip bookers”.");
+      } else {
+        toast.success(`Queued ${n} reminder${n === 1 ? "" : "s"} for ${res.email}. Check the MMK Check-in reminder jobs.`);
+      }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Klaviyo test failed");
+      toast.error(e instanceof Error ? e.message : "Queue failed");
     } finally {
       setSaving(false);
     }
@@ -1154,14 +1164,14 @@ function TestKlaviyoDialog({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-mm-black/60 p-4">
-      <div className="w-full max-w-lg border-[3px] border-mm-black bg-mm-paper p-5 shadow-mm-lg">
+      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto border-[3px] border-mm-black bg-mm-paper p-5 shadow-mm-lg">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-display text-2xl">TEST KLAVIYO</h2>
+          <h2 className="font-display text-2xl">QUEUE REMINDER</h2>
           <button onClick={onClose} className="text-mm-black/60 hover:text-mm-black">✕</button>
         </div>
         <p className="mb-4 text-xs text-mm-black/70">
-          Creates or updates a Klaviyo profile, adds it to list RsVDpj, and sends a Booked ALL IN Trip event.
-          Does not create a booking or charge a card. Uses a dummy Indonesia 22 Sep 2026 departure.
+          Adds this profile to the MMK Check-in reminder queue (source <code>allin</code>).
+          Only dashboard timers with “Send this timer to ALL IN trip bookers” checked apply. Does not create a booking or charge a card.
         </p>
         <div className="space-y-3">
           <div>
@@ -1173,22 +1183,51 @@ function TestKlaviyoDialog({ onClose }: { onClose: () => void }) {
             <Input type="email" value={form.email} onChange={(e) => setForm((s) => ({ ...s, email: e.target.value }))} className="mt-1 h-10 rounded-none border-[2px] border-mm-black bg-mm-paper" />
           </div>
           <div>
-            <Label className="font-sticker text-[10px] tracking-[0.15em]">PHONE (E.164, FOR WHATSAPP)</Label>
-            <Input value={form.phone} onChange={(e) => setForm((s) => ({ ...s, phone: e.target.value }))} placeholder="+447700900000" className="mt-1 h-10 rounded-none border-[2px] border-mm-black bg-mm-paper" />
-          </div>
-          <div>
-            <Label className="font-sticker text-[10px] tracking-[0.15em]">COUNTRY</Label>
-            <Input value={form.country} onChange={(e) => setForm((s) => ({ ...s, country: e.target.value }))} className="mt-1 h-10 rounded-none border-[2px] border-mm-black bg-mm-paper" />
+            <Label className="font-sticker text-[10px] tracking-[0.15em]">DEPARTURE DATE (YYYY-MM-DD)</Label>
+            <Input value={form.departureDate} onChange={(e) => setForm((s) => ({ ...s, departureDate: e.target.value }))} placeholder="defaults to +14 days" className="mt-1 h-10 rounded-none border-[2px] border-mm-black bg-mm-paper" />
           </div>
         </div>
-        <div className="mt-5 flex justify-end gap-2">
+        {jobs.length > 0 && (
+          <div className="mt-4 border-[2px] border-mm-black">
+            <div className="bg-mm-black px-3 py-1 font-sticker text-[10px] tracking-[0.15em] text-mm-bone">ALL IN QUEUE</div>
+            <div className="max-h-48 overflow-auto text-xs">
+              {jobs.map((j, i) => (
+                <div key={`${j.id ?? i}-${j.sendAt}`} className="grid grid-cols-[1fr_auto] gap-2 border-t border-mm-black/20 px-3 py-1.5">
+                  <span>{j.email} · {j.eventName} · {j.status}</span>
+                  <span className="text-mm-black/60">{j.sendAt ? new Date(j.sendAt).toLocaleString() : ""}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        <div className="mt-5 flex flex-wrap justify-end gap-2">
           <Button variant="outline" onClick={onClose} className="rounded-none border-[2px] border-mm-black">CANCEL</Button>
+          <Button
+            variant="outline"
+            disabled={saving}
+            onClick={async () => {
+              setSaving(true);
+              try {
+                const res = await backfillMmkReminders(["upcoming", "ongoing"]);
+                toast.success(`Backfill: scanned ${res.scanned}, queued ${res.queued}, skipped ${res.skipped} (past ${res.skippedPastSendAt}).`);
+                const jobs = await listMmkReminderJobs().catch(() => []);
+                setJobs(jobs);
+              } catch (e) {
+                toast.error(e instanceof Error ? e.message : "Backfill failed");
+              } finally {
+                setSaving(false);
+              }
+            }}
+            className="rounded-none border-[2px] border-mm-black"
+          >
+            {saving ? "WORKING…" : "BACKFILL EXISTING"}
+          </Button>
           <Button
             onClick={submit}
             disabled={saving}
             className="rounded-none border-[2px] border-mm-black bg-mm-pink text-mm-bone hover:bg-mm-pink"
           >
-            {saving ? "SENDING…" : "SEND TO KLAVIYO"}
+            {saving ? "QUEUING…" : "QUEUE PROFILE"}
           </Button>
         </div>
       </div>

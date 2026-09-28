@@ -14,6 +14,7 @@
 //   {"action":"test_journey","email":"…"}       one synthetic guest per trip, every event (test mode only)
 //   {"action":"check","email":"…"}              read a profile, its lists and events back from Klaviyo
 //   {"action":"backfill"}                       queue profile_sync for future bookings
+//   {"action":"backfill_mmk","scopes":[…]}      queue existing leads onto MMK reminder jobs
 //   {"action":"skip_stale","hours":24}          retire old pending rows before go-live
 //
 // Charlie, 23 Sep 2026: locked off until he flips the mode. Every failure
@@ -32,6 +33,7 @@ import {
   type KlaviyoProfile,
   type OutboxEvent,
 } from "../_shared/klaviyo.ts";
+import { backfillAllInBookingsToMmk } from "../_shared/mmk-reminders.ts";
 
 type Mode = "off" | "dry_run" | "test" | "live";
 const MODES: Mode[] = ["off", "dry_run", "test", "live"];
@@ -250,7 +252,11 @@ Deno.serve(async (req) => {
   const { data: vaultSecret, error: vaultErr } = await sb.rpc("get_cron_secret");
   if (vaultErr) return json({ error: "cron secret unavailable" }, 503);
   const secret = normalizeCronSecret(typeof vaultSecret === "string" ? vaultSecret : null);
-  if (!secret || provided !== secret) return json({ error: "forbidden" }, 403);
+  const cronOk = Boolean(secret && provided === secret);
+  const mmkToken = Deno.env.get("MMK_CHECKIN_REMINDER_TOKEN")?.trim();
+  const internal = (req.headers.get("x-internal-token") || req.headers.get("x-internal-secret") || "").trim();
+  const mmkOk = Boolean(mmkToken && internal && internal === mmkToken);
+  if (!cronOk && !mmkOk) return json({ error: "forbidden" }, 403);
 
   let body: Record<string, unknown> = {};
   try {
@@ -259,6 +265,7 @@ Deno.serve(async (req) => {
     // cron sends {} or nothing
   }
   const action = str(body.action) || "drain";
+  if (mmkOk && !cronOk && action !== "backfill_mmk") return json({ error: "forbidden" }, 403);
   const cfg = await loadConfig(sb);
   const keyPresent = Boolean(Deno.env.get("KLAVIYO_PRIVATE_KEY"));
 
@@ -406,6 +413,21 @@ Deno.serve(async (req) => {
         queued++;
       }
       return json({ ok: true, mode: cfg.mode, queued, note: "rows are drained by the next run according to klaviyo_mode" });
+    }
+
+    if (action === "backfill_mmk") {
+      const scopes = (Array.isArray(body.scopes) ? body.scopes : ["upcoming"])
+        .map((s) => str(s))
+        .filter((s): s is "previous" | "ongoing" | "upcoming" => s === "previous" || s === "ongoing" || s === "upcoming");
+      if (scopes.length === 0) return json({ error: "scopes must include previous, ongoing, and/or upcoming" }, 400);
+      const result = await backfillAllInBookingsToMmk(sb, {
+        ruleId: Number(body.ruleId) > 0 ? Number(body.ruleId) : undefined,
+        scopes,
+        previousDays: Number(body.previousDays ?? 90) || 90,
+        testEmails: cfg.mode === "test" ? cfg.testEmails : undefined,
+        dryRun: body.dry_run === true,
+      });
+      return json(result);
     }
 
     if (action === "skip_stale") {
