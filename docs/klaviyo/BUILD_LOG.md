@@ -190,3 +190,17 @@ _(written at the end, from the log above)_
 - Risk: two pipelines would double every booking under two metric names,
   and that branch has no test/live gate. Needs one owner. Raised with Charlie.
 
+### 2026-09-28 · Correction: the branch was merged, and it builds on ours
+- The 25 Sep entry above read the branch head. The branch was merged to main
+  on 23 Sep as PR #6 (f6a7066), and the merged version extends klaviyo-sync
+  rather than running beside it: money fields on events (`amount_paid`,
+  `full_due`, `balance_due`, `currency`), event `value` = full trip price on
+  "Booking Placed", events stamped with the outbox row's time. The test/live
+  gate and allowlist are untouched. No double pipeline.
+- This explains the 23 Sep 07:10 to 07:31 UTC events on Charlie's profile:
+  the merged klaviyo-sync `test_profile`, deployed after the merge.
+- Still broken: `send-test-klaviyo` (the admin "send test" button) imports
+  `syncBookerToKlaviyo`, which does not exist in `_shared/klaviyo.ts`. It
+  cannot boot, so it cannot send anything; the button just errors. Either
+  delete it or point it at `test_profile`.
+
