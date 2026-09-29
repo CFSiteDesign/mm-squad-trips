@@ -38,3 +38,7 @@ verify_jwt = false
 # Called by pg_cron without a JWT — guarded by the Vault CRON_SECRET instead.
 [functions.klaviyo-sync]
 verify_jwt = false
+
+# Admin-only queue onto MMK check-in reminder jobs — guarded by admin token.
+[functions.send-test-klaviyo]
+verify_jwt = false
