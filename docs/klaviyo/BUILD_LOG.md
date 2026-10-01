@@ -204,3 +204,22 @@ _(written at the end, from the log above)_
   cannot boot, so it cannot send anything; the button just errors. Either
   delete it or point it at `test_profile`.
 
+### 2026-10-01 · Found in live mode, and not through the go-live steps
+- `status` says `klaviyo_mode` = `live`. `app_config.updated_at` for that row
+  still reads 23 Sep 05:02 (when it was set to test), so the value was edited
+  directly in the table, not through any code path or the Lovable chat (no
+  such request in its history). Nothing in the repo can set the mode.
+- First live send: one real "Booking Placed" on 29 Sep 05:30 UTC, 15 minutes
+  after a Lovable deploy of stripe-webhook, klaviyo-sync and
+  send-test-klaviyo (Ayush's PR #7). Outbox: 1 sent, 0 pending, 0 failed.
+- Go-live steps NOT done: `backfill` (12 existing lead bookings on upcoming
+  departures are not in Klaviyo), Mich's flows still need "allin_test is not
+  true" so the test guests stay out, runbook not written. Raised with Charlie
+  before touching anything.
+- Also live since 29 Sep (PR #7): stripe-webhook queues every new lead onto the
+  MMK check-in reminder job table (`_shared/mmk-reminders.ts`). Both MMK
+  secrets are set; no MMK errors in the stripe-webhook logs. Reminders only go
+  out if a rule is switched on in the MMK dashboard.
+- Lesson for the runbook: the mode lives in a plain table row anyone with
+  Lovable access can edit, and `updated_at` does not move when edited by hand.
+
