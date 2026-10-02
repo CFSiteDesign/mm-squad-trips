@@ -7,6 +7,7 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { appBase } from "../_shared/app-base.ts";
 
 const DEPOSIT_PER_SPOT = 99;
 const DEPOSIT_THRESHOLD_DAYS = 7;
@@ -314,7 +315,7 @@ Deno.serve(async (req) => {
 
     // 6. Stripe Checkout
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-    const origin = req.headers.get("origin") ?? "";
+    const origin = appBase(req.headers.get("origin"));
 
     let customerId: string | undefined;
     try {

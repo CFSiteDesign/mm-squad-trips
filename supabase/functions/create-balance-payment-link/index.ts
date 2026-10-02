@@ -5,7 +5,7 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { APP_URL } from "../_shared/email.ts";
+import { appBase } from "../_shared/app-base.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -80,7 +80,7 @@ Deno.serve(async (req) => {
   }
 
   const tripName = (lead.trip_name as string) || (lead.trip_slug as string) || "Your trip";
-  const origin = req.headers.get("origin") || APP_URL;
+  const origin = appBase(req.headers.get("origin"));
 
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
