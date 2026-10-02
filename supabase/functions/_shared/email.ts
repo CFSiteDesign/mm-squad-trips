@@ -565,7 +565,7 @@ export function squadMemberJoinedEmail(v: {
 </div>
 <a href="{{dashboardUrl}}" style="display:inline-block;background:#ff6600;color:#0a0a0a;font-weight:900;text-transform:uppercase;padding:14px 22px;border:2px solid #0a0a0a;text-decoration:none">Open dashboard</a>
 </td></tr>`,
-    { ...v, progressGoal: String(goal) } as Record<string, string>,
+    { ...v, progressGoal: String(goal) } as unknown as Record<string, string>,
   );
   return { subject: `Squad just grew — ${v.bookingsCount}/${goal}`, html: shell("New squad member", inner) };
 }
@@ -592,7 +592,7 @@ export function squadMilestoneEmail(v: {
 <p style="margin:0 0 20px 0">{{nextStepText}}</p>
 <a href="{{dashboardUrl}}" style="display:inline-block;background:#ff6600;color:#0a0a0a;font-weight:900;text-transform:uppercase;padding:14px 22px;border:2px solid #0a0a0a;text-decoration:none">Claim it</a>
 </td></tr>`,
-    v as Record<string, string>,
+    v as unknown as Record<string, string>,
   );
   return { subject: `${v.milestoneHeadline} 🎉`, html: shell("Milestone unlocked", inner) };
 }
@@ -694,7 +694,7 @@ export function balanceFailedEmail(v: {
 <p style="margin:0 0 16px 0">We'll retry automatically in 2 days. If you'd like to update the card on file or settle this manually before then, just reply to this email and we'll send you a new payment link.</p>
 <p style="margin:0;font-size:13px;color:#555">Booking ref: <strong>{{bookingRef}}</strong></p>
 </td></tr>`,
-    v as Record<string, string>,
+    v as unknown as Record<string, string>,
   );
   return { subject: `Action needed: final payment for ${v.tripName} declined`, html: shell("Final payment failed", inner) };
 }
