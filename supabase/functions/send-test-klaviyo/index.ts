@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
       previousDays: Number(body.previousDays ?? 90) || 90,
       testEmails: mode === "test" ? testEmails : undefined,
     });
-    return jr({ ok: true, ...result });
+    return jr({ ...result, ok: true });
   }
 
   const email = String(body.email ?? "").trim();
