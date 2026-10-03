@@ -18,10 +18,10 @@ const HIDE_WITHIN_DAYS = 0;
 const MIN_CUSTOM_DATE_NOTICE_DAYS = 5;
 const WEEKDAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-// Booking cutoff per trip (mirrors src/lib/trip-helpers.ts):
-// Vietnam departs Wed → must be >=1 day out. Others depart Mon → must be >=3 days out.
-function bookingCutoffDays(slug: string): number {
-  return slug === "vietnam" ? 1 : 3;
+// No booking cutoff (mirrors src/lib/trip-helpers.ts): trips stay bookable
+// right up to departure day.
+function bookingCutoffDays(_slug: string): number {
+  return 0;
 }
 
 const SLUG_TO_LABEL: Record<string, string> = {
