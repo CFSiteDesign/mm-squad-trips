@@ -12,7 +12,7 @@ export const DEFAULT_FAQS = [
   { q: "When is the balance due?", a: "7 days before departure. We'll email you a reminder with a payment link." },
   { q: "Is my departure guaranteed to run?", a: "Yes. Every departure is guaranteed from the moment you book — there's no minimum group size, so your trip runs no matter how many others book." },
   { q: "I used a creator code — what do I get?", a: "You're entered into our prize draw to win a 7-Day Indonesia ALL IN Trip, and 2 free nights are added to your Mad Monkey Loyalty account shortly after booking. The free nights are valid for 3 months from your booking date." },
-  { q: "What's your refund policy?", a: "If you cancel: your deposit is non-refundable, and the balance is refundable up to 60 days before departure, 50% up to 30 days, none after that. If we cancel because the departure didn't reach its 5-traveller minimum, you get a full refund automatically." },
+  { q: "What's your refund policy?", a: "If you cancel: your deposit is non-refundable, and the balance is refundable up to 60 days before departure, 50% up to 30 days, none after that. If we ever have to cancel a departure ourselves, you get a full refund automatically." },
   { q: "Do I need travel insurance?", a: "Yes — it's a hard requirement. Cheap and easy with SafetyWing or World Nomads." },
 ];
 
@@ -26,7 +26,7 @@ const STUDENT_FAQS = [
   { q: "When is the balance due?", a: "7 days before departure. We'll email you a reminder with a payment link." },
   { q: "Is my departure guaranteed to run?", a: "Yes. Every departure is guaranteed from the moment you book — there's no minimum group size, so your trip runs no matter how many others book." },
   { q: "I used a creator code — what do I get?", a: "You're entered into our prize draw to win a 7-Day Indonesia ALL IN Trip, and 2 free nights are added to your Mad Monkey Loyalty account shortly after booking. The free nights are valid for 3 months from your booking date." },
-  { q: "What's your refund policy?", a: "If you cancel: your deposit is non-refundable, and the balance is refundable up to 60 days before departure, 50% up to 30 days, none after that. If we cancel because the departure didn't reach its 5-traveller minimum, you get a full refund automatically." },
+  { q: "What's your refund policy?", a: "If you cancel: your deposit is non-refundable, and the balance is refundable up to 60 days before departure, 50% up to 30 days, none after that. If we ever have to cancel a departure ourselves, you get a full refund automatically." },
   { q: "Do I need travel insurance?", a: "Yes — it's a hard requirement. Cheap and easy with SafetyWing or World Nomads." },
 ];
 
