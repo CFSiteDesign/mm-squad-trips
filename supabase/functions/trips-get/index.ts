@@ -35,7 +35,8 @@ Deno.serve(async (req) => {
     if (tErr) return jr({ error: tErr.message }, 500);
     if (!trip) return jr({ error: "Trip not found" }, 404);
 
-    const minDate = todayPlusDays(7);
+    // No lead time: dates stay listed right up to departure day.
+    const minDate = todayPlusDays(0);
     const today = todayPlusDays(0);
     let depQuery = sb
       .from("departures")

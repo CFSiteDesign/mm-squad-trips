@@ -1,0 +1,1 @@
+ALTER TABLE public.departures ALTER COLUMN min_bookings_to_confirm SET DEFAULT 1;

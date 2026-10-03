@@ -227,18 +227,17 @@ export function bookingConfirmationEmail(v: {
 <tr><td style="padding:10px 14px"><strong>Deposit paid</strong></td><td style="padding:10px 14px">{{amount}}</td></tr>
 </table>
 
-<div style="margin:18px 0;padding:16px;border:2px solid #0a0a0a;background:#ffc000">
-<div style="font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px">⚠️ Hold off on flights</div>
-<p style="margin:0;font-size:14px;line-height:1.5"><strong>Don't book your flights yet.</strong> Wait for the official "Trip Confirmed" email from us before locking in dates. Trips only confirm once we hit our 5-traveller minimum.</p>
+<div style="margin:18px 0;padding:16px;border:2px solid #0a0a0a;background:#ccff01">
+<div style="font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px">✅ Your trip is confirmed</div>
+<p style="margin:0;font-size:14px;line-height:1.5"><strong>Every departure is guaranteed to run</strong> — there's no minimum group size, so you're locked in from the moment you book. Go ahead and book your flights.</p>
 </div>
 
 {{creatorPerks}}
 
 <p style="margin:0 0 12px 0"><strong>What happens next:</strong></p>
 <ul style="margin:0 0 16px 18px;padding:0;font-size:14px;line-height:1.6">
-<li>As soon as your departure hits 5 travellers, we'll email you the green light to book flights + the link to settle the balance.</li>
-<li>If we're already inside the 30-day window before departure, we'll be in touch then either way with final details.</li>
-<li>Balance is due 7 days before departure — you'll get a reminder, but you can pay it whenever once the trip is confirmed.</li>
+<li>Your trip is confirmed — book your flights whenever you're ready.</li>
+<li>Balance is due 7 days before departure — you'll get a reminder with a payment link.</li>
 </ul>
 
 <p style="margin:0 0 20px 0">Booking ref: <strong>{{bookingRef}}</strong></p>
@@ -272,7 +271,7 @@ export function tripConfirmedEmail(v: {
 </td></tr>
 <tr><td style="padding:0 24px 16px 24px;font-size:16px;line-height:1.5">
 <p style="margin:0 0 12px 0">Hey {{firstName}},</p>
-<p style="margin:0 0 12px 0">Big news — <strong>{{tripName}}</strong> on <strong>{{departureDate}}</strong> is officially <strong>CONFIRMED</strong>. We hit the 5-traveller minimum and it's a go.</p>
+<p style="margin:0 0 12px 0">Big news — <strong>{{tripName}}</strong> on <strong>{{departureDate}}</strong> is officially <strong>CONFIRMED</strong>. It's a go.</p>
 
 <div style="margin:18px 0;padding:16px;border:2px solid #0a0a0a;background:#ccff01">
 <div style="font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px">✈️ Green light on flights</div>

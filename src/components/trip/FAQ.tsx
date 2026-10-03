@@ -8,11 +8,11 @@ export const DEFAULT_FAQS = [
   { q: "Is this like a guided tour?", a: "No coach buses. No 60-person mega-groups. Max 20 people, real backpacker hostels, free time built in." },
   { q: "What if I don't drink?", a: "Plenty of guests don't. The crew always plans non-drinking options for every night." },
   { q: "What if my plans change?", a: "Plans change, and that's totally okay. Swap your trip dates, gift it to someone, or save it for later with our Lifetime Deposit Guarantee." },
-  { q: "What happens after I pay the deposit?", a: "You get an email with your booking reference. Once 5 travellers have booked, your trip is confirmed and we'll email you the green light to book your flights. The remaining balance is then automatically charged to the same card 7 days before departure — no action needed." },
+  { q: "What happens after I pay the deposit?", a: "You get an email with your booking reference and your trip is confirmed straight away — every departure is guaranteed to run. The remaining balance is then automatically charged to the same card 7 days before departure — no action needed." },
   { q: "When is the balance due?", a: "7 days before departure. We'll email you a reminder with a payment link." },
-  { q: "What if my departure doesn't reach the minimum?", a: "Every departure needs at least 5 travellers to run. If it hasn't reached 5 by 30 days before departure, we cancel it and refund your deposit in full, automatically — you don't need to do anything." },
+  { q: "Is my departure guaranteed to run?", a: "Yes. Every departure is guaranteed from the moment you book — there's no minimum group size, so your trip runs no matter how many others book." },
   { q: "I used a creator code — what do I get?", a: "You're entered into our prize draw to win a 7-Day Indonesia ALL IN Trip, and 2 free nights are added to your Mad Monkey Loyalty account shortly after booking. The free nights are valid for 3 months from your booking date." },
-  { q: "What's your refund policy?", a: "If you cancel: your deposit is non-refundable, and the balance is refundable up to 60 days before departure, 50% up to 30 days, none after that. If we cancel because the departure didn't reach its 5-traveller minimum, you get a full refund automatically." },
+  { q: "What's your refund policy?", a: "If you cancel: your deposit is non-refundable, and the balance is refundable up to 60 days before departure, 50% up to 30 days, none after that. If we ever have to cancel a departure ourselves, you get a full refund automatically." },
   { q: "Do I need travel insurance?", a: "Yes — it's a hard requirement. Cheap and easy with SafetyWing or World Nomads." },
 ];
 
@@ -20,13 +20,13 @@ const STUDENT_FAQS = [
   { q: "What if I'm not part of a society?", a: "No worries! This offer is open to any group of students." },
   { q: "What's the age range?", a: "Most guests are 23–31. Nobody under 18, nobody over 39 on these specific trips." },
   { q: "Is this like a guided tour?", a: "No coach buses. No 60-person mega-groups. Max 20 people, real backpacker hostels, free time built in." },
-  { q: "What if less than 10 people book?", a: "The 10-booking target is only for the squad leader reward. Miss it and you simply don't unlock the 2 free spots — your trip still goes ahead, as long as the departure reaches its 5-traveller minimum." },
+  { q: "What if less than 10 people book?", a: "The 10-booking target is only for the squad leader reward. Miss it and you simply don't unlock the 2 free spots — your trip still goes ahead, as every departure is guaranteed to run." },
   { q: "What if my plans change?", a: "Plans change, and that's totally okay. Swap your trip dates, gift it to someone, or save it for later with our Lifetime Deposit Guarantee." },
-  { q: "What happens after I pay the deposit?", a: "You get an email with your booking reference. You'll receive another email once 5 travellers have booked and your trip is confirmed. Then it's time to book your flights and pay the balance. The balance is due 7 days before departure — we'll send you a reminder." },
+  { q: "What happens after I pay the deposit?", a: "You get an email with your booking reference and your trip is confirmed straight away — every departure is guaranteed to run. Then it's time to book your flights and pay the balance. The balance is due 7 days before departure — we'll send you a reminder." },
   { q: "When is the balance due?", a: "7 days before departure. We'll email you a reminder with a payment link." },
-  { q: "What if my departure doesn't reach the minimum?", a: "Every departure needs at least 5 travellers to run. If it hasn't reached 5 by 30 days before departure, we cancel it and refund your deposit in full, automatically — you don't need to do anything." },
+  { q: "Is my departure guaranteed to run?", a: "Yes. Every departure is guaranteed from the moment you book — there's no minimum group size, so your trip runs no matter how many others book." },
   { q: "I used a creator code — what do I get?", a: "You're entered into our prize draw to win a 7-Day Indonesia ALL IN Trip, and 2 free nights are added to your Mad Monkey Loyalty account shortly after booking. The free nights are valid for 3 months from your booking date." },
-  { q: "What's your refund policy?", a: "If you cancel: your deposit is non-refundable, and the balance is refundable up to 60 days before departure, 50% up to 30 days, none after that. If we cancel because the departure didn't reach its 5-traveller minimum, you get a full refund automatically." },
+  { q: "What's your refund policy?", a: "If you cancel: your deposit is non-refundable, and the balance is refundable up to 60 days before departure, 50% up to 30 days, none after that. If we ever have to cancel a departure ourselves, you get a full refund automatically." },
   { q: "Do I need travel insurance?", a: "Yes — it's a hard requirement. Cheap and easy with SafetyWing or World Nomads." },
 ];
 
