@@ -114,6 +114,7 @@ export type Database = {
           traveller_mode: string | null
           trip_confirmed_notified_at: string | null
           trip_id: string | null
+          underfill_notice_sent_at: string | null
           updated_at: string
           utm_campaign: string | null
           utm_content: string | null
@@ -168,6 +169,7 @@ export type Database = {
           traveller_mode?: string | null
           trip_confirmed_notified_at?: string | null
           trip_id?: string | null
+          underfill_notice_sent_at?: string | null
           updated_at?: string
           utm_campaign?: string | null
           utm_content?: string | null
@@ -222,6 +224,7 @@ export type Database = {
           traveller_mode?: string | null
           trip_confirmed_notified_at?: string | null
           trip_id?: string | null
+          underfill_notice_sent_at?: string | null
           updated_at?: string
           utm_campaign?: string | null
           utm_content?: string | null
