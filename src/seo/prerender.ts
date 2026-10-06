@@ -262,7 +262,7 @@ export function llmsTxt(): string {
 
 > Small-group backpacker trips through Southeast Asia run by Mad Monkey Hostels. 7 to 14 days, with Mad Monkey hostel beds, transport and the activities in the itinerary included. A $99 deposit per spot holds a place; the balance is charged 7 days before departure.
 
-Travellers book either with a crew (a group departure that runs once 5 people have booked, up to 20) or independently (the same route and beds, guaranteed to run, at their own pace). Crew departures that have not reached 5 travellers 30 days out are cancelled and refunded in full.
+Travellers book either with a crew (a group departure of up to 20) or independently (the same route and beds, at their own pace). Every departure runs. If a crew departure has fewer than 5 travellers 10 days out, its guests get a heads-up and can ask for their deposit back.
 
 ## Trips
 

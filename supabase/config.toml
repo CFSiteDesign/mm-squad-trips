@@ -42,3 +42,7 @@ verify_jwt = false
 # Admin-only queue onto MMK check-in reminder jobs — guarded by admin token.
 [functions.send-test-klaviyo]
 verify_jwt = false
+
+# Crew heads-up 10 days out (pg_cron), guarded by the Vault CRON_SECRET.
+[functions.underfilled-crew-notice]
+verify_jwt = false

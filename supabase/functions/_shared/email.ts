@@ -728,6 +728,44 @@ export function departureCancelledEmail(v: {
   };
 }
 
+// Crew heads-up, 10 days out, when a departure is still under 5 travellers.
+// Charlie, 6 Oct 2026: crew trips now run regardless (the 30-day auto-cancel
+// is gone). Tell them early, sell them on going anyway, and offer the deposit
+// back through cs@ if they'd rather not.
+export function underfilledCrewNoticeEmail(v: {
+  firstName: string;
+  tripName: string;
+  departureDate: string;
+  bookingRef: string;
+  /** Empty when there's no balance still to charge. */
+  balanceDate: string;
+}): { subject: string; html: string } {
+  const balanceLine = v.balanceDate
+    ? `<p style="margin:0 0 12px 0">If you can, let us know before <strong>{{balanceDate}}</strong>, when your remaining balance is charged.</p>`
+    : "";
+  const inner = render(
+    `<tr><td style="padding:16px 24px 8px 24px">
+<h1 style="margin:0;font-size:28px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em">A QUICK HEADS UP 🐒</h1>
+</td></tr>
+<tr><td style="padding:0 24px 16px 24px;font-size:16px;line-height:1.5">
+<p style="margin:0 0 12px 0">Hey {{firstName}},</p>
+<p style="margin:0 0 12px 0">Your <strong>{{tripName}}</strong> trip leaving <strong>{{departureDate}}</strong> hasn't reached 5 travellers yet. It's still going ahead, and we'd love you to come!</p>
+<div style="margin:18px 0;padding:16px;border:2px solid #0a0a0a;background:#ffc000">
+<div style="font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px">You won't be short of company</div>
+<p style="margin:0;font-size:14px;line-height:1.5">You're sleeping at Mad Monkey hostels every night, and the tours and experiences are packed with travellers, so you'll meet plenty of people along the way.</p>
+</div>
+<p style="margin:0 0 12px 0">If you'd rather not go, no hard feelings. Email <a href="mailto:cs@madmonkeyhostels.com" style="color:#0a0a0a">cs@madmonkeyhostels.com</a> with your booking reference <strong>{{bookingRef}}</strong> and ask for a refund of your deposit.</p>
+${balanceLine}
+<p style="margin:0">See you out there!</p>
+</td></tr>`,
+    v as unknown as Record<string, string>,
+  );
+  return {
+    subject: `Heads up on your ${v.tripName} trip, ${v.departureDate}`,
+    html: shell("A quick heads up on your trip", inner),
+  };
+}
+
 // Property-team reminder, 7 days and 1 day before a departure. Charlie, 10 Sep
 // 2026: to the country GM list, reception@, and for Vietnam the travel desks.
 // The manifest is built by hand (escapeHtml per cell) because render() only

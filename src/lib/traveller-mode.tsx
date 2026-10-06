@@ -127,6 +127,8 @@ const INDEPENDENT_REWRITES: Array<[RegExp | string, string]> = [
   ["we've sorted the beds, the transport, the crew and the good times", "we've sorted the beds, the transport, the local team and the good times"],
   ["No coach buses. No 60-person mega-groups. Max 20 people, real backpacker hostels, free time built in.", "No coach buses. Real backpacker hostels, a fixed route and free time built in."],
   [/\s*If we cancel because the departure didn't reach its 5-traveller minimum, you get a full refund automatically\./, ""],
+  // FAQ edit of 3 Oct 2026: group size means nothing to someone travelling alone.
+  [/ — there's no minimum group size, so your trip runs no matter how many others book\./, "."],
 ];
 
 export function independentText(s: string): string {

@@ -1,6 +1,13 @@
-// Daily job: cancel pending departures that haven't reached the 5-traveller
-// minimum by 30 days out, refund every deposit (and any collected balance),
-// and email each lead booker. Idempotent by design:
+// Daily job for pending departures 30 days out that haven't reached the
+// 5-traveller minimum.
+//
+// Charlie, 6 Oct 2026: crew trips now run even if they don't fill, so a
+// departure with crew bookings is left open and pending (it can still reach 5
+// and send the normal "you're confirmed" email). 10 days out,
+// underfilled-crew-notice gives those crews a heads-up and marks the departure
+// confirmed. This job now only closes EMPTY departures and confirms ones with
+// solo bookings. The refund path below is kept but no longer reached by crews.
+// Idempotent by design:
 // - departures.status='pending' → 'cancelled' guard so re-runs skip work.
 // - Stripe refund idempotencyKey per session so re-runs never double-refund.
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
@@ -91,6 +98,10 @@ Deno.serve(async (req) => {
       const soloBookings = (bookings ?? []).filter((b) => b.lead_solo === true);
       const squadBookings = (bookings ?? []).filter((b) => b.lead_solo !== true);
       const hasSolo = soloBookings.length > 0;
+      if (!hasSolo && squadBookings.length > 0) {
+        summary.push({ ...depSummary, kept: "crew under minimum, runs anyway (6 Oct 2026)" });
+        continue;
+      }
       // Solo travellers are exempt from the 5-minimum, so the departure still runs for them.
       const targetStatus = hasSolo ? "confirmed" : "cancelled";
       const stampCol = hasSolo ? "confirmed_at" : "cancelled_at";
