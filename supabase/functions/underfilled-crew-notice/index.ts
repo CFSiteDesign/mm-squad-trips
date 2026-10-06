@@ -49,6 +49,7 @@ type Booking = {
   lead_name: string | null;
   lead_email: string | null;
   lead_solo: boolean | null;
+  group_size: number | null;
   booking_ref: string | null;
   balance_status: string | null;
   balance_due_date: string | null;
@@ -97,7 +98,7 @@ Deno.serve(async (req) => {
 
     const { data: rows, error: bkErr } = await sb
       .from("bookings")
-      .select("stripe_session_id,spot_number,lead_name,lead_email,lead_solo,booking_ref,balance_status,balance_due_date,underfill_notice_sent_at")
+      .select("stripe_session_id,spot_number,lead_name,lead_email,lead_solo,group_size,booking_ref,balance_status,balance_due_date,underfill_notice_sent_at")
       .eq("departure_id", dep.id)
       .eq("status", "Confirmed");
     if (bkErr) { out.push({ departure: date, trip: trip.slug, error: bkErr.message }); continue; }
@@ -107,7 +108,10 @@ Deno.serve(async (req) => {
     const entry: Record<string, unknown> = { departure: date, trip: trip.slug, daysOut, travellers: bookings.length, status: dep.status, notices: [] as unknown[] };
 
     if (bookings.length < min && daysOut >= NOTICE_MIN_DAYS && daysOut <= NOTICE_MAX_DAYS) {
-      const leads = bookings.filter((b) => Number(b.spot_number ?? 1) === 1 && b.lead_solo !== true && !b.underfill_notice_sent_at && b.lead_email);
+      // Crew = flagged crew, or (older and admin rows with no flag) more than one
+      // spot. A blank flag on a one-spot booking is a solo traveller.
+      const isCrew = (b: Booking) => b.lead_solo === false || (b.lead_solo == null && Number(b.group_size ?? 1) > 1);
+      const leads = bookings.filter((b) => Number(b.spot_number ?? 1) === 1 && isCrew(b) && !b.underfill_notice_sent_at && b.lead_email);
       for (const lead of leads) {
         const owesBalance = (lead.balance_status === "scheduled" || lead.balance_status === "failed") && lead.balance_due_date;
         const { subject, html } = underfilledCrewNoticeEmail({
