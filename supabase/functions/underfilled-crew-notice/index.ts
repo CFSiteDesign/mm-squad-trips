@@ -50,7 +50,6 @@ type Booking = {
   lead_email: string | null;
   lead_solo: boolean | null;
   booking_ref: string | null;
-  trip_name: string | null;
   balance_status: string | null;
   balance_due_date: string | null;
   underfill_notice_sent_at: string | null;
@@ -78,7 +77,7 @@ Deno.serve(async (req) => {
   const today = localToday();
   const { data: departures, error: depErr } = await sb
     .from("departures")
-    .select("id,departure_date,status,min_bookings_to_confirm,trips(name,slug)")
+    .select("id,departure_date,status,min_bookings_to_confirm,trips(slug,days)")
     .in("status", ["pending", "confirmed"])
     .gte("departure_date", today)
     .lte("departure_date", plusDays(today, NOTICE_MAX_DAYS))
@@ -90,11 +89,15 @@ Deno.serve(async (req) => {
     const date = String(dep.departure_date);
     const daysOut = daysBetween(today, date);
     const min = Number(dep.min_bookings_to_confirm ?? 5) || 5;
-    const trip = (dep.trips as { name?: string; slug?: string } | null) ?? {};
+    const trip = (dep.trips as { slug?: string; days?: number } | null) ?? {};
+    // DB trip names are inconsistent ("Vietnam", "7 Day Gili T + Lombok"), so
+    // the guest-facing name is built from the trip: "14-day Vietnam".
+    const country = (trip.slug ?? "").split("-")[0].replace(/^./, (c) => c.toUpperCase());
+    const tripLabel = trip.days && country ? `${trip.days}-day ${country}` : country || "ALL IN";
 
     const { data: rows, error: bkErr } = await sb
       .from("bookings")
-      .select("stripe_session_id,spot_number,lead_name,lead_email,lead_solo,booking_ref,trip_name,balance_status,balance_due_date,underfill_notice_sent_at")
+      .select("stripe_session_id,spot_number,lead_name,lead_email,lead_solo,booking_ref,balance_status,balance_due_date,underfill_notice_sent_at")
       .eq("departure_id", dep.id)
       .eq("status", "Confirmed");
     if (bkErr) { out.push({ departure: date, trip: trip.slug, error: bkErr.message }); continue; }
@@ -109,7 +112,7 @@ Deno.serve(async (req) => {
         const owesBalance = (lead.balance_status === "scheduled" || lead.balance_status === "failed") && lead.balance_due_date;
         const { subject, html } = underfilledCrewNoticeEmail({
           firstName: (lead.lead_name ?? "").trim().split(/\s+/)[0] || "there",
-          tripName: lead.trip_name || trip.name || "ALL IN",
+          tripName: tripLabel,
           departureDate: dateLabel(date),
           bookingRef: lead.booking_ref ?? "",
           balanceDate: owesBalance ? dateLabel(String(lead.balance_due_date)) : "",

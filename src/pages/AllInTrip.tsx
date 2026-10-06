@@ -429,7 +429,7 @@ export default function AllInTrip({ slug: slugProp, unlisted = false }: { slug?:
                   <ChevronDown className={`h-5 w-5 shrink-0 transition-transform ${openFaq === i ? "rotate-180" : ""}`} />
                 </button>
                 {openFaq === i && (
-                  <p className="border-t-[2px] border-mm-black/15 bg-mm-paper p-4 text-sm leading-relaxed text-mm-black/80">{f.a}</p>
+                  <p className="whitespace-pre-line border-t-[2px] border-mm-black/15 bg-mm-paper p-4 text-sm leading-relaxed text-mm-black/80">{f.a}</p>
                 )}
               </div>
             ))}

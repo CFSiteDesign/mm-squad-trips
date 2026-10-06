@@ -8,7 +8,7 @@ export const DEFAULT_FAQS = [
   { q: "Is this like a guided tour?", a: "No coach buses. No 60-person mega-groups. Max 20 people, real backpacker hostels, free time built in." },
   { q: "What if I don't drink?", a: "Plenty of guests don't. The crew always plans non-drinking options for every night." },
   { q: "What if my plans change?", a: "Plans change, and that's totally okay. Swap your trip dates, gift it to someone, or save it for later with our Lifetime Deposit Guarantee." },
-  { q: "What happens after I pay the deposit?", a: "You get an email with your booking reference and your trip is confirmed straight away — every departure is guaranteed to run. The remaining balance is then automatically charged to the same card 7 days before departure — no action needed." },
+  { q: "What happens after I pay the deposit?", a: "You'll receive an email with your booking reference right away.\n\nThere's no minimum group size, so your trip is guaranteed to go ahead! However, if there are fewer than 5 travellers on your departure 10 days before you leave, we'll send you a quick heads-up. If you prefer a larger group, you're free to cancel, but we strongly recommend sticking with it! You'll still meet incredible people in the hostel and on your daily tours.\n\nYour remaining balance is automatically charged to your original payment card 7 days before departure, no extra steps needed." },
   { q: "When is the balance due?", a: "7 days before departure. We'll email you a reminder with a payment link." },
   { q: "Is my departure guaranteed to run?", a: "Yes. Every departure is guaranteed from the moment you book — there's no minimum group size, so your trip runs no matter how many others book." },
   { q: "I used a creator code — what do I get?", a: "You're entered into our prize draw to win a 7-Day Indonesia ALL IN Trip, and 2 free nights are added to your Mad Monkey Loyalty account shortly after booking. The free nights are valid for 3 months from your booking date." },
@@ -49,7 +49,7 @@ export function FAQ() {
               <AccordionTrigger className="px-3 py-3.5 text-left font-display text-[13px] uppercase leading-tight hover:no-underline md:px-4 md:py-4 md:text-base">
                 {f.q}
               </AccordionTrigger>
-              <AccordionContent className="px-3 pb-3.5 text-[13px] leading-snug text-mm-black/80 md:px-4 md:pb-4 md:text-sm">{f.a}</AccordionContent>
+              <AccordionContent className="whitespace-pre-line px-3 pb-3.5 text-[13px] leading-snug text-mm-black/80 md:px-4 md:pb-4 md:text-sm">{f.a}</AccordionContent>
             </AccordionItem>
           ))}
         </Accordion>
