@@ -62,7 +62,9 @@ interface ColumnDef {
   key: string;
   label: string;
   tooltip?: string;
-  type?: "text" | "number" | "boolean" | "date" | "json" | "textarea";
+  type?: "text" | "number" | "boolean" | "date" | "json" | "textarea" | "select";
+  /** For type "select": the only values the column accepts. The first is the default. */
+  options?: { value: string; label: string }[];
   readOnly?: boolean;
   hidden?: boolean;
   hideInTable?: boolean; // hidden from on-screen table but still included in CSV export
@@ -128,7 +130,10 @@ const COLUMNS: Record<AdminTable, ColumnDef[]> = {
   discount_codes: [
     { key: "id", label: "ID", readOnly: true, hidden: true },
     { key: "code", label: "Code", tooltip: "The discount code customers enter at checkout", type: "text" },
-    { key: "discount_type", label: "Type", tooltip: "'fixed' = dollar amount off, 'percent' = percentage of the subtotal off", type: "text" },
+    // A dropdown, not free text: the database only accepts these two values, and
+    // staff kept typing "Fixed", "$" or "%" (Hayley, Lexie, Oct 2026).
+    { key: "discount_type", label: "Type", tooltip: "Dollar amount off, or a percentage of the subtotal off", type: "select",
+      options: [{ value: "fixed", label: "Fixed ($ off)" }, { value: "percent", label: "Percent (% off)" }] },
     { key: "discount_amount", label: "Amount ($ or %)", tooltip: "Dollar amount for fixed codes, percentage (e.g. 20 = 20%) for percent codes", type: "number" },
     { key: "stackable", label: "Stackable", tooltip: "Allow this code to combine with ONE other stackable code at checkout (one fixed + one percent; fixed comes off first, then the % on the rest). Total capped at the global max discount ($300)", type: "boolean" },
     { key: "active", label: "Active", tooltip: "Whether this code can currently be used", type: "boolean" },
@@ -1034,6 +1039,8 @@ function RowEditor({ table, row, isNew, onClose, onSaved }: {
         // Unchecked checkboxes arrive as undefined — save false, not null, so
         // NOT NULL boolean columns (is_creator, stackable) accept the row.
         if (c.type === "boolean") { out[c.key] = v === true; continue; }
+        // A dropdown always saves what it shows, so an untouched one saves its first option.
+        if (c.type === "select" && (v === "" || v == null)) { out[c.key] = c.options?.[0]?.value ?? null; continue; }
         if (v === "" || v === undefined) { out[c.key] = null; continue; }
         if (c.type === "number") v = v === null ? null : Number(v);
         if (c.type === "json" && typeof v === "string") {
@@ -1088,6 +1095,15 @@ function RowEditor({ table, row, isNew, onClose, onSaved }: {
                       onChange={(e) => setVal(c.key, e.target.checked)}
                     />
                   </div>
+                ) : c.type === "select" ? (
+                  <select
+                    value={display || c.options?.[0]?.value || ""}
+                    onChange={(e) => setVal(c.key, e.target.value)}
+                    disabled={c.readOnly}
+                    className="mt-1 h-10 w-full rounded-none border-[2px] border-mm-black bg-mm-paper px-2 text-sm"
+                  >
+                    {c.options?.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </select>
                 ) : c.type === "json" ? (
                   <textarea
                     value={display}
