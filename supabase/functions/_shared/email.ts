@@ -174,11 +174,11 @@ function shell(title: string, bodyInner: string): string {
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5efe2"><tr><td align="center" style="padding:24px 16px">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border:2px solid #0a0a0a;box-shadow:8px 8px 0 #0a0a0a">
 <tr><td style="padding:20px 24px 0 24px" align="left">
-<img src="${LOGO}" alt="Mad Monkey — All In" width="120" style="display:block;border:0">
+<img src="${LOGO}" alt="Mad Monkey ALL IN" width="120" style="display:block;border:0">
 </td></tr>
 ${bodyInner}
 <tr><td style="padding:16px 24px 24px 24px;font-size:12px;color:#444;border-top:1px solid #eee">
-Mad Monkey Hostels — Squad Trips · Questions? cs@madmonkeyhostels.com
+Mad Monkey Hostels · ALL IN Trips · Questions? cs@madmonkeyhostels.com
 </td></tr>
 </table></td></tr></table></body></html>`;
 }
@@ -349,11 +349,30 @@ ${balanceBlock}
   };
 }
 
+// The pre-departure emails (send-departure-reminders, 6 to 4 days out).
+// Fixed 6 Oct 2026 before their first ever send: the day count is real, the
+// final-details HTML is spliced in after render() (render escapes every
+// {{var}}, which turned the block into visible tags), and the WhatsApp box
+// only shows when the trip has a verified chat.
+const FINAL_DETAILS_SLOT = "%%FINAL_DETAILS%%";
+
+function whatsappBox(url: string): string {
+  if (!url) return "";
+  return `<div style="margin:18px 0;padding:14px;border:2px dashed #0a0a0a;background:#f5efe2">
+<div style="font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px">📱 Property WhatsApp</div>
+<p style="margin:0 0 10px 0;font-size:14px;line-height:1.5">Save this: it's your direct line to the property crew. Use it for arrival timing, transfers or any "I'm running late" moments.</p>
+<a href="${escapeHtml(url)}" style="display:inline-block;background:#25d366;color:#ffffff;font-weight:900;text-transform:uppercase;padding:10px 16px;border:2px solid #0a0a0a;text-decoration:none">Open WhatsApp</a>
+</div>`;
+}
+
+const daysLabel = (n: number) => (n === 1 ? "1 day" : `${n} days`);
+
 export function balanceReminderEmail(v: {
   firstName: string;
   tripCountry: string;
   tripName: string;
   departureDate: string;
+  daysToGo: number;
   balanceAmount: string;
   payBalanceUrl: string;
   bookingRef: string;
@@ -362,35 +381,28 @@ export function balanceReminderEmail(v: {
 }): { subject: string; html: string } {
   const inner = render(
     `<tr><td style="padding:16px 24px 8px 24px">
-<h1 style="margin:0;font-size:28px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em">7 DAYS TO {{tripCountry}} 🎒</h1>
+<h1 style="margin:0;font-size:28px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em">{{days}} TO {{tripCountry}} 🎒</h1>
 </td></tr>
 <tr><td style="padding:0 24px 16px 24px;font-size:16px;line-height:1.5">
 <p style="margin:0 0 12px 0">Hey {{firstName}},</p>
-<p style="margin:0 0 12px 0">One week. <strong>{{tripName}}</strong> kicks off on <strong>{{departureDate}}</strong> and the countdown is on 🚨</p>
+<p style="margin:0 0 12px 0">Nearly there! Your <strong>{{tripName}}</strong> trip kicks off on <strong>{{departureDate}}</strong> and the countdown is on 🚨</p>
 
 <div style="margin:18px 0;padding:16px;border:2px solid #0a0a0a;background:#ffc000">
 <div style="font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px">💳 Balance still outstanding</div>
-<p style="margin:0 0 12px 0;font-size:14px;line-height:1.5">Balance of <strong>{{balanceAmount}}</strong> is due now. Settle it before we auto-charge your card on file:</p>
+<p style="margin:0 0 12px 0;font-size:14px;line-height:1.5">We couldn't take your balance of <strong>{{balanceAmount}}</strong> automatically. Pay it here to lock in your spot:</p>
 <p style="margin:0"><a href="{{payBalanceUrl}}" style="display:inline-block;background:#0a0a0a;color:#ccff01;font-weight:900;text-transform:uppercase;padding:12px 18px;border:2px solid #0a0a0a;text-decoration:none">Pay balance</a></p>
 </div>
 
-${"{{finalDetailsHtml}}"}
-
-<div style="margin:18px 0;padding:14px;border:2px dashed #0a0a0a;background:#f5efe2">
-<div style="font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px">📱 Property WhatsApp</div>
-<p style="margin:0 0 10px 0;font-size:14px;line-height:1.5">Save this — direct line to the property crew. Use it for arrival timing, transfers or any "I'm running late" moments.</p>
-<a href="{{whatsappUrl}}" style="display:inline-block;background:#25d366;color:#ffffff;font-weight:900;text-transform:uppercase;padding:10px 16px;border:2px solid #0a0a0a;text-decoration:none">Open WhatsApp</a>
-</div>
+${FINAL_DETAILS_SLOT}
+${whatsappBox(v.whatsappUrl)}
 
 <p style="margin:0 0 20px 0;font-size:13px;color:#555">Booking ref: <strong>{{bookingRef}}</strong></p>
 </td></tr>`,
-    { ...v } as Record<string, string>,
-  )
-    // finalDetailsHtml is raw HTML, intentionally not escaped (controlled server-side per trip slug)
-    .replace("{{finalDetailsHtml}}", v.finalDetailsHtml);
+    { firstName: v.firstName, tripCountry: v.tripCountry, tripName: v.tripName, departureDate: v.departureDate, days: daysLabel(v.daysToGo).toUpperCase(), balanceAmount: v.balanceAmount, payBalanceUrl: v.payBalanceUrl, bookingRef: v.bookingRef },
+  ).replace(FINAL_DETAILS_SLOT, v.finalDetailsHtml); // trusted HTML, built server-side per trip slug
   return {
-    subject: `7 days to ${v.tripCountry} 🎒 — balance + final details`,
-    html: shell("7 days to go", inner),
+    subject: `${daysLabel(v.daysToGo)} to ${v.tripCountry} 🎒 Balance + final details`,
+    html: shell(`${daysLabel(v.daysToGo)} to go`, inner),
   };
 }
 
@@ -399,33 +411,29 @@ export function tripCountdownEmail(v: {
   tripCountry: string;
   tripName: string;
   departureDate: string;
+  daysToGo: number;
   bookingRef: string;
   finalDetailsHtml: string;
   whatsappUrl: string;
 }): { subject: string; html: string } {
   const inner = render(
     `<tr><td style="padding:16px 24px 8px 24px">
-<h1 style="margin:0;font-size:28px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em">7 DAYS TO {{tripCountry}} 🎒</h1>
+<h1 style="margin:0;font-size:28px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em">{{days}} TO {{tripCountry}} 🎒</h1>
 </td></tr>
 <tr><td style="padding:0 24px 16px 24px;font-size:16px;line-height:1.5">
 <p style="margin:0 0 12px 0">Hey {{firstName}},</p>
-<p style="margin:0 0 12px 0">One week until <strong>{{tripName}}</strong> on <strong>{{departureDate}}</strong>. You're paid in full — all that's left is packing 🎒</p>
+<p style="margin:0 0 12px 0">Nearly there! Your <strong>{{tripName}}</strong> trip starts on <strong>{{departureDate}}</strong>. You're all paid up, so all that's left is packing 🎒</p>
 
-${"{{finalDetailsHtml}}"}
-
-<div style="margin:18px 0;padding:14px;border:2px dashed #0a0a0a;background:#f5efe2">
-<div style="font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px">📱 Property WhatsApp</div>
-<p style="margin:0 0 10px 0;font-size:14px;line-height:1.5">Save this — direct line to the property crew. Use it for arrival timing, transfers or any "I'm running late" moments.</p>
-<a href="{{whatsappUrl}}" style="display:inline-block;background:#25d366;color:#ffffff;font-weight:900;text-transform:uppercase;padding:10px 16px;border:2px solid #0a0a0a;text-decoration:none">Open WhatsApp</a>
-</div>
+${FINAL_DETAILS_SLOT}
+${whatsappBox(v.whatsappUrl)}
 
 <p style="margin:0 0 20px 0;font-size:13px;color:#555">Booking ref: <strong>{{bookingRef}}</strong></p>
 </td></tr>`,
-    { ...v } as Record<string, string>,
-  ).replace("{{finalDetailsHtml}}", v.finalDetailsHtml);
+    { firstName: v.firstName, tripCountry: v.tripCountry, tripName: v.tripName, departureDate: v.departureDate, days: daysLabel(v.daysToGo).toUpperCase(), bookingRef: v.bookingRef },
+  ).replace(FINAL_DETAILS_SLOT, v.finalDetailsHtml); // trusted HTML, built server-side per trip slug
   return {
-    subject: `7 days to ${v.tripCountry} 🎒 — final details inside`,
-    html: shell("7 days to go", inner),
+    subject: `${daysLabel(v.daysToGo)} to ${v.tripCountry} 🎒 Final details inside`,
+    html: shell(`${daysLabel(v.daysToGo)} to go`, inner),
   };
 }
 

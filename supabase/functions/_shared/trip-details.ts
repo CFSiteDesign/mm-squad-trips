@@ -20,7 +20,7 @@ type PropertyChat = { property: string; url: string };
 function chatsBlock(chats: PropertyChat[]): string {
   return `<div style="margin:18px 0;padding:16px;border:2px solid #0a0a0a;background:#f6fff4">
 <div style="font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;margin-bottom:10px">Join your squad WhatsApp chats</div>
-<div style="font-size:14px;line-height:1.6;margin-bottom:10px">One group chat per stop — join them all so you're plugged in before you land.</div>
+<div style="font-size:14px;line-height:1.6;margin-bottom:10px">One group chat per stop: join them all so you're plugged in before you land.</div>
 <ul style="margin:0;padding:0 0 0 18px;font-size:14px;line-height:1.7">
 ${chats
   .map(
@@ -66,9 +66,10 @@ const THAILAND_CHATS: PropertyChat[] = [];
 
 const TRIP_DETAILS: Record<string, TripFinalDetails> = {
   thailand: {
-    whatsappUrl: "https://chat.whatsapp.com/ISFzdY6OEfPEnfhG6N8Jsa",
+    // No verified Thailand chat yet; the old value was the Phnom Penh group.
+    whatsappUrl: "",
     finalDetailsHtml:
-      block("Final details — Thailand", [
+      block("Final details: Thailand", [
         "<strong>Meeting point:</strong> Mad Monkey Bangkok. Check-in from 2pm on departure day (a Tuesday).",
         "<strong>Day-1 kick-off:</strong> Beats + Bingo at 8pm at the hostel. Don't miss it, that's where you meet your crew.",
         "<strong>Heading north:</strong> Day 3 is the overnight bus to Chiang Mai (departs 5pm), then minivans to Pai and back. 762 bends on the Pai road, so pack motion sickness tablets if that's you.",
@@ -80,73 +81,70 @@ const TRIP_DETAILS: Record<string, TripFinalDetails> = {
   vietnam: {
     whatsappUrl: VIETNAM_CHATS[0].url,
     finalDetailsHtml:
-      block("Final details — Vietnam", [
-        "<strong>Meeting point:</strong> Mad Monkey Hanoi (Old Quarter). Free pre-trip night included — arrive Sunday before departure.",
-        "<strong>Welcome drinks:</strong> 7pm at the hostel bar on Sunday.",
-        "<strong>Day-1 kick-off:</strong> 9am Monday — Old Quarter walking tour. Don't be late, the bia hoi won't wait.",
+      block("Final details: Vietnam", [
+        "<strong>Meeting point:</strong> Mad Monkey Hanoi (Old Quarter). Free pre-trip night included: arrive the day before your departure date.",
+        "<strong>Day 1:</strong> settle into Hanoi, then a welcome drink at the hostel to meet your crew, with optional free karaoke and a pub crawl.",
         "<strong>What to pack:</strong> light layers + warm jacket for Ha Giang (cold at altitude), swimwear for Lan Ha Bay, sturdy shoes, rain shell, reef-safe sunscreen.",
         "<strong>Cash:</strong> bring ~$150 USD or equivalent VND for tips, optional add-ons and street food.",
-        "<strong>Weather right now:</strong> mixed — check the forecast for Hanoi + Ha Giang the day before you fly.",
-        "<strong>Nearest airport:</strong> arrive into HAN (Hanoi). Depart from DAD (Danang) — we can help with transfers.",
+        "<strong>Weather right now:</strong> mixed, so check the forecast for Hanoi + Ha Giang the day before you fly.",
+        "<strong>Nearest airport:</strong> arrive into HAN (Hanoi). Depart from DAD (Da Nang), and we can help with transfers.",
       ]) + chatsBlock(VIETNAM_CHATS),
   },
   indonesia: {
     whatsappUrl: INDONESIA_CHATS[0].url,
     finalDetailsHtml:
-      block("Final details — Indonesia", [
-        "<strong>Meeting point:</strong> Mad Monkey Uluwatu. Free pre-trip night included — arrive Sunday before departure.",
-        "<strong>Welcome drinks:</strong> 6pm at the cliffside bar on Sunday.",
-        "<strong>Day-1 kick-off:</strong> 8:30am Monday — surf lesson at Padang Padang. Bring swimwear.",
+      block("Final details: Indonesia", [
+        "<strong>Meeting point:</strong> Mad Monkey Uluwatu. Free pre-trip night included: arrive the day before your departure date.",
+        "<strong>Day 1:</strong> a Welcome Sunset session at Panorama Point with your crew, and a welcome drink to kick things off.",
         "<strong>What to pack:</strong> swimwear x3, reef-safe sunscreen, light layers, sandals + closed shoes for hikes, dry bag for boats.",
         "<strong>Cash:</strong> bring ~$200 USD or equivalent IDR for boats, scooters, tips and warungs.",
         "<strong>Weather right now:</strong> hot + humid; possible afternoon showers. Pack a light rain shell.",
-        "<strong>Nearest airport:</strong> arrive into DPS (Bali Denpasar). Depart from LOP (Lombok) — easy transfer.",
+        "<strong>Nearest airport:</strong> arrive into DPS (Bali Denpasar). Depart from LOP (Lombok), a 30-minute shuttle from Kuta Lombok.",
       ]) + chatsBlock(INDONESIA_CHATS),
   },
   cambodia: {
     whatsappUrl: CAMBODIA_CHATS[0].url,
     finalDetailsHtml:
-      block("Final details — Cambodia", [
-        "<strong>Meeting point:</strong> Mad Monkey Phnom Penh. Free pre-trip night included — arrive Sunday before departure.",
-        "<strong>Welcome drinks:</strong> 7pm at the rooftop bar on Sunday.",
-        "<strong>Day-1 kick-off:</strong> 9am Monday — Killing Fields + S21 tour. Wear something respectful.",
+      block("Final details: Cambodia", [
+        "<strong>Meeting point:</strong> Mad Monkey Phnom Penh. Free pre-trip night included: arrive the day before your departure date.",
+        "<strong>Day 1:</strong> a Welcome Khmer Family Dinner with your crew, 6:30pm to 8pm.",
         "<strong>What to pack:</strong> light cotton clothes, modest cover-up for temples (shoulders + knees), trainers for Angkor, swimwear for Sihanoukville, mozzy spray.",
         "<strong>Cash:</strong> USD is widely accepted. Bring small bills (~$150) for tips, tuk-tuks and markets.",
         "<strong>Weather right now:</strong> hot, occasional rain. Stay hydrated.",
-        "<strong>Nearest airport:</strong> arrive into PNH (Phnom Penh). Depart from REP (Siem Reap) or KOS (Sihanoukville).",
+        "<strong>Nearest airport:</strong> arrive into PNH (Phnom Penh). The trip ends with the bus back to Phnom Penh, so you fly home from PNH too.",
       ]) + chatsBlock(CAMBODIA_CHATS),
   },
   "indonesia-7": {
     whatsappUrl: INDONESIA7_CHATS[0].url,
     finalDetailsHtml:
-      block("Final details — Indonesia (7-day)", [
-        "<strong>Meeting point:</strong> Mad Monkey Gili Trawangan. Free pre-trip night included — arrive the day before departure.",
+      block("Final details: Indonesia (7-day)", [
+        "<strong>Meeting point:</strong> Mad Monkey Gili Trawangan. Free pre-trip night included: arrive the day before your departure date.",
         "<strong>Welcome dinner:</strong> traditional Mexican family dinner at the hostel on arrival night.",
-        "<strong>Day-1 kick-off:</strong> settle into Gili T — beach, pool and meeting the crew before dinner.",
-        "<strong>Getting there:</strong> most fly into Bali (DPS) or Lombok (LOP), then a fast-boat over to Gili Trawangan — we can help arrange the transfer.",
+        "<strong>Day 1:</strong> settle into Gili T, with the beach, the pool and meeting the crew before dinner.",
+        "<strong>Getting there:</strong> most fly into Bali (DPS) or Lombok (LOP), then a fast boat over to Gili Trawangan, and we can help arrange the transfer.",
         "<strong>What to pack:</strong> swimwear x3, reef-safe sunscreen, sandals + trainers, a dry bag for the boats, and board shorts / rash vest for surf camp at Kuta Lombok.",
         "<strong>Cash:</strong> bring ~$200 USD or equivalent IDR for boats, drinks, tips and warungs.",
-        "<strong>Weather right now:</strong> hot + humid with the odd afternoon shower — pack a light rain layer.",
+        "<strong>Weather right now:</strong> hot + humid with the odd afternoon shower, so pack a light rain layer.",
         "<strong>Nearest airport:</strong> depart from Lombok (LOP) after surf camp in Kuta Lombok.",
       ]) + chatsBlock(INDONESIA7_CHATS),
   },
   "vietnam-7": {
     whatsappUrl: VIETNAM7_CHATS[0].url,
     finalDetailsHtml:
-      block("Final details — Vietnam (7-day)", [
-        "<strong>Meeting point:</strong> Mad Monkey Hanoi (Old Quarter). Free pre-trip night included — arrive the day before departure.",
+      block("Final details: Vietnam (7-day)", [
+        "<strong>Meeting point:</strong> Mad Monkey Hanoi (Old Quarter). Free pre-trip night included: arrive the day before your departure date.",
         "<strong>Welcome drinks:</strong> at the hostel bar on arrival night.",
-        "<strong>Day-1 kick-off:</strong> Hanoi Old Quarter — street food, bia hoi and the Train Street run.",
+        "<strong>Day 1:</strong> settle into Hanoi, then a welcome drink at the hostel to meet your crew, with optional free karaoke and a pub crawl.",
         "<strong>What to pack:</strong> warm layers + a proper jacket and gloves for the Ha Giang Loop (cold at altitude on the bikes), rain shell, sturdy shoes, swimwear.",
         "<strong>Cash:</strong> bring ~$150 USD or equivalent VND for tips, optional add-ons and street food.",
-        "<strong>Weather right now:</strong> Ha Giang can be cold and wet — check the Hanoi + Ha Giang forecast the day before you fly.",
+        "<strong>Weather right now:</strong> Ha Giang can be cold and wet, so check the Hanoi + Ha Giang forecast the day before you fly.",
         "<strong>Nearest airport:</strong> arrive into HAN (Hanoi Noi Bai). The loop returns to Hanoi, so you also depart from HAN.",
       ]) + chatsBlock(VIETNAM7_CHATS),
   },
 };
 
 const DEFAULT_DETAILS: TripFinalDetails = {
-  whatsappUrl: "https://chat.whatsapp.com/ISFzdY6OEfPEnfhG6N8Jsa",
+  whatsappUrl: "",
   finalDetailsHtml: block("Final details", [
     "Your local crew will meet you at the Mad Monkey hostel for arrival check-in.",
     "Pack light layers, swimwear, reef-safe sunscreen, sturdy shoes, and a rain shell.",
