@@ -79,14 +79,29 @@ export type KlaviyoProfile = {
 
 const E164 = /^\+[1-9]\d{7,14}$/;
 
+/** True when some Klaviyo profile already has this E.164 number. */
+async function phoneNumberTaken(phone: string): Promise<boolean> {
+  const filter = encodeURIComponent(`equals(phone_number,"${phone}")`);
+  const found = await call("GET", `/profiles/?filter=${filter}`);
+  if (!found || typeof found !== "object" || !("data" in found)) return false;
+  return Array.isArray(found.data) && found.data.length > 0;
+}
+
 /** Create-or-update by email. Returns the Klaviyo profile id. */
 export async function upsertProfile(p: KlaviyoProfile): Promise<string> {
   const attributes: Record<string, unknown> = { email: p.email, properties: p.properties };
   if (p.firstName) attributes.first_name = p.firstName;
   if (p.lastName) attributes.last_name = p.lastName;
-  // Klaviyo rejects the whole profile on a bad phone number, so only send
-  // clean E.164 and keep the raw value on a property.
-  if (p.phone && E164.test(p.phone)) attributes.phone_number = p.phone;
+  // Klaviyo rejects the whole profile when phone_number is invalid or already
+  // on a profile. Send it only as clean E.164 that nobody has yet.
+  const phone = p.phone && E164.test(p.phone) ? p.phone : "";
+  if (phone) {
+    if (await phoneNumberTaken(phone)) {
+      console.warn(`klaviyo phone already on a profile, omitting phone_number for ${p.email}`);
+    } else {
+      attributes.phone_number = phone;
+    }
+  }
   const res = (await call("POST", "/profile-import/", { data: { type: "profile", attributes } })) as { data?: { id?: string } };
   const id = res?.data?.id;
   if (!id) throw new Error("Klaviyo profile import returned no id");
