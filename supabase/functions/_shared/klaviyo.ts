@@ -87,25 +87,47 @@ async function phoneNumberTaken(phone: string): Promise<boolean> {
   return Array.isArray(found.data) && found.data.length > 0;
 }
 
+/** Klaviyo 400s the whole import when phone_number is already on another profile. */
+function duplicatePhoneImportError(error: unknown): boolean {
+  const message = (error instanceof Error ? error.message : String(error)).toLowerCase();
+  const aboutPhone = message.includes("phone_number") || message.includes("phone number");
+  return aboutPhone && (message.includes("already") || message.includes("duplicate"));
+}
+
+async function importProfile(attributes: Record<string, unknown>): Promise<string> {
+  const res = (await call("POST", "/profile-import/", { data: { type: "profile", attributes } })) as { data?: { id?: string } };
+  const id = res?.data?.id;
+  if (!id) throw new Error("Klaviyo profile import returned no id");
+  return id;
+}
+
 /** Create-or-update by email. Returns the Klaviyo profile id. */
 export async function upsertProfile(p: KlaviyoProfile): Promise<string> {
-  const attributes: Record<string, unknown> = { email: p.email, properties: p.properties };
+  const properties: Record<string, unknown> = { ...p.properties };
+  const attributes: Record<string, unknown> = { email: p.email, properties };
   if (p.firstName) attributes.first_name = p.firstName;
   if (p.lastName) attributes.last_name = p.lastName;
-  // Klaviyo rejects the whole profile when phone_number is invalid or already
-  // on a profile. Send it only as clean E.164 that nobody has yet.
+  // Pre-check is the fast path. A number claimed between the GET and the
+  // import still rejects the whole profile, so that case retries once without it.
+  // The intended number stays on allin_phone so flows can see the conflict.
   const phone = p.phone && E164.test(p.phone) ? p.phone : "";
   if (phone) {
     if (await phoneNumberTaken(phone)) {
+      properties.allin_phone = phone;
       console.warn(`klaviyo phone already on a profile, omitting phone_number for ${p.email}`);
     } else {
       attributes.phone_number = phone;
     }
   }
-  const res = (await call("POST", "/profile-import/", { data: { type: "profile", attributes } })) as { data?: { id?: string } };
-  const id = res?.data?.id;
-  if (!id) throw new Error("Klaviyo profile import returned no id");
-  return id;
+  try {
+    return await importProfile(attributes);
+  } catch (error) {
+    if (!attributes.phone_number || !duplicatePhoneImportError(error)) throw error;
+    delete attributes.phone_number;
+    properties.allin_phone = phone;
+    console.warn(`klaviyo phone claimed during import, retrying without phone_number for ${p.email}`);
+    return await importProfile(attributes);
+  }
 }
 
 /** Add to a list without recording marketing consent (transactional use). */
