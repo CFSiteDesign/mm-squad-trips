@@ -77,9 +77,10 @@ Deno.serve(async (req) => {
     /** Adventure Advisors per-link token. Opaque, [A-Za-z0-9_-]{1,32},
      *  case-sensitive; stored untouched so their side can match the sale. */
     advisorRef?: string;
-    /** From the "how are you travelling?" gate. Independent = one traveller,
-     *  guaranteed to run. Crew = waits on the 5-booking minimum, whatever the
-     *  spot count. Absent on older pages, which keep the spot-count rule. */
+    /** From the "how are you travelling?" gate. Independent = one traveller;
+     *  crew = travelling with a group. Every departure runs either way (no
+     *  minimum since 8 Oct 2026); it decides lead_solo, which picks the copy
+     *  and the under-5 heads-up. Absent on older pages: spot-count rule. */
     travellerMode?: "independent" | "crew";
   };
   try { payload = await req.json(); } catch { return err("Invalid JSON body"); }
@@ -365,7 +366,7 @@ Deno.serve(async (req) => {
       // being cancelled for numbers, so it follows from the spot count rather
       // than a checkbox the guest might miss.
       // With the gate, the traveller says which they are: a crew booking of one
-      // spot still waits on the minimum, so it is not solo.
+      // spot is not solo (it gets the under-5 heads-up 10 days out).
       lead_solo: String(
         travellerMode ? travellerMode === "independent" : groupSize === 1 || String(lead.solo) === "true",
       ),

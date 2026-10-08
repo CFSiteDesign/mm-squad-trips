@@ -5,8 +5,8 @@
 // mirrored as ?mode= in the address bar, and the pages switch their copy on
 // it. Links that carry ?mode= skip the gate, so ads and advisors can send
 // people straight to the right version. Nothing below the page changes:
-// a one-spot booking is already guaranteed (lead_solo), a crew booking keeps
-// the 5-traveller minimum.
+// every departure runs (no minimum since 8 Oct 2026); a crew booking only
+// differs in the copy it sees and the under-5 heads-up 10 days out.
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { gtmPushEvent } from "@/utils/gtmTracker";

@@ -202,104 +202,10 @@ export function creatorPerksBlock(creatorCode?: string | null): string {
 </div>`;
 }
 
-export function bookingConfirmationEmail(v: {
-  firstName: string;
-  tripCountry: string;
-  tripName: string;
-  departureDate: string;
-  spots: number | string;
-  amount: string;
-  bookingRef: string;
-  bookingUrl: string;
-  creatorCode?: string | null;
-}): { subject: string; html: string } {
-  const inner = render(
-    `<tr><td style="padding:16px 24px 8px 24px">
-<h1 style="margin:0;font-size:28px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em">DEPOSIT IN. SPOT LOCKED 🔒</h1>
-</td></tr>
-<tr><td style="padding:0 24px 16px 24px;font-size:16px;line-height:1.5">
-<p style="margin:0 0 12px 0">Hey {{firstName}},</p>
-<p style="margin:0 0 16px 0">Your deposit for <strong>{{tripName}}</strong> is in. Here's the rundown:</p>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #0a0a0a;margin:0 0 16px 0">
-<tr><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a"><strong>Trip</strong></td><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a">{{tripName}}</td></tr>
-<tr><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a"><strong>Departure</strong></td><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a">{{departureDate}}</td></tr>
-<tr><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a"><strong>Spots</strong></td><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a">{{spots}}</td></tr>
-<tr><td style="padding:10px 14px"><strong>Deposit paid</strong></td><td style="padding:10px 14px">{{amount}}</td></tr>
-</table>
-
-<div style="margin:18px 0;padding:16px;border:2px solid #0a0a0a;background:#ccff01">
-<div style="font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px">✅ Your trip is confirmed</div>
-<p style="margin:0;font-size:14px;line-height:1.5"><strong>Every departure is guaranteed to run</strong> — there's no minimum group size, so you're locked in from the moment you book. Go ahead and book your flights.</p>
-</div>
-
-{{creatorPerks}}
-
-<p style="margin:0 0 12px 0"><strong>What happens next:</strong></p>
-<ul style="margin:0 0 16px 18px;padding:0;font-size:14px;line-height:1.6">
-<li>Your trip is confirmed — book your flights whenever you're ready.</li>
-<li>Balance is due 7 days before departure — you'll get a reminder with a payment link.</li>
-</ul>
-
-<p style="margin:0 0 20px 0">Booking ref: <strong>{{bookingRef}}</strong></p>
-<a href="{{bookingUrl}}" style="display:inline-block;background:#ff6600;color:#0a0a0a;font-weight:900;text-transform:uppercase;padding:14px 22px;border:2px solid #0a0a0a;text-decoration:none">View booking</a>
-</td></tr>`,
-    v as unknown as Record<string, string>,
-    // creatorPerks is trusted server-built HTML (the code inside is escaped),
-    // so it is injected after render() rather than through it.
-  ).replace("{{creatorPerks}}", creatorPerksBlock(v.creatorCode));
-  return {
-    subject: `Deposit in for ${v.tripCountry} 🔒 — hold off on flights`,
-    html: shell("Deposit in", inner),
-  };
-}
-
-export function tripConfirmedEmail(v: {
-  firstName: string;
-  tripCountry: string;
-  tripName: string;
-  departureDate: string;
-  spots: number | string;
-  balanceAmount: string;
-  balanceDueDate: string;
-  payBalanceUrl: string;
-  bookingRef: string;
-  bookingUrl: string;
-}): { subject: string; html: string } {
-  const inner = render(
-    `<tr><td style="padding:16px 24px 8px 24px">
-<h1 style="margin:0;font-size:28px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em">TRIP CONFIRMED ✅ BOOK YOUR FLIGHTS</h1>
-</td></tr>
-<tr><td style="padding:0 24px 16px 24px;font-size:16px;line-height:1.5">
-<p style="margin:0 0 12px 0">Hey {{firstName}},</p>
-<p style="margin:0 0 12px 0">Big news — <strong>{{tripName}}</strong> on <strong>{{departureDate}}</strong> is officially <strong>CONFIRMED</strong>. It's a go.</p>
-
-<div style="margin:18px 0;padding:16px;border:2px solid #0a0a0a;background:#ccff01">
-<div style="font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px">✈️ Green light on flights</div>
-<p style="margin:0;font-size:14px;line-height:1.5">You're cleared to book. Aim to arrive the day before departure (your free pre-trip night). Reach out if you'd like a hand with anything.</p>
-</div>
-
-<p style="margin:0 0 12px 0"><strong>Balance to settle:</strong></p>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #0a0a0a;margin:0 0 16px 0">
-<tr><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a"><strong>Spots</strong></td><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a">{{spots}}</td></tr>
-<tr><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a"><strong>Balance</strong></td><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a">{{balanceAmount}}</td></tr>
-<tr><td style="padding:10px 14px"><strong>Due by</strong></td><td style="padding:10px 14px">{{balanceDueDate}} (7 days before departure)</td></tr>
-</table>
-
-<p style="margin:0 0 12px 0">Pay it anytime from now. Heads up: if you don't, we'll auto-charge the card on file 7 days before departure.</p>
-
-<p style="margin:18px 0"><a href="{{payBalanceUrl}}" style="display:inline-block;background:#ff6600;color:#0a0a0a;font-weight:900;text-transform:uppercase;padding:14px 22px;border:2px solid #0a0a0a;text-decoration:none">Pay balance now</a></p>
-
-<p style="margin:0 0 20px 0;font-size:13px;color:#555">Booking ref: <strong>{{bookingRef}}</strong> · <a href="{{bookingUrl}}" style="color:#0a0a0a">View booking</a></p>
-</td></tr>`,
-    v as Record<string, string>,
-  );
-  return {
-    subject: `${v.tripCountry} is CONFIRMED ✅ — book your flights`,
-    html: shell("Trip confirmed", inner),
-  };
-}
-
-export function soloBookingConfirmedEmail(v: {
+// The one booking confirmation every guest gets (8 Oct 2026: no minimum, so
+// crews and independents both hear "confirmed, book your flights" right away).
+// Handles deposit (balance block + pay link) and paid in full.
+export function bookingConfirmedEmail(v: {
   firstName: string;
   tripCountry: string;
   tripName: string;
@@ -322,7 +228,7 @@ export function soloBookingConfirmedEmail(v: {
 </table>
 <p style="margin:0 0 12px 0">Pay it anytime from now. Heads up: if you don't, we'll auto-charge the card on file 7 days before departure.</p>
 <p style="margin:18px 0"><a href="{{payBalanceUrl}}" style="display:inline-block;background:#ff6600;color:#0a0a0a;font-weight:900;text-transform:uppercase;padding:14px 22px;border:2px solid #0a0a0a;text-decoration:none">Pay balance now</a></p>`
-    : `<p style="margin:0 0 16px 0"><strong>You're paid in full — nothing left to settle 🎉</strong></p>`;
+    : `<p style="margin:0 0 16px 0"><strong>You're paid in full, nothing left to settle 🎉</strong></p>`;
 
   const inner = render(
     `<tr><td style="padding:16px 24px 8px 24px">
@@ -330,10 +236,10 @@ export function soloBookingConfirmedEmail(v: {
 </td></tr>
 <tr><td style="padding:0 24px 16px 24px;font-size:16px;line-height:1.5">
 <p style="margin:0 0 12px 0">Hey {{firstName}},</p>
-<p style="margin:0 0 12px 0">You booked <strong>{{tripName}}</strong> on <strong>{{departureDate}}</strong> as a <strong>solo traveller</strong> — which means it's <strong>guaranteed to run</strong>. No waiting on a minimum, no group needed. You're locked in.</p>
+<p style="margin:0 0 12px 0">You're booked on <strong>{{tripName}}</strong> on <strong>{{departureDate}}</strong>, and like every departure it's <strong>guaranteed to run</strong>. You're locked in.</p>
 <div style="margin:18px 0;padding:16px;border:2px solid #0a0a0a;background:#ccff01">
 <div style="font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px">✈️ Green light on flights</div>
-<p style="margin:0;font-size:14px;line-height:1.5">Book your flights whenever you're ready — your trip is confirmed. Aim to arrive the day before departure (your free pre-trip night). Shout if you'd like a hand with anything.</p>
+<p style="margin:0;font-size:14px;line-height:1.5">Book your flights whenever you're ready: your trip is confirmed. Aim to arrive the day before departure (your free pre-trip night). Shout if you'd like a hand with anything.</p>
 </div>
 {{creatorPerks}}
 ${balanceBlock}
@@ -344,7 +250,7 @@ ${balanceBlock}
     // so it is injected after render() rather than through it.
   ).replace("{{creatorPerks}}", creatorPerksBlock(v.creatorCode));
   return {
-    subject: `${v.tripCountry} is CONFIRMED ✅ — you're solo & good to book flights`,
+    subject: `${v.tripCountry} is confirmed ✅ Good to book your flights`,
     html: shell("You're confirmed", inner),
   };
 }
@@ -453,8 +359,7 @@ export function bookingOpsNotificationEmail(v: {
   /** Solo = one traveller, guaranteed to run. Group = several spots on one
    *  booking. Falls back to the spot count when a caller doesn't say. */
   bookingType?: "solo" | "group";
-  /** From the gate. When present it decides the label: an independent
-   *  booking always runs, a crew booking waits on 5 whatever its size. */
+  /** From the gate. Decides the label only: every booking runs (no minimum since 8 Oct 2026). */
   travellerMode?: "independent" | "crew";
 }): { subject: string; html: string } {
   // Ops asked (9 Sep 2026) for the type to be unmissable: it is the first
@@ -466,8 +371,8 @@ export function bookingOpsNotificationEmail(v: {
   const typeLabel = mode ? (solo ? "Independent" : "With a crew") : solo ? "Solo" : "Group";
   const typeDetail = mode
     ? solo
-      ? "1 traveller · guaranteed to run, no minimum"
-      : `${spotsText} · expecting a crew · runs once 5 have booked, tell them when it does`
+      ? "1 traveller · guaranteed to run"
+      : `${spotsText} · booked to travel with a crew · guaranteed to run`
     : solo
       ? "1 traveller · departure guaranteed to run"
       : `${spots} travellers booked together`;

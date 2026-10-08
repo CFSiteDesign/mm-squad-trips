@@ -396,7 +396,7 @@ export function BookingFlow({ trip, hideHeading = false }: { trip: Trip; hideHea
           >
             <span className="font-display text-lg">TRAVEL SOLO 🧳</span>
             <span className="mt-1 text-xs text-mm-black/70">
-              Just you — and it's <strong>guaranteed to run</strong>. No crew, no 5-person minimum. We plan the whole itinerary; you just show up, and you're cleared to book flights the moment you've paid.
+              Just you, and it's <strong>guaranteed to run</strong>. We plan the whole itinerary; you just show up, and you're cleared to book flights the moment you've paid.
             </span>
           </button>
           <p className="font-sticker text-[11px] tracking-[0.15em] text-mm-bone/70">
@@ -478,7 +478,7 @@ export function BookingFlow({ trip, hideHeading = false }: { trip: Trip; hideHea
                 )}
               </div>
               <p className="mt-2 font-sticker text-[10px] tracking-[0.14em] text-mm-bone/50">
-                {WEEKDAY_NAMES[startWeekday].toUpperCase()}S ONLY · {soloSelected ? "RUNS WHATEVER THE NUMBERS" : "NEEDS 5 TRAVELLERS TO RUN"}
+                {WEEKDAY_NAMES[startWeekday].toUpperCase()}S ONLY · EVERY DATE RUNS
               </p>
             </div>
           )}

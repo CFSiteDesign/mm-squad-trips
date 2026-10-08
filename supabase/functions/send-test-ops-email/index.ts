@@ -43,15 +43,14 @@ Deno.serve(async (req) => {
   <p style="margin:0 0 16px;line-height:1.5">
     Hey team — sending this so everyone can see what the automated ops
     notification looks like when a booking comes in / a departure hits its
-    5-traveller minimum on the All In squad trips platform.
+    5th traveller on the All In trips platform.
   </p>
   <p style="margin:0 0 16px;line-height:1.5">
     Going forward, you'll receive real versions of these whenever:
   </p>
   <ul style="margin:0 0 16px 20px;line-height:1.6">
     <li>A new booking is made (with lead name, spots, squad code, amount)</li>
-    <li>A departure officially confirms (hits 5 travellers)</li>
-    <li>A departure is auto-cancelled + refunded (didn't hit minimum 30 days out)</li>
+    <li>A departure reaches 5 travellers (a milestone only: every departure runs)</li>
   </ul>
   <p style="margin:0 0 16px;line-height:1.5">
     <strong>Region GMs</strong> are CC'd on the relevant trip only —

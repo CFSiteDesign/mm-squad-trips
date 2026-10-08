@@ -9,12 +9,11 @@ import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import {
   APP_URL,
-  bookingConfirmationEmail,
   bookingOpsNotificationEmail,
   OPS_NOTIFY_EMAILS,
   opsCcForTrip,
   sendEmail,
-  soloBookingConfirmedEmail,
+  bookingConfirmedEmail,
 } from "../_shared/email.ts";
 
 function envClient() {
@@ -207,13 +206,12 @@ async function processSession(
       const country =
         (m.trip_name as string)?.split(/[—\-:]/)[0]?.trim() || (m.trip_slug as string) || "your trip";
       const firstName = ((m.lead_name as string) || "").split(" ")[0] || "traveler";
-      const isSoloLead = m.lead_solo === "true";
-      if (isSoloLead) {
+      {
         const balanceTotal = Math.max(0, fullDue - amountPaidTotal);
         const depForDue = new Date(((m.departure_date as string) || "") + "T00:00:00Z");
         depForDue.setUTCDate(depForDue.getUTCDate() - 7);
         const balDue = isNaN(depForDue.getTime()) ? "" : depForDue.toISOString().slice(0, 10);
-        const { subject, html } = soloBookingConfirmedEmail({
+        const { subject, html } = bookingConfirmedEmail({
           firstName,
           tripCountry: country,
           tripName: (m.trip_name as string) || (m.trip_slug as string) || "",
@@ -229,18 +227,6 @@ async function processSession(
         });
         await sendEmail({ to: m.lead_email as string, subject, html, templateName: "backfill_booking_confirmation" });
         await sb.from("bookings").update({ trip_confirmed_notified_at: new Date().toISOString() }).eq("stripe_session_id", sessionId);
-      } else {
-        const { subject, html } = bookingConfirmationEmail({
-          firstName,
-          tripCountry: country,
-          tripName: (m.trip_name as string) || (m.trip_slug as string) || "",
-          departureDate: (m.departure_date as string) || "",
-          spots: groupSize,
-          amount: `$${amountPaidTotal.toFixed(2)} ${(session.currency || "usd").toUpperCase()}`,
-          bookingRef,
-          bookingUrl: `${APP_URL}/booking-success?session_id=${encodeURIComponent(sessionId)}`,
-        });
-        await sendEmail({ to: m.lead_email as string, subject, html, templateName: "backfill_trip_confirmed" });
       }
 
       try {

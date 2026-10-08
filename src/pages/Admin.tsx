@@ -849,7 +849,7 @@ function AddRunDateDialog({ onClose, onSaved }: { onClose: () => void; onSaved: 
     setSaving(true);
     try {
       // Manual run dates always win: they're public, bookable, guaranteed to run
-      // (no 5-traveller minimum) and ignore the normal booking cut-off.
+      // and ignore the normal booking cut-off.
       const overrides = {
         total_spots: n,
         bookable: true,
@@ -951,7 +951,7 @@ function AddRunDateDialog({ onClose, onSaved }: { onClose: () => void; onSaved: 
               className="mt-1 h-11 rounded-none border-[2px] border-mm-black bg-mm-bone"
             />
             <p className="mt-1 text-xs text-mm-black/60">
-              Guaranteed to run — it ignores the 5-traveller minimum and the booking cut-off.
+              Ignores the booking cut-off. (Every departure runs; there's no minimum.)
             </p>
 
           </div>

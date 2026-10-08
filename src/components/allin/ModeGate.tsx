@@ -61,7 +61,7 @@ export function ModeGate() {
               JOIN A GROUP, TRAVEL THE WHOLE ROUTE TOGETHER
             </span>
             <span className="mt-3 text-sm leading-snug text-mm-black/80">
-              Weekly departures with up to 20 backpackers. Runs once 5 have booked. Bring mates and the squad leader goes free.
+              Weekly departures with up to 20 backpackers. Every date runs. Bring mates and the squad leader goes free.
             </span>
             <span className="mt-4 inline-flex items-center gap-2 font-sticker text-[10px] tracking-[0.14em] text-mm-black">
               THAT'S ME <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
