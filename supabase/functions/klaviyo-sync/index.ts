@@ -10,7 +10,9 @@
 //   {"action":"lists"}                          the lists in the Klaviyo account
 //   {"action":"create_test_list"}               make "ALL IN - Sync Test" and store its id
 //   {"action":"dry_run"}                        what a drain would send
-//   {"action":"test_profile","email":"…"}       synthetic booking -> test list (test mode only)
+//   {"action":"test_profile","email":"…"}       synthetic booking -> test list (test or live mode,
+//                                               allowlisted only; options trip, date, name, phone,
+//                                               relist: re-add so list-triggered flows fire, event: false)
 //   {"action":"test_journey","email":"…"}       one synthetic guest per trip, every event (test mode only)
 //   {"action":"check","email":"…"}              read a profile, its lists and events back from Klaviyo
 //   {"action":"backfill"}                       queue profile_sync for future bookings; phone is set only if that Klaviyo profile has none
@@ -27,6 +29,7 @@ import {
   enqueueKlaviyo,
   inspectProfile,
   listLists,
+  removeFromList,
   METRIC_NAMES,
   trackEvent,
   upsertProfile,
@@ -298,21 +301,30 @@ Deno.serve(async (req) => {
 
     if (action === "test_profile") {
       const email = str(body.email).trim().toLowerCase();
-      if (cfg.mode !== "test") return json({ error: `test_profile needs klaviyo_mode = test (it is ${cfg.mode})` }, 400);
+      // Live mode too since 8 Oct 2026 (Mich testing her WhatsApp flow): still
+      // allowlisted addresses only, still only the test list.
+      if (cfg.mode !== "test" && cfg.mode !== "live") return json({ error: `test_profile needs klaviyo_mode test or live (it is ${cfg.mode})` }, 400);
       if (!email || !allowlisted(cfg, email)) return json({ error: "email must be in klaviyo_test_emails" }, 400);
       const slug = str(body.trip) || "vietnam-7";
+      // A real inbox (no +tag) keeps its own name unless one is given.
+      const name = str(body.name) || (email.includes("+") ? "ALL IN Test" : "");
+      const phone = str(body.phone).replace(/[\s()-]/g, "");
       const { data: trip } = await sb.from("trips").select("slug,name,code,days,default_price").eq("slug", slug).maybeSingle();
       if (!trip) return json({ error: `unknown trip ${slug}` }, 400);
       const departureDate = str(body.date) || plusDays(new Date().toISOString().slice(0, 10), 14);
       const ctx: Ctx = {
-        lead: { lead_email: email, lead_name: str(body.name) || "ALL IN Test", lead_phone: "", group_size: 1, booking_ref: `TEST-${Date.now().toString(36).toUpperCase()}`, status: "Confirmed", traveller_mode: "independent", balance_status: "scheduled", balance_due_date: plusDays(departureDate, -7) },
+        lead: { lead_email: email, lead_name: name, lead_phone: phone, group_size: 1, booking_ref: `TEST-${Date.now().toString(36).toUpperCase()}`, status: "Confirmed", traveller_mode: "independent", balance_status: "scheduled", balance_due_date: plusDays(departureDate, -7) },
         trip: trip as Row,
         dep: { departure_date: departureDate, status: "confirmed" },
       };
       const { profile, eventProps } = buildProfile(ctx, { test: true });
       if (body.dry_run === true) return json({ ok: true, dry: true, profile, eventProps, listId: cfg.lists.test ?? null });
       const profileId = await upsertProfile(profile);
-      if (cfg.lists.test) await addToList(cfg.lists.test, profileId);
+      if (cfg.lists.test) {
+        if (body.relist === true) await removeFromList(cfg.lists.test, profileId);
+        await addToList(cfg.lists.test, profileId);
+      }
+      if (body.event === false) return json({ ok: true, sent: true, event: false, profileId, listId: cfg.lists.test ?? null, profile: profile.properties });
       const deposit = 99;
       const fullDue = Number((trip as { default_price?: number }).default_price) || deposit;
       await trackEvent({

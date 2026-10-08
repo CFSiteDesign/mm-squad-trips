@@ -53,7 +53,7 @@ function apiKey(): string {
   return k;
 }
 
-async function call(method: "GET" | "POST", path: string, body?: unknown): Promise<unknown> {
+async function call(method: "GET" | "POST" | "DELETE", path: string, body?: unknown): Promise<unknown> {
   const res = await fetch(`${BASE}${path}`, {
     method,
     headers: {
@@ -146,6 +146,11 @@ export async function upsertProfile(p: KlaviyoProfile): Promise<string> {
 /** Add to a list without recording marketing consent (transactional use). */
 export async function addToList(listId: string, profileId: string): Promise<void> {
   await call("POST", `/lists/${listId}/relationships/profiles/`, { data: [{ type: "profile", id: profileId }] });
+}
+
+/** Take a profile off a list, so re-adding it fires list-triggered flows again (tests only). */
+export async function removeFromList(listId: string, profileId: string): Promise<void> {
+  await call("DELETE", `/lists/${listId}/relationships/profiles/`, { data: [{ type: "profile", id: profileId }] });
 }
 
 export async function trackEvent(v: {

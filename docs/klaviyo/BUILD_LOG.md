@@ -223,3 +223,17 @@ _(written at the end, from the log above)_
 - Lesson for the runbook: the mode lives in a plain table row anyone with
   Lovable access can edit, and `updated_at` does not move when edited by hand.
 
+### 2026-10-08 · Testing a live flow on a staff profile
+- Mich built a WhatsApp flow for Indonesia 12 that only fires when
+  `allin_departure_date` is today, so she couldn't test it on her own profile,
+  and our test tools were locked to test mode (the account is live).
+- Change: `test_profile` now runs in test OR live mode, still allowlisted
+  addresses only and still only the test list. New options: `phone` (E.164,
+  for WhatsApp), `relist` (remove then re-add to the test list, because a
+  list-triggered flow only fires for new members; see 25 Sep), `event: false`.
+  A real inbox keeps its own name unless `name` is passed (the old default
+  "ALL IN Test" would have renamed a staff profile).
+- Lesson for the runbook: to test a date-filtered flow, set the date property
+  to today through the API, not by hand in the Klaviyo UI, so the property has
+  the same type a real booking writes.
+
