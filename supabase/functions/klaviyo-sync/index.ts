@@ -13,7 +13,7 @@
 //   {"action":"test_profile","email":"…"}       synthetic booking -> test list (test mode only)
 //   {"action":"test_journey","email":"…"}       one synthetic guest per trip, every event (test mode only)
 //   {"action":"check","email":"…"}              read a profile, its lists and events back from Klaviyo
-//   {"action":"backfill"}                       queue profile_sync for future bookings
+//   {"action":"backfill"}                       queue profile_sync for future bookings; phone is set only if that Klaviyo profile has none
 //   {"action":"backfill_mmk","scopes":[…]}      queue existing leads onto MMK reminder jobs
 //   {"action":"skip_stale","hours":24}          retire old pending rows before go-live
 //
@@ -405,14 +405,28 @@ Deno.serve(async (req) => {
         .select("stripe_session_id,departures!inner(departure_date)")
         .eq("spot_number", 1)
         .eq("status", "Confirmed")
-        .is("klaviyo_synced_at", null)
         .gte("departures.departure_date", new Date().toISOString().slice(0, 10));
+      const { data: pending } = await sb.from("klaviyo_outbox").select("booking_session").eq("status", "pending").eq("event", "profile_sync");
+      const pendingSessions = new Set((pending ?? []).map((r) => str((r as Row).booking_session)));
       let queued = 0;
+      let alreadyPending = 0;
       for (const l of leads ?? []) {
-        await enqueueKlaviyo(sb, str(l.stripe_session_id), "profile_sync", { source: "backfill" });
+        const session = str(l.stripe_session_id);
+        if (!session || pendingSessions.has(session)) {
+          alreadyPending++;
+          continue;
+        }
+        await enqueueKlaviyo(sb, session, "profile_sync", { source: "backfill" });
+        pendingSessions.add(session);
         queued++;
       }
-      return json({ ok: true, mode: cfg.mode, queued, note: "rows are drained by the next run according to klaviyo_mode" });
+      return json({
+        ok: true,
+        mode: cfg.mode,
+        queued,
+        alreadyPending,
+        note: "rows are drained by the next run according to klaviyo_mode. phone_number is set only when that Klaviyo profile has none",
+      });
     }
 
     if (action === "backfill_mmk") {
