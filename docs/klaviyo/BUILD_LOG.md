@@ -237,3 +237,12 @@ _(written at the end, from the log above)_
   to today through the API, not by hand in the Klaviyo UI, so the property has
   the same type a real booking writes.
 
+### 2026-10-08 · No minimum: two events retired
+- Charlie's no-minimum standard (every departure runs, every booking is
+  confirmed when placed). process-departure-events no longer enqueues
+  `departure_confirmed` when a departure reaches 5: a "Departure Confirmed"
+  flow would tell guests they weren't confirmed before. `departure_cancelled`
+  only fires for departures with bookings, which are no longer cancelled, so
+  it is effectively dead too. Test kit page updated to say both are retired
+  and that "you're confirmed" messages belong on Booking Placed.
+
