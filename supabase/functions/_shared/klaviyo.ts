@@ -79,6 +79,18 @@ export type KlaviyoProfile = {
 
 const E164 = /^\+[1-9]\d{7,14}$/;
 
+/** True when this email's Klaviyo profile already has a phone number. */
+async function profileHasPhone(email: string): Promise<boolean> {
+  const filter = encodeURIComponent(`equals(email,"${email}")`);
+  const found = await call("GET", `/profiles/?filter=${filter}&fields[profile]=phone_number`);
+  if (!found || typeof found !== "object" || !("data" in found) || !Array.isArray(found.data)) return false;
+  const row = found.data[0];
+  if (!row || typeof row !== "object" || !("attributes" in row)) return false;
+  const attributes = row.attributes;
+  if (!attributes || typeof attributes !== "object" || !("phone_number" in attributes)) return false;
+  return typeof attributes.phone_number === "string" && attributes.phone_number.length > 0;
+}
+
 /** True when some Klaviyo profile already has this E.164 number. */
 async function phoneNumberTaken(phone: string): Promise<boolean> {
   const filter = encodeURIComponent(`equals(phone_number,"${phone}")`);
@@ -107,11 +119,12 @@ export async function upsertProfile(p: KlaviyoProfile): Promise<string> {
   const attributes: Record<string, unknown> = { email: p.email, properties };
   if (p.firstName) attributes.first_name = p.firstName;
   if (p.lastName) attributes.last_name = p.lastName;
-  // Pre-check is the fast path. A number claimed between the GET and the
-  // import still rejects the whole profile, so that case retries once without it.
-  // The intended number stays on allin_phone so flows can see the conflict.
+  // Send phone_number only when this profile has none. A number claimed
+  // between the check and the import still rejects the whole profile, so
+  // that case retries once without it. The intended number stays on
+  // allin_phone so flows can see the conflict.
   const phone = p.phone && E164.test(p.phone) ? p.phone : "";
-  if (phone) {
+  if (phone && !(await profileHasPhone(p.email))) {
     if (await phoneNumberTaken(phone)) {
       properties.allin_phone = phone;
       console.warn(`klaviyo phone already on a profile, omitting phone_number for ${p.email}`);
