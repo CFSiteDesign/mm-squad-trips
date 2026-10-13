@@ -120,6 +120,8 @@ export type Database = {
           utm_content: string | null
           utm_medium: string | null
           utm_source: string | null
+          whatsapp_opt_in: boolean
+          whatsapp_opt_in_at: string | null
         }
         Insert: {
           additional_travelers?: Json | null
@@ -175,6 +177,8 @@ export type Database = {
           utm_content?: string | null
           utm_medium?: string | null
           utm_source?: string | null
+          whatsapp_opt_in?: boolean
+          whatsapp_opt_in_at?: string | null
         }
         Update: {
           additional_travelers?: Json | null
@@ -230,6 +234,8 @@ export type Database = {
           utm_content?: string | null
           utm_medium?: string | null
           utm_source?: string | null
+          whatsapp_opt_in?: boolean
+          whatsapp_opt_in_at?: string | null
         }
         Relationships: [
           {
