@@ -77,7 +77,7 @@ export type KlaviyoProfile = {
   properties: Record<string, unknown>;
 };
 
-const E164 = /^\+[1-9]\d{7,14}$/;
+export const E164 = /^\+[1-9]\d{7,14}$/;
 
 /** True when this email's Klaviyo profile already has a phone number. */
 async function profileHasPhone(email: string): Promise<boolean> {
@@ -148,6 +148,34 @@ export async function addToList(listId: string, profileId: string): Promise<void
   await call("POST", `/lists/${listId}/relationships/profiles/`, { data: [{ type: "profile", id: profileId }] });
 }
 
+/**
+ * WhatsApp consent for trip updates only (Klaviyo "transactional" = Meta utility
+ * messages), from the checkout box. Klaviyo's bulk subscribe job takes WhatsApp
+ * alongside email/SMS (help.klaviyo.com, "Understanding WhatsApp consent
+ * collection"). No list, so no double opt-in; the guest ticked the box.
+ */
+export async function subscribeWhatsAppTransactional(v: { email: string; phone: string; source: string }): Promise<void> {
+  await call("POST", "/profile-subscription-bulk-create-jobs/", {
+    data: {
+      type: "profile-subscription-bulk-create-job",
+      attributes: {
+        custom_source: v.source,
+        profiles: {
+          data: [{
+            type: "profile",
+            attributes: {
+              email: v.email,
+              phone_number: v.phone,
+              subscriptions: { whatsapp: { transactional: { consent: "SUBSCRIBED" } } },
+            },
+          }],
+        },
+        historical_import: false,
+      },
+    },
+  });
+}
+
 /** Take a profile off a list, so re-adding it fires list-triggered flows again (tests only). */
 export async function removeFromList(listId: string, profileId: string): Promise<void> {
   await call("DELETE", `/lists/${listId}/relationships/profiles/`, { data: [{ type: "profile", id: profileId }] });
@@ -201,11 +229,14 @@ export async function listLists(): Promise<Array<{ id: string; name: string }>> 
 export async function inspectProfile(email: string): Promise<null | {
   id: string;
   properties: Record<string, unknown>;
+  whatsapp: unknown;
   lists: string[];
   events: Array<{ metric: string; time: string; properties: Record<string, unknown> }>;
 }> {
   const filter = encodeURIComponent(`equals(email,"${email}")`);
-  const found = (await call("GET", `/profiles/?filter=${filter}`)) as { data?: Array<{ id: string; attributes?: { properties?: Record<string, unknown> } }> };
+  const found = (await call("GET", `/profiles/?filter=${filter}&additional-fields[profile]=subscriptions`)) as {
+    data?: Array<{ id: string; attributes?: { properties?: Record<string, unknown>; subscriptions?: Record<string, unknown> } }>;
+  };
   const p = found?.data?.[0];
   if (!p) return null;
   const lists = (await call("GET", `/profiles/${p.id}/lists/?fields[list]=name`)) as { data?: Array<{ attributes?: { name?: string } }> };
@@ -223,6 +254,7 @@ export async function inspectProfile(email: string): Promise<null | {
   return {
     id: p.id,
     properties: p.attributes?.properties ?? {},
+    whatsapp: (p.attributes?.subscriptions as { whatsapp?: unknown } | undefined)?.whatsapp ?? null,
     lists: (lists?.data ?? []).map((l) => l.attributes?.name ?? ""),
     events: (ev?.data ?? []).map((e) => ({
       metric: metricName.get(e.relationships?.metric?.data?.id ?? "") || `metric ${e.relationships?.metric?.data?.id ?? "?"}`,

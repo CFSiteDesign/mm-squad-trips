@@ -89,6 +89,8 @@ export interface CreateCheckoutInput {
   advisorRef?: string;
   /** From the gate; decides guaranteed vs waits-on-5 on the server. */
   travellerMode?: "independent" | "crew";
+  /** Ticked "Keep me posted on WhatsApp" (trip updates only). */
+  whatsappOptIn?: boolean;
   friendsMentioned?: string;
   /** Optional "Mad Monkey staff recommendation" name from the booking form. */
   staffRecommendation?: string;

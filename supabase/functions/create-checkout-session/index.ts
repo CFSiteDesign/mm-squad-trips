@@ -82,6 +82,8 @@ Deno.serve(async (req) => {
      *  minimum since 8 Oct 2026); it decides lead_solo, which picks the copy
      *  and the under-5 heads-up. Absent on older pages: spot-count rule. */
     travellerMode?: "independent" | "crew";
+    /** Ticked "Keep me posted on WhatsApp" at checkout (trip updates only). */
+    whatsappOptIn?: boolean;
   };
   try { payload = await req.json(); } catch { return err("Invalid JSON body"); }
 
@@ -371,6 +373,8 @@ Deno.serve(async (req) => {
         travellerMode ? travellerMode === "independent" : groupSize === 1 || String(lead.solo) === "true",
       ),
       traveller_mode: travellerMode,
+      // "true" only when the guest ticked the box; consent is never assumed.
+      whatsapp_opt_in: payload.whatsappOptIn === true ? "true" : "",
       friends_mentioned: friendsMentioned ?? "",
       staff_recommendation: (staffRecommendation ?? "").slice(0, 200),
       utm_source: utm.utm_source ?? "",

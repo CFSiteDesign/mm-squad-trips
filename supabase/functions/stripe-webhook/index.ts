@@ -256,6 +256,10 @@ async function writeBookings(session: Stripe.Checkout.Session) {
     // traveller, so each spot has to be findable by the link that sold it.
     advisor_ref: m.advisor_ref || null,
     traveller_mode: m.traveller_mode || null,
+    // WhatsApp trip-updates consent, lead only (it's their phone). The time is
+    // the consent record; klaviyo-sync passes it on as WhatsApp transactional.
+    whatsapp_opt_in: m.whatsapp_opt_in === "true",
+    whatsapp_opt_in_at: m.whatsapp_opt_in === "true" ? new Date((session.created ?? Date.now() / 1000) * 1000).toISOString() : null,
   });
   // Members
   for (let i = 1; i < groupSize; i++) {

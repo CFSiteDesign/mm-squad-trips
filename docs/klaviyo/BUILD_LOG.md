@@ -246,3 +246,19 @@ _(written at the end, from the log above)_
   it is effectively dead too. Test kit page updated to say both are retired
   and that "you're confirmed" messages belong on Booking Placed.
 
+### 2026-10-13 · WhatsApp consent from the checkout box
+- Charlie: a "Keep me posted on WhatsApp" box above Continue to Payment
+  ("Trip updates only. Opt out anytime."), unticked by default.
+- Path: checkout -> Stripe metadata `whatsapp_opt_in` -> webhook writes
+  `bookings.whatsapp_opt_in` + `whatsapp_opt_in_at` (lead row, the consent
+  record) -> klaviyo-sync sets `allin_whatsapp_opt_in` and, on booking_placed /
+  profile_sync with an E.164 phone, subscribes the phone to WhatsApp
+  TRANSACTIONAL (Meta utility messages) via the bulk subscribe job. Copy says
+  trip updates only, so never marketing.
+- Unverified going in: Klaviyo's API reference doesn't show the WhatsApp key;
+  the help article "Understanding WhatsApp consent collection" shows
+  `subscriptions.whatsapp.transactional`. Verified on Mich's profile with
+  `test_profile` + `whatsapp: true`, read back through `check` (see next entry).
+- A consent failure never blocks the sync; it lands in
+  `bookings.klaviyo_last_error` as "whatsapp consent: ...".
+

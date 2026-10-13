@@ -161,7 +161,8 @@ const COLUMNS: Record<AdminTable, ColumnDef[]> = {
       } },
     { key: "departure_id", label: "Departure", tooltip: "Which departure date was selected", readOnly: true, lookup: "departure" },
     { key: "booking_type", label: "Booking Type", tooltip: "Lead traveler or group member", readOnly: true },
-    { key: "traveller_mode", label: "Travelling", tooltip: "Independent = guaranteed to run. With a crew = waiting on 5 bookings; tell them when the date confirms.", readOnly: true, compute: (r) => {
+    { key: "whatsapp_opt_in", label: "WhatsApp", tooltip: "Ticked 'Keep me posted on WhatsApp' at checkout (trip updates only)", type: "boolean", readOnly: true },
+    { key: "traveller_mode", label: "Travelling", tooltip: "Independent = travelling alone. With a crew = travelling with a group. Every departure runs either way.", readOnly: true, compute: (r) => {
         const m = String(r.traveller_mode ?? "");
         if (m === "independent") return "Independent (guaranteed)";
         if (m === "crew") return "With a crew";

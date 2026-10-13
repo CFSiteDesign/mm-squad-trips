@@ -12,7 +12,8 @@
 //   {"action":"dry_run"}                        what a drain would send
 //   {"action":"test_profile","email":"…"}       synthetic booking -> test list (test or live mode,
 //                                               allowlisted only; options trip, date, name, phone,
-//                                               relist: re-add so list-triggered flows fire, event: false)
+//                                               relist: re-add so list-triggered flows fire, event: false,
+//                                               whatsapp: true = WhatsApp transactional consent)
 //   {"action":"test_journey","email":"…"}       one synthetic guest per trip, every event (test mode only)
 //   {"action":"check","email":"…"}              read a profile, its lists and events back from Klaviyo
 //   {"action":"backfill"}                       queue profile_sync for future bookings; phone is set only if that Klaviyo profile has none
@@ -30,6 +31,8 @@ import {
   inspectProfile,
   listLists,
   removeFromList,
+  subscribeWhatsAppTransactional,
+  E164,
   METRIC_NAMES,
   trackEvent,
   upsertProfile,
@@ -131,6 +134,8 @@ function buildProfile(ctx: Ctx, opts: { test: boolean }): { profile: KlaviyoProf
     allin_balance_due_date: str(lead.balance_due_date) || null,
     allin_last_synced_at: new Date().toISOString(),
     allin_test: opts.test,
+    // Ticked "Keep me posted on WhatsApp" at checkout (trip updates only).
+    allin_whatsapp_opt_in: lead.whatsapp_opt_in === true,
   };
   if (str(lead.advisor_ref)) properties.allin_advisor_ref = str(lead.advisor_ref);
   const eventProps = {
@@ -216,6 +221,15 @@ async function processRow(sb: SupabaseClient, row: Row, cfg: Cfg, dry: boolean):
   try {
     const profileId = await upsertProfile(profile);
     for (const l of lists) await addToList(l, profileId);
+    // WhatsApp trip-updates consent from the checkout box. Never blocks the sync:
+    // a failure is recorded on the booking and the rest still goes out.
+    if ((event === "booking_placed" || event === "profile_sync") && ctx.lead.whatsapp_opt_in === true && profile.phone && E164.test(profile.phone)) {
+      try {
+        await subscribeWhatsAppTransactional({ email: profile.email, phone: profile.phone, source: "ALL IN checkout: Keep me posted on WhatsApp" });
+      } catch (e) {
+        await sb.from("bookings").update({ klaviyo_last_error: `whatsapp consent: ${e instanceof Error ? e.message : String(e)}`.slice(0, 500) }).eq("stripe_session_id", session);
+      }
+    }
     if (metric) {
       await trackEvent({
         metric,
@@ -313,7 +327,7 @@ Deno.serve(async (req) => {
       if (!trip) return json({ error: `unknown trip ${slug}` }, 400);
       const departureDate = str(body.date) || plusDays(new Date().toISOString().slice(0, 10), 14);
       const ctx: Ctx = {
-        lead: { lead_email: email, lead_name: name, lead_phone: phone, group_size: 1, booking_ref: `TEST-${Date.now().toString(36).toUpperCase()}`, status: "Confirmed", traveller_mode: "independent", balance_status: "scheduled", balance_due_date: plusDays(departureDate, -7) },
+        lead: { lead_email: email, lead_name: name, lead_phone: phone, whatsapp_opt_in: body.whatsapp === true, group_size: 1, booking_ref: `TEST-${Date.now().toString(36).toUpperCase()}`, status: "Confirmed", traveller_mode: "independent", balance_status: "scheduled", balance_due_date: plusDays(departureDate, -7) },
         trip: trip as Row,
         dep: { departure_date: departureDate, status: "confirmed" },
       };
@@ -323,6 +337,10 @@ Deno.serve(async (req) => {
       if (cfg.lists.test) {
         if (body.relist === true) await removeFromList(cfg.lists.test, profileId);
         await addToList(cfg.lists.test, profileId);
+      }
+      if (body.whatsapp === true) {
+        if (!profile.phone || !E164.test(profile.phone)) return json({ error: "whatsapp: true needs an E.164 phone" }, 400);
+        await subscribeWhatsAppTransactional({ email, phone: profile.phone, source: "ALL IN test_profile" });
       }
       if (body.event === false) return json({ ok: true, sent: true, event: false, profileId, listId: cfg.lists.test ?? null, profile: profile.properties });
       const deposit = 99;

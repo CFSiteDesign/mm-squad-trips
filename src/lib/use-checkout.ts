@@ -56,6 +56,8 @@ export function useCheckout(trip: Trip, departure: Departure | null, opts: UseCh
     if (spots > maxSpots) setSpotsRaw(maxSpots);
   }, [maxSpots, spots]);
   const [submitting, setSubmitting] = useState(false);
+  // WhatsApp trip-updates opt-in. Unticked by default: consent has to be given.
+  const [whatsappOptIn, setWhatsappOptIn] = useState(false);
   const [squadStatus, setSquadStatus] = useState<CodeStatus | null>(null);
   const [discountStatus, setDiscountStatus] = useState<CodeStatus | null>(null);
   // Private departures owned by an entered squad code: invisible to the public,
@@ -200,6 +202,7 @@ export function useCheckout(trip: Trip, departure: Departure | null, opts: UseCh
         squadCode: appliedSquad || undefined,
         advisorRef,
         travellerMode: opts.travellerMode,
+        whatsappOptIn,
         utm: opts.utm ?? readUtm(),
         gaClientId: readGaClientId(),
       });
@@ -212,6 +215,7 @@ export function useCheckout(trip: Trip, departure: Departure | null, opts: UseCh
 
   return {
     form, setForm, setField,
+    whatsappOptIn, setWhatsappOptIn,
     spots, setSpots, maxSpots,
     submitting, codesPending,
     squadStatus, discountStatus,

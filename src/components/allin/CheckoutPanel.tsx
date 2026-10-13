@@ -9,7 +9,7 @@ import { type Checkout, type CheckoutFields, type CodeStatus } from "@/lib/use-c
 import type { Trip, Departure } from "@/types/trip";
 
 export function CheckoutPanel({ trip, departure, checkout, independent = false }: { trip: Trip; departure: Departure; checkout: Checkout; independent?: boolean }) {
-  const { form, setField, spots, setSpots, maxSpots, submitting, codesPending, squadStatus, discountStatus, discountAmount, appliedDiscount, submit } = checkout;
+  const { form, setField, spots, setSpots, maxSpots, submitting, codesPending, squadStatus, discountStatus, discountAmount, appliedDiscount, whatsappOptIn, setWhatsappOptIn, submit } = checkout;
 
   const pay = paymentLine(departure.date, spots, departure.price);
   const total = departure.price * spots;
@@ -117,6 +117,21 @@ export function CheckoutPanel({ trip, departure, checkout, independent = false }
         {pay.type === "full" && (
           <p className="mt-2 text-[11px] text-mm-black/60">Departures inside 7 days are paid in full — the deposit option isn't available this close to the date.</p>
         )}
+        <label htmlFor="whatsapp-opt-in" className="mt-4 flex cursor-pointer items-start gap-3 border-[3px] border-mm-black bg-mm-bone p-3">
+          <input
+            id="whatsapp-opt-in"
+            type="checkbox"
+            checked={whatsappOptIn}
+            onChange={(e) => setWhatsappOptIn(e.target.checked)}
+            className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer accent-[hsl(var(--mm-pink))]"
+          />
+          <span>
+            <span className="block font-display text-sm leading-tight text-mm-black">Keep me posted on WhatsApp</span>
+            <span className="mt-1 block text-[12px] leading-snug text-mm-black/70">
+              We'll send your day-by-day schedule, pickup times and anything you need before you go. Trip updates only. Opt out anytime.
+            </span>
+          </span>
+        </label>
         <button
           onClick={submit}
           disabled={submitting || codesPending}
