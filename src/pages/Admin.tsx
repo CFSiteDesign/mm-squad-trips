@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { GuestJourneys } from "@/components/admin/GuestJourneys";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 
 import { AdminWalkthrough } from "@/components/admin/AdminWalkthrough";
@@ -338,8 +339,11 @@ export default function Admin({ preview = false }: { preview?: boolean } = {}) {
             <SquadAdmin refreshKey={refreshKey} />
           </div>
         ) : (
-          <Tabs defaultValue="trips" className="mx-auto max-w-7xl">
+          <Tabs defaultValue={preview ? "journeys" : "trips"} className="mx-auto max-w-7xl">
             <TabsList className="flex flex-wrap gap-1 rounded-none border-[2px] border-mm-black bg-mm-bone p-1">
+              <TabsTrigger value="journeys" className="rounded-none data-[state=active]:bg-mm-pink data-[state=active]:text-mm-bone">
+                Guest journeys
+              </TabsTrigger>
               {TABS.map((t) => (
                 <TabsTrigger key={t.id} value={t.id} className="rounded-none data-[state=active]:bg-mm-pink data-[state=active]:text-mm-bone">
                   {t.label}
@@ -360,6 +364,9 @@ export default function Admin({ preview = false }: { preview?: boolean } = {}) {
                 <TableEditor table={t.id} refreshKey={refreshKey} />
               </TabsContent>
             ))}
+            <TabsContent value="journeys" className="mt-4">
+              <GuestJourneys />
+            </TabsContent>
             <TabsContent value="leaderboard" className="mt-4">
               <StaffLeaderboard refreshKey={refreshKey} />
             </TabsContent>
