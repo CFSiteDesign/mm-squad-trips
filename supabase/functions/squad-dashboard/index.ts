@@ -1,11 +1,9 @@
 // Return the squad leader's dashboard data, authenticated by access_token.
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-
-// Per the Aug 2026 squad copy (RALLY 3 MATES / RALLY 6 MATES), changed 3 Sep 2026 from 4 / 8.
-const TIER_HALF = 3;
-const TIER_FREE = 6;
-const STUDENT_GOAL = 10;
+// Tiers per the Aug 2026 squad copy (RALLY 3 MATES / RALLY 6 MATES), changed
+// 3 Sep 2026 from 4 / 8. Counted in mates, not checkouts (14 Oct 2026).
+import { matesByLeader, type SquadLeader, STUDENT_GOAL, TIER_FREE, TIER_HALF } from "../_shared/squad-reward.ts";
 
 function jr(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -22,7 +20,7 @@ function computeTier(count: number, isStudent: boolean) {
     const more = STUDENT_GOAL - count;
     return {
       discountPct: 0,
-      nextLine: `${more} more booking${more === 1 ? "" : "s"} to unlock 2 FREE squad leader spots`,
+      nextLine: `${more} more mate${more === 1 ? "" : "s"} to unlock 2 FREE squad leader spots`,
       progress: (count / STUDENT_GOAL) * 100,
     };
   }
@@ -33,14 +31,14 @@ function computeTier(count: number, isStudent: boolean) {
     const more = TIER_FREE - count;
     return {
       discountPct: 50,
-      nextLine: `50% off locked in — ${more} more booking${more === 1 ? "" : "s"} and your trip is FREE`,
+      nextLine: `50% off locked in. ${more} more mate${more === 1 ? "" : "s"} and your trip is FREE`,
       progress: 50 + ((count - TIER_HALF) / (TIER_FREE - TIER_HALF)) * 50,
     };
   }
   const more = TIER_HALF - count;
   return {
     discountPct: 0,
-    nextLine: `${more} more booking${more === 1 ? "" : "s"} to unlock 50% off`,
+    nextLine: `${more} more mate${more === 1 ? "" : "s"} to unlock 50% off`,
     progress: (count / TIER_HALF) * 50,
   };
 }
@@ -65,20 +63,32 @@ Deno.serve(async (req) => {
 
   const { data: leader, error: lErr } = await supabase
     .from("squad_leaders")
-    .select("id, name, email, code, preferred_trip_slug, preferred_month, created_at, is_student")
+    .select("id, name, email, code, preferred_trip_slug, preferred_month, created_at, is_student, reward_booking_ref")
     .eq("access_token", token)
     .maybeSingle();
   if (lErr) return jr({ error: lErr.message }, 500);
   if (!leader) return jr({ error: "Invalid or expired link" }, 404);
 
-  const { data: bookings, error: bErr } = await supabase
-    .from("squad_bookings")
-    .select("id, booker_name, booker_email, trip_slug, departure_date, created_at")
-    .eq("squad_leader_id", leader.id)
-    .order("created_at", { ascending: false });
-  if (bErr) return jr({ error: bErr.message }, 500);
+  // One entry per mate (traveller), newest first. Names only: no emails or
+  // session ids go to the leader.
+  let bookings: Array<{ id: string; booker_name: string; trip_slug: string | null; departure_date: string | null; created_at: string }>;
+  try {
+    const mates = (await matesByLeader(supabase, [leader as SquadLeader])).get(leader.id) ?? [];
+    bookings = mates
+      .map((x, i) => ({ id: `${i}`, booker_name: x.name, trip_slug: x.trip_slug, departure_date: x.departure_date, created_at: x.booked_at }))
+      .reverse();
+  } catch (e) {
+    return jr({ error: e instanceof Error ? e.message : "Could not load squad" }, 500);
+  }
 
-  const count = bookings?.length ?? 0;
+  // Rewards applied to the leader's own booking (_shared/squad-reward.ts).
+  const { data: rewardRows } = await supabase
+    .from("squad_rewards")
+    .select("tier, status, amount, balance_cut, refund_due, refunded, booking_ref")
+    .eq("squad_leader_id", leader.id);
+  const rewards = (rewardRows ?? []).filter((r) => r.status !== "processing");
+
+  const count = bookings.length;
   const isStudent = !!leader.is_student;
   return jr({
     leader: {
@@ -89,8 +99,9 @@ Deno.serve(async (req) => {
       preferredMonth: leader.preferred_month,
       isStudent,
     },
-    bookings: bookings ?? [],
+    bookings,
     count,
     tier: computeTier(count, isStudent),
+    rewards,
   });
 });

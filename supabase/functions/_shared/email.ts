@@ -472,14 +472,14 @@ export function squadMemberJoinedEmail(v: {
 <p style="margin:0 0 12px 0"><strong>{{memberName}}</strong> just booked <strong>{{tripName}}</strong> with your squad code.</p>
 <div style="margin:16px 0;padding:14px;border:2px solid #0a0a0a;background:#ccff01">
 <div style="font-size:12px;text-transform:uppercase;letter-spacing:.15em">Squad progress</div>
-<div style="font-size:24px;font-weight:900;margin-top:4px">{{bookingsCount}} / {{progressGoal}} bookings</div>
+<div style="font-size:24px;font-weight:900;margin-top:4px">{{bookingsCount}} / {{progressGoal}} mates booked</div>
 <div style="font-size:13px;margin-top:4px">{{toNextMilestone}} to go until {{nextReward}}.</div>
 </div>
 <a href="{{dashboardUrl}}" style="display:inline-block;background:#ff6600;color:#0a0a0a;font-weight:900;text-transform:uppercase;padding:14px 22px;border:2px solid #0a0a0a;text-decoration:none">Open dashboard</a>
 </td></tr>`,
     { ...v, progressGoal: String(goal) } as unknown as Record<string, string>,
   );
-  return { subject: `Squad just grew — ${v.bookingsCount}/${goal}`, html: shell("New squad member", inner) };
+  return { subject: `Squad just grew: ${v.bookingsCount}/${goal}`, html: shell("New squad member", inner) };
 }
 
 export function squadMilestoneEmail(v: {
@@ -497,16 +497,79 @@ export function squadMilestoneEmail(v: {
 </td></tr>
 <tr><td style="padding:0 24px 16px 24px;font-size:16px;line-height:1.5">
 <p style="margin:0 0 12px 0">Hey {{leaderName}},</p>
-<p style="margin:0 0 12px 0">Your squad <strong>{{squadCode}}</strong> just hit <strong>{{bookingsCount}} bookings</strong>. That means:</p>
+<p style="margin:0 0 12px 0">Your squad <strong>{{squadCode}}</strong> just hit <strong>{{bookingsCount}} mates booked</strong>. That means:</p>
 <div style="margin:16px 0;padding:18px;border:2px dashed #0a0a0a;background:#ffc000;text-align:center">
 <div style="font-size:22px;font-weight:900;text-transform:uppercase">{{rewardText}}</div>
 </div>
 <p style="margin:0 0 20px 0">{{nextStepText}}</p>
-<a href="{{dashboardUrl}}" style="display:inline-block;background:#ff6600;color:#0a0a0a;font-weight:900;text-transform:uppercase;padding:14px 22px;border:2px solid #0a0a0a;text-decoration:none">Claim it</a>
+<a href="{{dashboardUrl}}" style="display:inline-block;background:#ff6600;color:#0a0a0a;font-weight:900;text-transform:uppercase;padding:14px 22px;border:2px solid #0a0a0a;text-decoration:none">See your squad</a>
 </td></tr>`,
     v as unknown as Record<string, string>,
   );
   return { subject: `${v.milestoneHeadline} 🎉`, html: shell("Milestone unlocked", inner) };
+}
+
+/**
+ * Squad reward applied to the leader's own booking (_shared/squad-reward.ts):
+ * money off their balance, a refund waiting for the team's check, or a refund
+ * sent.
+ */
+export function squadRewardLeaderEmail(v: {
+  leaderName: string;
+  free: boolean;
+  tripName: string;
+  bookingRef: string;
+  /** Formatted amounts; "" when that part doesn't apply. */
+  cut: string;
+  balanceLeft: string;
+  chargeDate: string;
+  refundPending: string;
+  refundSent: string;
+}): { subject: string; html: string } {
+  const e = (s: string) => escapeHtml(s);
+  const p = (t: string) => `<p style="margin:0 0 12px 0">${t}</p>`;
+  const trip = `${e(v.tripName)}${v.bookingRef ? ` (${e(v.bookingRef)})` : ""}`;
+  const parts: string[] = [p(`Hey ${e(v.leaderName)},`)];
+  if (v.refundSent) {
+    parts.push(p(`We've refunded <strong>${e(v.refundSent)}</strong> to the card you paid with for ${trip}. It usually shows within 5 to 10 working days.`));
+  } else {
+    parts.push(p(`Your squad reward is on your booking for ${trip}.`));
+    if (v.cut) {
+      parts.push(p(v.balanceLeft === "$0.00"
+        ? `We've taken <strong>${e(v.cut)}</strong> off your balance, so there's nothing left to pay.`
+        : `We've taken <strong>${e(v.cut)}</strong> off your balance. You now owe <strong>${e(v.balanceLeft)}</strong>, charged automatically${v.chargeDate ? ` on ${e(v.chargeDate)}` : ""}.`));
+    }
+    if (v.refundPending) {
+      parts.push(p(`${v.cut ? "The other" : "Your"} <strong>${e(v.refundPending)}</strong> goes back to your card once our team has checked it over. We'll email you when it's on its way.`));
+    }
+  }
+  parts.push(p("Thanks for rallying the squad."));
+  const headline = v.refundSent ? "REFUND ON ITS WAY" : v.free ? "YOUR TRIP IS ON US" : "50% OFF, DONE";
+  const subject = v.refundSent
+    ? "Your squad reward refund is on its way"
+    : v.free ? "Your squad reward: your trip is on us" : "Your squad reward: 50% off is on your booking";
+  const inner = `<tr><td style="padding:16px 24px 8px 24px">
+<h1 style="margin:0;font-size:28px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em">${headline} 🎉</h1>
+</td></tr>
+<tr><td style="padding:0 24px 16px 24px;font-size:16px;line-height:1.5">
+${parts.join("\n")}
+</td></tr>`;
+  return { subject, html: shell("Squad reward", inner) };
+}
+
+/** Ops note for every squad reward event (applied, approval needed, refunded, failed). */
+export function squadRewardOpsEmail(v: { subject: string; body: string; adminUrl: string }): { subject: string; html: string } {
+  const inner = render(
+    `<tr><td style="padding:16px 24px 8px 24px">
+<h1 style="margin:0;font-size:22px;font-weight:900;text-transform:uppercase;letter-spacing:-.01em">Squad reward</h1>
+</td></tr>
+<tr><td style="padding:0 24px 16px 24px;font-size:15px;line-height:1.5">
+<p style="margin:0 0 16px 0">{{body}}</p>
+<a href="{{adminUrl}}" style="display:inline-block;background:#ff6600;color:#0a0a0a;font-weight:900;text-transform:uppercase;padding:12px 20px;border:2px solid #0a0a0a;text-decoration:none">Open admin</a>
+</td></tr>`,
+    v,
+  );
+  return { subject: v.subject, html: shell("Squad reward", inner) };
 }
 
 export function squadPasswordResetEmail(v: {

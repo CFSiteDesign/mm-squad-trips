@@ -151,8 +151,15 @@ export const previewSquadAdmin: SquadAdminData = {
       status: "approved",
       university: null,
       society: null,
-      count: 5,
-      tier: "50% OFF",
+      count: 6,
+      tier: "FREE TRIP",
+      rewardBookingRef: null,
+      // Squad rewards: 50% came off the balance, the free-trip step left the
+      // $99 deposit waiting as a refund for Approve.
+      rewards: [
+        { id: "rw-half", tier: "half", status: "applied", mates_at_unlock: 3, booking_ref: "SOL-VIE-002", amount: 425, balance_cut: 425, refund_due: 0, refunded: 0, last_error: null, applied_at: iso(-3), updated_at: iso(-3) },
+        { id: "rw-free", tier: "free", status: "awaiting_approval", mates_at_unlock: 6, booking_ref: "SOL-VIE-002", amount: 425, balance_cut: 326, refund_due: 99, refunded: 0, last_error: null, applied_at: null, updated_at: iso(-1) },
+      ],
       bookings: bookings.slice(0, 5).map((b) => ({
         id: b.id,
         squad_leader_id: "77777777-7777-4777-8777-777777777771",
@@ -184,5 +191,5 @@ export const previewSquadAdmin: SquadAdminData = {
       bookings: [],
     },
   ],
-  stats: { totalLeaders: 2, totalBookings: 7, unlockedHalf: 1, unlockedFree: 0, pendingStudents: 1 },
+  stats: { totalLeaders: 2, totalBookings: 7, unlockedHalf: 0, unlockedFree: 1, pendingStudents: 1 },
 };

@@ -19,6 +19,15 @@ import {
 } from "../_shared/email.ts";
 import { triggerCommissionPush } from "../_shared/push-commission.ts";
 import { enqueueKlaviyo } from "../_shared/klaviyo.ts";
+import {
+  matesByLeader,
+  settleForLeaderEmail,
+  settleSquadRewards,
+  type SquadLeader,
+  STUDENT_GOAL,
+  TIER_FREE,
+  TIER_HALF,
+} from "../_shared/squad-reward.ts";
 import { allInReminderProperties, enqueueAllInToMmk } from "../_shared/mmk-reminders.ts";
 
 function envClient() {
@@ -412,76 +421,80 @@ async function writeBookings(session: Stripe.Checkout.Session) {
           console.warn("squad_bookings insert failed:", sErr.message);
         }
 
-        // Notify the squad leader (member-joined + milestone if applicable)
+        // Notify the squad leader (member-joined, milestone when one is
+        // crossed), then apply any reward the new mates unlocked. Counts mates,
+        // not checkouts: every traveller on the booking, never the leader.
         try {
           const { data: full } = await sb
             .from("squad_leaders")
-            .select("id, name, email, code, is_student")
+            .select("id, name, email, code, is_student, reward_booking_ref")
             .eq("id", leader.id)
             .maybeSingle();
-          const { count } = await sb
-            .from("squad_bookings")
-            .select("id", { count: "exact", head: true })
-            .eq("squad_leader_id", leader.id);
-          const bookingsCount = count ?? 0;
           const isStudent = Boolean(full?.is_student);
+          const all = full ? ((await matesByLeader(sb, [full as SquadLeader])).get(leader.id) ?? []) : [];
+          const mates = all.length;
+          const added = all.filter((x) => x.stripe_session_id === sessionId).length;
+          const before = mates - added;
           const dashboardUrl = isStudent
             ? `${APP_URL}/students/squad-leader/login`
             : `${APP_URL}/squad-leader/login`;
-          if (full?.email) {
+          // added is 0 when the leader booked their own trip with their own code.
+          if (full?.email && added > 0) {
             const leaderFirst = (full.name as string | null)?.split(" ")[0] || "captain";
-            // Squad tiers: 50% at 3 bookings, free at 6 (Aug 2026 copy; was 4 / 8).
-            const goal = isStudent ? 10 : 6;
+            const goal = isStudent ? STUDENT_GOAL : TIER_FREE;
             const nextRewardObj = isStudent
-              ? bookingsCount < 10
-                ? { at: 10, text: "2 free squad leader spots" }
-                : { at: bookingsCount, text: "the next perk" }
-              : bookingsCount < 3
-                ? { at: 3, text: "50% off your trip" }
-                : bookingsCount < 6
-                  ? { at: 6, text: "a free trip" }
-                  : { at: bookingsCount, text: "the next perk" };
+              ? mates < STUDENT_GOAL
+                ? { at: STUDENT_GOAL, text: "2 free squad leader spots" }
+                : { at: mates, text: "the next perk" }
+              : mates < TIER_HALF
+                ? { at: TIER_HALF, text: "50% off your trip" }
+                : mates < TIER_FREE
+                  ? { at: TIER_FREE, text: "a free trip" }
+                  : { at: mates, text: "the next perk" };
+            const booker = (m.lead_name as string) || "A new booker";
             const joined = squadMemberJoinedEmail({
               leaderName: leaderFirst,
-              memberName: (m.lead_name as string) || "A new booker",
+              memberName: added > 1 ? `${booker} and ${added - 1} more` : booker,
               tripName: (m.trip_name as string) || "their trip",
-              bookingsCount,
-              toNextMilestone: String(Math.max(0, nextRewardObj.at - bookingsCount)),
+              bookingsCount: mates,
+              toNextMilestone: String(Math.max(0, nextRewardObj.at - mates)),
               nextReward: nextRewardObj.text,
               dashboardUrl,
               progressGoal: goal,
             });
-            sendEmail({ to: full.email as string, subject: joined.subject, html: joined.html, templateName: "squad_member_joined" }).catch(
+            await sendEmail({ to: full.email as string, subject: joined.subject, html: joined.html, templateName: "squad_member_joined" }).catch(
               (e) => console.warn("squad-member-joined email failed", e),
             );
-            const milestoneHit = isStudent
-              ? bookingsCount === 10
-              : bookingsCount === 3 || bookingsCount === 6;
-            if (milestoneHit) {
-              const milestone = squadMilestoneEmail({
+            const crossed = (n: number) => before < n && mates >= n;
+            const milestone = isStudent
+              ? (crossed(STUDENT_GOAL) ? "students" : null)
+              : crossed(TIER_FREE) ? "free" : crossed(TIER_HALF) ? "half" : null;
+            if (milestone) {
+              const applies = "Not booked yet? Book with this email address and it applies straight away.";
+              const ms = squadMilestoneEmail({
                 leaderName: leaderFirst,
                 squadCode: (full.code as string) ?? "",
-                bookingsCount,
-                milestoneHeadline: isStudent
+                bookingsCount: mates,
+                milestoneHeadline: milestone === "students"
                   ? "2 free spots unlocked"
-                  : bookingsCount === 6
-                    ? "Free trip unlocked"
-                    : "50% off unlocked",
-                rewardText: isStudent
+                  : milestone === "free" ? "Free trip unlocked" : "50% off unlocked",
+                rewardText: milestone === "students"
                   ? "2 FREE SQUAD LEADER SPOTS"
-                  : bookingsCount === 6
-                    ? "Your trip is on the house"
-                    : "Your trip is half price",
-                nextStepText: isStudent
+                  : milestone === "free" ? "Your trip is on the house" : "Your trip is half price",
+                nextStepText: milestone === "students"
                   ? "Email hayley@madmonkeyhostels.com to book in your 2 free squad leader spots."
-                  : bookingsCount === 6
-                    ? "We'll be in touch to lock in your free trip."
-                    : "Keep going — 3 more bookings unlocks a free trip.",
+                  : milestone === "free"
+                    ? `We take the rest off your own ALL IN trip automatically, from your balance or back to your card. ${applies}`
+                    : `We take it off your own ALL IN trip automatically, from your balance or back to your card. ${applies} ${TIER_FREE - TIER_HALF} more mates and your trip is free.`,
                 dashboardUrl,
               });
-              sendEmail({ to: full.email as string, subject: milestone.subject, html: milestone.html, templateName: "squad_milestone" })
+              await sendEmail({ to: full.email as string, subject: ms.subject, html: ms.html, templateName: "squad_milestone" })
                 .catch((e) => console.warn("squad-milestone email failed", e));
             }
+          }
+          if (!isStudent && added > 0) {
+            const r = await settleSquadRewards(sb, leader.id);
+            if (r.actions.length) console.log(`squad reward ${full?.code}: ${r.actions.join("; ")}`);
           }
         } catch (e) {
           console.warn("squad notify failed:", e instanceof Error ? e.message : e);
@@ -489,6 +502,18 @@ async function writeBookings(session: Stripe.Checkout.Session) {
       }
     } catch (e) {
       console.warn("Squad credit failed:", e instanceof Error ? e.message : e);
+    }
+  }
+
+  // A squad leader booking their own trip: a reward they've already unlocked
+  // comes off this booking straight away.
+  if (m.lead_email) {
+    try {
+      for (const r of await settleForLeaderEmail(sb, String(m.lead_email))) {
+        if (r.actions.length) console.log(`squad reward (own booking): ${r.actions.join("; ")}`);
+      }
+    } catch (e) {
+      console.warn("squad reward for leader's own booking failed:", e instanceof Error ? e.message : e);
     }
   }
 

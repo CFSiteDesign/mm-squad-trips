@@ -45,7 +45,7 @@ export default function SquadDashboard() {
     );
   }
 
-  const { leader, bookings, count, tier } = data;
+  const { leader, bookings, count, tier, rewards = [] } = data;
   const code = leader.code;
   const isStudent = !!leader.isStudent;
   // Tiers changed 3 Sep 2026 from 4 / 8 to 3 / 6 (squad-dashboard TIER_HALF / TIER_FREE).
@@ -65,7 +65,7 @@ export default function SquadDashboard() {
           <div>
             <Sticker color="lime" rotate={-3}>YOUR SQUAD CODE</Sticker>
             <div className="mt-4 font-display text-4xl tracking-[0.1em] md:text-6xl">{code}</div>
-            <p className="mt-3 text-mm-bone/80">Hey {leader.name.split(" ")[0]} — share this with your crew. Every booking ticks you up the rewards.</p>
+            <p className="mt-3 text-mm-bone/80">Hey {leader.name.split(" ")[0]}, share this with your crew. Every mate who books ticks you up the rewards.</p>
           </div>
           <div className="flex flex-wrap gap-3">
             <button
@@ -91,7 +91,7 @@ export default function SquadDashboard() {
         <div className="mx-auto max-w-5xl">
           <div className="flex items-end justify-between">
             <h2 className="font-display text-3xl md:text-5xl">YOUR SQUAD SO FAR</h2>
-            <div className="font-sticker text-xs tracking-[0.15em] text-mm-black/70">{count}/{goal} BOOKED</div>
+            <div className="font-sticker text-xs tracking-[0.15em] text-mm-black/70">{count}/{goal} MATES BOOKED</div>
           </div>
 
           <div className={`mt-8 grid gap-3 ${isStudent ? "grid-cols-5 sm:grid-cols-10" : "grid-cols-3 sm:grid-cols-6"}`}>
@@ -147,17 +147,44 @@ export default function SquadDashboard() {
               ))}
             </div>
           </div>
+
+          {!isStudent && rewards.length > 0 && (
+            <div className="mt-10 border-[3px] border-mm-black bg-mm-lime p-5 shadow-mm-sm">
+              <div className="font-sticker text-[10px] tracking-[0.15em]">YOUR REWARD</div>
+              <ul className="mt-2 space-y-1 text-sm">
+                {rewards.map((r) => {
+                  const step = r.tier === "free" ? "Free trip" : "50% off";
+                  const money = (n: number) => `$${Number(n ?? 0).toFixed(2)}`;
+                  let line: string;
+                  if (r.status === "waiting_booking") {
+                    line = `${step} unlocked. Book your ALL IN trip with the email you signed up with and it comes off straight away.`;
+                  } else if (r.status === "applied") {
+                    const parts = [
+                      Number(r.balance_cut) > 0 ? `${money(r.balance_cut)} off your balance` : "",
+                      Number(r.refunded) > 0 ? `${money(r.refunded)} refunded to your card` : "",
+                    ].filter(Boolean);
+                    line = `${step} applied to ${r.booking_ref ?? "your booking"}${parts.length ? `: ${parts.join(", ")}` : ""}.`;
+                  } else if (r.status === "declined") {
+                    line = `${step}: our team has been in touch about this one.`;
+                  } else {
+                    line = `${step} applied to ${r.booking_ref ?? "your booking"}${Number(r.balance_cut) > 0 ? `: ${money(r.balance_cut)} off your balance` : ""}. The rest is on its way back to your card.`;
+                  }
+                  return <li key={r.tier}>{line}</li>;
+                })}
+              </ul>
+            </div>
+          )}
         </div>
       </section>
 
       {/* Bookings */}
       <section className="px-5 pb-16 md:px-8 md:pb-24">
         <div className="mx-auto max-w-5xl">
-          <h3 className="font-display text-2xl">RECENT BOOKINGS</h3>
+          <h3 className="font-display text-2xl">YOUR MATES</h3>
           <div className="mt-4 overflow-hidden border-mm-thick bg-mm-bone shadow-mm-sm">
             {bookings.length === 0 ? (
               <div className="p-6 text-center text-sm text-mm-black/60">
-                No bookings yet — share your code to get the squad rolling.
+                No mates booked yet. Share your code to get the squad rolling.
               </div>
             ) : (
               <table className="w-full text-sm">
@@ -198,12 +225,12 @@ export default function SquadDashboard() {
               <button onClick={() => setShareOpen(false)} aria-label="Close"><X className="h-5 w-5" /></button>
             </div>
             <div className="mt-4 border-[2px] border-mm-black bg-mm-bone p-4 text-sm">
-              "Booking my Mad Monkey trip — use my code <strong>{code}</strong> at checkout to join my squad. 🌴"
+              "Booking my Mad Monkey trip. Use my code <strong>{code}</strong> at checkout to join my squad. 🌴"
             </div>
             <div className="mt-4 grid grid-cols-3 gap-2">
               <a
                 className="border-[3px] border-mm-black bg-mm-lime py-2 text-center font-display text-xs text-mm-black"
-                href={`https://wa.me/?text=${encodeURIComponent(`Booking my Mad Monkey trip — use my code ${code} at checkout. 🌴`)}`}
+                href={`https://wa.me/?text=${encodeURIComponent(`Booking my Mad Monkey trip. Use my code ${code} at checkout to join my squad. 🌴`)}`}
                 target="_blank" rel="noreferrer"
               >
                 WHATSAPP
