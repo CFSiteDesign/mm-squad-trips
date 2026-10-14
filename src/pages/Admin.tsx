@@ -66,6 +66,8 @@ interface ColumnDef {
   /** For type "select": the only values the column accepts. The first is the default. */
   options?: { value: string; label: string }[];
   readOnly?: boolean;
+  /** Bookings: read-only in the table, but editable on a lead row (e.g. Rezdy imports with no email). */
+  editableOnLead?: boolean;
   hidden?: boolean;
   hideInTable?: boolean; // hidden from on-screen table but still included in CSV export
   hideInCsv?: boolean; // synthetic/derived column — exclude from CSV
@@ -183,9 +185,9 @@ const COLUMNS: Record<AdminTable, ColumnDef[]> = {
         }
         return "";
       } },
-    { key: "lead_name", label: "Lead Name", tooltip: "Full name of the primary traveler", readOnly: true, compute: (r, ctx) => getTravelerForRow(r, ctx)?.name ?? "" },
-    { key: "lead_email", label: "Lead Email", tooltip: "Email address of the primary traveler", readOnly: true, compute: (r, ctx) => getTravelerForRow(r, ctx)?.email ?? "" },
-    { key: "lead_phone", label: "Lead Phone", tooltip: "Phone number of the primary traveler", readOnly: true, compute: (r, ctx) => getTravelerForRow(r, ctx)?.phone ?? "" },
+    { key: "lead_name", label: "Lead Name", tooltip: "Full name of the primary traveler", readOnly: true, editableOnLead: true, compute: (r, ctx) => getTravelerForRow(r, ctx)?.name ?? "" },
+    { key: "lead_email", label: "Lead Email", tooltip: "Email address of the primary traveler", readOnly: true, editableOnLead: true, compute: (r, ctx) => getTravelerForRow(r, ctx)?.email ?? "" },
+    { key: "lead_phone", label: "Lead Phone", tooltip: "Phone number of the primary traveler", readOnly: true, editableOnLead: true, compute: (r, ctx) => getTravelerForRow(r, ctx)?.phone ?? "" },
     { key: "lead_country", label: "Lead Country", tooltip: "Country the primary traveler is from", readOnly: true, compute: (r, ctx) => getTravelerForRow(r, ctx)?.country ?? "" },
     { key: "lead_age", label: "Lead Age", tooltip: "Age of the primary traveler", readOnly: true, compute: (r, ctx) => getTravelerForRow(r, ctx)?.age ?? "" },
     { key: "lead_source", label: "Source", tooltip: "How the traveler found the trip (e.g. Instagram, Google)", readOnly: true },
@@ -794,6 +796,7 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
           table={table}
           row={editing ?? {}}
           isNew={creating}
+          siblings={editing && table === "bookings" && editing.booking_ref ? rows.filter((x) => x.booking_ref === editing.booking_ref && x.id !== editing.id) : []}
           onClose={() => { setEditing(null); setCreating(false); }}
           onSaved={() => { setEditing(null); setCreating(false); reload(); }}
         />
@@ -1016,10 +1019,15 @@ function renderCell(v: unknown, c?: ColumnDef): string {
   return String(v);
 }
 
-function RowEditor({ table, row, isNew, onClose, onSaved }: {
+function RowEditor({ table, row, isNew, onClose, onSaved, siblings = [] }: {
   table: AdminTable; row: Row; isNew: boolean; onClose: () => void; onSaved: () => void;
+  /** Bookings: the booking's other rows (same booking_ref), to keep lead contact details in step. */
+  siblings?: Row[];
 }) {
-  const cols = COLUMNS[table].filter((c) => !c.hidden);
+  // A lead row's contact details are editable (Cai, 15 Oct 2026: Rezdy imports
+  // arrived without emails and nobody could add them). Member rows stay read-only.
+  const isLeadRow = table === "bookings" && String(row.booking_type ?? "") !== "Group member" && Number(row.spot_number ?? 1) === 1;
+  const cols = COLUMNS[table].filter((c) => !c.hidden).map((c) => (c.editableOnLead && isLeadRow && !isNew ? { ...c, readOnly: false, compute: undefined } : c));
   const [values, setValues] = useState<Row>(() => (
     // New records: start Active ticked — a code you create should work unless
     // you deliberately switch it off.
@@ -1058,8 +1066,14 @@ function RowEditor({ table, row, isNew, onClose, onSaved }: {
         if (out.active == null) out.active = true;
         delete out.used_count;
       }
+      if (table === "bookings" && typeof out.lead_email === "string") out.lead_email = out.lead_email.trim().toLowerCase() || null;
       if (isNew) await adminApi.create(table, out);
       else await adminApi.update(table, String(row.id), out);
+      // Every row of a booking carries the lead's contact details; keep them in step.
+      if (table === "bookings" && isLeadRow && !isNew) {
+        const lead = { lead_name: out.lead_name ?? null, lead_email: out.lead_email ?? null, lead_phone: out.lead_phone ?? null };
+        for (const sib of siblings) await adminApi.update(table, String(sib.id), lead);
+      }
       toast.success("Saved");
       onSaved();
     } catch (e) {
