@@ -200,7 +200,7 @@ export default function SquadAdmin({ refreshKey }: { refreshKey?: number }) {
                     const open = expanded === l.id;
                     const isPending = l.isStudent && l.status === "pending";
                     const dashUrl = `/squad-leader/dashboard?token=${l.accessToken}`;
-                    const goal = l.isStudent ? 10 : 8;
+                    const goal = l.isStudent ? 10 : 6;
                     return (
                       <Fragment key={l.id}>
                         <tr className="border-t-[2px] border-mm-black/10 align-top">

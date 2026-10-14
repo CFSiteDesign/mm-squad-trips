@@ -48,7 +48,8 @@ export default function SquadDashboard() {
   const { leader, bookings, count, tier } = data;
   const code = leader.code;
   const isStudent = !!leader.isStudent;
-  const goal = isStudent ? 10 : 8;
+  // Tiers changed 3 Sep 2026 from 4 / 8 to 3 / 6 (squad-dashboard TIER_HALF / TIER_FREE).
+  const goal = isStudent ? 10 : 6;
 
   function copy() {
     navigator.clipboard?.writeText(code);
@@ -93,7 +94,7 @@ export default function SquadDashboard() {
             <div className="font-sticker text-xs tracking-[0.15em] text-mm-black/70">{count}/{goal} BOOKED</div>
           </div>
 
-          <div className={`mt-8 grid gap-3 ${isStudent ? "grid-cols-5 sm:grid-cols-10" : "grid-cols-4 sm:grid-cols-8"}`}>
+          <div className={`mt-8 grid gap-3 ${isStudent ? "grid-cols-5 sm:grid-cols-10" : "grid-cols-3 sm:grid-cols-6"}`}>
             {Array.from({ length: goal }).map((_, i) => {
               const b = bookings[i];
               return (
@@ -125,8 +126,8 @@ export default function SquadDashboard() {
               {(isStudent
                 ? [{ pos: 100, label: "2 FREE SPOTS", unlocked: count >= 10 }]
                 : [
-                    { pos: 50, label: "50% OFF", unlocked: count >= 4 },
-                    { pos: 100, label: "FREE TRIP", unlocked: count >= 8 },
+                    { pos: 50, label: "50% OFF", unlocked: count >= 3 },
+                    { pos: 100, label: "FREE TRIP", unlocked: count >= 6 },
                   ]
               ).map((m) => (
                 <div key={m.label} className="absolute -top-1 -translate-x-1/2" style={{ left: `${m.pos}%` }}>
