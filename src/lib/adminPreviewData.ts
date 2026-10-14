@@ -83,7 +83,7 @@ const bookings = bookingNames.map(([name, email, country, age], i) => {
     booking_ref: `DEMO-${1000 + i}`,
     trip_id: tripId,
     departure_id: dep,
-    booking_type: groupSize > 1 ? "Group" : "Solo",
+    booking_type: groupSize > 1 ? "Group lead" : "Solo",
     group_id: groupSize > 1 ? `GRP-${i}` : null,
     group_size: groupSize,
     spot_number: 1,
@@ -100,9 +100,9 @@ const bookings = bookingNames.map(([name, email, country, age], i) => {
     original_price: price * groupSize,
     discount_code_id: isCreatorBooking ? DISCOUNT_IDS.creator : discount ? DISCOUNT_IDS.early : null,
     discount_amount: discount * groupSize,
-    final_price: final,
-    amount_paid: 99 * groupSize,
-    balance_amount: final - 99 * groupSize,
+    final_price: final / groupSize,
+    amount_paid: 99,
+    balance_amount: final / groupSize - 99,
     balance_due_date: day(14),
     balance_status: "scheduled",
     balance_attempts: 0,
@@ -117,7 +117,25 @@ const bookings = bookingNames.map(([name, email, country, age], i) => {
   };
 });
 
+// Near-departure examples for the per-guest journey (Bookings → "journey").
+const nearDepartures: Record<string, unknown>[] = [
+  { id: "22222222-2222-4222-8222-2222222222a1", trip_id: TRIP_IDS.vietnam, departure_code: "VIE-NEAR", departure_date: day(5), total_spots: 20, spots_remaining: 19, bookable: true, status: "confirmed", confirmed_at: iso(-20), min_bookings_to_confirm: 5, visibility: "public", owner_code: null, force_bookable: false, cancelled_at: null, created_at: iso(-90), updated_at: iso(-2), team_reminder_7d_sent_at: iso(-2), team_reminder_1d_sent_at: null },
+  { id: "22222222-2222-4222-8222-2222222222a2", trip_id: TRIP_IDS.indonesia7, departure_code: "IND7-NEAR", departure_date: day(9), total_spots: 16, spots_remaining: 14, bookable: true, status: "confirmed", confirmed_at: iso(-1), min_bookings_to_confirm: 5, visibility: "public", owner_code: null, force_bookable: false, cancelled_at: null, created_at: iso(-60), updated_at: iso(-1), team_reminder_7d_sent_at: null, team_reminder_1d_sent_at: null },
+];
+const nearBase = bookings[0];
+const nearBookings: Record<string, unknown>[] = [
+  { ...nearBase, id: "55555555-5555-4555-8555-5555555555a1", booking_ref: "DEMO-2001", trip_id: TRIP_IDS.vietnam, departure_id: "22222222-2222-4222-8222-2222222222a1", booking_type: "Solo", group_id: null, group_size: 1, lead_name: "Hannah Lee", lead_email: "hannah.lee@example.com", lead_solo: true, additional_travelers: null, group_members: ["Hannah Lee"], original_price: 850, discount_code_id: null, discount_amount: 0, final_price: 850, amount_paid: 850, balance_amount: 751, balance_due_date: day(-2), balance_status: "charged", status: "Confirmed", stripe_session_id: "cs_demo_near_1", created_at: iso(-20), updated_at: iso(-1), traveller_mode: "independent", whatsapp_opt_in: true, whatsapp_opt_in_at: iso(-20), klaviyo_synced_at: iso(-20), reminder_7d_sent_at: iso(-1), underfill_notice_sent_at: null },
+  { ...nearBase, id: "55555555-5555-4555-8555-5555555555a2", booking_ref: "DEMO-2002", trip_id: TRIP_IDS.indonesia7, departure_id: "22222222-2222-4222-8222-2222222222a2", booking_type: "Group lead", group_id: "GRP-NEAR", group_size: 2, lead_name: "Tom Becker", lead_email: "tom.becker@example.com", lead_solo: false, additional_travelers: [{ name: "Jess Becker", age: 25 }], group_members: ["Tom Becker", "Jess Becker"], original_price: 465, discount_code_id: null, discount_amount: 0, final_price: 465, amount_paid: 99, balance_amount: 366, balance_due_date: day(2), balance_status: "scheduled", status: "Confirmed", stripe_session_id: "cs_demo_near_2", created_at: iso(-12), updated_at: iso(-1), traveller_mode: "crew", whatsapp_opt_in: false, whatsapp_opt_in_at: null, klaviyo_synced_at: iso(-12), reminder_7d_sent_at: null, underfill_notice_sent_at: iso(-1) },
+];
+
 const email_send_log = [
+  { id: "66666666-6666-4666-8666-6666666666a1", template_name: "booking_confirmed", recipient_email: "hannah.lee@example.com", cc: null, subject: "Vietnam is confirmed ✅ Good to book your flights", status: "sent", provider_message_id: "demo-a1", error_message: null, metadata: null, created_at: iso(-20) },
+  { id: "66666666-6666-4666-8666-6666666666a2", template_name: "booking_ops_notification", recipient_email: "reden@madmonkeyhostels.com", cc: null, subject: "INDEPENDENT booking: Hannah Lee · ALL IN Vietnam", status: "sent", provider_message_id: "demo-a2", error_message: null, metadata: null, created_at: iso(-20) },
+  { id: "66666666-6666-4666-8666-6666666666a3", template_name: "balance_paid", recipient_email: "hannah.lee@example.com", cc: null, subject: "Final payment confirmed", status: "sent", provider_message_id: "demo-a3", error_message: null, metadata: null, created_at: iso(-2) },
+  { id: "66666666-6666-4666-8666-6666666666a4", template_name: "trip_countdown_7d", recipient_email: "hannah.lee@example.com", cc: null, subject: "6 days to Vietnam 🎒 Final details inside", status: "sent", provider_message_id: "demo-a4", error_message: null, metadata: null, created_at: iso(-1) },
+  { id: "66666666-6666-4666-8666-6666666666a5", template_name: "booking_confirmed", recipient_email: "tom.becker@example.com", cc: null, subject: "Indonesia is confirmed ✅ Good to book your flights", status: "sent", provider_message_id: "demo-a5", error_message: null, metadata: null, created_at: iso(-12) },
+  { id: "66666666-6666-4666-8666-6666666666a6", template_name: "booking_ops_notification", recipient_email: "reden@madmonkeyhostels.com", cc: null, subject: "WITH A CREW booking (2 spots): Tom Becker · ALL IN Indonesia 7 Day", status: "sent", provider_message_id: "demo-a6", error_message: null, metadata: null, created_at: iso(-12) },
+  { id: "66666666-6666-4666-8666-6666666666a7", template_name: "underfilled_crew_notice", recipient_email: "tom.becker@example.com", cc: null, subject: "Heads up on your 7-day Indonesia trip", status: "sent", provider_message_id: "demo-a7", error_message: null, metadata: null, created_at: iso(-1) },
   { id: "66666666-6666-4666-8666-666666666661", template_name: "booking_confirmation", recipient_email: "alex.morgan@example.com", cc: "cs@madmonkeyhostels.com", subject: "You're ALL IN — Vietnam", status: "sent", provider_message_id: "demo-1", error_message: null, metadata: null, created_at: iso(-1) },
   { id: "66666666-6666-4666-8666-666666666662", template_name: "trip_confirmed", recipient_email: "sofia.rossi@example.com", cc: null, subject: "Your trip is CONFIRMED", status: "sent", provider_message_id: "demo-2", error_message: null, metadata: null, created_at: iso(-2) },
   { id: "66666666-6666-4666-8666-666666666663", template_name: "squad_created", recipient_email: "leader@example.com", cc: null, subject: "Your squad is live", status: "sent", provider_message_id: "demo-3", error_message: null, metadata: null, created_at: iso(-4) },
@@ -126,10 +144,10 @@ const email_send_log = [
 
 export const previewTables: Record<AdminTable, Record<string, unknown>[]> = {
   trips,
-  departures,
+  departures: [...departures, ...nearDepartures],
   pricing_calendar,
   discount_codes,
-  bookings,
+  bookings: [...nearBookings, ...bookings],
   email_send_log,
 };
 

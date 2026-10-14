@@ -1,14 +1,16 @@
 // Admin "Guest journeys": every message an ALL IN guest (and the team) gets
 // after booking, step by step, for each traveller type. Charlie's 13 Oct 2026
-// dashboard meeting: Lexie reviews the wording in context here.
+// dashboard meeting: Lexie reviews the wording in context here. Each booking's
+// own journey lives on the Bookings tab (BookingJourney.tsx).
 //
 // The previews are the real templates from supabase/functions/_shared, the
-// same code the edge functions send, run in the browser with sample data. If a
-// template changes, its preview changes with it. Plan: docs/journeys/PLAN.md.
+// same code the edge functions send (journey-emails.ts), filled with a sample
+// guest. If a template changes, its preview changes with it.
+// Plan: docs/journeys/PLAN.md.
 import { useState } from "react";
 import { Eye, X } from "lucide-react";
+import { journeyEmails, type GuestEmailData, type RenderedEmail } from "@/components/admin/journey-emails";
 
-type Rendered = { subject: string; html: string; to: string };
 type Status = "live" | "planned" | "decision";
 type Message = {
   label: string;
@@ -16,185 +18,98 @@ type Message = {
   status: Status;
   note?: string;
   /** Builds the email from the real template; absent for steps owned elsewhere (Klaviyo). */
-  render?: () => Promise<Omit<Rendered, "to">>;
+  render?: () => Promise<RenderedEmail>;
 };
 type Step = { when: string; title: string; condition?: string; messages: Message[] };
 
-// ---------- sample guest ----------
-const S = {
-  first: "Sam",
-  name: "Sam Taylor",
-  email: "sam@example.com",
-  phone: "+44 7700 900123",
-  trip: "Vietnam 14 Days",
-  country: "Vietnam",
-  slug: "vietnam",
-  date: "Wed, 28 Oct 2026",
-  dueDate: "Wed, 21 Oct 2026",
-  ref: "ALLIN-VIE-0042",
-  url: "https://madmonkeyhostels.com/all-in-trips/booking-success",
-};
-const email = () => import("../../../supabase/functions/_shared/email");
-const details = () => import("../../../supabase/functions/_shared/trip-details");
+export const OPS_RECIPIENTS = "Ops list (Reden, Adel, Hayley) + trip GMs";
+export const TEAM_RECIPIENTS = "reception@ + trip GMs (+ Vietnam travel desks)";
 
-const OPS = "Ops list (Reden, Adel, Hayley) + trip GMs";
-const TEAM = "reception@ + trip GMs (+ Vietnam travel desks)";
-
-const confirmation = (crew: boolean): Message => ({
-  label: "Booking confirmed",
-  to: "Guest",
-  status: "live",
-  note: crew
-    ? "Planned: own crew wording (meeting 13 Oct). Today both routes get this same email."
-    : "Planned: slightly different independent wording (meeting 13 Oct). Today both routes get this same email.",
-  render: async () =>
-    (await email()).bookingConfirmedEmail({
-      firstName: S.first, tripCountry: S.country, tripName: S.trip, departureDate: S.date,
-      spots: crew ? 2 : 1, balanceAmount: crew ? "$1,502.00 USD" : "$751.00 USD", balanceDueDate: S.dueDate,
-      payBalanceUrl: S.url, bookingRef: S.ref, bookingUrl: S.url, hasBalance: true,
-    }),
+const sample = (crew: boolean): GuestEmailData => ({
+  first: "Sam", name: "Sam Taylor", email: "sam@example.com", phone: "+44 7700 900123",
+  tripName: "ALL IN Vietnam", shortTrip: "14-day Vietnam", country: "Vietnam", slug: "vietnam",
+  date: "Wed, 28 Oct 2026", dueDate: "Wed, 21 Oct 2026", ref: "ALLIN-VIE-0042",
+  bookingUrl: "https://madmonkeyhostels.com/all-in-trips/booking-success",
+  spots: crew ? 2 : 1, crew, paidToday: crew ? 198 : 99, balance: crew ? 1502 : 751, total: crew ? 1700 : 850, hasBalance: true,
 });
 
-const opsAlert = (crew: boolean): Message => ({
-  label: "New booking alert",
-  to: OPS,
-  status: "live",
-  render: async () =>
-    (await email()).bookingOpsNotificationEmail({
-      leadName: S.name, leadEmail: S.email, leadPhone: S.phone, tripName: S.trip, departureDate: S.date,
-      spots: crew ? 2 : 1, amount: crew ? "$198.00 USD" : "$99.00 USD", bookingRef: S.ref, bookingUrl: S.url,
-      travellerMode: crew ? "crew" : "independent",
-    }),
-});
-
-const sharedTail = (crew: boolean): Step[] => [
-  {
-    when: "7 days before",
-    title: "Balance charged automatically",
-    condition: "Deposit bookings only. Paid-in-full guests skip this.",
-    messages: [
-      {
-        label: "Balance paid", to: "Guest", status: "live",
-        render: async () =>
-          (await email()).balancePaidEmail({
-            firstName: S.first, tripName: S.trip, departureDate: S.date, spots: crew ? 2 : 1,
-            amountCharged: crew ? "$1,502.00 USD" : "$751.00 USD", totalPaid: crew ? "$1,700.00 USD" : "$850.00 USD",
-            bookingRef: S.ref, bookingUrl: S.url,
-          }),
-      },
-      {
-        label: "Balance failed (retries every 2 days)", to: "Guest", status: "live",
-        render: async () =>
-          (await email()).balanceFailedEmail({
-            firstName: S.first, tripName: S.trip, departureDate: S.date, amountDue: crew ? "$1,502.00 USD" : "$751.00 USD",
-            attempts: 1, nextAttemptDate: "Fri, 23 Oct 2026", bookingRef: S.ref,
-          }),
-      },
-    ],
-  },
-  {
-    when: "7 days and 1 day before",
-    title: "Property team manifest",
-    messages: [
-      {
-        label: "Departure manifest", to: TEAM, status: "live",
-        render: async () =>
-          (await email()).departureTeamReminderEmail({
-            daysOut: 7, tripName: S.trip, tripDays: 14, departureDate: S.date, departureStatus: "confirmed",
-            departureCode: "VIE-2026-10-28", travellers: crew ? 2 : 1, adminUrl: "https://madmonkeyhostels.com/all-in-trips/admin",
-            bookings: [{
-              ref: S.ref, leadName: S.name, email: S.email, phone: S.phone, spots: crew ? 2 : 1,
-              type: crew ? "With a crew" : "Independent", payment: "Paid in full", members: crew ? "Alex Kim" : "",
-            }],
-          }),
-      },
-    ],
-  },
-  {
-    when: "6 to 4 days before",
-    title: "Final details",
-    condition: "Meeting point, free pre-trip night, Day 1, packing, WhatsApp group.",
-    messages: [
-      {
-        label: "Final details (balance paid)", to: "Guest", status: "live",
-        render: async () => {
-          const d = (await details()).tripFinalDetails(S.slug);
-          return (await email()).tripCountdownEmail({
-            firstName: S.first, tripCountry: S.country, tripName: "14-day Vietnam", departureDate: S.date, daysToGo: 6,
-            bookingRef: S.ref, finalDetailsHtml: d.finalDetailsHtml, whatsappUrl: d.whatsappUrl,
-          });
-        },
-      },
-      {
-        label: "Final details + pay link (charge failed)", to: "Guest", status: "live",
-        render: async () => {
-          const d = (await details()).tripFinalDetails(S.slug);
-          return (await email()).balanceReminderEmail({
-            firstName: S.first, tripCountry: S.country, tripName: "14-day Vietnam", departureDate: S.date, daysToGo: 5,
-            balanceAmount: crew ? "$1,502.00 USD" : "$751.00 USD", payBalanceUrl: S.url, bookingRef: S.ref,
-            finalDetailsHtml: d.finalDetailsHtml, whatsappUrl: d.whatsappUrl,
-          });
-        },
-      },
-    ],
-  },
-  {
-    when: "Through the trip",
-    title: "Day-by-day messages",
-    condition: "Built in Klaviyo off the departure date. WhatsApp only to guests who ticked the box at checkout.",
-    messages: [{ label: "Klaviyo / WhatsApp flows", to: "Guest", status: "live", note: "Owned by Mich in Klaviyo, so no preview here." }],
-  },
-];
-
-const INDEPENDENT: Step[] = [
-  {
+function steps(crew: boolean): Step[] {
+  const g = sample(crew);
+  const atBooking: Step = {
     when: "At booking",
     title: "Books and pays",
-    condition: "$99 deposit per spot if 7+ days out, otherwise pay in full. Always one traveller.",
-    messages: [
-      confirmation(false),
-      opsAlert(false),
-      { label: "Klaviyo: profile + Booking Placed (+ WhatsApp consent if ticked)", to: "Klaviyo", status: "live", note: "Feeds Mich's flows. No guest-facing message." },
-    ],
-  },
-  ...sharedTail(false),
-];
-
-const CREW: Step[] = [
-  {
-    when: "At booking",
-    title: "Books and pays",
-    condition: "$99 deposit per spot if 7+ days out, otherwise pay in full. 1 to 5 spots.",
-    messages: [
-      confirmation(true),
-      opsAlert(true),
-      { label: "Klaviyo: profile + Booking Placed (+ WhatsApp consent if ticked)", to: "Klaviyo", status: "live", note: "Feeds Mich's flows. No guest-facing message." },
-    ],
-  },
-  {
-    when: "When the 5th traveller books",
-    title: "Milestone only",
-    condition: "Every departure runs whatever the numbers, so nothing goes to guests.",
-    messages: [{ label: "\"5 travellers booked\" note", to: OPS, status: "live", note: "One line: no action needed." }],
-  },
-  {
-    when: "10 days before",
-    title: "Under 5 travellers? Heads-up",
-    condition: "Fewer than 5 booked on the departure: send. 5 or more: skipped entirely.",
+    condition: crew
+      ? "$99 deposit per spot if 7+ days out, otherwise pay in full. 1 to 5 spots."
+      : "$99 deposit if 7+ days out, otherwise pay in full. Always one traveller.",
     messages: [
       {
-        label: "Heads-up: still going ahead", to: "Guest (lead booker)", status: "live",
-        note: "Today: sent 10 to 8 days out. Planned: straight away if they book when it's already inside 10 days.",
-        render: async () =>
-          (await email()).underfilledCrewNoticeEmail({
-            firstName: S.first, tripName: "14-day Vietnam", departureDate: S.date, bookingRef: S.ref, balanceDate: S.dueDate,
-          }),
+        label: "Booking confirmed", to: "Guest", status: "live",
+        note: crew
+          ? "Planned: own crew wording (meeting 13 Oct). Today both routes get this same email."
+          : "Planned: slightly different independent wording (meeting 13 Oct). Today both routes get this same email.",
+        render: () => journeyEmails.confirmation(g),
       },
-      { label: "\"Cancel my booking\" button in the heads-up", to: "Guest", status: "decision", note: "Ideal: cancels and refunds automatically, then tells GMs, Reden, ops and cs@. Fallback: emails cs@ with the booking ref. Waiting on Charlie's call (refund amount, auto vs CS)." },
+      { label: "New booking alert", to: OPS_RECIPIENTS, status: "live", render: () => journeyEmails.opsAlert(g) },
+      { label: "Klaviyo: profile + Booking Placed (+ WhatsApp consent if ticked)", to: "Klaviyo", status: "live", note: "Feeds Mich's flows. No guest-facing message." },
     ],
-  },
-  ...sharedTail(true),
-];
+  };
+  const crewOnly: Step[] = crew
+    ? [
+        {
+          when: "When the 5th traveller books",
+          title: "Milestone only",
+          condition: "Every departure runs whatever the numbers, so nothing goes to guests.",
+          messages: [{ label: "\"5 travellers booked\" note", to: OPS_RECIPIENTS, status: "live", note: "One line: no action needed." }],
+        },
+        {
+          when: "10 days before",
+          title: "Under 5 travellers? Heads-up",
+          condition: "Fewer than 5 booked on the departure: send. 5 or more: skipped entirely.",
+          messages: [
+            {
+              label: "Heads-up: still going ahead", to: "Guest (lead booker)", status: "live",
+              note: "Today: sent 10 to 8 days out. Planned: straight away if they book when it's already inside 10 days.",
+              render: () => journeyEmails.headsUp(g),
+            },
+            { label: "\"Cancel my booking\" button in the heads-up", to: "Guest", status: "decision", note: "Ideal: cancels and refunds automatically, then tells GMs, Reden, ops and cs@. Fallback: emails cs@ with the booking ref. Waiting on Charlie's call (refund amount, auto vs CS)." },
+          ],
+        },
+      ]
+    : [];
+  return [
+    atBooking,
+    ...crewOnly,
+    {
+      when: "7 days before",
+      title: "Balance charged automatically",
+      condition: "Deposit bookings only. Paid-in-full guests skip this.",
+      messages: [
+        { label: "Balance paid", to: "Guest", status: "live", render: () => journeyEmails.balancePaid(g) },
+        { label: "Balance failed (retries every 2 days)", to: "Guest", status: "live", render: () => journeyEmails.balanceFailed(g) },
+      ],
+    },
+    {
+      when: "7 days and 1 day before",
+      title: "Property team manifest",
+      messages: [{ label: "Departure manifest", to: TEAM_RECIPIENTS, status: "live", render: () => journeyEmails.manifest(g, 7, g.spots) }],
+    },
+    {
+      when: "6 to 4 days before",
+      title: "Final details",
+      condition: "Meeting point, free pre-trip night, Day 1, packing, WhatsApp group.",
+      messages: [
+        { label: "Final details (balance paid)", to: "Guest", status: "live", render: () => journeyEmails.finalPaid(g) },
+        { label: "Final details + pay link (charge failed)", to: "Guest", status: "live", render: () => journeyEmails.finalPayLink(g) },
+      ],
+    },
+    {
+      when: "Through the trip",
+      title: "Day-by-day messages",
+      condition: "Built in Klaviyo off the departure date. WhatsApp only to guests who ticked the box at checkout.",
+      messages: [{ label: "Klaviyo / WhatsApp flows", to: "Guest", status: "live", note: "Owned by Mich in Klaviyo, so no preview here." }],
+    },
+  ];
+}
 
 const STATUS: Record<Status, { text: string; cls: string }> = {
   live: { text: "LIVE", cls: "bg-mm-lime" },
@@ -202,7 +117,55 @@ const STATUS: Record<Status, { text: string; cls: string }> = {
   decision: { text: "DECISION NEEDED", cls: "bg-mm-orange" },
 };
 
-function Lane({ title, sub, steps, onOpen }: { title: string; sub: string; steps: Step[]; onOpen: (m: Message) => void }) {
+export function ViewEmailButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="ml-auto inline-flex items-center gap-1 border-[2px] border-mm-black bg-mm-paper px-2 py-1 font-sticker text-[9px] tracking-[0.12em] text-mm-black hover:bg-mm-yellow"
+    >
+      <Eye className="h-3.5 w-3.5" /> VIEW EMAIL
+    </button>
+  );
+}
+
+/** The real email in a sandboxed frame, subject and recipient on top. */
+export function EmailPreviewModal({ email, to, onClose }: { email: RenderedEmail; to: string; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-mm-black/60 p-4" onClick={onClose}>
+      <div className="flex max-h-[92vh] w-full max-w-2xl flex-col border-[3px] border-mm-black bg-mm-paper shadow-mm-lg" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-start justify-between gap-3 border-b-[3px] border-mm-black p-4">
+          <div className="min-w-0">
+            <p className="font-sticker text-[10px] tracking-[0.14em] text-mm-black/55">SUBJECT</p>
+            <p className="mt-1 break-words text-base font-bold normal-case leading-tight text-mm-black">{email.subject}</p>
+            <p className="mt-1 text-[12px] text-mm-black/60">To: {to}</p>
+          </div>
+          <button onClick={onClose} aria-label="Close" className="shrink-0 text-mm-black/60 hover:text-mm-black">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <iframe title="Email preview" srcDoc={email.html} sandbox="" className="h-[70vh] w-full bg-white" />
+      </div>
+    </div>
+  );
+}
+
+/** Open a rendered email; shared by the overview and the per-booking journey. */
+export function useEmailPreview() {
+  const [open, setOpen] = useState<{ email: RenderedEmail; to: string } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const show = async (render: () => Promise<RenderedEmail>, to: string) => {
+    setError(null);
+    try {
+      setOpen({ email: await render(), to });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  };
+  const modal = open ? <EmailPreviewModal email={open.email} to={open.to} onClose={() => setOpen(null)} /> : null;
+  return { show, modal, error };
+}
+
+function Lane({ title, sub, steps: list, onOpen }: { title: string; sub: string; steps: Step[]; onOpen: (m: Message) => void }) {
   return (
     <section className="min-w-0 flex-1">
       <div className="border-[3px] border-mm-black bg-mm-black p-4 text-mm-bone">
@@ -210,7 +173,7 @@ function Lane({ title, sub, steps, onOpen }: { title: string; sub: string; steps
         <p className="mt-1 text-sm text-mm-bone/75">{sub}</p>
       </div>
       <ol className="relative mt-4 space-y-4 border-l-[3px] border-mm-black pl-5">
-        {steps.map((step) => (
+        {list.map((step) => (
           <li key={step.when + step.title} className="relative">
             <span className="absolute -left-[31px] top-3 h-4 w-4 border-[3px] border-mm-black bg-mm-pink" aria-hidden />
             <p className="font-sticker text-[10px] tracking-[0.14em] text-mm-black/60">{step.when.toUpperCase()}</p>
@@ -225,14 +188,7 @@ function Lane({ title, sub, steps, onOpen }: { title: string; sub: string; steps
                         {STATUS[m.status].text}
                       </span>
                       <span className="text-sm font-bold text-mm-black">{m.label}</span>
-                      {m.render && (
-                        <button
-                          onClick={() => onOpen(m)}
-                          className="ml-auto inline-flex items-center gap-1 border-[2px] border-mm-black bg-mm-paper px-2 py-1 font-sticker text-[9px] tracking-[0.12em] text-mm-black hover:bg-mm-yellow"
-                        >
-                          <Eye className="h-3.5 w-3.5" /> VIEW EMAIL
-                        </button>
-                      )}
+                      {m.render && <ViewEmailButton onClick={() => onOpen(m)} />}
                     </div>
                     <p className="mt-1 text-[12px] text-mm-black/60">To: {m.to}</p>
                     {m.note && <p className="mt-1 text-[12px] leading-snug text-mm-black/75">{m.note}</p>}
@@ -248,19 +204,8 @@ function Lane({ title, sub, steps, onOpen }: { title: string; sub: string; steps
 }
 
 export function GuestJourneys() {
-  const [open, setOpen] = useState<Rendered | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  const show = async (m: Message) => {
-    if (!m.render) return;
-    setError(null);
-    try {
-      const r = await m.render();
-      setOpen({ ...r, to: m.to });
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    }
-  };
+  const { show, modal, error } = useEmailPreview();
+  const open = (m: Message) => m.render && show(m.render, m.to);
 
   return (
     <div>
@@ -269,7 +214,8 @@ export function GuestJourneys() {
         <p className="mt-2 max-w-3xl text-sm leading-relaxed text-mm-black/75">
           Everything that happens after someone books, for each traveller type. "View email" opens the real email
           from the live templates, filled with a sample guest (Sam, Vietnam 14 days, departing 28 Oct). Every
-          departure runs: there's no minimum number of travellers.
+          departure runs: there's no minimum number of travellers. To see one guest's journey, open Bookings and
+          click "journey" on their row.
         </p>
         <div className="mt-3 flex flex-wrap gap-3 text-[12px] text-mm-black/70">
           {(Object.keys(STATUS) as Status[]).map((s) => (
@@ -283,27 +229,10 @@ export function GuestJourneys() {
       </div>
 
       <div className="mt-6 flex flex-col gap-8 lg:flex-row">
-        <Lane title="ROUTE 1 · INDEPENDENT" sub="Travelling alone. One spot. Always runs." steps={INDEPENDENT} onOpen={show} />
-        <Lane title="ROUTE 2 · WITH A CREW" sub="Booked to travel with a group. Runs whatever the numbers; under 5 gets a heads-up." steps={CREW} onOpen={show} />
+        <Lane title="ROUTE 1 · INDEPENDENT" sub="Travelling alone. One spot. Always runs." steps={steps(false)} onOpen={open} />
+        <Lane title="ROUTE 2 · WITH A CREW" sub="Booked to travel with a group. Runs whatever the numbers; under 5 gets a heads-up." steps={steps(true)} onOpen={open} />
       </div>
-
-      {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-mm-black/60 p-4" onClick={() => setOpen(null)}>
-          <div className="flex max-h-[92vh] w-full max-w-2xl flex-col border-[3px] border-mm-black bg-mm-paper shadow-mm-lg" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-start justify-between gap-3 border-b-[3px] border-mm-black p-4">
-              <div className="min-w-0">
-                <p className="font-sticker text-[10px] tracking-[0.14em] text-mm-black/55">SUBJECT</p>
-                <p className="mt-1 break-words text-base font-bold normal-case leading-tight text-mm-black">{open.subject}</p>
-                <p className="mt-1 text-[12px] text-mm-black/60">To: {open.to}</p>
-              </div>
-              <button onClick={() => setOpen(null)} aria-label="Close" className="shrink-0 text-mm-black/60 hover:text-mm-black">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <iframe title="Email preview" srcDoc={open.html} sandbox="" className="h-[70vh] w-full bg-white" />
-          </div>
-        </div>
-      )}
+      {modal}
     </div>
   );
 }
