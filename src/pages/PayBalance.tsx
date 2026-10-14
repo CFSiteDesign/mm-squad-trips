@@ -26,12 +26,21 @@ export default function PayBalance() {
         body: { bookingRef: ref, leadEmail: email },
       });
       if (error) {
-        const ctx = (error as { context?: { alreadyPaid?: boolean } }).context;
-        if (ctx?.alreadyPaid) {
+        // supabase-js hands back the raw Response; the reason is in its JSON body.
+        const res = (error as { context?: Response }).context;
+        const reply = res && typeof res.json === "function"
+          ? ((await res.clone().json().catch(() => null)) as { error?: string; alreadyPaid?: boolean } | null)
+          : null;
+        if (reply?.alreadyPaid) {
           setState({ kind: "alreadyPaid" });
           return;
         }
-        throw error;
+        const friendly: Record<string, string> = {
+          "booking not found": "We couldn't find that booking. Check the link in your email.",
+          "email mismatch": "That email doesn't match the booking. Use the link from your booking email.",
+          "no balance due": "There's nothing left to pay on this booking.",
+        };
+        throw new Error((reply?.error && friendly[reply.error]) || reply?.error || error.message);
       }
       const url = (data as { url?: string })?.url;
       if (!url) throw new Error("No checkout URL returned");
