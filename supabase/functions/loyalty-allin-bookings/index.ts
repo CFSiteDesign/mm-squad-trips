@@ -169,7 +169,11 @@ Deno.serve(async (req) => {
         ),
       );
       const byTraveller = await Promise.all(
-        emails.map((e) => sb.from("bookings").select(COLS).eq("spot_number", 1).contains("additional_travelers", [{ email: e }])),
+        // jsonb containment: supabase-js sends an array as a Postgres array
+        // literal, so the JSON goes as a string.
+        emails.map((e) =>
+          sb.from("bookings").select(COLS).eq("spot_number", 1).contains("additional_travelers", JSON.stringify([{ email: e }])),
+        ),
       );
       for (const r of [...byLead, ...byTraveller]) {
         if (r.error) return jr({ error: r.error.message }, 500);
