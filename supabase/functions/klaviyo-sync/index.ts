@@ -46,7 +46,7 @@ const MODES: Mode[] = ["off", "dry_run", "test", "live"];
 const MAX_ATTEMPTS = 5;
 const BATCH = 100;
 // Mirrors `nights` in src/data/trips.ts: the departure morning is not a night.
-const NIGHTS: Record<string, number> = { vietnam: 13, thailand: 10 };
+const NIGHTS: Record<string, number> = { vietnam: 13, thailand: 10, laos: 9 };
 
 type Row = Record<string, unknown>;
 type Cfg = { mode: Mode; testEmails: Set<string>; lists: Record<string, string> };

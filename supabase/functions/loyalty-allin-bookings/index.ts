@@ -26,6 +26,7 @@ const NIGHTS: Record<string, number> = {
   cambodia: 14,
   vietnam: 13,
   thailand: 10,
+  laos: 9,
 };
 
 function jr(body: unknown, status = 200) {

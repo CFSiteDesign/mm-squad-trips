@@ -6,7 +6,10 @@
 //     day-by-day. Using 14.
 //   • "2 Locations" in the header vs "4 destinations" in the FAQ. Using 4,
 //     which is what the itinerary actually visits.
-//   • Trip code reads CAM07 on a 14-day trip. Left exactly as written.
+//   • Trip code read CAM07 on a 14-day trip. Recoded to CAM14 (15 Oct 2026):
+//     codes now follow country + days (IND12, IND07, VIET14, VIET07, CAM14,
+//     THAI11, LAOS10). These are the codes the pages show; the database keeps
+//     its own short codes, which go into booking references.
 import s21 from "@/assets/kh-hl-s21.jpg";
 import angkor from "@/assets/kh-hl-angkor.jpg";
 import floating from "@/assets/kh-hl-floating.jpg";
@@ -17,7 +20,7 @@ import type { Day } from "@/data/trip-content-indonesia";
 import type { Highlight } from "@/data/trip-content";
 
 export const KH_SNAPSHOT = {
-  tripCode: "CAM07",
+  tripCode: "CAM14",
   days: 14,
   from: "Phnom Penh",
   to: "Koh Sdach",

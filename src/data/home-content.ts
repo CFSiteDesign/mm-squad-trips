@@ -21,7 +21,7 @@ export const DIFFERENT_INDEPENDENT = [
 
 export const INCLUDED = [
   "All transfers + island boats", "24/7 local crew", "Free pre-trip night",
-  "Breakfasts, lunches + dinners", "Loads of free drinks", "Every activity in the itinerary",
+  "Meals as per itinerary", "Loads of free drinks", "Every activity in the itinerary",
   "Dorm beds at Mad Monkey",
 ];
 export const NOT_INCLUDED = ["Flights", "Travel insurance", "Personal expenses", "Upgrades + add-ons"];

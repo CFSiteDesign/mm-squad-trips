@@ -9,7 +9,7 @@ import type { Day } from "@/data/trip-content-indonesia";
 import type { Highlight } from "@/data/trip-content";
 
 export const I7_SNAPSHOT = {
-  tripCode: "INDO07",
+  tripCode: "IND07",
   days: 7,
   from: "Gili T",
   to: "Kuta Lombok",

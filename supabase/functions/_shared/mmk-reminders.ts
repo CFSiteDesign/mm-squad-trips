@@ -24,7 +24,7 @@ export type MmkAllInGuest = {
 
 export type MmkStayScope = "previous" | "ongoing" | "upcoming";
 
-const NIGHTS: Record<string, number> = { vietnam: 13, thailand: 10 };
+const NIGHTS: Record<string, number> = { vietnam: 13, thailand: 10, laos: 9 };
 
 function plusDays(iso: string, days: number) {
   const d = new Date(`${iso}T00:00:00Z`);

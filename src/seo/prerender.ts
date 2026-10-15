@@ -11,6 +11,7 @@
 import { TRIPS } from "@/data/trips";
 import { getTripContent, type TripSlug } from "@/data/trip-content";
 import { getTripFallback } from "@/data/tripFallbacks";
+import { weekdayName } from "@/lib/trip-dates";
 import { SQUAD_BENEFITS } from "@/data/squad-benefits";
 import { DIFFERENT_CREW, DIFFERENT_INDEPENDENT, HERO_SUB, INCLUDED, NOT_INCLUDED, RATING_LINE } from "@/data/home-content";
 import {
@@ -60,7 +61,7 @@ const hero = (eyebrow: string | null, lines: [string, string][], sub: string) =>
 <section class="border-b-[4px] border-mm-bone bg-mm-black text-mm-bone">
   <div class="mx-auto flex min-h-[70svh] max-w-6xl flex-col justify-center px-5 pb-24 pt-[9rem] md:px-8 md:pb-20 md:pt-32 lg:pl-20">
     ${eyebrow ? `<p class="mb-2 font-display text-2xl tracking-[0.12em] text-mm-lime md:text-3xl lg:text-5xl">${esc(eyebrow)}</p>` : ""}
-    <h1 class="${HERO_H1}">${lines.map(([text, cls]) => `<span class="block ${cls}">${esc(text)}</span>`).join("")}</h1>
+    <h1 class="${HERO_H1}">${lines.map(([text, cls]) => `<span class="block ${cls}">${esc(text)}</span>`).join(" ")}</h1>
     <p class="mt-5 max-w-xl text-[14px] leading-snug text-mm-bone/85 md:mt-7 md:text-lg">${esc(sub)}</p>
   </div>
 </section>`;
@@ -176,8 +177,10 @@ function tripProduct(slug: SeoSlug) {
 function tripPage(slug: SeoSlug): PrerenderPage {
   const meta = TRIPS.find((t) => t.slug === slug)!;
   const seo = TRIP_SEO[slug];
-  const c = getTripContent(getTripFallback(slug)!, slug as TripSlug);
+  const fallback = getTripFallback(slug)!;
+  const c = getTripContent(fallback, slug as TripSlug);
   const s = c.snapshot;
+  const departs = weekdayName(fallback.startWeekday);
   const url = pageUrl(slug);
 
   const days = c.itinerary.map((d) => {
@@ -200,13 +203,16 @@ function tripPage(slug: SeoSlug): PrerenderPage {
     hero(meta.name.toUpperCase(), [["YOUR", ""], ["TRIP,", "text-mm-pink"], ["SORTED.", "text-mm-lime"]],
       `${s.from} → ${s.to} · ${s.days} days · from $${priceOf(slug)} · $99 deposit holds your spot`) +
     section("Your adventure snapshot",
-      `<dl class="mt-4 grid grid-cols-2 gap-3 text-[15px] sm:grid-cols-5">${[["Trip code", s.tripCode], ["Days", String(s.days)], ["From", s.from], ["To", s.to], ["Countries", s.countries]]
+      `<dl class="mt-4 grid grid-cols-2 gap-3 text-[15px] sm:grid-cols-3">${[["Trip code", s.tripCode], ["Days", String(s.days)], ["From", s.from], ["To", s.to], ["Countries", s.countries], ...(departs ? [["Departs", `Every ${departs}`]] : [])]
         .map(([k, v]) => `<div><dt class="text-xs uppercase tracking-[0.14em] text-mm-black/55">${esc(k)}</dt><dd class="font-display">${esc(v)}</dd></div>`).join("")}</dl>` +
       `<p class="${P}">${esc(s.blurb)}</p>` +
       `<h3 class="${H3}">IS THIS TRIP FOR ME?</h3>${list(c.isThisForMe.map((r) => `${r.k}: ${r.v}`))}`) +
     (c.highlights.length ? section("Bucket-list moments made for the group chat", list(c.highlights.map((h) => h.title))) : "") +
-    section("What your $99 deposit unlocks", `${list(c.included)}<h3 class="${H3}">NOT INCLUDED</h3>${list(c.notIncluded)}`) +
-    section("The breakdown", days) +
+    section("What your $99 deposit unlocks", `${list(c.included)}<h3 class="${H3}">NOT INCLUDED</h3>${list(c.notIncluded)}` +
+      (c.addOns?.length
+        ? `<h3 class="${H3}">WANT TO GO BIGGER?</h3>${list(c.addOns.map((a) => `${a.name} (${a.price}): ${a.body}`))}${c.addOnsNote ? `<p class="${P}">${esc(c.addOnsNote)}</p>` : ""}`
+        : "")) +
+    section("The breakdown", days + (c.goodToKnow ? `<h3 class="${H3}">GOOD TO KNOW</h3><p class="${P}">${esc(c.goodToKnow)}</p>` : "")) +
     reviews +
     section("FAQ", c.faqs.map((f) => `<h3 class="${H3}">${esc(f.q)}</h3><p class="${P}">${esc(f.a)}</p>`).join("")) +
     (seo.noindex ? "" : section("More ALL IN trips",

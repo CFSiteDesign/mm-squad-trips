@@ -49,6 +49,7 @@ const FALLBACKS: Record<string, Trip> = {
     code: "IND",
     name: "Indonesia Island Hopping",
     slug: "indonesia",
+    startWeekday: 6,
     days: 12,
     stops: [
       { name: "Uluwatu", nights: 2, description: "", photos: [], activities: [] },
@@ -69,6 +70,7 @@ const FALLBACKS: Record<string, Trip> = {
     code: "CAM",
     name: "Cambodia Coast to Coast",
     slug: "cambodia",
+    startWeekday: 4,
     days: 14,
     stops: [
       { name: "Phnom Penh", nights: 3, description: "", photos: [], activities: [] },
@@ -88,6 +90,7 @@ const FALLBACKS: Record<string, Trip> = {
     code: "VIE",
     name: "Vietnam",
     slug: "vietnam",
+    startWeekday: 3,
     days: 14,
     stops: [
       { name: "Hanoi", nights: 3, description: "", photos: [], activities: [] },
@@ -109,6 +112,7 @@ const FALLBACKS: Record<string, Trip> = {
     code: "IND7",
     name: "ALL IN · 7 Day Gili T + Lombok",
     slug: "indonesia-7",
+    startWeekday: 4,
     days: 7,
     stops: [
       { name: "Gili Trawangan", nights: 3, description: "", photos: [], activities: [] },
@@ -127,6 +131,7 @@ const FALLBACKS: Record<string, Trip> = {
     code: "VIE7",
     name: "ALL IN · Vietnam Adventure",
     slug: "vietnam-7",
+    startWeekday: 3,
     days: 7,
     stops: [
       { name: "Hanoi", nights: 2, description: "", photos: [], activities: [] },
@@ -145,6 +150,7 @@ const FALLBACKS: Record<string, Trip> = {
     code: "THA",
     name: "ALL IN · Thailand",
     slug: "thailand",
+    startWeekday: 2,
     days: 11,
     stops: [
       { name: "Bangkok", nights: 2, description: "", photos: [], activities: [] },
@@ -154,6 +160,27 @@ const FALLBACKS: Record<string, Trip> = {
     activityCount: 12,
     heroVideoUrl: "",
     defaultPrice: 340,
+    defaultStrikethrough: 0,
+    departures: [],
+  },
+  laos: {
+    ...BASE,
+    testimonials: DUMMY_TESTIMONIALS,
+    id: "placeholder-laos",
+    code: "LAO",
+    name: "ALL IN · Laos Ultimate",
+    slug: "laos",
+    startWeekday: 0,
+    days: 10,
+    stops: [
+      { name: "Luang Prabang", nights: 4, description: "", photos: [], activities: [] },
+      { name: "Nong Khiaw", nights: 1, description: "", photos: [], activities: [] },
+      { name: "Muang Ngoi", nights: 1, description: "", photos: [], activities: [] },
+      { name: "Vang Vieng", nights: 3, description: "", photos: [], activities: [] },
+    ],
+    activityCount: 12,
+    heroVideoUrl: "",
+    defaultPrice: 400,
     defaultStrikethrough: 0,
     departures: [],
   },
