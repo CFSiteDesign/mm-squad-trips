@@ -89,7 +89,7 @@
         try { sessionStorage.setItem('mm-paying', data.ref); } catch (x) { /* private mode */ }
         window.location.href = data.checkoutUrl;
       })
-      .catch(function (x) { btn.disabled = false; btn.textContent = label; show((x && x.message && x.message.indexOf('HTTP') !== 0 ? x.message + ' ' : '') + 'Nothing has been charged. Try again, or copy your plan and message the crew at ' + (C.CREW_EMAIL || 'cs@madmonkeyhostels.com') + '.'); });
+      .catch(function (x) { btn.disabled = false; btn.textContent = label; show((x && x.message && x.message.indexOf('HTTP') !== 0 ? x.message + ' ' : '') + 'Nothing has been charged. Try again, or copy your plan and message the crew at ' + (C.CREW_EMAIL || 'ewan@madmonkeyhostels.com') + '.'); });
   }
 
   // Ewan's demo-mode confirmation (no LEAD_ENDPOINT): nothing sent, nothing charged.

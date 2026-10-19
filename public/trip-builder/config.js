@@ -20,7 +20,8 @@ window.MM_CONFIG = {
   WHATSAPP: '',
 
   // Optional fallback shown in demo mode / when the endpoint fails.
-  CREW_EMAIL: 'cs@madmonkeyhostels.com',
+  // Trip builder enquiries are Ewan's (Charlie, 19 Oct 2026).
+  CREW_EMAIL: 'ewan@madmonkeyhostels.com',
 
   // Used in share links + the story card. Leave blank to use wherever this page is hosted.
   SITE_URL: '',

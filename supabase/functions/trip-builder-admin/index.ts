@@ -10,7 +10,7 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { adminAuthHeaderToken, verifyAdminToken } from "../_shared/admin-auth.ts";
-import { sendEmail, tripBuilderDeclinedEmail, tripBuilderReadyEmail } from "../_shared/email.ts";
+import { sendEmail, TRIP_BUILDER_CONTACT, tripBuilderDeclinedEmail, tripBuilderReadyEmail } from "../_shared/email.ts";
 import { builderStatusUrl, usd } from "../_shared/trip-builder.ts";
 
 const json = (body: unknown, status = 200) =>
@@ -105,7 +105,7 @@ Deno.serve(async (req) => {
       let emailed = false;
       if (to) {
         const m = tripBuilderReadyEmail({ firstName: first, ref: row.ref, route: row.route ?? "your trip", balance: usd(amount), note, payUrl: session.url ?? statusUrl, statusUrl });
-        await sendEmail({ to, subject: m.subject, html: m.html, templateName: "trip_builder_ready" });
+        await sendEmail({ to, subject: m.subject, html: m.html, replyTo: TRIP_BUILDER_CONTACT, templateName: "trip_builder_ready" });
         emailed = true;
       }
       return json({ ok: true, url: session.url, emailed });
@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
       await save({ status: "declined", crew_note: note || null });
       if (to) {
         const m = tripBuilderDeclinedEmail({ firstName: first, ref: row.ref, route: row.route ?? "your trip", note, refunded: refunded ? usd(refunded) : "", statusUrl });
-        await sendEmail({ to, subject: m.subject, html: m.html, templateName: "trip_builder_declined" });
+        await sendEmail({ to, subject: m.subject, html: m.html, replyTo: TRIP_BUILDER_CONTACT, templateName: "trip_builder_declined" });
       }
       return json({ ok: true, refunded });
     }

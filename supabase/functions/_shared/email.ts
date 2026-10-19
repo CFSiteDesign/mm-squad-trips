@@ -169,7 +169,7 @@ function render(tpl: string, vars: Record<string, string | number | undefined | 
 
 const LOGO = `${APP_URL}/all-in.png`;
 
-function shell(title: string, bodyInner: string): string {
+function shell(title: string, bodyInner: string, contact = "cs@madmonkeyhostels.com"): string {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>${title}</title></head>
 <body style="margin:0;padding:0;background:#f5efe2;font-family:Montserrat,Arial,sans-serif;color:#0a0a0a">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5efe2"><tr><td align="center" style="padding:24px 16px">
@@ -179,7 +179,7 @@ function shell(title: string, bodyInner: string): string {
 </td></tr>
 ${bodyInner}
 <tr><td style="padding:16px 24px 24px 24px;font-size:12px;color:#444;border-top:1px solid #eee">
-Mad Monkey Hostels · ALL IN Trips · Questions? cs@madmonkeyhostels.com
+Mad Monkey Hostels · ALL IN Trips · Questions? ${contact}
 </td></tr>
 </table></td></tr></table></body></html>`;
 }
@@ -756,17 +756,20 @@ export function underfilledCrewNoticeEmail(v: {
 // ---------- Trip builder (Ewan's builder at /trip-builder, 19 Oct 2026) ----------
 // A guest sends a trip for checking with a $50 per person deposit; the crew
 // checks it in Admin > Trip builder and sends the balance link from there.
+// All trip builder comms go through Ewan: alerts to him, guest replies to him.
 
 const tbButton = (href: string, label: string) =>
   `<a href="${escapeHtml(href)}" style="display:inline-block;background:#ff6600;color:#0a0a0a;font-weight:900;text-transform:uppercase;padding:14px 22px;border:2px solid #0a0a0a;text-decoration:none">${escapeHtml(label)}</a>`;
 const tbP = (html: string) => `<p style="margin:0 0 12px 0">${html}</p>`;
+// Every trip builder email points at Ewan (Charlie, 19 Oct 2026): he runs these enquiries.
+export const TRIP_BUILDER_CONTACT = "ewan@madmonkeyhostels.com";
 const tbShell = (title: string, headline: string, body: string) =>
   shell(title, `<tr><td style="padding:16px 24px 8px 24px">
 <h1 style="margin:0;font-size:28px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em">${escapeHtml(headline)}</h1>
 </td></tr>
 <tr><td style="padding:0 24px 16px 24px;font-size:16px;line-height:1.5">
 ${body}
-</td></tr>`);
+</td></tr>`, TRIP_BUILDER_CONTACT);
 
 /** Guest: deposit paid, the trip is with the crew. */
 export function tripBuilderDepositEmail(v: {

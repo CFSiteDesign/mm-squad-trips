@@ -8,12 +8,16 @@ import type Stripe from "https://esm.sh/stripe@18.5.0";
 import { appBase } from "./app-base.ts";
 import {
   APP_URL,
-  OPS_NOTIFY_EMAILS,
   sendEmail,
   tripBuilderConfirmedEmail,
   tripBuilderDepositEmail,
   tripBuilderOpsEmail,
+  TRIP_BUILDER_CONTACT,
 } from "./email.ts";
+
+// Trip builder enquiries are Ewan's (Charlie, 19 Oct 2026): every alert goes to
+// him and every guest email replies to him, not the ALL IN ops list or cs@.
+const EWAN = TRIP_BUILDER_CONTACT;
 
 export const DEPOSIT_PER_PERSON_USD = 50;
 export const HOLD_HOURS = 48;
@@ -82,7 +86,7 @@ export async function handleTripBuilderPaid(sb: SupabaseClient, session: Stripe.
         startDate: fmtDay(row.start_date), deposit, people: Number(row.party_size ?? 1),
         holdUntil: fmtDayTime(holdUntil), statusUrl,
       });
-      await sendEmail({ to: guestEmail, subject: m.subject, html: m.html, templateName: "trip_builder_deposit" }).catch((e) => console.warn("trip builder guest email failed", e));
+      await sendEmail({ to: guestEmail, subject: m.subject, html: m.html, replyTo: EWAN, templateName: "trip_builder_deposit" }).catch((e) => console.warn("trip builder guest email failed", e));
     }
     const contact = row.contact_via === "whatsapp" ? `WhatsApp ${row.whatsapp ?? ""}` : `Email ${row.email ?? ""}`;
     const ops = tripBuilderOpsEmail({
@@ -92,7 +96,7 @@ export async function handleTripBuilderPaid(sb: SupabaseClient, session: Stripe.
       deposit, allInMatch: String(row.all_in_match ?? ""), notes: String(row.notes ?? ""), itinerary: String(row.itinerary ?? ""),
       tripLink: String(row.trip_link ?? ""), adminUrl: `${APP_URL}/admin`, holdUntil: fmtDayTime(holdUntil),
     });
-    await sendEmail({ to: OPS_NOTIFY_EMAILS, subject: ops.subject, html: ops.html, templateName: "trip_builder_ops" }).catch((e) => console.warn("trip builder ops email failed", e));
+    await sendEmail({ to: EWAN, subject: ops.subject, html: ops.html, replyTo: guestEmail ?? undefined, templateName: "trip_builder_ops" }).catch((e) => console.warn("trip builder ops email failed", e));
     return;
   }
 
@@ -109,10 +113,10 @@ export async function handleTripBuilderPaid(sb: SupabaseClient, session: Stripe.
     const paid = usd((session.amount_total ?? 0) / 100);
     if (guestEmail) {
       const m = tripBuilderConfirmedEmail({ firstName: first, ref: row.ref, route: row.route ?? "your trip", paid, statusUrl });
-      await sendEmail({ to: guestEmail, subject: m.subject, html: m.html, templateName: "trip_builder_confirmed" }).catch((e) => console.warn("trip builder confirmed email failed", e));
+      await sendEmail({ to: guestEmail, subject: m.subject, html: m.html, replyTo: EWAN, templateName: "trip_builder_confirmed" }).catch((e) => console.warn("trip builder confirmed email failed", e));
     }
     await sendEmail({
-      to: OPS_NOTIFY_EMAILS,
+      to: EWAN,
       subject: `Trip builder: ${row.name} paid the ${paid} balance · ${row.ref}`,
       html: `<p><strong>${String(row.name).replace(/</g, "&lt;")}</strong> paid the ${paid} balance for ${String(row.route ?? "").replace(/</g, "&lt;")} (${row.ref}). It's booked: make sure the beds are locked in.</p>`,
       templateName: "trip_builder_balance_ops",
