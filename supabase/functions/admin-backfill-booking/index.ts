@@ -14,6 +14,7 @@ import {
   opsCcForTrip,
   sendEmail,
   bookingConfirmedEmail,
+  countryForSlug,
 } from "../_shared/email.ts";
 
 function envClient() {
@@ -203,8 +204,7 @@ async function processSession(
 
   if (sendEmails && m.lead_email) {
     try {
-      const country =
-        (m.trip_name as string)?.split(/[—\-:]/)[0]?.trim() || (m.trip_slug as string) || "your trip";
+      const country = countryForSlug(m.trip_slug as string) || "your trip";
       const firstName = ((m.lead_name as string) || "").split(" ")[0] || "traveler";
       {
         const balanceTotal = Math.max(0, fullDue - amountPaidTotal);

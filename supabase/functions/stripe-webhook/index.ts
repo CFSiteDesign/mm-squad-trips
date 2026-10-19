@@ -14,6 +14,7 @@ import {
   opsCcForTrip,
   sendEmail,
   bookingConfirmedEmail,
+  countryForSlug,
   squadMemberJoinedEmail,
   squadMilestoneEmail,
 } from "../_shared/email.ts";
@@ -520,7 +521,8 @@ async function writeBookings(session: Stripe.Checkout.Session) {
   // Booking confirmation to the lead booker
   try {
     if (m.lead_email) {
-      const country = (m.trip_name as string)?.split(/[—\-:]/)[0]?.trim() || (m.trip_slug as string) || "your trip";
+      // From the slug: trip names ("ALL IN · Vietnam") don't give a clean country.
+      const country = countryForSlug(m.trip_slug as string) || "your trip";
       const firstName = ((m.lead_name as string) || "").split(" ")[0] || "traveler";
       const isSoloLead = m.lead_solo === "true"; // labels the ops email only
       {

@@ -204,7 +204,9 @@ export function creatorPerksBlock(creatorCode?: string | null): string {
 }
 
 // The one booking confirmation every guest gets (8 Oct 2026: no minimum, so
-// crews and independents both hear "confirmed, book your flights" right away).
+// crews and independents both hear they're confirmed right away). Comms doc
+// 16 Oct 2026: no "guaranteed to run" and nothing about flights, here or in
+// the subject; guests decide on flights themselves.
 // Handles deposit (balance block + pay link) and paid in full.
 export function bookingConfirmedEmail(v: {
   firstName: string;
@@ -233,15 +235,11 @@ export function bookingConfirmedEmail(v: {
 
   const inner = render(
     `<tr><td style="padding:16px 24px 8px 24px">
-<h1 style="margin:0;font-size:28px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em">YOU'RE CONFIRMED ✅ BOOK YOUR FLIGHTS</h1>
+<h1 style="margin:0;font-size:28px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em">You're confirmed ✅ See you in {{tripCountry}}!</h1>
 </td></tr>
 <tr><td style="padding:0 24px 16px 24px;font-size:16px;line-height:1.5">
 <p style="margin:0 0 12px 0">Hey {{firstName}},</p>
-<p style="margin:0 0 12px 0">You're booked on <strong>{{tripName}}</strong> on <strong>{{departureDate}}</strong>, and like every departure it's <strong>guaranteed to run</strong>. You're locked in.</p>
-<div style="margin:18px 0;padding:16px;border:2px solid #0a0a0a;background:#ccff01">
-<div style="font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px">✈️ Green light on flights</div>
-<p style="margin:0;font-size:14px;line-height:1.5">Book your flights whenever you're ready: your trip is confirmed. Aim to arrive the day before departure (your free pre-trip night). Shout if you'd like a hand with anything.</p>
-</div>
+<p style="margin:0 0 12px 0">You're booked on <strong>{{tripName}}</strong> on <strong>{{departureDate}}</strong>. You're locked in.</p>
 {{creatorPerks}}
 ${balanceBlock}
 <p style="margin:0 0 20px 0;font-size:13px;color:#555">Booking ref: <strong>{{bookingRef}}</strong> · <a href="{{bookingUrl}}" style="color:#0a0a0a">View booking</a></p>
@@ -251,7 +249,7 @@ ${balanceBlock}
     // so it is injected after render() rather than through it.
   ).replace("{{creatorPerks}}", creatorPerksBlock(v.creatorCode));
   return {
-    subject: `${v.tripCountry} is confirmed ✅ Good to book your flights`,
+    subject: `You're confirmed ✅ See you in ${v.tripCountry}!`,
     html: shell("You're confirmed", inner),
   };
 }
@@ -357,8 +355,8 @@ export function bookingOpsNotificationEmail(v: {
   discountCode?: string;
   staffRecommendation?: string;
   bookingUrl: string;
-  /** Solo = one traveller, guaranteed to run. Group = several spots on one
-   *  booking. Falls back to the spot count when a caller doesn't say. */
+  /** Solo = one traveller. Group = several spots on one booking. Falls back
+   *  to the spot count when a caller doesn't say. */
   bookingType?: "solo" | "group";
   /** From the gate. Decides the label only: every booking runs (no minimum since 8 Oct 2026). */
   travellerMode?: "independent" | "crew";
@@ -370,12 +368,13 @@ export function bookingOpsNotificationEmail(v: {
   const solo = mode ? mode === "independent" : v.bookingType ? v.bookingType === "solo" : String(v.spots) === "1";
   const spotsText = `${spots} spot${spots === 1 ? "" : "s"}`;
   const typeLabel = mode ? (solo ? "Independent" : "With a crew") : solo ? "Solo" : "Group";
+  // No "guaranteed to run" (comms doc 16 Oct 2026): every trip runs, so it says nothing.
   const typeDetail = mode
     ? solo
-      ? "1 traveller · guaranteed to run"
-      : `${spotsText} · booked to travel with a crew · guaranteed to run`
+      ? "1 traveller · travelling independently"
+      : `${spotsText} · booked to travel with a crew`
     : solo
-      ? "1 traveller · departure guaranteed to run"
+      ? "1 traveller"
       : `${spots} travellers booked together`;
   const heading = mode
     ? solo ? "🧍 INDEPENDENT BOOKING" : `👥 WITH A CREW · ${spotsText.toUpperCase()}`
@@ -711,36 +710,62 @@ export function departureCancelledEmail(v: {
 // back through cs@ if they'd rather not.
 export function underfilledCrewNoticeEmail(v: {
   firstName: string;
+  /** "14-day Vietnam" */
   tripName: string;
+  /** "Vietnam": the headline and the sign-off */
+  country: string;
   departureDate: string;
   bookingRef: string;
   /** Empty when there's no balance still to charge. */
   balanceDate: string;
 }): { subject: string; html: string } {
+  // Copy from the ALL IN comms doc (16 Oct 2026): lead with the good news.
+  const flag = COUNTRY_FLAGS[v.country] ?? "";
   const balanceLine = v.balanceDate
-    ? `<p style="margin:0 0 12px 0">If you can, let us know before <strong>{{balanceDate}}</strong>, when your remaining balance is charged.</p>`
+    ? ` Please let us know before <strong>{{balanceDate}}</strong>, when your remaining balance is charged.`
     : "";
   const inner = render(
     `<tr><td style="padding:16px 24px 8px 24px">
-<h1 style="margin:0;font-size:28px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em">A QUICK HEADS UP 🐒</h1>
+<h1 style="margin:0;font-size:28px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em">{{country}} is still on 🐒</h1>
 </td></tr>
 <tr><td style="padding:0 24px 16px 24px;font-size:16px;line-height:1.5">
 <p style="margin:0 0 12px 0">Hey {{firstName}},</p>
-<p style="margin:0 0 12px 0">Your <strong>{{tripName}}</strong> trip leaving <strong>{{departureDate}}</strong> hasn't reached 5 travellers yet. It's still going ahead, and we'd love you to come!</p>
+<p style="margin:0 0 12px 0">Good news: your <strong>{{tripName}}</strong> trip leaving <strong>{{departureDate}}</strong> is going ahead.</p>
+<p style="margin:0 0 12px 0">We want to be upfront with you: your booked crew is smaller than 5 this time. But here's the thing about an ALL IN Trip: the crew you book with is only the start.</p>
 <div style="margin:18px 0;padding:16px;border:2px solid #0a0a0a;background:#ffc000">
-<div style="font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px">You won't be short of company</div>
-<p style="margin:0;font-size:14px;line-height:1.5">You're sleeping at Mad Monkey hostels every night, and the tours and experiences are packed with travellers, so you'll meet plenty of people along the way.</p>
+<div style="font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px">Your crew gets bigger every day</div>
+<p style="margin:0;font-size:14px;line-height:1.5">Every night you're at a Mad Monkey hostel, where the whole point is meeting people. Family dinners, bar nights, rooftop sunsets, and tours packed with travellers going the same way you are. Most people leave with a group chat full of new mates from all over the world.</p>
 </div>
-<p style="margin:0 0 12px 0">If you'd rather not go, no hard feelings. Email <a href="mailto:cs@madmonkeyhostels.com" style="color:#0a0a0a">cs@madmonkeyhostels.com</a> with your booking reference <strong>{{bookingRef}}</strong> and ask for a refund of your deposit.</p>
-${balanceLine}
-<p style="margin:0">See you out there!</p>
+<p style="margin:0 0 6px 0"><strong>What a smaller crew actually means</strong></p>
+<ul style="margin:0 0 16px 0;padding-left:20px">
+<li style="margin:0 0 4px 0">More say in how you spend your free time</li>
+<li style="margin:0">Easier to bond fast, then bring new friends into the mix</li>
+</ul>
+<p style="margin:0 0 6px 0"><strong>Changed your mind?</strong></p>
+<p style="margin:0 0 16px 0">No problem. Email <a href="mailto:cs@madmonkeyhostels.com" style="color:#0a0a0a">cs@madmonkeyhostels.com</a> with your booking reference <strong>{{bookingRef}}</strong> and we'll refund your deposit.${balanceLine}</p>
+<p style="margin:0">See you in {{country}} {{flag}}</p>
 </td></tr>`,
-    v as unknown as Record<string, string>,
+    { ...v, flag } as unknown as Record<string, string>,
   );
   return {
-    subject: `Heads up on your ${v.tripName} trip, ${v.departureDate}`,
-    html: shell("A quick heads up on your trip", inner),
+    subject: `${v.country} is still on 🐒 Your trip leaves ${v.departureDate}`,
+    html: shell("Your trip is still on", inner),
   };
+}
+
+// Flag for the sign-off of guest emails, by trip country.
+const COUNTRY_FLAGS: Record<string, string> = {
+  Vietnam: "🇻🇳",
+  Indonesia: "🇮🇩",
+  Cambodia: "🇰🇭",
+  Thailand: "🇹🇭",
+  Laos: "🇱🇦",
+};
+
+/** "vietnam-7" → "Vietnam". Trip names ("ALL IN · Vietnam") don't give a clean country. */
+export function countryForSlug(slug?: string | null): string {
+  const first = String(slug ?? "").trim().split("-")[0];
+  return first ? first.charAt(0).toUpperCase() + first.slice(1) : "";
 }
 
 // Property-team reminder, 7 days and 1 day before a departure. Charlie, 10 Sep
@@ -764,7 +789,6 @@ export function departureTeamReminderEmail(v: {
   tripName: string;
   tripDays: number | null;
   departureDate: string;
-  departureStatus: string;
   departureCode?: string | null;
   travellers: number;
   bookings: TeamReminderBooking[];
@@ -793,7 +817,7 @@ export function departureTeamReminderEmail(v: {
 <div style="margin:0 0 16px 0;padding:14px 16px;border:3px solid #0a0a0a;background:${soon ? "#ff6600" : "#ccff01"}">
 <div style="font-size:20px;font-weight:900;text-transform:uppercase;letter-spacing:.02em">${escapeHtml(v.tripName)}</div>
 <div style="font-size:14px;margin-top:4px"><strong>${escapeHtml(v.departureDate)}</strong> · departs ${escapeHtml(whenLower)}${v.tripDays ? ` · ${v.tripDays}-day trip` : ""}</div>
-<div style="font-size:14px;margin-top:2px"><strong>${v.travellers} traveller${v.travellers === 1 ? "" : "s"}</strong> across ${v.bookings.length} booking${v.bookings.length === 1 ? "" : "s"} · departure ${escapeHtml(v.departureStatus)}${v.departureCode ? ` · ${escapeHtml(v.departureCode)}` : ""}</div>
+<div style="font-size:14px;margin-top:2px"><strong>${v.travellers} traveller${v.travellers === 1 ? "" : "s"}</strong> across ${v.bookings.length} booking${v.bookings.length === 1 ? "" : "s"}${v.departureCode ? ` · ${escapeHtml(v.departureCode)}` : ""}</div>
 </div>
 <p style="margin:0 0 12px 0">Heads up from ALL IN: this group ${whenLower === "today" ? "arrives" : "is arriving"} ${escapeHtml(whenLower)}. Here is who is on it.</p>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #0a0a0a;margin:0 0 16px 0;border-collapse:collapse">

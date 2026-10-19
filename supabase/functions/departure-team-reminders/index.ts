@@ -165,7 +165,6 @@ Deno.serve(async (req) => {
       tripName: trip.name.replace(/^ALL IN\s*[·\-–]\s*/i, ""),
       tripDays: trip.days,
       departureDate: dateLabel(dep.departure_date as string),
-      departureStatus: String(dep.status),
       departureCode: dep.departure_code as string | null,
       travellers,
       bookings,
