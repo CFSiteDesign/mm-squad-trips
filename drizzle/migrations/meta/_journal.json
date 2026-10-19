@@ -29,6 +29,13 @@
       "when": 1791990897848,
       "tag": "0003_apply_squad_rewards_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792382629238,
+      "tag": "0004_laos_trip",
+      "breakpoints": true
     }
   ]
 }
