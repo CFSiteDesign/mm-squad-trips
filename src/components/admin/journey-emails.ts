@@ -47,7 +47,7 @@ export const journeyEmails = {
     }),
   headsUp: async (g: GuestEmailData): Promise<RenderedEmail> =>
     (await email()).underfilledCrewNoticeEmail({
-      firstName: g.first, tripName: g.shortTrip, departureDate: g.date, bookingRef: g.ref,
+      firstName: g.first, tripName: g.shortTrip, country: g.country, departureDate: g.date, bookingRef: g.ref,
       balanceDate: g.hasBalance ? g.dueDate : "",
     }),
   balancePaid: async (g: GuestEmailData): Promise<RenderedEmail> =>
@@ -62,7 +62,7 @@ export const journeyEmails = {
     }),
   manifest: async (g: GuestEmailData, daysOut: 7 | 1, travellers: number): Promise<RenderedEmail> =>
     (await email()).departureTeamReminderEmail({
-      daysOut, tripName: g.tripName, tripDays: null, departureDate: g.date, departureStatus: "confirmed",
+      daysOut, tripName: g.tripName, tripDays: null, departureDate: g.date,
       travellers, adminUrl: "https://madmonkeyhostels.com/all-in-trips/admin",
       bookings: [{
         ref: g.ref, leadName: g.name, email: g.email, phone: g.phone, spots: g.spots,

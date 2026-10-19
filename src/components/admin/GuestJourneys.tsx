@@ -56,12 +56,6 @@ function steps(crew: boolean): Step[] {
   const crewOnly: Step[] = crew
     ? [
         {
-          when: "When the 5th traveller books",
-          title: "Milestone only",
-          condition: "Every departure runs whatever the numbers, so nothing goes to guests.",
-          messages: [{ label: "\"5 travellers booked\" note", to: OPS_RECIPIENTS, status: "live", note: "One line: no action needed." }],
-        },
-        {
           when: "10 days before",
           title: "Under 5 travellers? Heads-up",
           condition: "Fewer than 5 booked on the departure: send. 5 or more: skipped entirely.",

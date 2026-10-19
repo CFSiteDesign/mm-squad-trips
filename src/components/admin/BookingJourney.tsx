@@ -130,7 +130,7 @@ export function BookingJourney({ lead, allBookings, onClose }: { lead: Row; allB
       when: "10 days before",
       date: dateLabel(headsUpDate),
       items: [
-        { label: "Travellers on this departure", state: travellers >= 5 ? "done" : "info", detail: travellers >= 5 ? `${travellers} booked (5+ reached, milestone only)` : `${travellers} of 5 booked so far. It runs either way.` },
+        { label: "Travellers on this departure", state: travellers >= 5 ? "done" : "info", detail: travellers >= 5 ? `${travellers} booked (5 or more)` : `${travellers} of 5 booked so far. It runs either way.` },
         ifCancelled({ ...item, to: "Guest (lead booker)", render: () => journeyEmails.headsUp(g) }),
       ],
     });
