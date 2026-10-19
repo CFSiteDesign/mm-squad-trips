@@ -108,6 +108,28 @@ const COLS =
   "stripe_refund_id,stripe_balance_refund_id,whatsapp_opt_in,whatsapp_opt_in_at," +
   "utm_source,utm_medium,utm_campaign,utm_content,advisor_ref,created_at,updated_at";
 
+// The Experience Database's allin-sync signs its requests instead of sending the key (19 Oct 2026): ECDSA P-256
+// over "<timestamp>.<raw body>", checked with app_config('experience_db_public_jwk'). The private key never leaves
+// the Experience Database, so no password is shared between the two systems. Five minutes either side.
+function fromB64url(s: string): Uint8Array<ArrayBuffer> {
+  const b = atob(s.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((s.length + 3) % 4));
+  const out = new Uint8Array(new ArrayBuffer(b.length));
+  for (let i = 0; i < b.length; i++) out[i] = b.charCodeAt(i);
+  return out;
+}
+async function signedByExperienceDb(req: Request, raw: string, publicJwk: string | null): Promise<boolean> {
+  const ts = req.headers.get("x-mmx-timestamp") ?? "";
+  const sig = req.headers.get("x-mmx-signature") ?? "";
+  if (!/^\d{9,11}$/.test(ts) || !sig || !publicJwk) return false;
+  if (Math.abs(Date.now() / 1000 - Number(ts)) > 300) return false;
+  try {
+    const key = await crypto.subtle.importKey("jwk", JSON.parse(publicJwk), { name: "ECDSA", namedCurve: "P-256" }, false, ["verify"]);
+    return await crypto.subtle.verify({ name: "ECDSA", hash: "SHA-256" }, key, fromB64url(sig), new TextEncoder().encode(`${ts}.${raw}`));
+  } catch {
+    return false;
+  }
+}
+
 // One word the page can switch on. Same states as advisor-bookings.
 function paymentState(lead: Row, cancelled: boolean) {
   if (cancelled) return lead.stripe_refund_id || lead.stripe_balance_refund_id ? "refunded" : "cancelled";
@@ -127,24 +149,35 @@ Deno.serve(async (req) => {
     if (!url || !key) return jr({ error: "Backend not configured" }, 503);
     const sb = createClient(url, key);
 
+    // Raw text first: the Experience DB signature covers the exact bytes sent.
+    const raw = await req.text();
     let body: Record<string, unknown> = {};
     try {
-      body = await req.json();
+      body = JSON.parse(raw);
     } catch {
       return jr({ error: "Invalid JSON" }, 400);
     }
 
     // Key in the x-loyalty-key header, or `key` in the body for clients that
     // cannot set headers.
-    const presented = (req.headers.get("x-loyalty-key") ?? (typeof body.key === "string" ? body.key : "")).trim();
-    if (!presented) return jr({ error: "Key required (x-loyalty-key header)" }, 401);
-    const { data: cfg, error: cfgErr } = await sb
-      .from("app_config")
-      .select("value")
-      .eq("key", "loyalty_api_key")
-      .maybeSingle();
-    if (cfgErr || !cfg?.value) return jr({ error: "Endpoint unavailable" }, 503);
-    if (!safeEqual(presented, String(cfg.value).trim())) return jr({ error: "Wrong key" }, 401);
+    const signed = req.headers.has("x-mmx-signature")
+      ? await signedByExperienceDb(
+          req,
+          raw,
+          ((await sb.from("app_config").select("value").eq("key", "experience_db_public_jwk").maybeSingle()).data?.value as string | undefined) ?? null,
+        )
+      : false;
+    if (!signed) {
+      const presented = (req.headers.get("x-loyalty-key") ?? (typeof body.key === "string" ? body.key : "")).trim();
+      if (!presented) return jr({ error: "Key required (x-loyalty-key header)" }, 401);
+      const { data: cfg, error: cfgErr } = await sb
+        .from("app_config")
+        .select("value")
+        .eq("key", "loyalty_api_key")
+        .maybeSingle();
+      if (cfgErr || !cfg?.value) return jr({ error: "Endpoint unavailable" }, 503);
+      if (!safeEqual(presented, String(cfg.value).trim())) return jr({ error: "Wrong key" }, 401);
+    }
 
     const rawEmails = [
       ...(typeof body.email === "string" ? [body.email] : []),
