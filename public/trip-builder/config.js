@@ -55,7 +55,13 @@ window.MM_CONFIG = {
   APP_URL: '',
 
   // Optional privacy link shown under the lead form.
-  PRIVACY_URL: ''
+  PRIVACY_URL: '',
+
+  // Optional. Once the crew has approved a trip, the guest chooses how to pay the rest here: POST { ref, k, plan }. Blank = derived from STATUS_ENDPOINT. See docs/PAYMENTS.md.
+  PAY_ENDPOINT: 'https://bilhhkzcmicygufsdfxi.supabase.co/functions/v1/trip-builder-pay',
+
+  // Where "ALL IN details" links and the ALL IN nav button go. The live copy at madmonkeyhostels.com/all-in-trips/trip-builder/ sets '../'.
+  ALLIN_BASE: '../',
 };
 
 // With an API, fill in every endpoint that wasn't set by hand.

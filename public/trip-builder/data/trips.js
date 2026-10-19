@@ -2,9 +2,8 @@
    TRIPS
    ALL_IN   — the packaged crew trips (prices, departures, inclusions from
               madmonkeyhostels.com/all-in-trips + the trip PDFs, Oct 2026).
-              ALL IN site copy (19 Oct 2026): Thailand and Laos are live, and
-              every "from" price matches the ALL IN site (Cambodia $650,
-              Indonesia $700, Laos $400).
+              Thailand and Laos are live, and every "from" price matches the ALL IN site
+              (Cambodia $650, Indonesia $700, Laos $400): the ALL IN site is the source of truth.
    SPECIALS — one featured partner trip on the home page (empty right now, see below).
    CLASSICS — DIY routes we recommend when nobody has a packaged trip for it.
               Used by the quiz matcher. EDITORIAL.
@@ -23,10 +22,11 @@
   }
   function S(p, n, frags) { return { p: p, n: n, acts: (frags || []).map(function (f) { return find(p, f); }) }; }
 
-  MM.ALLIN_URL = '../';
-  // The ALL IN trip page for each builder trip id (this copy lives at all-in-trips/trip-builder/).
+  MM.ALLIN_URL = 'https://madmonkeyhostels.com/all-in-trips';
+  // Where "ALL IN details" links go. MM_CONFIG.ALLIN_BASE overrides it (the live copy at all-in-trips/trip-builder/ sets '../').
   var ALLIN_PAGE = { vietnam: 'vietnam', loop: 'vietnam-7', cambodia: 'cambodia', indonesia: 'indonesia', 'gili-lombok': 'indonesia-7', thailand: 'thailand', laos: 'laos' };
-  MM.allInUrl = function (id) { return '../' + (ALLIN_PAGE[id] || ''); };
+  MM.allInBase = function () { var c = (typeof window !== 'undefined' && window.MM_CONFIG) || {}, b = c.ALLIN_BASE != null ? c.ALLIN_BASE : MM.ALLIN_URL; return String(b).replace(/\/*$/, '/'); };
+  MM.allInUrl = function (id) { return MM.allInBase() + (ALLIN_PAGE[id] || ''); };
   MM.DEPOSIT = 99;
 
   MM.INCLUDED = ['Dorm beds at Mad Monkey', 'All scheduled transport: transfers, buses, island boats', 'Every activity in the itinerary',
@@ -75,10 +75,9 @@
       hl: ['Kuang Si Falls', 'Nong Khiaw viewpoint', 'Sunset paramotor', 'Tipsy tubing'], img: ['kuang-si-waterfall', 'vang-vieng-tipsy-tubing'],
       stops: [S('luang-prabang', 4, ['Kuang Si', 'Nong Khiaw', 'Stories of', 'Jewellery', 'Night market']), S('vang-vieng', 3, ['paramotor', 'Blue Lagoons', 'Zipline', 'Tipsy tubing', 'pub crawl'])] }
   ];
-
-  // ALL IN Thailand is link-only on the ALL IN site (Charlie, 19 Oct 2026): sold privately, never listed.
-  // Its entry stays above so it's one line to bring back.
+  // ALL IN Thailand is link-only on the ALL IN site: sold privately, never listed. Its entry stays above so it's one line to bring back.
   MM.ALL_IN = MM.ALL_IN.filter(function (t) { return t.id !== 'thailand'; });
+
 
   MM.SPECIALS = [
     /* One featured partner trip shows on the home page. Add one object and it appears; remove it and the section hides.
