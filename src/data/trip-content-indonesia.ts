@@ -12,7 +12,7 @@ import mexicanDinner from "@/assets/hl-mexican-dinner.jpg";
 import foamParty from "@/assets/hl-foam-party.jpg";
 
 export const SNAPSHOT = {
-  tripCode: "IND",
+  tripCode: "IND12",
   days: 12,
   from: "Uluwatu",
   to: "Kuta Lombok",

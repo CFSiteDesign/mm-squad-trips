@@ -117,6 +117,7 @@ Deno.serve(async (req) => {
         const { subject, html } = underfilledCrewNoticeEmail({
           firstName: (lead.lead_name ?? "").trim().split(/\s+/)[0] || "there",
           tripName: tripLabel,
+          country: country || "ALL IN",
           departureDate: dateLabel(date),
           bookingRef: lead.booking_ref ?? "",
           balanceDate: owesBalance ? dateLabel(String(lead.balance_due_date)) : "",

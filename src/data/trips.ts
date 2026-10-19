@@ -25,9 +25,9 @@ export const TRIPS: TripCard[] = [
   { slug: "indonesia",   country: "Indonesia", name: "Indonesia",  sub: "Island hopping",  route: "Bali → Gili T → Lombok → Uluwatu",                days: 12, nights: 12, price: 700, accent: "orange" },
   { slug: "cambodia",    country: "Cambodia",  name: "Cambodia",   sub: "Coast to coast",  route: "Phnom Penh → Siem Reap → Koh Rong → Koh Sdach",   days: 14, nights: 14, price: 650, accent: "lime", comingSoonOn: ["student"]   },
   { slug: "vietnam",     country: "Vietnam",   name: "Vietnam",    sub: "Northern + Central Vietnam",      route: "Hanoi → Ha Long Bay → Ha Giang Loop → Danang → Hoi An",    days: 14, nights: 13, price: 850, accent: "pink"   },
-  // Unlisted (14 Sep 2026): reachable at /thailand only, never on the home page, student index or cross-sell.
-  { slug: "thailand",    country: "Thailand",  name: "Thailand",   sub: "Bangkok to the mountains", route: "Bangkok → Chiang Mai → Pai",                        days: 11, nights: 10, price: 340, accent: "orange", hiddenOn: ["default", "student"] },
-  { slug: "laos",        country: "Laos",      name: "Laos",       sub: "Coming soon",     route: "TBC",                                              days: 0,  nights: 0,  price: 0,   accent: "cyan", comingSoonOn: ["student"], hiddenOn: ["default"] },
+  // Published 15 Oct 2026 from the Thailand and Laos dev specs. Not on the student site yet.
+  { slug: "thailand",    country: "Thailand",  name: "Thailand",   sub: "Bangkok to the mountains", route: "Bangkok → Chiang Mai → Pai → Chiang Mai",           days: 11, nights: 10, price: 340, accent: "orange", hiddenOn: ["student"] },
+  { slug: "laos",        country: "Laos",      name: "Laos Ultimate", sub: "Northern Laos", route: "Luang Prabang → Nong Khiaw → Muang Ngoi → Vang Vieng",     days: 10, nights: 9,  price: 400, accent: "cyan", comingSoonOn: ["student"] },
 ];
 
 

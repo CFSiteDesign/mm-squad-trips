@@ -3,7 +3,14 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { ExternalLink, Lock } from "lucide-react";
 import { Sticker } from "@/components/brand/Sticker";
-import { getSquadAdmin, setStudentLeaderStatus, type SquadAdminData } from "@/lib/squad";
+import {
+  getSquadAdmin,
+  setStudentLeaderStatus,
+  squadRewardAction,
+  type SquadAdminData,
+  type SquadAdminLeader,
+  type SquadReward,
+} from "@/lib/squad";
 import { getAdminToken } from "@/lib/admin";
 
 // Module-level cache persists across view switches (mount/unmount)
@@ -15,6 +22,20 @@ export function clearSquadCache() {
 
 type FilterKey = "all" | "students" | "pending";
 
+const usd = (n: number) => `$${Number(n ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const STEP_LABEL: Record<SquadReward["tier"], string> = { half: "50% off", free: "Free trip" };
+const REWARD_STATUS: Record<SquadReward["status"], { label: string; cls: string }> = {
+  processing: { label: "WORKING", cls: "bg-mm-paper" },
+  waiting_booking: { label: "WAITING FOR BOOKING", cls: "bg-mm-paper" },
+  applied: { label: "APPLIED", cls: "bg-mm-lime" },
+  awaiting_approval: { label: "APPROVE REFUND", cls: "bg-mm-orange" },
+  declined: { label: "DECLINED", cls: "bg-mm-black text-mm-bone" },
+  failed: { label: "FAILED", cls: "bg-mm-pink text-mm-bone" },
+};
+const refundLeft = (r: SquadReward) => Math.max(0, Number(r.refund_due) - Number(r.refunded));
+const needsApproval = (l: SquadAdminLeader) =>
+  (l.rewards ?? []).some((r) => (r.status === "awaiting_approval" || r.status === "failed") && refundLeft(r) >= 0.01);
+
 export default function SquadAdmin({ refreshKey }: { refreshKey?: number }) {
   const [password, setPassword] = useState("");
   const [data, setData] = useState<SquadAdminData | null>(squadCache);
@@ -23,6 +44,8 @@ export default function SquadAdmin({ refreshKey }: { refreshKey?: number }) {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterKey>("all");
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [linkRefs, setLinkRefs] = useState<Record<string, string>>({});
+  const [checking, setChecking] = useState(false);
 
   const adminToken = getAdminToken();
 
@@ -83,6 +106,38 @@ export default function SquadAdmin({ refreshKey }: { refreshKey?: number }) {
       toast.error(err instanceof Error ? err.message : "Action failed");
     } finally {
       setBusyId(null);
+    }
+  }
+
+  async function rewardAction(id: string, action: "approve_reward" | "decline_reward" | "link_booking", bookingRef?: string) {
+    if (!adminToken) return;
+    if (action === "approve_reward" && !window.confirm("Send this refund to the leader's card through Stripe?")) return;
+    if (action === "decline_reward" && !window.confirm("Close this refund without paying it?")) return;
+    setBusyId(id);
+    try {
+      const actions = await squadRewardAction({ token: adminToken, action, id, bookingRef });
+      toast.success(actions.length ? actions.join(" · ") : "Nothing to change");
+      squadCache = null;
+      await reload();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Action failed");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function checkRewards() {
+    if (!adminToken) return;
+    setChecking(true);
+    try {
+      const actions = await squadRewardAction({ token: adminToken, action: "check_rewards" });
+      toast.success(actions.length ? actions.join(" · ") : "All rewards up to date");
+      squadCache = null;
+      await reload();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Check failed");
+    } finally {
+      setChecking(false);
     }
   }
 
@@ -176,6 +231,14 @@ export default function SquadAdmin({ refreshKey }: { refreshKey?: number }) {
               {f.l.toUpperCase()}
             </button>
           ))}
+          <button
+            onClick={checkRewards}
+            disabled={checking}
+            title="Applies any squad reward that's due: takes it off the leader's balance, or queues a refund for approval"
+            className="ml-auto border-[3px] border-mm-black bg-mm-lime px-4 py-2 font-sticker text-[10px] tracking-[0.15em] disabled:opacity-60"
+          >
+            {checking ? "CHECKING…" : "CHECK REWARDS"}
+          </button>
         </div>
       </section>
 
@@ -200,7 +263,7 @@ export default function SquadAdmin({ refreshKey }: { refreshKey?: number }) {
                     const open = expanded === l.id;
                     const isPending = l.isStudent && l.status === "pending";
                     const dashUrl = `/squad-leader/dashboard?token=${l.accessToken}`;
-                    const goal = l.isStudent ? 10 : 8;
+                    const goal = l.isStudent ? 10 : 6;
                     return (
                       <Fragment key={l.id}>
                         <tr className="border-t-[2px] border-mm-black/10 align-top">
@@ -261,6 +324,13 @@ export default function SquadAdmin({ refreshKey }: { refreshKey?: number }) {
                             >
                               {l.tier}
                             </span>
+                            {(l.rewards ?? []).length > 0 && (
+                              <div className="mt-1 font-sticker text-[9px] tracking-[0.12em] text-mm-black/70">
+                                {needsApproval(l)
+                                  ? "REFUND TO APPROVE"
+                                  : (l.rewards ?? []).map((r) => `${STEP_LABEL[r.tier]}: ${REWARD_STATUS[r.status].label}`).join(" · ").toUpperCase()}
+                              </div>
+                            )}
                           </td>
                           <td className="px-3 py-3">
                             <div className="flex flex-wrap items-center gap-2">
@@ -309,8 +379,81 @@ export default function SquadAdmin({ refreshKey }: { refreshKey?: number }) {
                                   <p className="mt-1 text-sm">{l.reason}</p>
                                 </div>
                               )}
+                              {!l.isStudent && (
+                                <div className="mb-5">
+                                  <div className="font-sticker text-[10px] tracking-[0.15em] text-mm-black/60">
+                                    REWARD ({l.count} MATES BOOKED, LEADER'S OWN SPOT NOT COUNTED)
+                                  </div>
+                                  {(l.rewards ?? []).length === 0 ? (
+                                    <p className="mt-2 text-sm text-mm-black/60">
+                                      {l.count >= 3 ? "Unlocked, not applied yet. Press Check rewards." : "Nothing unlocked yet."}
+                                    </p>
+                                  ) : (
+                                    <table className="mt-2 w-full text-xs">
+                                      <thead className="text-left">
+                                        <tr>
+                                          {["Step", "Status", "Booking", "Worth", "Off balance", "Refund", "Refunded", "Note"].map((h) => (
+                                            <th key={h} className="px-2 py-1 font-sticker tracking-[0.12em] text-mm-black/60">{h.toUpperCase()}</th>
+                                          ))}
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {(l.rewards ?? []).map((r) => (
+                                          <tr key={r.id} className="border-t border-mm-black/10">
+                                            <td className="px-2 py-1 font-display">{STEP_LABEL[r.tier]}</td>
+                                            <td className="px-2 py-1">
+                                              <span className={`inline-flex border-[2px] border-mm-black px-1.5 py-0.5 font-sticker text-[9px] tracking-[0.12em] ${REWARD_STATUS[r.status].cls}`}>
+                                                {REWARD_STATUS[r.status].label}
+                                              </span>
+                                            </td>
+                                            <td className="px-2 py-1">{r.booking_ref ?? "—"}</td>
+                                            <td className="px-2 py-1">{usd(r.amount)}</td>
+                                            <td className="px-2 py-1">{usd(r.balance_cut)}</td>
+                                            <td className="px-2 py-1">{usd(r.refund_due)}</td>
+                                            <td className="px-2 py-1">{usd(r.refunded)}</td>
+                                            <td className="px-2 py-1 text-mm-black/70">{r.last_error ?? ""}</td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  )}
+                                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                                    {needsApproval(l) && (
+                                      <>
+                                        <button
+                                          onClick={() => rewardAction(l.id, "approve_reward")}
+                                          disabled={busyId === l.id}
+                                          className="border-[2px] border-mm-black bg-mm-lime px-2 py-1 font-sticker text-[10px] tracking-[0.15em] disabled:opacity-60"
+                                        >
+                                          APPROVE REFUND {usd((l.rewards ?? []).reduce((t, r) => t + refundLeft(r), 0))}
+                                        </button>
+                                        <button
+                                          onClick={() => rewardAction(l.id, "decline_reward")}
+                                          disabled={busyId === l.id}
+                                          className="border-[2px] border-mm-black bg-mm-paper px-2 py-1 font-sticker text-[10px] tracking-[0.15em] disabled:opacity-60"
+                                        >
+                                          DECLINE
+                                        </button>
+                                      </>
+                                    )}
+                                    <input
+                                      value={linkRefs[l.id] ?? l.rewardBookingRef ?? ""}
+                                      onChange={(e) => setLinkRefs((m) => ({ ...m, [l.id]: e.target.value }))}
+                                      placeholder="Leader's booking ref, if booked under another email"
+                                      className="w-72 border-[2px] border-mm-black bg-mm-bone px-2 py-1 text-xs"
+                                    />
+                                    <button
+                                      onClick={() => rewardAction(l.id, "link_booking", linkRefs[l.id] ?? l.rewardBookingRef ?? "")}
+                                      disabled={busyId === l.id}
+                                      className="border-[2px] border-mm-black bg-mm-paper px-2 py-1 font-sticker text-[10px] tracking-[0.15em] disabled:opacity-60"
+                                    >
+                                      LINK BOOKING
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
                               <div className="font-sticker text-[10px] tracking-[0.15em] text-mm-black/60">
-                                BOOKINGS ({l.bookings.length})
+                                BOOKINGS WITH THEIR CODE ({l.bookings.length})
                               </div>
                               {l.bookings.length === 0 ? (
                                 <p className="mt-2 text-sm text-mm-black/60">No bookings yet.</p>

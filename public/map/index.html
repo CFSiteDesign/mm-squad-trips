@@ -154,7 +154,9 @@ const TRIP_EXTRA_STOPS = [
   ["Ha Giang", "Vietnam", 22.8233, 104.9784],
   ["Lan Ha Bay", "Vietnam", 20.7500, 107.0700],
   ["Ninh Binh", "Vietnam", 20.2506, 105.9745],
-  ["Sihanoukville", "Cambodia", 10.6270, 103.5220]
+  ["Sihanoukville", "Cambodia", 10.6270, 103.5220],
+  ["Nong Khiaw", "Laos", 20.5726, 102.6158],
+  ["Muang Ngoi", "Laos", 20.7108, 102.6802]
 ];
 
 /* Ordered route per trip, taken stop-for-stop off the itinerary in
@@ -167,7 +169,8 @@ const TRIP_ROUTES = {
   "vietnam":     ["Hanoi", "Lan Ha Bay", "Hanoi", "Ha Giang", "Hanoi", "Ninh Binh", "Hoi An"],
   "vietnam-7":   ["Hanoi", "Ha Giang", "Hanoi"],
   "cambodia":    ["Phnom Penh", "Siem Reap", "Sihanoukville", "Koh Rong", "Koh Sdach", "Phnom Penh"],
-  "thailand":    ["Bangkok", "Chiang Mai", "Pai", "Chiang Mai"]
+  "thailand":    ["Bangkok", "Chiang Mai", "Pai", "Chiang Mai"],
+  "laos":        ["Luang Prabang", "Nong Khiaw", "Muang Ngoi", "Luang Prabang", "Vang Vieng"]
 };
 
 /* Framing per trip. Auto-fitting to the stops alone crops to a featureless
@@ -186,7 +189,9 @@ const TRIP_VIEWS = {
   "cambodia":    { country: "Cambodia", bounds: [[101.8, 9.4], [108.1, 15.1]],
                    labels: [["Cambodia", 105.9, 13.3]] },
   "thailand":    { country: "Thailand", bounds: [[96.8, 5.4], [106.2, 20.7]],
-                   labels: [["Thailand", 101.2, 15.6]] }
+                   labels: [["Thailand", 101.2, 15.6]] },
+  "laos":        { country: "Laos", bounds: [[99.4, 15.8], [106.4, 23.0]],
+                   labels: [["Laos", 104.2, 18.1]] }
 };
 
 const TRIP_SLUG = new URLSearchParams(location.search).get("trip");

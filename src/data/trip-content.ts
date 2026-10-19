@@ -29,17 +29,24 @@ import {
   KH_SNAPSHOT, KH_IS_THIS_FOR_ME, KH_HIGHLIGHTS, KH_INCLUDED, KH_ITINERARY, KH_FAQ_OVERRIDES,
 } from "@/data/trip-content-cambodia";
 import vnHero from "@/assets/vn-hero.jpg";
-import allInHero from "@/assets/preview-hero-allin.jpg";
+import thHero from "@/assets/preview-th-hero.jpg";
+import laHero from "@/assets/preview-la-hero.jpg";
 import {
-  TH_SNAPSHOT, TH_IS_THIS_FOR_ME, TH_HIGHLIGHTS, TH_INCLUDED, TH_ITINERARY, TH_FAQ_OVERRIDES,
+  TH_SNAPSHOT, TH_IS_THIS_FOR_ME, TH_HIGHLIGHTS, TH_INCLUDED, TH_NOT_INCLUDED, TH_ITINERARY,
 } from "@/data/trip-content-thailand";
+import {
+  LA_SNAPSHOT, LA_IS_THIS_FOR_ME, LA_HIGHLIGHTS, LA_INCLUDED, LA_NOT_INCLUDED, LA_ITINERARY,
+  LA_ADD_ONS, LA_ADD_ONS_NOTE, LA_GOOD_TO_KNOW,
+} from "@/data/trip-content-laos";
 import khHero from "@/assets/kh-hero.png";
 
-export const TRIP_CONTENT_SLUGS = ["indonesia", "indonesia-7", "vietnam", "vietnam-7", "cambodia", "thailand"] as const;
+export const TRIP_CONTENT_SLUGS = ["indonesia", "indonesia-7", "vietnam", "vietnam-7", "cambodia", "thailand", "laos"] as const;
 export type TripSlug = (typeof TRIP_CONTENT_SLUGS)[number];
 
 export type Review = { property: string; author: string | null; rating: number; when: string | null; body: string };
 export type Highlight = { title: string; image: string | null; /** Tailwind object-position, e.g. "object-right". */ position?: string };
+/** A paid extra on top of the trip ("Want to go bigger?"). Not part of the from price. */
+export type AddOn = { name: string; price: string; body: string };
 
 export type TripContent = {
   hero: string;
@@ -51,6 +58,12 @@ export type TripContent = {
   itinerary: Day[];
   reviews: Review[];
   faqs: { q: string; a: string }[];
+  /** "Want to go bigger?": paid add-ons, shown under the inclusions. */
+  addOns?: AddOn[];
+  /** The line under the add-ons (how to book them). */
+  addOnsNote?: string;
+  /** "Good to know", shown under the day by day. */
+  goodToKnow?: string;
   /** Sections with no real content yet, surfaced to the client rather than hidden. */
   pending: string[];
 };
@@ -156,16 +169,34 @@ export function getTripContent(trip: Trip, slug: TripSlug): TripContent {
   }
   if (slug === "thailand") {
     return {
-      hero: allInHero, // no Thailand shot yet; the ALL IN home hero stands in
+      hero: thHero, // Wat Arun, Bangkok (from the Mad Monkey site)
       snapshot: TH_SNAPSHOT,
       isThisForMe: TH_IS_THIS_FOR_ME,
       highlights: TH_HIGHLIGHTS,
       included: TH_INCLUDED,
-      notIncluded: GENERIC_NOT_INCLUDED,
+      notIncluded: TH_NOT_INCLUDED,
       itinerary: TH_ITINERARY,
       reviews: [],
-      faqs: DEFAULT_FAQS.map((f) => ({ ...f, a: TH_FAQ_OVERRIDES[f.q] ?? f.a })),
-      pending: ["Hero image", "Highlight photography", "Property reviews"],
+      // The spec's FAQ is the shared ALL IN set, published as written.
+      faqs: DEFAULT_FAQS,
+      pending: ["Lod Cave photo", "Property reviews"],
+    };
+  }
+  if (slug === "laos") {
+    return {
+      hero: laHero, // pool volleyball at Mad Monkey Vang Vieng (Mad Monkey site)
+      snapshot: LA_SNAPSHOT,
+      isThisForMe: LA_IS_THIS_FOR_ME,
+      highlights: LA_HIGHLIGHTS,
+      included: LA_INCLUDED,
+      notIncluded: LA_NOT_INCLUDED,
+      itinerary: LA_ITINERARY,
+      reviews: [],
+      faqs: DEFAULT_FAQS,
+      addOns: LA_ADD_ONS,
+      addOnsNote: LA_ADD_ONS_NOTE,
+      goodToKnow: LA_GOOD_TO_KNOW,
+      pending: ["Paramotor photo", "Property reviews"],
     };
   }
   if (slug === "vietnam-7") {

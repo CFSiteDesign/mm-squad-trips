@@ -10,10 +10,10 @@ export const ALLIN_URL = `${SITE_ORIGIN}/all-in-trips`;
 export const SOCIAL_IMAGE =
   "https://storage.googleapis.com/gpt-engineer-file-uploads/tzR2PpIkesUVrzz7XGJoD3wIFsL2/social-images/social-1779854602939-mmsquad.webp";
 
-export type SeoSlug = "indonesia" | "indonesia-7" | "vietnam" | "vietnam-7" | "cambodia" | "thailand";
+export type SeoSlug = "indonesia" | "indonesia-7" | "vietnam" | "vietnam-7" | "cambodia" | "thailand" | "laos";
 
-/** The home page's trip cards, in order. Thailand is link-only and stays out. */
-export const LISTED_SLUGS = ["indonesia", "indonesia-7", "vietnam", "vietnam-7", "cambodia"] as const;
+/** The home page's trip cards, in order. Thailand and Laos joined on 15 Oct 2026. */
+export const LISTED_SLUGS = ["indonesia", "indonesia-7", "vietnam", "vietnam-7", "cambodia", "thailand", "laos"] as const;
 
 export const pageUrl = (slug?: string) => (slug ? `${ALLIN_URL}/${slug}` : ALLIN_URL);
 export const priceOf = (slug: string) => TRIPS.find((t) => t.slug === slug)?.price ?? 0;
@@ -21,7 +21,7 @@ export const priceOf = (slug: string) => TRIPS.find((t) => t.slug === slug)?.pri
 export const HOME_SEO = {
   title: "ALL IN Backpacker Trips in Southeast Asia | Mad Monkey Hostels",
   description:
-    "7 to 14-day backpacker trips through Vietnam, Indonesia and Cambodia. Mad Monkey hostel beds, transport and activities sorted. A $99 deposit holds your spot.",
+    "7 to 14-day backpacker trips through Vietnam, Indonesia, Cambodia, Thailand and Laos. Mad Monkey hostel beds, transport and activities sorted. A $99 deposit holds your spot.",
 };
 
 type TripSeo = { title: string; description: string; noindex?: boolean };
@@ -50,10 +50,12 @@ export const TRIP_SEO: Record<SeoSlug, TripSeo> = {
     title: "Cambodia 14-Day Backpacker Trip: Angkor to Koh Rong | Mad Monkey",
     description: `14 days from Phnom Penh to Koh Sdach: Angkor Wat, Koh Rong beach parties and island chill. ${sorted}, from $${priceOf("cambodia")}. ${deposit}`,
   },
-  // Link-only (App.tsx: unlisted). Kept out of search, the sitemap and llms.txt.
   thailand: {
     title: "Thailand 11-Day Backpacker Trip: Bangkok, Chiang Mai, Pai | Mad Monkey",
     description: `11 days from Bangkok to Chiang Mai and Pai. ${sorted}, from $${priceOf("thailand")}. ${deposit}`,
-    noindex: true,
+  },
+  laos: {
+    title: "Laos Ultimate 10-Day Backpacker Trip: Luang Prabang to Vang Vieng | Mad Monkey",
+    description: `10 days from Luang Prabang to Nong Khiaw, Muang Ngoi and Vang Vieng. ${sorted}, from $${priceOf("laos")}. ${deposit}`,
   },
 };

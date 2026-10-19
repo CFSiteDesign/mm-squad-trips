@@ -46,7 +46,9 @@ Deno.serve(async (req) => {
   const { data: lead, error } = await sb
     .from("bookings")
     .select(
-      "id,stripe_session_id,stripe_customer_id,balance_amount,balance_status,group_size,lead_email,lead_name,trip_id,departure_id,booking_ref,trip_slug,trip_name,departures(departure_date)",
+      // bookings has no trip_slug / trip_name (selecting them failed every request
+      // until 15 Oct 2026); the trip comes through the departure.
+      "id,stripe_session_id,stripe_customer_id,balance_amount,balance_status,group_size,lead_email,lead_name,trip_id,departure_id,booking_ref,departures(departure_date,trips(name,slug))",
     )
     .eq("booking_ref", bookingRef)
     .eq("spot_number", 1)
@@ -79,7 +81,8 @@ Deno.serve(async (req) => {
     });
   }
 
-  const tripName = (lead.trip_name as string) || (lead.trip_slug as string) || "Your trip";
+  const dep = lead.departures as { trips?: { name?: string } | null } | null;
+  const tripName = dep?.trips?.name || "Your trip";
   const origin = appBase(req.headers.get("origin"));
 
   const session = await stripe.checkout.sessions.create({
@@ -92,7 +95,7 @@ Deno.serve(async (req) => {
           currency: "usd",
           unit_amount: totalCents,
           product_data: {
-            name: `${tripName} — final balance`,
+            name: `${tripName}: final balance`,
             description: `${lead.group_size} spot${Number(lead.group_size) === 1 ? "" : "s"} · ref ${bookingRef}`,
           },
         },

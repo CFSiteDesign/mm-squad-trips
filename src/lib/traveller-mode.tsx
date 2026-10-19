@@ -119,6 +119,10 @@ const INDEPENDENT_REWRITES: Array<[RegExp | string, string]> = [
   ["Say farewell to your crew!", "Say your farewells!"],
   ["Say farewell to your squad!", "Say your farewells!"],
   ["then meet your crew at 8pm for Beats + Bingo", "then head to Beats + Bingo at 8pm"],
+  // Laos Ultimate (15 Oct 2026).
+  ["so the crew and the parties come built in", "so the people and the parties come built in"],
+  ["for night market eats and a bowling night with the crew", "for night market eats and a bowling night"],
+  ["then a farewell night out with the crew", "then a farewell night out"],
   ["with your new travel family", "with the people you've met"],
   ["a welcome drink at the hostel to meet your crew", "a welcome drink at the hostel"],
   ["Wake up in Ha Giang, rally your crew, and ride", "Wake up in Ha Giang and ride"],

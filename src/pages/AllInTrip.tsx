@@ -11,6 +11,7 @@ import { fetchTrip } from "@/lib/api";
 import { getTripFallback } from "@/data/tripFallbacks";
 import { formatPrice } from "@/lib/trip-helpers";
 import { SiteFooter } from "@/components/trip/SiteFooter";
+import { TripCrossSell } from "@/components/trip/TripCrossSell";
 import { Starburst } from "@/components/brand/Sticker";
 import { SubNav, StickyCta, SCROLL_OFFSET } from "@/components/allin/Chrome";
 import { getTripContent, type TripSlug } from "@/data/trip-content";
@@ -48,6 +49,13 @@ const scrollToId = (id: string) => {
   window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - SCROLL_OFFSET, behavior: "smooth" });
 };
 
+/** The adventure snapshot, in order. Departs shows once the trip's start weekday is known. */
+function snapshotRows(s: { tripCode: string; days: number; from: string; to: string; countries: string }, departsDay: string | null): [string, string][] {
+  const cells: [string, string][] = [["TRIP CODE", s.tripCode], ["DAYS", String(s.days)], ["FROM", s.from], ["TO", s.to], ["COUNTRIES", s.countries]];
+  if (departsDay) cells.push(["DEPARTS", `Every ${departsDay}`]);
+  return cells;
+}
+
 function H({ eyebrow, children }: { eyebrow: string; children: React.ReactNode }) {
   return (
     <div className="mb-6">
@@ -76,17 +84,22 @@ export default function AllInTrip({ slug: slugProp, unlisted = false }: { slug?:
     return () => { document.head.removeChild(meta); };
   }, [unlisted]);
 
-  const { data: trip, isPlaceholderData } = useQuery({
+  const { data: liveTrip, isPlaceholderData } = useQuery({
     queryKey: ["trip", slug],
     queryFn: () => fetchTrip(slug),
     retry: false,
     placeholderData: getTripFallback(slug),
   });
+  // If the trip can't be loaded (a brand-new trip whose database row isn't
+  // in yet, or an outage), keep showing the page from its fallback rather
+  // than going blank. It simply has no dates to book until the data arrives.
+  const trip = liveTrip ?? getTripFallback(slug);
 
-  // Only fire once real data has arrived — the placeholder carries dummy
+  // Only fire once real data has arrived: the placeholder carries dummy
   // pricing, and firing on that would log fabricated prices into GA4.
   useEffect(() => {
-    if (!trip || isPlaceholderData) return;
+    if (!liveTrip || isPlaceholderData) return;
+    const trip = liveTrip;
     if (!markCheckoutEventOnce("view_item", trip.slug)) return;
     gtmClearEcommerce();
     gtmPushEvent("view_item", {
@@ -98,7 +111,7 @@ export default function AllInTrip({ slug: slugProp, unlisted = false }: { slug?:
         items: [buildTripEcommerceItem(trip, { price: trip.defaultPrice })],
       },
     });
-  }, [trip, isPlaceholderData]);
+  }, [liveTrip, isPlaceholderData]);
 
   const crewContent = trip ? getTripContent(trip, slug) : null;
   // Independent visitors get the same page with the group messaging taken out.
@@ -124,6 +137,8 @@ export default function AllInTrip({ slug: slugProp, unlisted = false }: { slug?:
           faqs: FAQS, hero: heroImg } = content;
   // Customers see finished tiles only.
   const HIGHLIGHTS = content.highlights.filter((h) => h.image);
+  // Every trip departs weekly on its start weekday (the departures table is seeded that way).
+  const snapshotCells = snapshotRows(SNAPSHOT, weekdayName(trip?.startWeekday));
 
   return (
     <div className="min-h-screen bg-mm-bone pb-24 md:pb-0">
@@ -142,7 +157,7 @@ export default function AllInTrip({ slug: slugProp, unlisted = false }: { slug?:
           </div>
 
           <div className="pointer-events-none absolute right-3 top-[5rem] z-30">
-            <Starburst size={92} color="pink" rotate={-12}>{SNAPSHOT.days}<br />DAYS</Starburst>
+            <Starburst size={92} color="pink" rotate={-12}>{SNAPSHOT.days}{" "}<br />DAYS</Starburst>
           </div>
 
           <div className="relative z-10 flex flex-col px-5 pt-[9rem] pb-24">
@@ -150,8 +165,8 @@ export default function AllInTrip({ slug: slugProp, unlisted = false }: { slug?:
               {(meta?.name ?? trip?.name ?? "").toUpperCase()}
             </p>
             <h1 className="font-display text-[clamp(2.4rem,11.4vw,3.75rem)] leading-[0.9] text-mm-bone">
-              <span className="block">YOUR</span>
-              <span className="block whitespace-nowrap text-mm-pink">TRIP,</span>
+              <span className="block">YOUR</span>{" "}
+              <span className="block whitespace-nowrap text-mm-pink">TRIP,</span>{" "}
               <span className="block text-mm-lime">SORTED.</span>
             </h1>
             <p className="mt-5 max-w-[280px] text-[14px] leading-snug text-mm-bone/85">
@@ -187,7 +202,7 @@ export default function AllInTrip({ slug: slugProp, unlisted = false }: { slug?:
 
           <div className="pointer-events-none absolute right-8 top-20 z-20 origin-top-right scale-[0.78] lg:right-16 lg:top-20 lg:scale-100">
             <Starburst size={180} color="pink" rotate={-12} textClassName="text-2xl">
-              {SNAPSHOT.days}<br />DAYS
+              {SNAPSHOT.days}{" "}<br />DAYS
             </Starburst>
           </div>
 
@@ -197,8 +212,8 @@ export default function AllInTrip({ slug: slugProp, unlisted = false }: { slug?:
                 {(meta?.name ?? trip?.name ?? "").toUpperCase()}
               </p>
               <h1 className="font-display text-[clamp(3.5rem,10.5vw,7.9rem)] leading-[0.88] text-mm-bone">
-                <span className="block">YOUR</span>
-                <span className="block whitespace-nowrap text-mm-pink">TRIP,</span>
+                <span className="block">YOUR</span>{" "}
+                <span className="block whitespace-nowrap text-mm-pink">TRIP,</span>{" "}
                 <span className="block text-mm-lime">SORTED.</span>
               </h1>
               <p className="mt-7 max-w-xl text-lg leading-snug text-mm-bone/85">
@@ -225,9 +240,9 @@ export default function AllInTrip({ slug: slugProp, unlisted = false }: { slug?:
 
           {/* Overview */}
           <section id="overview" className="scroll-mt-[116px]">
-            <H eyebrow="TOUR OVERVIEW">YOUR ADVENTURE<br />SNAPSHOT</H>
-            <dl className="mb-6 grid grid-cols-2 gap-px border-[3px] border-mm-black bg-mm-black sm:grid-cols-5">
-              {[["TRIP CODE", SNAPSHOT.tripCode], ["DAYS", String(SNAPSHOT.days)], ["FROM", SNAPSHOT.from], ["TO", SNAPSHOT.to], ["COUNTRIES", SNAPSHOT.countries]].map(([k, v]) => (
+            <H eyebrow="TOUR OVERVIEW">YOUR ADVENTURE{" "}<br />SNAPSHOT</H>
+            <dl className="mb-6 grid grid-cols-2 gap-px border-[3px] border-mm-black bg-mm-black sm:grid-cols-3">
+              {snapshotCells.map(([k, v]) => (
                 <div key={k} className="bg-mm-bone p-3">
                   <dt className="font-sticker text-[9px] tracking-[0.14em] text-mm-black/55">{k}</dt>
                   <dd className="mt-1 font-display text-base leading-tight text-mm-black">{v}</dd>
@@ -250,7 +265,7 @@ export default function AllInTrip({ slug: slugProp, unlisted = false }: { slug?:
           {/* Highlights */}
           {HIGHLIGHTS.length > 0 && (
           <section className="mt-16">
-            <H eyebrow="TOUR HIGHLIGHTS">BUCKET-LIST MOMENTS<br />{solo ? "SORTED FOR YOU" : "MADE FOR THE GROUP CHAT"}</H>
+            <H eyebrow="TOUR HIGHLIGHTS">BUCKET-LIST MOMENTS{" "}<br />{solo ? "SORTED FOR YOU" : "MADE FOR THE GROUP CHAT"}</H>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {HIGHLIGHTS.map((h) => (
                 <figure key={h.title} className="border-[3px] border-mm-black bg-mm-bone shadow-mm-sm">
@@ -271,7 +286,7 @@ export default function AllInTrip({ slug: slugProp, unlisted = false }: { slug?:
 
           {/* What's included */}
           <section id="included" className="mt-16 scroll-mt-[116px]">
-            <H eyebrow="WHAT'S INCLUDED">WHAT YOUR $99<br />DEPOSIT UNLOCKS</H>
+            <H eyebrow="WHAT'S INCLUDED">WHAT YOUR $99{" "}<br />DEPOSIT UNLOCKS</H>
             <div className="grid gap-px border-[3px] border-mm-black bg-mm-black sm:grid-cols-2">
               {visibleIncluded.map((i) => (
                 <div key={i} className="flex items-start gap-2 bg-mm-bone p-3">
@@ -295,11 +310,30 @@ export default function AllInTrip({ slug: slugProp, unlisted = false }: { slug?:
                 </div>
               ))}
             </div>
+
+            {/* Paid extras, not part of the from price. Booked with the team, not online. */}
+            {content.addOns && content.addOns.length > 0 && (
+              <>
+                <h3 className="mt-8 font-display text-xl text-mm-black">WANT TO GO BIGGER?</h3>
+                <div className="mt-3 grid gap-px border-[3px] border-mm-black bg-mm-black sm:grid-cols-2">
+                  {content.addOns.map((a) => (
+                    <div key={a.name} className="bg-mm-bone p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <p className="font-display text-base leading-tight text-mm-black">{a.name}</p>
+                        <span className="shrink-0 border-[2px] border-mm-black bg-mm-lime px-2 py-0.5 font-sticker text-[10px] tracking-[0.1em] text-mm-black">{a.price}</span>
+                      </div>
+                      <p className="mt-2 text-sm leading-relaxed text-mm-black/80">{a.body}</p>
+                    </div>
+                  ))}
+                </div>
+                {content.addOnsNote && <p className="mt-3 text-sm font-semibold text-mm-black">{content.addOnsNote}</p>}
+              </>
+            )}
           </section>
 
           {/* Itinerary */}
           <section id="itinerary" className="mt-16 scroll-mt-[116px]">
-            <H eyebrow="THE STORY OF YOUR TRIP">THE<br />BREAKDOWN</H>
+            <H eyebrow="THE STORY OF YOUR TRIP">THE{" "}<br />BREAKDOWN</H>
             {/* Dhany's animated network map, embedded as supplied. It is
                 iframed rather than ported so his file stays the source of
                 truth and its D3 dependency stays out of our bundle. */}
@@ -333,12 +367,18 @@ export default function AllInTrip({ slug: slugProp, unlisted = false }: { slug?:
                 </article>
               ))}
             </div>
+            {content.goodToKnow && (
+              <div className="mt-6 border-[3px] border-mm-black bg-mm-yellow p-4 shadow-mm-sm">
+                <p className="font-sticker text-[10px] tracking-[0.14em] text-mm-black">GOOD TO KNOW</p>
+                <p className="mt-1 text-sm leading-relaxed text-mm-black">{content.goodToKnow}</p>
+              </div>
+            )}
           </section>
 
           {/* Reviews */}
           {REVIEWS.length > 0 && (
           <section className="mt-16">
-            <H eyebrow="REVIEWS FROM OUR TRAVELS">DON'T TAKE<br />OUR WORD FOR IT</H>
+            <H eyebrow="REVIEWS FROM OUR TRAVELS">DON'T TAKE{" "}<br />OUR WORD FOR IT</H>
             <div className="grid gap-4 sm:grid-cols-2">
               {REVIEWS.map((r) => (
                 <blockquote key={r.property} className="border-[3px] border-mm-black bg-mm-bone p-4 shadow-mm-sm">
@@ -411,7 +451,7 @@ export default function AllInTrip({ slug: slugProp, unlisted = false }: { slug?:
       {/* ============ DATES & BOOKING ============ */}
       <section id="booking" className="scroll-mt-[116px] border-t-[4px] border-mm-black bg-mm-bone py-12">
         <div className="mx-auto max-w-6xl px-5 md:px-6">
-          <H eyebrow="DATES & AVAILABILITY">THE COUNTDOWN<br />STARTS NOW</H>
+          <H eyebrow="DATES & AVAILABILITY">THE COUNTDOWN{" "}<br />STARTS NOW</H>
           {trip && <Booking key={trip.slug} trip={trip} />}
         </div>
 
@@ -437,6 +477,7 @@ export default function AllInTrip({ slug: slugProp, unlisted = false }: { slug?:
         </div>
       </section>
 
+      <TripCrossSell currentSlug={slug} eyebrow="MORE ALL IN TRIPS" />
       <SiteFooter />
       <StickyCta onClick={() => scrollToId("booking")} />
     </div>

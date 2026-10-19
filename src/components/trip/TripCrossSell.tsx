@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { TRIPS, ACCENT_BG } from "@/data/trips";
 import { useSiteVariant, tripPath } from "@/hooks/use-site-variant";
 
-export function TripCrossSell({ currentSlug }: { currentSlug?: string }) {
+export function TripCrossSell({ currentSlug, eyebrow = "PICK A VIBE" }: { currentSlug?: string; eyebrow?: string }) {
   const variant = useSiteVariant();
   const others = TRIPS.filter(
     (t) =>
@@ -15,10 +15,10 @@ export function TripCrossSell({ currentSlug }: { currentSlug?: string }) {
     <section className="relative bg-mm-blue px-5 py-16 text-mm-bone md:px-8 md:py-24">
       <div className="mx-auto max-w-6xl">
         <span className="font-sticker text-[11px] tracking-[0.24em] text-mm-bone/80">
-          PICK A VIBE
+          {eyebrow}
         </span>
         <h2 className="mt-3 font-display text-[2.5rem] leading-[0.92] text-mm-bone md:text-7xl">
-          LOOKING FOR<br />
+          LOOKING FOR{" "}<br />
           <span className="text-mm-lime">SOMETHING ELSE?</span>
         </h2>
 

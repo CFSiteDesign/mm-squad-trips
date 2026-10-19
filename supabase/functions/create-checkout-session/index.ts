@@ -31,6 +31,7 @@ const SLUG_TO_LABEL: Record<string, string> = {
   vietnam: "Vietnam",
   "vietnam-7": "Vietnam",
   thailand: "Thailand",
+  laos: "Laos",
 };
 
 function daysUntil(iso: string): number {

@@ -65,6 +65,21 @@ const VIETNAM7_CHATS: PropertyChat[] = [
 const THAILAND_CHATS: PropertyChat[] = [];
 
 const TRIP_DETAILS: Record<string, TripFinalDetails> = {
+  // Laos Ultimate, from the 15 Oct 2026 dev spec. No WhatsApp chats verified
+  // yet, and only what the spec states: no packing or cash advice until ops
+  // supply it.
+  laos: {
+    whatsappUrl: "",
+    finalDetailsHtml:
+      block("Final details: Laos Ultimate", [
+        "<strong>Meeting point:</strong> Mad Monkey Luang Prabang on departure day (a Sunday). Free pre-trip night included: arrive the night before.",
+        "<strong>Day 1:</strong> roam the Old Town, riverside cafés or the pool, then dinner at the night market.",
+        "<strong>Nights 4 and 5:</strong> a mountain-top camp above Nong Khiaw, then a village homestay in car-free Muang Ngoi. Every other night is at Mad Monkey.",
+        "<strong>Heading south:</strong> Day 7 is the high-speed train to Vang Vieng, about 55 minutes.",
+        "<strong>Add-ons:</strong> a hot air balloon ride (+$110) and the ethical elephant experience at MandaLao (+$99). Ask us online or at the hostel for times and booking.",
+        "<strong>Trip ends:</strong> Vang Vieng, with checkout on Day 10.",
+      ]),
+  },
   thailand: {
     // No verified Thailand chat yet; the old value was the Phnom Penh group.
     whatsappUrl: "",
@@ -163,6 +178,7 @@ export function tripCountryFromSlug(slug: string | null | undefined): string {
     vietnam: "Vietnam",
     "vietnam-7": "Vietnam",
     thailand: "Thailand",
+    laos: "Laos",
     indonesia: "Indonesia",
     "indonesia-7": "Indonesia",
     cambodia: "Cambodia",

@@ -672,6 +672,7 @@ export type Database = {
           reason: string | null
           reset_token: string | null
           reset_token_expires_at: string | null
+          reward_booking_ref: string | null
           society: string | null
           status: string
           university: string | null
@@ -692,6 +693,7 @@ export type Database = {
           reason?: string | null
           reset_token?: string | null
           reset_token_expires_at?: string | null
+          reward_booking_ref?: string | null
           society?: string | null
           status?: string
           university?: string | null
@@ -712,11 +714,84 @@ export type Database = {
           reason?: string | null
           reset_token?: string | null
           reset_token_expires_at?: string | null
+          reward_booking_ref?: string | null
           society?: string | null
           status?: string
           university?: string | null
         }
         Relationships: []
+      }
+      squad_rewards: {
+        Row: {
+          amount: number
+          applied_at: string | null
+          balance_cut: number
+          booking_id: string | null
+          booking_ref: string | null
+          created_at: string
+          id: string
+          last_error: string | null
+          mates_at_unlock: number
+          refund_due: number
+          refunded: number
+          squad_leader_id: string
+          status: string
+          stripe_refund_ids: string[]
+          tier: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          applied_at?: string | null
+          balance_cut?: number
+          booking_id?: string | null
+          booking_ref?: string | null
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          mates_at_unlock?: number
+          refund_due?: number
+          refunded?: number
+          squad_leader_id: string
+          status?: string
+          stripe_refund_ids?: string[]
+          tier: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          applied_at?: string | null
+          balance_cut?: number
+          booking_id?: string | null
+          booking_ref?: string | null
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          mates_at_unlock?: number
+          refund_due?: number
+          refunded?: number
+          squad_leader_id?: string
+          status?: string
+          stripe_refund_ids?: string[]
+          tier?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "squad_rewards_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "squad_rewards_squad_leader_id_fkey"
+            columns: ["squad_leader_id"]
+            isOneToOne: false
+            referencedRelation: "squad_leaders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       trips: {
         Row: {

@@ -29,7 +29,8 @@ export async function registerSquadLeader(input: SquadRegisterInput): Promise<Sq
 export interface SquadBooking {
   id: string;
   booker_name: string | null;
-  booker_email: string | null;
+  /** Admin only: the leader's dashboard gets names, never emails. */
+  booker_email?: string | null;
   trip_slug: string | null;
   departure_date: string | null;
   created_at: string;
@@ -46,6 +47,23 @@ export interface SquadDashboardData {
   bookings: SquadBooking[];
   count: number;
   tier: { discountPct: number; nextLine: string; progress: number };
+  rewards?: Pick<SquadReward, "tier" | "status" | "amount" | "balance_cut" | "refund_due" | "refunded" | "booking_ref">[];
+}
+
+/** One step of a leader's reward (squad_rewards row, _shared/squad-reward.ts). */
+export interface SquadReward {
+  id: string;
+  tier: "half" | "free";
+  status: "processing" | "waiting_booking" | "applied" | "awaiting_approval" | "declined" | "failed";
+  mates_at_unlock: number;
+  booking_ref: string | null;
+  amount: number;
+  balance_cut: number;
+  refund_due: number;
+  refunded: number;
+  last_error: string | null;
+  applied_at: string | null;
+  updated_at: string;
 }
 
 export async function getSquadDashboard(accessToken: string): Promise<SquadDashboardData> {
@@ -74,6 +92,8 @@ export interface SquadAdminLeader {
   count: number;
   tier: string;
   bookings: (SquadBooking & { squad_leader_id: string })[];
+  rewardBookingRef?: string | null;
+  rewards?: SquadReward[];
 }
 export interface SquadAdminData {
   leaders: SquadAdminLeader[];
@@ -135,4 +155,27 @@ export async function confirmSquadPasswordReset(token: string, password: string)
   });
   if (error) throw new Error(error.message);
   if (!data?.ok) throw new Error(data?.error || "Could not reset password");
+}
+
+/** Squad admin reward actions: approve or decline a waiting refund, link a booking ref, or re-check every leader. */
+export async function squadRewardAction(args: {
+  token: string;
+  action: "approve_reward" | "decline_reward" | "link_booking" | "check_rewards";
+  id?: string;
+  bookingRef?: string;
+}): Promise<string[]> {
+  const { isAdminPreview } = await import("@/lib/admin");
+  if (isAdminPreview()) throw new Error("Preview mode is read-only. Log in at /admin to make changes.");
+  const { data, error } = await supabase.functions.invoke("squad-admin", {
+    body: { action: args.action, id: args.id, bookingRef: args.bookingRef },
+    headers: { Authorization: `Bearer ${args.token}` },
+  });
+  if (error) {
+    // supabase-js hands back the Response on a non-2xx; the function's message is in its body.
+    const ctx = (error as { context?: Response }).context;
+    const body = ctx && typeof ctx.json === "function" ? await ctx.json().catch(() => null) : null;
+    throw new Error(body?.error || error.message);
+  }
+  if (!data?.ok) throw new Error(data?.error || "Could not update");
+  return (data.actions as string[]) ?? [];
 }

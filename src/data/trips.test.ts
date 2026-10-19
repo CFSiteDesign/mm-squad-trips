@@ -11,6 +11,7 @@ import { ITINERARY as ID_ITINERARY, SNAPSHOT as ID_SNAPSHOT } from "@/data/trip-
 import { KH_ITINERARY, KH_SNAPSHOT } from "@/data/trip-content-cambodia";
 import { VN_ITINERARY, VN_SNAPSHOT } from "@/data/trip-content-vietnam";
 import { TH_ITINERARY, TH_SNAPSHOT } from "@/data/trip-content-thailand";
+import { LA_ITINERARY, LA_SNAPSHOT } from "@/data/trip-content-laos";
 
 const CONTENT = {
   "indonesia-7": { itinerary: I7_ITINERARY, snapshot: I7_SNAPSHOT },
@@ -19,6 +20,7 @@ const CONTENT = {
   cambodia: { itinerary: KH_ITINERARY, snapshot: KH_SNAPSHOT },
   vietnam: { itinerary: VN_ITINERARY, snapshot: VN_SNAPSHOT },
   thailand: { itinerary: TH_ITINERARY, snapshot: TH_SNAPSHOT },
+  laos: { itinerary: LA_ITINERARY, snapshot: LA_SNAPSHOT },
 } as const;
 
 const lastDayNumber = (labels: { label: string }[]) => {
