@@ -1,5 +1,5 @@
 import { assert, assertEquals, assertStringIncludes } from "jsr:@std/assert@1";
-import { crewReviewUrl, readSummary, signCrewKey, suggestBalance, verifyCrewKey } from "./trip-builder-crew.ts";
+import { crewReviewUrl, guestTripUrl, readSummary, signCrewKey, signGuestKey, suggestBalance, verifyCrewKey, verifyGuestKey } from "./trip-builder-crew.ts";
 
 const SECRET = "test-secret";
 const NOW = Date.UTC(2026, 9, 20);
@@ -55,4 +55,20 @@ Deno.test("suggested balance is the trip cost for everyone less the deposit, nev
   assertEquals(suggestBalance(sum, 100), 602);
   assertEquals(suggestBalance(sum, 5000), 0);
   assertEquals(suggestBalance(null, 100), 0);
+});
+
+Deno.test("a guest key works for its own trip, for 90 days, and is not interchangeable with a crew key", async () => {
+  const g = await signGuestKey("MM-ABC234", SECRET, NOW), c = await signCrewKey("MM-ABC234", SECRET, NOW);
+  assert(await verifyGuestKey("MM-ABC234", g, SECRET, NOW));
+  assert(await verifyGuestKey("MM-ABC234", g, SECRET, NOW + 89 * 86400_000));
+  assert(!(await verifyGuestKey("MM-ABC234", g, SECRET, NOW + 91 * 86400_000)));
+  assert(!(await verifyGuestKey("MM-ABC235", g, SECRET, NOW)), "another trip's key must fail");
+  assert(!(await verifyGuestKey("MM-ABC234", c, SECRET, NOW)), "a crew key must not open guest actions");
+  assert(!(await verifyCrewKey("MM-ABC234", g, SECRET, NOW)), "a guest key must not open crew actions");
+  assert(!(await verifyGuestKey("MM-ABC234", undefined, SECRET, NOW)));
+});
+
+Deno.test("the guest's trip link carries the key in the fragment", () => {
+  assertEquals(guestTripUrl("https://madmonkeyhostels.com", "MM-ABC234", "k.sig"), "https://madmonkeyhostels.com/all-in-trips/trip-builder/#/trip/MM-ABC234?k=k.sig");
+  assertEquals(guestTripUrl(null, "MM-ABC234"), "https://madmonkeyhostels.com/all-in-trips/trip-builder/#/trip/MM-ABC234");
 });

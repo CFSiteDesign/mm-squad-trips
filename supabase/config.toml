@@ -65,5 +65,12 @@ verify_jwt = false
 [functions.trip-builder-admin]
 verify_jwt = false
 
+[functions.trip-builder-pay]
+verify_jwt = false
+
+# Daily job (cron secret checked inside): charges due trip builder payments and sends reminders.
+[functions.charge-trip-builder-payments]
+verify_jwt = false
+
 [functions.trip-builder-test-emails]
 verify_jwt = false

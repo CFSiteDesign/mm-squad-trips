@@ -29,23 +29,37 @@ export function crewSecret(): string {
   return Deno.env.get("TRIP_BUILDER_LINK_SECRET") || Deno.env.get("ADMIN_PASSWORD") || "";
 }
 
-/** "<expiry in base 36>.<signature>" for one trip reference. */
-export async function signCrewKey(ref: string, secret = crewSecret(), now = Date.now(), days = KEY_DAYS): Promise<string> {
-  if (!secret) throw new Error("No secret configured for crew links");
+// A key proves a link came from one of our emails. It is bound to one kind of link ("crew" or "guest") and one trip,
+// so a crew key can't be used as a guest key or the other way round, and neither works for a different trip.
+async function signKey(kind: "crew" | "guest", ref: string, secret: string, now: number, days: number): Promise<string> {
+  if (!secret) throw new Error("No secret configured for trip builder links");
   const exp = Math.floor(now / 1000) + days * 86400;
-  return `${exp.toString(36)}.${await mac(secret, `tbcrew:${ref}:${exp}`)}`;
+  return `${exp.toString(36)}.${await mac(secret, `tb${kind}:${ref}:${exp}`)}`;
 }
-
-export async function verifyCrewKey(ref: string, key: unknown, secret = crewSecret(), now = Date.now()): Promise<boolean> {
+async function verifyKey(kind: "crew" | "guest", ref: string, key: unknown, secret: string, now: number): Promise<boolean> {
   if (!secret || typeof key !== "string" || key.length > 80) return false;
   const [e, sig] = key.split(".");
   const exp = parseInt(e ?? "", 36);
   if (!sig || !Number.isFinite(exp) || exp < Math.floor(now / 1000)) return false;
-  const want = await mac(secret, `tbcrew:${ref}:${exp}`);
+  const want = await mac(secret, `tb${kind}:${ref}:${exp}`);
   if (want.length !== sig.length) return false;
   let diff = 0;
   for (let i = 0; i < want.length; i++) diff |= want.charCodeAt(i) ^ sig.charCodeAt(i); // constant time
   return diff === 0;
+}
+
+/** "<expiry in base 36>.<signature>" for the crew's links in the new-trip email. One trip, 30 days. */
+export const signCrewKey = (ref: string, secret = crewSecret(), now = Date.now(), days = KEY_DAYS) => signKey("crew", ref, secret, now, days);
+export const verifyCrewKey = (ref: string, key: unknown, secret = crewSecret(), now = Date.now()) => verifyKey("crew", ref, key, secret, now);
+
+/** The same for the guest's link in the "your trip is checked" email, where they choose how to pay. One trip, 90 days. */
+export const GUEST_KEY_DAYS = 90;
+export const signGuestKey = (ref: string, secret = crewSecret(), now = Date.now(), days = GUEST_KEY_DAYS) => signKey("guest", ref, secret, now, days);
+export const verifyGuestKey = (ref: string, key: unknown, secret = crewSecret(), now = Date.now()) => verifyKey("guest", ref, key, secret, now);
+
+/** The guest's own trip page, with their key so they can choose how to pay. */
+export function guestTripUrl(origin: string | null, ref: string, key?: string): string {
+  return `${appBase(origin)}/trip-builder/#/trip/${encodeURIComponent(ref)}${key ? `?k=${encodeURIComponent(key)}` : ""}`;
 }
 
 export type CrewAction = "review" | "approve" | "decline" | "edit";

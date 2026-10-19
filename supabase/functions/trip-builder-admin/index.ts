@@ -18,8 +18,9 @@ import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { adminAuthHeaderToken, verifyAdminToken } from "../_shared/admin-auth.ts";
 import { sendEmail, TRIP_BUILDER_CONTACT, tripBuilderDeclinedEmail, tripBuilderReadyEmail } from "../_shared/email.ts";
-import { builderStatusUrl, usd } from "../_shared/trip-builder.ts";
-import { crewReviewUrl, readSummary, signCrewKey, suggestBalance, verifyCrewKey } from "../_shared/trip-builder-crew.ts";
+import { builderStatusUrl, fmtDay, usd } from "../_shared/trip-builder.ts";
+import { crewReviewUrl, guestTripUrl, readSummary, signCrewKey, signGuestKey, suggestBalance, verifyCrewKey } from "../_shared/trip-builder-crew.ts";
+import { LATE_DAYS, payOptions, readSchedule } from "../_shared/trip-builder-pay.ts";
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -53,7 +54,7 @@ Deno.serve(async (req) => {
   if (action === "list") {
     const { data, error } = await sb
       .from("trip_builder_requests")
-      .select("ref,status,name,contact_via,email,whatsapp,guest_email,from_place,party_size,dates_flex,start_date,route,days,nights,stops,est_total_usd,all_in_match,trip_link,itinerary,notes,campaign_ref,from_hostel,deposit_amount,deposit_paid_at,hold_until,balance_amount,balance_url,balance_paid_at,refunded_at,crew_note,created_at,updated_at")
+      .select("ref,status,name,contact_via,email,whatsapp,guest_email,from_place,party_size,dates_flex,start_date,route,days,nights,stops,est_total_usd,all_in_match,trip_link,itinerary,notes,campaign_ref,from_hostel,deposit_amount,deposit_paid_at,hold_until,balance_amount,balance_url,balance_paid_at,pay_plan,pay_schedule,refunded_at,crew_note,created_at,updated_at")
       .order("created_at", { ascending: false })
       .limit(500);
     if (error) return json({ error: error.message }, 500);
@@ -74,7 +75,7 @@ Deno.serve(async (req) => {
     const sum = readSummary(row.payload);
     const VIEW = ["ref", "status", "name", "contact_via", "email", "whatsapp", "guest_email", "from_place", "party_size", "dates_flex", "start_date", "route", "days", "nights", "est_total_usd",
       "all_in_match", "trip_link", "itinerary", "notes", "campaign_ref", "from_hostel", "deposit_amount", "deposit_paid_at", "hold_until", "balance_amount", "balance_url", "balance_paid_at",
-      "refunded_at", "crew_note", "created_at", "updated_at"];
+      "pay_plan", "pay_schedule", "refunded_at", "crew_note", "created_at", "updated_at"];
     const request: Record<string, unknown> = {};
     for (const k of VIEW) request[k] = (row as Record<string, unknown>)[k] ?? null;
     const pl = (row.payload ?? {}) as Record<string, unknown>;
@@ -147,37 +148,33 @@ Deno.serve(async (req) => {
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
     if (action === "balance") {
+      // The crew approves the trip: record the balance and invite the guest to choose how to pay it. No Stripe link is made here:
+      // the Checkout page is made when they choose, so it never goes stale in their inbox. Their deposit is already counted.
       if (!row.deposit_paid_at) return json({ error: "The deposit isn't paid yet." }, 400);
       if (row.balance_paid_at) return json({ error: "The balance is already paid." }, 400);
+      if (String(row.status) === "approved" && readSchedule(row.pay_schedule).length) return json({ error: "They've already chosen how to pay and are booked. Change a payment from Stripe, or reply to them." }, 409);
       const amount = Math.round(Number(body.amount) * 100) / 100;
       if (!(amount >= 1 && amount <= 50_000)) return json({ error: "Enter the balance in US dollars (after the deposit)." }, 400);
-      const session = await stripe.checkout.sessions.create({
-        mode: "payment",
-        customer_email: to || undefined,
-        line_items: [{
-          price_data: {
-            currency: "usd",
-            unit_amount: Math.round(amount * 100),
-            product_data: { name: "Mad Monkey trip: balance", description: `${String(row.route ?? "").slice(0, 200)} · ref ${row.ref}` },
-          },
-          quantity: 1,
-        }],
-        success_url: statusUrl,
-        cancel_url: statusUrl,
-        metadata: { kind: "trip_builder_balance", ref: row.ref, origin: LIVE_ORIGIN },
-        payment_intent_data: { description: `Trip builder balance · ref ${row.ref}`, metadata: { kind: "trip_builder_balance", ref: row.ref } },
-      });
-      await save({ status: "ready", balance_amount: amount, balance_session_id: session.id, balance_url: session.url, crew_note: note || null });
+      await save({ status: "ready", balance_amount: amount, balance_session_id: null, balance_url: null, pay_plan: null, pay_schedule: [], crew_note: note || null });
+      const tripUrl = guestTripUrl(LIVE_ORIGIN, row.ref, await signGuestKey(row.ref));
       let emailed = false;
       if (to) {
-        const m = tripBuilderReadyEmail({ firstName: first, ref: row.ref, route: row.route ?? "your trip", balance: usd(amount), note, payUrl: session.url ?? statusUrl, statusUrl, planUrl: (row.trip_link as string | null) || undefined });
+        const opts = payOptions({ balance: amount, start: row.start_date as string | null, cardSaved: !!row.stripe_payment_method_id });
+        const choices = opts.map((o) => o.plan === "now" ? `Pay all ${usd(amount)} now`
+          : o.plan === "later" ? `Pay ${usd(amount)} automatically on ${fmtDay(o.items[0].due)}, ${LATE_DAYS} days before you leave`
+          : `Pay in ${o.count} instalments of about ${usd(o.items[0].amount)}: the first now, then one every 30 days`);
+        const m = tripBuilderReadyEmail({ firstName: first, ref: row.ref, route: row.route ?? "your trip", balance: usd(amount), note, payUrl: tripUrl, statusUrl, planUrl: (row.trip_link as string | null) || undefined, choices });
         await sendEmail({ to, subject: m.subject, html: m.html, replyTo: TRIP_BUILDER_CONTACT, templateName: "trip_builder_ready" });
         emailed = true;
       }
-      return json({ ok: true, url: session.url, emailed });
+      return json({ ok: true, url: tripUrl, emailed });
     }
 
     if (action === "decline") {
+      // Declining only ever refunds the deposit, so once they've paid anything towards the balance it has to be settled by hand.
+      if (row.balance_paid_at || readSchedule(row.pay_schedule).some((i) => i.status === "paid")) {
+        return json({ error: "They've already paid towards this trip, so it can't be declined here. Refund the payments from Stripe, then mark it as you see fit." }, 409);
+      }
       let refunded = 0;
       if (body.refund === true && row.deposit_payment_intent && !row.refunded_at) {
         const r = await stripe.refunds.create(

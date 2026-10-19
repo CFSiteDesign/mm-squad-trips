@@ -17,13 +17,14 @@ type Req = {
   itinerary: string | null; notes: string | null; campaign_ref: string | null; from_hostel: string | null;
   deposit_amount: number; deposit_paid_at: string | null; hold_until: string | null; balance_amount: number | null;
   balance_url: string | null; balance_paid_at: string | null; refunded_at: string | null; crew_note: string | null; created_at: string;
+  pay_plan: string | null; pay_schedule: { n: number; amount: number; due: string; status: string }[] | null;
 };
 
 const STATUS: Record<string, { label: string; cls: string }> = {
   pending_payment: { label: "UNPAID", cls: "bg-mm-paper text-mm-black/60" },
   submitted: { label: "NEW", cls: "bg-mm-pink text-mm-bone" },
   checking: { label: "CHECKING", cls: "bg-mm-orange" },
-  ready: { label: "BALANCE SENT", cls: "bg-mm-yellow" },
+  ready: { label: "THEY'RE CHOOSING", cls: "bg-mm-yellow" },
   approved: { label: "BOOKED", cls: "bg-mm-lime" },
   declined: { label: "DECLINED", cls: "bg-mm-black text-mm-bone" },
 };
@@ -82,7 +83,7 @@ export default function TripBuilderAdmin({ refreshKey }: { refreshKey?: number }
     try {
       const d = await call({ action, ref: r.ref, note: notes[r.ref] ?? r.crew_note ?? "", ...extra });
       toast.success(
-        action === "balance" ? (d.emailed ? "Balance link sent to the guest" : "Balance link made (no email on file: copy it below)")
+        action === "balance" ? (d.emailed ? "Final price sent: they choose how to pay" : "Price saved (no email on file: send them the link yourself)")
         : action === "decline" ? (d.refunded ? `Declined, ${usd(d.refunded)} refunded` : "Declined")
         : "Saved",
       );
@@ -163,7 +164,8 @@ export default function TripBuilderAdmin({ refreshKey }: { refreshKey?: number }
                       <td className="px-3 py-3">{r.party_size}</td>
                       <td className="px-3 py-3">{usd(r.deposit_amount)}<div className="text-xs text-mm-black/60">{r.refunded_at ? "refunded" : r.deposit_paid_at ? "paid" : "not paid"}</div></td>
                       <td className="px-3 py-3"><span className={`inline-flex border-[2px] border-mm-black px-2 py-0.5 font-sticker text-[10px] tracking-[0.12em] ${st.cls}`}>{st.label}</span>
-                        {r.status === "ready" && r.balance_amount != null && <div className="mt-1 text-xs">{usd(r.balance_amount)} to pay</div>}
+                        {r.status === "ready" && r.balance_amount != null && <div className="mt-1 text-xs">{usd(r.balance_amount)} to pay, their choice of how</div>}
+                        {r.pay_plan && (r.pay_schedule ?? []).length > 0 && <div className="mt-1 text-xs">{r.pay_plan === "later" ? "pays a week before they leave" : r.pay_plan === "instalments" ? "instalments" : "paid all at once"} · {(r.pay_schedule ?? []).filter((i) => i.status === "paid").length}/{(r.pay_schedule ?? []).length} paid</div>}
                         {r.hold_until && ["submitted", "checking"].includes(r.status) && <div className="mt-1 text-xs text-mm-black/60">beds held to {day(r.hold_until)}</div>}</td>
                       <td className="px-3 py-3"><button onClick={() => setOpen(isOpen ? null : r.ref)} className="border-[2px] border-mm-black bg-mm-paper px-2 py-1 font-sticker text-[10px] tracking-[0.15em]">{isOpen ? "HIDE" : "OPEN"}</button></td>
                     </tr>
@@ -183,6 +185,15 @@ export default function TripBuilderAdmin({ refreshKey }: { refreshKey?: number }
                                   Builder estimate {usd(r.est_total_usd)} per person, incl. their spending money{r.all_in_match ? ` · looks like ALL IN ${r.all_in_match}` : ""}{r.from_place ? ` · now in ${r.from_place}` : ""}{r.campaign_ref ? ` · ref ${r.campaign_ref}` : ""}{r.from_hostel ? ` · QR at ${r.from_hostel}` : ""}
                                 </span>
                               </div>
+                              {(r.pay_schedule ?? []).length > 0 && (
+                                <ul className="mt-3 border-[2px] border-mm-black bg-mm-bone text-sm">
+                                  {(r.pay_schedule ?? []).map((i) => (
+                                    <li key={i.n} className={`flex justify-between gap-3 border-t-[1px] border-mm-black/10 px-3 py-1.5 first:border-t-0 ${i.status === "paid" ? "bg-mm-lime/40" : i.status === "failed" || i.status === "gave_up" ? "bg-mm-yellow" : ""}`}>
+                                      <span>Payment {i.n}: {day(i.due)}</span><span>{usd(i.amount)} · {i.status === "paid" ? "paid" : i.status === "failed" ? "failed, retrying" : i.status === "gave_up" ? "not taken" : "due"}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
                               {r.notes && <p className="mt-3 text-sm"><b>Their note:</b> {r.notes}</p>}
                               <pre className="mt-3 max-h-80 overflow-auto whitespace-pre-wrap border-[2px] border-mm-black bg-mm-bone p-3 font-mono text-[11px] leading-relaxed">{r.itinerary || "No itinerary text."}</pre>
                             </div>
@@ -204,8 +215,8 @@ export default function TripBuilderAdmin({ refreshKey }: { refreshKey?: number }
                                       <input type="number" min={1} step="0.01" value={amounts[r.ref] ?? String(r.balance_amount ?? balanceGuess)}
                                         onChange={(e) => setAmounts((m) => ({ ...m, [r.ref]: e.target.value }))} className="w-32 border-[2px] border-mm-black bg-mm-paper px-2 py-1 text-sm" />
                                       <button disabled={busy === r.ref} onClick={() => act(r, "balance", { amount: Number(amounts[r.ref] ?? r.balance_amount ?? balanceGuess) },
-                                        `Send ${r.name} a payment link for $${amounts[r.ref] ?? r.balance_amount ?? balanceGuess}?`)}
-                                        className="flex-1 border-[2px] border-mm-black bg-mm-lime px-2 py-1 font-sticker text-[10px] tracking-[0.15em] disabled:opacity-60">{r.status === "ready" ? "SEND A NEW LINK" : "SEND BALANCE LINK"}</button>
+                                        `Send ${r.name} the final price of $${amounts[r.ref] ?? r.balance_amount ?? balanceGuess}? They choose how to pay it.`)}
+                                        className="flex-1 border-[2px] border-mm-black bg-mm-lime px-2 py-1 font-sticker text-[10px] tracking-[0.15em] disabled:opacity-60">{r.status === "ready" ? "UPDATE THE PRICE" : "SEND THE FINAL PRICE"}</button>
                                     </div>
                                     {r.balance_url && <button onClick={() => navigator.clipboard.writeText(r.balance_url!).then(() => toast.success("Copied"))} className="mt-2 text-xs underline">Copy the current balance link</button>}
                                   </div>

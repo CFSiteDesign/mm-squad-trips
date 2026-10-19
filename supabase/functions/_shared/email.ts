@@ -927,11 +927,13 @@ ${sum.flags.map((f) => `<tr><td style="padding:6px 12px;font-size:13px;line-heig
   };
 }
 
-/** Guest: checked, here's the final price and the balance link. */
+/** Guest: checked, here's the final price. The button opens their trip page, where they choose how to pay the rest. */
 export function tripBuilderReadyEmail(v: {
   firstName: string; ref: string; route: string; balance: string; note: string; payUrl: string; statusUrl: string;
   /** The checked plan (the crew may have tweaked it), so the guest can see exactly what they're paying for. */
   planUrl?: string;
+  /** What they can choose, e.g. ["Pay it all now", "Pay it automatically on Tue 12 Jan, a week before you leave", "Pay in 3 instalments"]. */
+  choices?: string[];
 }): { subject: string; html: string } {
   const e = escapeHtml;
   const body = [
@@ -939,11 +941,72 @@ export function tripBuilderReadyEmail(v: {
     tbP(`Good news: the crew has checked your trip, <strong>${e(v.route)}</strong>.`),
     v.note ? `<div style="margin:16px 0;padding:14px;border:2px solid #0a0a0a;background:#ccff01"><div style="font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px">From the crew</div><div style="font-size:15px;white-space:pre-line">${e(v.note)}</div></div>` : "",
     v.planUrl ? tbP(`Have a look at the plan we checked: <a href="${e(v.planUrl)}" style="color:#0a0a0a">see your trip</a>.`) : "",
-    tbP(`The balance to pay is <strong>${e(v.balance)}</strong> (your deposit is already taken off). Pay it to lock in your beds.`),
-    `<p style="margin:18px 0">${tbButton(v.payUrl, "Approve + pay balance")}</p>`,
-    `<p style="margin:0;font-size:13px;color:#555">Want something changed first? Just reply to this email. Reference: <strong>${e(v.ref)}</strong> · <a href="${e(v.statusUrl)}" style="color:#0a0a0a">Trip status</a></p>`,
+    tbP(`The rest to pay is <strong>${e(v.balance)}</strong>. Your deposit is already taken off, and it's the same card that carries on.`),
+    v.choices && v.choices.length ? `<ul style="margin:0 0 12px 0;padding-left:20px">${v.choices.map((c) => `<li style="margin:0 0 4px 0">${e(c)}</li>`).join("")}</ul>` : "",
+    `<p style="margin:18px 0">${tbButton(v.payUrl, "Choose how to pay")}</p>`,
+    `<p style="margin:0;font-size:13px;color:#555">Want something changed first? Just reply to this email. Reference: <strong>${e(v.ref)}</strong></p>`,
   ].join("\n");
-  return { subject: `Your trip is checked: approve and pay the balance (${v.ref})`, html: tbShell("Your trip is ready", "Ready for your OK", body) };
+  return { subject: `Your trip is checked: choose how to pay the rest (${v.ref})`, html: tbShell("Your trip is ready", "Ready for your OK", body) };
+}
+
+type PayRow = { amount: string; due: string; paid: boolean };
+const tbTable = (rows: PayRow[]) => `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #0a0a0a;margin:0 0 16px 0;font-size:14px;border-collapse:collapse">${rows.map((r) =>
+  `<tr><td style="padding:7px 12px;border-bottom:1px solid #ddd;color:#0a0a0a">${escapeHtml(r.due)}</td><td align="right" style="padding:7px 12px;border-bottom:1px solid #ddd;color:#0a0a0a;white-space:nowrap">${escapeHtml(r.amount)}</td><td align="right" style="padding:7px 12px;border-bottom:1px solid #ddd;white-space:nowrap;font-weight:900;color:#0a0a0a">${r.paid ? "Paid" : "Due"}</td></tr>`).join("")}</table>`;
+
+/** Guest: they have chosen how to pay and the first payment (if any) is in. Their trip is booked. */
+export function tripBuilderBookedEmail(v: {
+  firstName: string; ref: string; route: string; planLabel: string; deposit: string; schedule: PayRow[]; statusUrl: string; startDate?: string;
+}): { subject: string; html: string } {
+  const e = escapeHtml;
+  const body = [
+    tbP(`Hey ${e(v.firstName)},`),
+    tbP(`You're booked: <strong>${e(v.route)}</strong>${v.startDate ? `, starting ${e(v.startDate)}` : ""}. Your <strong>${e(v.deposit)}</strong> deposit is counted, and you've chosen to ${e(v.planLabel)}.`),
+    `<p style="margin:0 0 6px 0;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;color:#555">Your payments</p>`,
+    tbTable(v.schedule),
+    tbP("Payments after today are charged to the card you paid your deposit with. We'll email you a few days before each one. Want to pay one sooner? Open your trip below."),
+    `<p style="margin:18px 0">${tbButton(v.statusUrl, "My trip")}</p>`,
+    `<p style="margin:0;font-size:13px;color:#555">Reference: <strong>${e(v.ref)}</strong></p>`,
+  ].join("\n");
+  return { subject: `You're booked: ${v.route} (${v.ref})`, html: tbShell("You're booked", "You're booked", body) };
+}
+
+/** Guest: a payment comes out in a few days. */
+export function tripBuilderReminderEmail(v: { firstName: string; ref: string; route: string; amount: string; due: string; statusUrl: string }): { subject: string; html: string } {
+  const e = escapeHtml;
+  const body = [
+    tbP(`Hey ${e(v.firstName)},`),
+    tbP(`A reminder that <strong>${e(v.amount)}</strong> for <strong>${e(v.route)}</strong> comes out of the card you paid your deposit with on <strong>${e(v.due)}</strong>. There's nothing you need to do.`),
+    tbP("Need to change something first? Reply to this email and we'll sort it."),
+    `<p style="margin:18px 0">${tbButton(v.statusUrl, "My trip")}</p>`,
+    `<p style="margin:0;font-size:13px;color:#555">Reference: <strong>${e(v.ref)}</strong></p>`,
+  ].join("\n");
+  return { subject: `A payment comes out on ${v.due} (${v.ref})`, html: tbShell("Payment reminder", "A payment's coming up", body) };
+}
+
+/** Guest: a scheduled payment went through. */
+export function tripBuilderReceiptEmail(v: { firstName: string; ref: string; route: string; amount: string; remaining: string; nextDue: string; nextAmount: string; statusUrl: string }): { subject: string; html: string } {
+  const e = escapeHtml;
+  const body = [
+    tbP(`Hey ${e(v.firstName)},`),
+    tbP(`We've taken <strong>${e(v.amount)}</strong> for <strong>${e(v.route)}</strong>.`),
+    v.nextDue ? tbP(`<strong>${e(v.remaining)}</strong> to go. The next payment, <strong>${e(v.nextAmount)}</strong>, comes out on ${e(v.nextDue)}.`) : tbP("That's everything: you're <strong>paid in full</strong>. See you out there."),
+    `<p style="margin:18px 0">${tbButton(v.statusUrl, "My trip")}</p>`,
+    `<p style="margin:0;font-size:13px;color:#555">Reference: <strong>${e(v.ref)}</strong></p>`,
+  ].join("\n");
+  return { subject: v.nextDue ? `Payment received: ${v.amount} (${v.ref})` : `You're paid in full (${v.ref})`, html: tbShell("Payment received", v.nextDue ? "Payment received" : "Paid in full", body) };
+}
+
+/** Guest: a scheduled payment didn't go through. */
+export function tripBuilderPaymentFailedEmail(v: { firstName: string; ref: string; route: string; amount: string; nextTry: string; final: boolean; statusUrl: string }): { subject: string; html: string } {
+  const e = escapeHtml;
+  const body = [
+    tbP(`Hey ${e(v.firstName)},`),
+    tbP(`We tried to take <strong>${e(v.amount)}</strong> for <strong>${e(v.route)}</strong> and your bank didn't let it through.`),
+    v.final ? tbP("We've tried a few times now. Please pay it below, or reply to this email so we can help, to keep your beds.") : tbP(`We'll try again on <strong>${e(v.nextTry)}</strong>. If you'd rather pay it now with a different card, you can.`),
+    `<p style="margin:18px 0">${tbButton(v.statusUrl, "Pay it now")}</p>`,
+    `<p style="margin:0;font-size:13px;color:#555">Reference: <strong>${e(v.ref)}</strong></p>`,
+  ].join("\n");
+  return { subject: `Your payment didn't go through (${v.ref})`, html: tbShell("Payment problem", "That payment didn't go through", body) };
 }
 
 /** Guest: balance paid, all booked. */

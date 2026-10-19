@@ -13,13 +13,17 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import {
   sendEmail,
   TRIP_BUILDER_CONTACT,
+  tripBuilderBookedEmail,
   tripBuilderConfirmedEmail,
   tripBuilderDeclinedEmail,
   tripBuilderDepositEmail,
   tripBuilderOpsEmail,
+  tripBuilderPaymentFailedEmail,
   tripBuilderReadyEmail,
+  tripBuilderReceiptEmail,
+  tripBuilderReminderEmail,
 } from "../_shared/email.ts";
-import { crewReviewUrl, readSummary, signCrewKey, suggestBalance } from "../_shared/trip-builder-crew.ts";
+import { crewReviewUrl, guestTripUrl, readSummary, signCrewKey, signGuestKey, suggestBalance } from "../_shared/trip-builder-crew.ts";
 import { SAMPLE_TRIP } from "../_shared/trip-builder-sample.ts";
 
 const json = (body: unknown, status = 200) =>
@@ -81,8 +85,16 @@ Deno.serve(async (req) => {
     }) },
     { tpl: "trip_builder_test_ready", m: tripBuilderReadyEmail({
       firstName: "Charlie", ref, route, balance: "$512",
-      note: "All checked. We swapped the Kampot bus for a morning minivan so you arrive in daylight.", payUrl: statusUrl, statusUrl,
+      note: "All checked. We swapped the Kampot bus for a morning minivan so you arrive in daylight.", payUrl: guestTripUrl(null, SAMPLE_REF, await signGuestKey(SAMPLE_REF)), statusUrl,
+      planUrl: SAMPLE.trip_link, choices: ["Pay all $512 now", "Pay $512 automatically on Mon 4 Jan, 7 days before you leave", "Pay in 3 instalments of about $171: the first now, then one every 30 days"],
     }) },
+    { tpl: "trip_builder_test_booked", m: tripBuilderBookedEmail({
+      firstName: "Charlie", ref, route, planLabel: "pay the rest in instalments", deposit: "$100", statusUrl, startDate: "Mon 11 Jan 2027",
+      schedule: [{ amount: "$171", due: "Today", paid: true }, { amount: "$171", due: "Wed 18 Nov", paid: false }, { amount: "$170", due: "Fri 18 Dec", paid: false }],
+    }) },
+    { tpl: "trip_builder_test_reminder", m: tripBuilderReminderEmail({ firstName: "Charlie", ref, route, amount: "$171", due: "Wed 18 Nov", statusUrl }) },
+    { tpl: "trip_builder_test_receipt", m: tripBuilderReceiptEmail({ firstName: "Charlie", ref, route, amount: "$171", remaining: "$170", nextDue: "Fri 18 Dec", nextAmount: "$170", statusUrl }) },
+    { tpl: "trip_builder_test_payment_failed", m: tripBuilderPaymentFailedEmail({ firstName: "Charlie", ref, route, amount: "$171", nextTry: "Fri 20 Nov", final: false, statusUrl }) },
     { tpl: "trip_builder_test_confirmed", m: tripBuilderConfirmedEmail({ firstName: "Charlie", ref, route, paid: "$512", statusUrl }) },
     { tpl: "trip_builder_test_declined", m: tripBuilderDeclinedEmail({
       firstName: "Charlie", ref, route, note: "Koh Sdach is full on those nights. Want to swap it for Koh Rong Samloem?", refunded: "$100", statusUrl,

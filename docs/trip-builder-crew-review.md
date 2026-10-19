@@ -14,7 +14,7 @@ Three buttons at the top and bottom: **Approve**, **Not approved**, **Edit it**.
 
 | Button | What it does |
 | --- | --- |
-| Approve | Asks for the balance (pre-filled: trip cost for everyone less the deposit; spending money is never charged) and an optional note, then sends the guest the Stripe payment link. Same as Admin > "Send balance link". |
+| Approve | Asks for the balance (pre-filled: trip cost for everyone less the deposit; spending money is never charged) and an optional note, then emails the guest to choose how to pay it (all now, a week before they leave, or instalments). Nothing is charged until they choose: see [trip-builder-payments.md](trip-builder-payments.md). Same as Admin > "Send the final price". |
 | Not approved | Reason for the guest, and "refund the deposit" (ticked). Same as Admin > "Decline". |
 | Edit it | Opens the trip in the builder with a "Save our version" bar. Saving updates the request (route, days, dates, estimate, trip link), moves it to *checking*, and keeps the guest's own version in `payload.original`. Then Approve sends the guest the edited plan. |
 

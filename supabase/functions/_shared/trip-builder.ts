@@ -4,17 +4,19 @@
 // (trip-builder-admin), and stripe-webhook hands both payments to
 // handleTripBuilderPaid below. Table: trip_builder_requests.
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import type Stripe from "https://esm.sh/stripe@18.5.0";
+import Stripe from "https://esm.sh/stripe@18.5.0";
 import { appBase } from "./app-base.ts";
 import {
   APP_URL,
   sendEmail,
+  tripBuilderBookedEmail,
   tripBuilderConfirmedEmail,
   tripBuilderDepositEmail,
   tripBuilderOpsEmail,
   TRIP_BUILDER_CONTACT,
 } from "./email.ts";
-import { crewReviewUrl, readSummary, signCrewKey, suggestBalance } from "./trip-builder-crew.ts";
+import { crewReviewUrl, guestTripUrl, readSummary, signCrewKey, signGuestKey, suggestBalance } from "./trip-builder-crew.ts";
+import { allPaid, type Item, type Plan, readSchedule } from "./trip-builder-pay.ts";
 
 // Trip builder enquiries are Ewan's (Charlie, 19 Oct 2026): every alert goes to
 // him and every guest email replies to him, not the ALL IN ops list or cs@.
@@ -57,7 +59,41 @@ type Row = Record<string, unknown> & {
   contact_via: string | null; guest_email: string | null; deposit_paid_at: string | null; balance_paid_at: string | null;
 };
 
-/** checkout.session.completed with metadata.kind trip_builder_deposit / trip_builder_balance. Idempotent. */
+export const planLabel = (plan: string | null | undefined) =>
+  plan === "later" ? "pay the rest on the card a week before you leave" : plan === "instalments" ? "pay the rest in instalments" : "pay the rest now";
+
+/** A saved payment schedule as rows for an email: "Today $200 Paid", "Mon 12 Jan $200 Due". */
+export function scheduleRows(items: Item[]): { amount: string; due: string; paid: boolean }[] {
+  const today = new Date().toISOString().slice(0, 10);
+  return items.map((i) => ({ amount: usd(i.amount), due: i.due === today ? "Today" : fmtDay(i.due), paid: i.status === "paid" }));
+}
+
+function stripeFromEnv(): Stripe | null {
+  const k = Deno.env.get("STRIPE_SECRET_KEY");
+  return k ? new Stripe(k, { apiVersion: "2025-08-27.basil" }) : null;
+}
+
+/** The guest has chosen how to pay and is booked: tell them (with their payment table) and tell Ewan. */
+export async function notifyBooked(row: Row, items: Item[], origin: string | null, key: string): Promise<void> {
+  const first = String(row.name ?? "").trim().split(/\s+/)[0] || "there";
+  const to = (row.guest_email as string | null) || (row.email as string | null);
+  const statusUrl = guestTripUrl(origin, row.ref, key);
+  const plan = String(row.pay_plan ?? "now");
+  if (to) {
+    const m = tripBuilderBookedEmail({ firstName: first, ref: row.ref, route: row.route ?? "your trip", planLabel: planLabel(plan), deposit: usd(Number(row.deposit_amount)), schedule: scheduleRows(items), statusUrl, startDate: fmtDay(row.start_date) });
+    await sendEmail({ to, subject: m.subject, html: m.html, replyTo: EWAN, templateName: "trip_builder_booked" }).catch((e) => console.warn("trip builder booked email failed", e));
+  }
+  const rows = items.map((i) => `${i.status === "paid" ? "Paid" : "Due"} ${fmtDay(i.due)}: ${usd(i.amount)}`).join("<br>");
+  await sendEmail({
+    to: EWAN, cc: teamCc(),
+    subject: `Trip builder: ${row.name} is booked and will ${planLabel(plan)} · ${row.ref}`,
+    html: `<p><strong>${esc(String(row.name))}</strong> approved ${esc(String(row.route ?? ""))} (${row.ref}) and chose to ${esc(planLabel(plan))}. It's booked: make sure the beds are locked in.</p><p>${rows}</p>`,
+    templateName: "trip_builder_booked_ops",
+  }).catch((e) => console.warn("trip builder booked ops email failed", e));
+}
+const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+/** checkout.session.completed with metadata.kind trip_builder_deposit / trip_builder_balance / trip_builder_instalment. Idempotent. */
 export async function handleTripBuilderPaid(sb: SupabaseClient, session: Stripe.Checkout.Session): Promise<void> {
   const meta = (session.metadata ?? {}) as Record<string, string>;
   const ref = meta.ref ?? "";
@@ -76,10 +112,22 @@ export async function handleTripBuilderPaid(sb: SupabaseClient, session: Stripe.
   if (meta.kind === "trip_builder_deposit") {
     if (row.deposit_paid_at) return;
     const holdUntil = row.start_date ? new Date(now.getTime() + HOLD_HOURS * 3600_000).toISOString() : null;
+    // The deposit checkout saves the card (setup_future_usage) so the rest can be charged on the schedule the guest picks later.
+    let customer = typeof session.customer === "string" ? session.customer : session.customer?.id ?? null, method: string | null = null;
+    try {
+      const stripe = pi ? stripeFromEnv() : null;
+      if (stripe && pi) {
+        const p = await stripe.paymentIntents.retrieve(pi);
+        method = typeof p.payment_method === "string" ? p.payment_method : p.payment_method?.id ?? null;
+        customer = customer ?? (typeof p.customer === "string" ? p.customer : p.customer?.id ?? null);
+      }
+    } catch (e) { console.warn("trip builder: couldn't read the saved card", e instanceof Error ? e.message : e); }
     const { error: uErr } = await sb.from("trip_builder_requests").update({
       status: "submitted",
       deposit_paid_at: now.toISOString(),
       deposit_payment_intent: pi,
+      stripe_customer_id: customer,
+      stripe_payment_method_id: method,
       guest_email: guestEmail,
       hold_until: holdUntil,
       updated_at: now.toISOString(),
@@ -116,26 +164,48 @@ export async function handleTripBuilderPaid(sb: SupabaseClient, session: Stripe.
     return;
   }
 
-  if (meta.kind === "trip_builder_balance") {
-    if (row.balance_paid_at) return;
+  if (meta.kind === "trip_builder_balance" || meta.kind === "trip_builder_instalment") {
+    // A payment the guest made on a Checkout page: "pay it all now", or the first instalment, or a missed one they paid by hand.
+    const n = Number(meta.n) || 1;
+    const items = readSchedule(row.pay_schedule);
+    const item = items.find((i) => i.n === n);
+    if (item ? item.status === "paid" : !!row.balance_paid_at) return; // this payment is already counted (webhook delivered twice)
+    const paidNow = (session.amount_total ?? 0) / 100;
+    if (item) { item.status = "paid"; item.paid_at = now.toISOString(); item.payment_intent = pi; item.last_error = null; item.retry_after = null; }
+    const complete = items.length ? allPaid(items) : true;
+    const firstBooking = String(row.status) !== "approved"; // read before we save: this payment is what books them
+    const plan = (row.pay_plan as Plan | null) ?? (items.length > 1 ? "instalments" : "now");
     const { error: uErr } = await sb.from("trip_builder_requests").update({
       status: "approved",
-      balance_paid_at: now.toISOString(),
+      pay_plan: plan,
+      pay_schedule: items,
+      plan_chosen_at: (row.plan_chosen_at as string | null) ?? now.toISOString(),
+      balance_paid_at: complete ? now.toISOString() : null,
       balance_payment_intent: pi,
       guest_email: row.guest_email || guestEmail,
       updated_at: now.toISOString(),
     }).eq("ref", row.ref);
-    if (uErr) throw new Error(`trip builder balance save: ${uErr.message}`);
-    const paid = usd((session.amount_total ?? 0) / 100);
-    if (guestEmail) {
-      const m = tripBuilderConfirmedEmail({ firstName: first, ref: row.ref, route: row.route ?? "your trip", paid, statusUrl });
-      await sendEmail({ to: guestEmail, subject: m.subject, html: m.html, replyTo: EWAN, templateName: "trip_builder_confirmed" }).catch((e) => console.warn("trip builder confirmed email failed", e));
+    if (uErr) throw new Error(`trip builder payment save: ${uErr.message}`);
+    const paid = usd(paidNow);
+    if (complete) {
+      if (guestEmail) {
+        const m = tripBuilderConfirmedEmail({ firstName: first, ref: row.ref, route: row.route ?? "your trip", paid, statusUrl });
+        await sendEmail({ to: guestEmail, subject: m.subject, html: m.html, replyTo: EWAN, templateName: "trip_builder_confirmed" }).catch((e) => console.warn("trip builder confirmed email failed", e));
+      }
+      await sendEmail({
+        to: EWAN, cc: teamCc(),
+        subject: `Trip builder: ${row.name} paid ${paid} and is paid in full · ${row.ref}`,
+        html: `<p><strong>${esc(String(row.name))}</strong> paid ${paid} for ${esc(String(row.route ?? ""))} (${row.ref}) and is paid in full. ${firstBooking ? "It's booked: make sure the beds are locked in." : ""}</p>`,
+        templateName: "trip_builder_balance_ops",
+      }).catch((e) => console.warn("trip builder balance ops email failed", e));
+    } else if (firstBooking) {
+      // First instalment in: they're booked, with the rest scheduled.
+      await notifyBooked({ ...row, pay_plan: plan, plan_chosen_at: now.toISOString() } as Row, items, meta.origin || null, await signGuestKey(row.ref));
+    } else {
+      await sendEmail({
+        to: EWAN, subject: `Trip builder: ${row.name} paid ${paid} (instalment ${n} of ${items.length}) · ${row.ref}`,
+        html: `<p><strong>${esc(String(row.name))}</strong> paid ${paid} towards ${esc(String(row.route ?? ""))} (${row.ref}).</p>`, templateName: "trip_builder_instalment_ops",
+      }).catch((e) => console.warn("trip builder instalment ops email failed", e));
     }
-    await sendEmail({
-      to: EWAN,
-      subject: `Trip builder: ${row.name} paid the ${paid} balance · ${row.ref}`,
-      html: `<p><strong>${String(row.name).replace(/</g, "&lt;")}</strong> paid the ${paid} balance for ${String(row.route ?? "").replace(/</g, "&lt;")} (${row.ref}). It's booked: make sure the beds are locked in.</p>`,
-      templateName: "trip_builder_balance_ops",
-    }).catch((e) => console.warn("trip builder balance ops email failed", e));
   }
 }

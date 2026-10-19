@@ -113,9 +113,18 @@ Deno.serve(async (req) => {
       success_url: back,
       cancel_url: back,
       metadata: { kind: "trip_builder_deposit", ref, origin: origin ?? "" },
+      // Save the card with the deposit, so that once the crew has approved the trip the guest can pay the rest
+      // on the schedule they choose (now, 7 days before they leave, or in instalments). Same as ALL IN bookings.
+      customer_creation: "always",
+      custom_text: {
+        submit: {
+          message: `You're paying a $${depositUsd} deposit today. It comes off your trip total, and you get it back if the crew can't make the trip work. If you approve the checked plan, the rest is charged to this card on the schedule you choose, or you can pay it sooner.`,
+        },
+      },
       payment_intent_data: {
         description: `Trip builder deposit · ref ${ref}`,
         metadata: { kind: "trip_builder_deposit", ref },
+        setup_future_usage: "off_session",
       },
     });
     await sb.from("trip_builder_requests").update({ deposit_session_id: session.id, deposit_url: session.url, updated_at: new Date().toISOString() }).eq("ref", ref);
