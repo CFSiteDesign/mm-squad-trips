@@ -36,6 +36,13 @@
       "when": 1792382629238,
       "tag": "0004_laos_trip",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792396753765,
+      "tag": "0005_experience_db_public_key",
+      "breakpoints": true
     }
   ]
 }
