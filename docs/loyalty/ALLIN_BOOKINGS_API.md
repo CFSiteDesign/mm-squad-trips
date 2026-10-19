@@ -1,5 +1,11 @@
 # ALL IN bookings for the Loyalty page
 
+> **Replaced 19 Oct 2026.** Dhany and Ayush now use the Experience Database's
+> `allin-guest-trips` endpoint, which adds each trip's day-by-day on real dates
+> and gives every app its own revocable key (spec: costing-tool
+> `docs/ALLIN_API.md`). This feed stays as the source the Experience Database
+> syncs from every 5 minutes (signed requests, no shared key).
+
 For Dhany, 15 Oct 2026. The Loyalty account page shows an ALL IN guest where
 to be on each day of their trip. This endpoint gives that page every data point
 we take at checkout, plus the WhatsApp consent, read live from the bookings
