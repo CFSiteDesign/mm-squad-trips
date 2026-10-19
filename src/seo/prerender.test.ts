@@ -21,19 +21,27 @@ describe("prerendered ALL IN pages", () => {
     }
   });
 
-  it("publishes Thailand and Laos like every other trip (15 Oct 2026 specs)", () => {
+  it("publishes Laos like every other trip (15 Oct 2026 specs)", () => {
     const sitemap = sitemapXml(pages, "2026-01-01");
     const home = pages.find((p) => p.file === "index.html")!.body;
-    for (const slug of ["thailand", "laos"]) {
-      const page = pages.find((p) => p.file === `${slug}/index.html`)!;
-      expect(page.noindex, slug).toBe(false);
-      expect(page.jsonLd, slug).not.toBeNull();
-      expect(sitemap, slug).toContain(`/all-in-trips/${slug}<`);
-      expect(llmsTxt(), slug).toContain(`/all-in-trips/${slug})`);
-      expect(home, slug).toContain(`/all-in-trips/${slug}"`);
-    }
+    const page = pages.find((p) => p.file === "laos/index.html")!;
+    expect(page.noindex).toBe(false);
+    expect(page.jsonLd).not.toBeNull();
+    expect(sitemap).toContain("/all-in-trips/laos<");
+    expect(llmsTxt()).toContain("/all-in-trips/laos)");
+    expect(home).toContain('/all-in-trips/laos"');
     // Each trip page links to the other trips, Laos included.
     expect(pages.find((p) => p.file === "cambodia/index.html")!.body).toContain("Laos Ultimate");
+  });
+
+  it("keeps link-only Thailand out of search and off the home page (19 Oct 2026)", () => {
+    const th = pages.find((p) => p.file === "thailand/index.html")!;
+    expect(th.noindex).toBe(true);
+    expect(th.jsonLd).toBeNull();
+    expect(sitemapXml(pages, "2026-01-01")).not.toContain("thailand");
+    expect(llmsTxt()).not.toContain("thailand");
+    expect(pages.find((p) => p.file === "index.html")!.body).not.toContain("/thailand");
+    expect(pages.find((p) => p.file === "cambodia/index.html")!.body).not.toContain("/thailand");
   });
 
   it("reads YOUR TRIP, SORTED. with its spaces, not YOURTRIP,SORTED.", () => {

@@ -12,8 +12,8 @@ export const SOCIAL_IMAGE =
 
 export type SeoSlug = "indonesia" | "indonesia-7" | "vietnam" | "vietnam-7" | "cambodia" | "thailand" | "laos";
 
-/** The home page's trip cards, in order. Thailand and Laos joined on 15 Oct 2026. */
-export const LISTED_SLUGS = ["indonesia", "indonesia-7", "vietnam", "vietnam-7", "cambodia", "thailand", "laos"] as const;
+/** The home page's trip cards, in order. Laos joined on 15 Oct 2026; Thailand is link-only again (19 Oct 2026). */
+export const LISTED_SLUGS = ["indonesia", "indonesia-7", "vietnam", "vietnam-7", "cambodia", "laos"] as const;
 
 export const pageUrl = (slug?: string) => (slug ? `${ALLIN_URL}/${slug}` : ALLIN_URL);
 export const priceOf = (slug: string) => TRIPS.find((t) => t.slug === slug)?.price ?? 0;
@@ -21,7 +21,7 @@ export const priceOf = (slug: string) => TRIPS.find((t) => t.slug === slug)?.pri
 export const HOME_SEO = {
   title: "ALL IN Backpacker Trips in Southeast Asia | Mad Monkey Hostels",
   description:
-    "7 to 14-day backpacker trips through Vietnam, Indonesia, Cambodia, Thailand and Laos. Mad Monkey hostel beds, transport and activities sorted. A $99 deposit holds your spot.",
+    "7 to 14-day backpacker trips through Vietnam, Indonesia, Cambodia and Laos. Mad Monkey hostel beds, transport and activities sorted. A $99 deposit holds your spot.",
 };
 
 type TripSeo = { title: string; description: string; noindex?: boolean };
@@ -53,6 +53,8 @@ export const TRIP_SEO: Record<SeoSlug, TripSeo> = {
   thailand: {
     title: "Thailand 11-Day Backpacker Trip: Bangkok, Chiang Mai, Pai | Mad Monkey",
     description: `11 days from Bangkok to Chiang Mai and Pai. ${sorted}, from $${priceOf("thailand")}. ${deposit}`,
+    // Link-only (App.tsx: unlisted, 19 Oct 2026). Kept out of search, the sitemap and llms.txt.
+    noindex: true,
   },
   laos: {
     title: "Laos Ultimate 10-Day Backpacker Trip: Luang Prabang to Vang Vieng | Mad Monkey",
