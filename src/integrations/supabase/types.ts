@@ -793,6 +793,138 @@ export type Database = {
           },
         ]
       }
+      trip_builder_requests: {
+        Row: {
+          all_in_match: string | null
+          balance_amount: number | null
+          balance_paid_at: string | null
+          balance_payment_intent: string | null
+          balance_session_id: string | null
+          balance_url: string | null
+          campaign_ref: string | null
+          contact_via: string | null
+          countries: string[]
+          created_at: string
+          crew_note: string | null
+          dates_flex: string | null
+          days: number | null
+          deposit_amount: number
+          deposit_paid_at: string | null
+          deposit_payment_intent: string | null
+          deposit_session_id: string | null
+          deposit_url: string | null
+          email: string | null
+          est_total_usd: number | null
+          from_hostel: string | null
+          from_place: string | null
+          guest_email: string | null
+          hold_until: string | null
+          id: string
+          itinerary: string | null
+          name: string
+          nights: number | null
+          notes: string | null
+          party_size: number
+          payload: Json
+          ref: string
+          refund_id: string | null
+          refunded_at: string | null
+          route: string | null
+          start_date: string | null
+          status: string
+          stops: string[]
+          trip_link: string | null
+          updated_at: string
+          whatsapp: string | null
+        }
+        Insert: {
+          all_in_match?: string | null
+          balance_amount?: number | null
+          balance_paid_at?: string | null
+          balance_payment_intent?: string | null
+          balance_session_id?: string | null
+          balance_url?: string | null
+          campaign_ref?: string | null
+          contact_via?: string | null
+          countries?: string[]
+          created_at?: string
+          crew_note?: string | null
+          dates_flex?: string | null
+          days?: number | null
+          deposit_amount: number
+          deposit_paid_at?: string | null
+          deposit_payment_intent?: string | null
+          deposit_session_id?: string | null
+          deposit_url?: string | null
+          email?: string | null
+          est_total_usd?: number | null
+          from_hostel?: string | null
+          from_place?: string | null
+          guest_email?: string | null
+          hold_until?: string | null
+          id?: string
+          itinerary?: string | null
+          name: string
+          nights?: number | null
+          notes?: string | null
+          party_size?: number
+          payload: Json
+          ref: string
+          refund_id?: string | null
+          refunded_at?: string | null
+          route?: string | null
+          start_date?: string | null
+          status?: string
+          stops?: string[]
+          trip_link?: string | null
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Update: {
+          all_in_match?: string | null
+          balance_amount?: number | null
+          balance_paid_at?: string | null
+          balance_payment_intent?: string | null
+          balance_session_id?: string | null
+          balance_url?: string | null
+          campaign_ref?: string | null
+          contact_via?: string | null
+          countries?: string[]
+          created_at?: string
+          crew_note?: string | null
+          dates_flex?: string | null
+          days?: number | null
+          deposit_amount?: number
+          deposit_paid_at?: string | null
+          deposit_payment_intent?: string | null
+          deposit_session_id?: string | null
+          deposit_url?: string | null
+          email?: string | null
+          est_total_usd?: number | null
+          from_hostel?: string | null
+          from_place?: string | null
+          guest_email?: string | null
+          hold_until?: string | null
+          id?: string
+          itinerary?: string | null
+          name?: string
+          nights?: number | null
+          notes?: string | null
+          party_size?: number
+          payload?: Json
+          ref?: string
+          refund_id?: string | null
+          refunded_at?: string | null
+          route?: string | null
+          start_date?: string | null
+          status?: string
+          stops?: string[]
+          trip_link?: string | null
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
       trips: {
         Row: {
           active: boolean

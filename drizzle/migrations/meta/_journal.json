@@ -43,6 +43,13 @@
       "when": 1792396753765,
       "tag": "0005_experience_db_public_key",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792414298997,
+      "tag": "0006_trip_builder_requests",
+      "breakpoints": true
     }
   ]
 }
