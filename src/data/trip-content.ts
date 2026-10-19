@@ -29,7 +29,8 @@ import {
   KH_SNAPSHOT, KH_IS_THIS_FOR_ME, KH_HIGHLIGHTS, KH_INCLUDED, KH_ITINERARY, KH_FAQ_OVERRIDES,
 } from "@/data/trip-content-cambodia";
 import vnHero from "@/assets/vn-hero.jpg";
-import allInHero from "@/assets/preview-hero-allin.jpg";
+import thHero from "@/assets/preview-th-hero.jpg";
+import laHero from "@/assets/preview-la-hero.jpg";
 import {
   TH_SNAPSHOT, TH_IS_THIS_FOR_ME, TH_HIGHLIGHTS, TH_INCLUDED, TH_NOT_INCLUDED, TH_ITINERARY,
 } from "@/data/trip-content-thailand";
@@ -168,7 +169,7 @@ export function getTripContent(trip: Trip, slug: TripSlug): TripContent {
   }
   if (slug === "thailand") {
     return {
-      hero: allInHero, // no Thailand shot yet; the ALL IN home hero stands in
+      hero: thHero, // Wat Arun, Bangkok (from the Mad Monkey site)
       snapshot: TH_SNAPSHOT,
       isThisForMe: TH_IS_THIS_FOR_ME,
       highlights: TH_HIGHLIGHTS,
@@ -178,12 +179,12 @@ export function getTripContent(trip: Trip, slug: TripSlug): TripContent {
       reviews: [],
       // The spec's FAQ is the shared ALL IN set, published as written.
       faqs: DEFAULT_FAQS,
-      pending: ["Hero image", "Highlight photography", "Property reviews"],
+      pending: ["Lod Cave photo", "Property reviews"],
     };
   }
   if (slug === "laos") {
     return {
-      hero: allInHero, // no Laos shot yet; the ALL IN home hero stands in
+      hero: laHero, // pool volleyball at Mad Monkey Vang Vieng (Mad Monkey site)
       snapshot: LA_SNAPSHOT,
       isThisForMe: LA_IS_THIS_FOR_ME,
       highlights: LA_HIGHLIGHTS,
@@ -195,7 +196,7 @@ export function getTripContent(trip: Trip, slug: TripSlug): TripContent {
       addOns: LA_ADD_ONS,
       addOnsNote: LA_ADD_ONS_NOTE,
       goodToKnow: LA_GOOD_TO_KNOW,
-      pending: ["Hero image", "Highlight photography", "Property reviews"],
+      pending: ["Paramotor photo", "Property reviews"],
     };
   }
   if (slug === "vietnam-7") {

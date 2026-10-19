@@ -5,10 +5,17 @@
 // The check-out morning counts as Day 11 (11 days, 10 nights: 9 in Mad Monkey
 // hostels plus the overnight bus), so `days` is 11 and nights is 10. No free
 // drinks on this trip: don't list them. No photography came with either
-// brief: the highlights carry no images (so the section stays hidden) and the
-// hero is the generic ALL IN shot until Mad Monkey sends a Thailand one.
+// brief, so the photos are generic ones from madmonkeyhostels.com (19 Oct
+// 2026). The tubing shot was taken in Vang Vieng, and there is no Lod Cave
+// photo yet, so that tile stays hidden until one arrives.
 import type { Day } from "@/data/trip-content-indonesia";
 import type { Highlight } from "@/data/trip-content";
+import oldTown from "@/assets/th-hl-old-town.jpg";
+import pubCrawl from "@/assets/th-hl-pub-crawl.jpg";
+import grandCanyon from "@/assets/th-hl-grand-canyon.jpg";
+import elephants from "@/assets/th-hl-elephants.jpg";
+import paiCanyon from "@/assets/th-hl-pai-canyon.jpg";
+import tubing from "@/assets/th-hl-tubing.jpg";
 
 export const TH_SNAPSHOT = {
   tripCode: "THAI11",
@@ -27,15 +34,15 @@ export const TH_IS_THIS_FOR_ME = [
   { k: "Physical Level", v: "Light to Moderate (tubing, rafting, a few late nights)" },
 ];
 
-// No photos in the brief yet. Tiles without an image do not render.
+// Tiles without an image do not render (Lod Cave has no photo yet).
 export const TH_HIGHLIGHTS: Highlight[] = [
-  { title: "Bangkok Old Town: markets, temples & canals", image: null },
-  { title: "Bangkok Pub Crawl", image: null },
-  { title: "Grand Canyon Water Park, Chiang Mai", image: null },
-  { title: "Ethical elephant sanctuary + bamboo rafting", image: null },
+  { title: "Bangkok Old Town: markets, temples & canals", image: oldTown },
+  { title: "Bangkok Pub Crawl", image: pubCrawl },
+  { title: "Grand Canyon Water Park, Chiang Mai", image: grandCanyon },
+  { title: "Ethical elephant sanctuary + bamboo rafting", image: elephants },
   // The crew picks the spot on the day; a sunset tour runs either way.
-  { title: "Sunset trip to Pai Canyon or Two Huts", image: null },
-  { title: "Tipsy tubing in Pai", image: null },
+  { title: "Sunset trip to Pai Canyon or Two Huts", image: paiCanyon },
+  { title: "Tipsy tubing in Pai", image: tubing },
   { title: "Lod Cave day tour", image: null },
 ];
 

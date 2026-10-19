@@ -9,10 +9,17 @@
 // Still open with ops (15 Oct 2026), so left off the page rather than guessed:
 // whether the Day 5 homestay dinner is included, how the group gets from Muang
 // Ngoi back to Luang Prabang on Day 6, and breakfast at the camp and the
-// homestay. No photography came with the spec: the highlights carry no images
-// (so the section stays hidden) and the hero is the generic ALL IN shot.
+// homestay. No photography came with the spec, so the photos are generic
+// ones from madmonkeyhostels.com (19 Oct 2026). There is no paramotor photo
+// yet, so that tile stays hidden until one arrives.
 import type { Day } from "@/data/trip-content-indonesia";
 import type { AddOn, Highlight } from "@/data/trip-content";
+import kuangSi from "@/assets/la-hl-kuang-si.jpg";
+import tubing from "@/assets/la-hl-tubing.jpg";
+import viewpoint from "@/assets/la-hl-viewpoint.jpg";
+import lpbPool from "@/assets/la-hl-lpb-pool.jpg";
+import vvPool from "@/assets/la-hl-vv-pool.jpg";
+import pubCrawl from "@/assets/la-hl-pub-crawl.jpg";
 
 export const LA_SNAPSHOT = {
   tripCode: "LAOS10",
@@ -31,15 +38,15 @@ export const LA_IS_THIS_FOR_ME = [
   { k: "Physical Level", v: "Light to Moderate (viewpoint hikes, kayaking, a night camping)" },
 ];
 
-// No photos in the spec yet. Tiles without an image do not render.
+// Tiles without an image do not render (the paramotor has no photo yet).
 export const LA_HIGHLIGHTS: Highlight[] = [
-  { title: "Kuang Si Falls: swim the turquoise pools", image: null },
+  { title: "Kuang Si Falls: swim the turquoise pools", image: kuangSi },
   { title: "Sunset paramotor flight over the karsts", image: null },
-  { title: "Tipsy tubing: floating down the Nam Song", image: null },
-  { title: "Karst viewpoints: Vang Vieng from the top", image: null },
-  { title: "Pool parties at Mad Monkey Luang Prabang", image: null },
-  { title: "Pool with a view at Mad Monkey Vang Vieng", image: null },
-  { title: "Vang Vieng pub crawl: one crew, one big night", image: null },
+  { title: "Tipsy tubing: floating down the Nam Song", image: tubing },
+  { title: "Karst viewpoints: Vang Vieng from the top", image: viewpoint },
+  { title: "Pool parties at Mad Monkey Luang Prabang", image: lpbPool },
+  { title: "Pool with a view at Mad Monkey Vang Vieng", image: vvPool },
+  { title: "Vang Vieng pub crawl: one crew, one big night", image: pubCrawl },
 ];
 
 export const LA_INCLUDED = [
