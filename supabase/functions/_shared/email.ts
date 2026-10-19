@@ -763,13 +763,15 @@ const tbButton = (href: string, label: string) =>
 const tbP = (html: string) => `<p style="margin:0 0 12px 0">${html}</p>`;
 // Every trip builder email points at Ewan (Charlie, 19 Oct 2026): he runs these enquiries.
 export const TRIP_BUILDER_CONTACT = "ewan@madmonkeyhostels.com";
+export const TRIP_BUILDER_WHATSAPP = "+44 7507 789985";
+const TB_WA_LINK = "https://wa.me/447507789985";
 const tbShell = (title: string, headline: string, body: string) =>
   shell(title, `<tr><td style="padding:16px 24px 8px 24px">
 <h1 style="margin:0;font-size:28px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em">${escapeHtml(headline)}</h1>
 </td></tr>
 <tr><td style="padding:0 24px 16px 24px;font-size:16px;line-height:1.5">
 ${body}
-</td></tr>`, TRIP_BUILDER_CONTACT);
+</td></tr>`, `${TRIP_BUILDER_CONTACT} · WhatsApp ${TRIP_BUILDER_WHATSAPP}`);
 
 /** Guest: deposit paid, the trip is with the crew. */
 export function tripBuilderDepositEmail(v: {
@@ -783,6 +785,7 @@ export function tripBuilderDepositEmail(v: {
     v.holdUntil ? tbP(`We're holding your beds until <strong>${e(v.holdUntil)}</strong> while a real Mad Monkey crew member checks the routes, beds, dates and prices.`) : tbP("A real Mad Monkey crew member is checking the routes, beds and prices, and will help you pin down dates."),
     tbP("Next, you'll get a confirmed plan and the final price. Your deposit comes off it. If we can't make the trip work, you get your deposit back."),
     `<p style="margin:18px 0">${tbButton(v.statusUrl, "Track my trip")}</p>`,
+    tbP(`Questions? Reply to this email or message Ewan on WhatsApp: <a href="${TB_WA_LINK}" style="color:#0a0a0a">${TRIP_BUILDER_WHATSAPP}</a>.`),
     `<p style="margin:0;font-size:13px;color:#555">Reference: <strong>${e(v.ref)}</strong></p>`,
   ].join("\n");
   return { subject: `Your trip is with the crew (${v.ref})`, html: tbShell("Your trip is with the crew", "It's with the crew 🐒", body) };
@@ -790,7 +793,7 @@ export function tripBuilderDepositEmail(v: {
 
 /** Ops: a new trip to check, deposit paid. */
 export function tripBuilderOpsEmail(v: {
-  ref: string; name: string; contact: string; guestEmail: string; people: number; route: string; days: number;
+  ref: string; name: string; contact: string; guestEmail: string; guestWhatsapp?: string; people: number; route: string; days: number;
   startDate: string; dates: string; estTotal: string; deposit: string; allInMatch: string; notes: string;
   itinerary: string; tripLink: string; adminUrl: string; holdUntil: string;
 }): { subject: string; html: string } {
@@ -804,7 +807,7 @@ export function tripBuilderOpsEmail(v: {
 ${row("Ref", v.ref)}${row("Contact", v.contact)}${row("Receipt email", v.guestEmail)}${row("People", String(v.people))}${row("Route", v.route)}${row("Days", String(v.days))}${row("Start", v.startDate)}${row("Dates", v.dates)}${row("Builder estimate", v.estTotal)}${row("Looks like ALL IN", v.allInMatch)}${row("Notes", v.notes)}
 </table>`,
     `<pre style="margin:0 0 16px 0;padding:12px;border:2px solid #0a0a0a;background:#f5efe2;font-size:12px;line-height:1.45;white-space:pre-wrap;font-family:Menlo,Consolas,monospace">${e(v.itinerary)}</pre>`,
-    `<p style="margin:0 0 8px 0">${tbButton(v.adminUrl, "Open admin")} &nbsp; <a href="${e(v.tripLink)}" style="color:#0a0a0a">Open the trip in the builder</a></p>`,
+    `<p style="margin:0 0 8px 0">${tbButton(v.adminUrl, "Open admin")} &nbsp; <a href="${e(v.tripLink)}" style="color:#0a0a0a">Open the trip in the builder</a>${v.guestWhatsapp && v.guestWhatsapp.replace(/\D/g, "").length >= 8 ? ` &nbsp; <a href="https://wa.me/${v.guestWhatsapp.replace(/\D/g, "")}" style="color:#0a0a0a">WhatsApp ${e(v.name)}</a>` : ""}</p>`,
   ].join("\n");
   return { subject: `Trip builder: ${v.name} paid a ${v.deposit} deposit · ${v.route}`, html: tbShell("New trip builder request", "New trip to check", body) };
 }

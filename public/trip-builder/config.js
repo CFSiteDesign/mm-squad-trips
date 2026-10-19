@@ -17,7 +17,8 @@ window.MM_CONFIG = {
   LEAD_ENDPOINT: 'https://bilhhkzcmicygufsdfxi.supabase.co/functions/v1/trip-builder-request',
 
   // Optional. Digits only with country code, e.g. '447000000000'. Adds a "message the crew" button.
-  WHATSAPP: '',
+  // Ewan's WhatsApp: trip builder enquiries are his (Charlie, 19 Oct 2026).
+  WHATSAPP: '447507789985',
 
   // Optional fallback shown in demo mode / when the endpoint fails.
   // Trip builder enquiries are Ewan's (Charlie, 19 Oct 2026).

@@ -58,3 +58,6 @@ verify_jwt = false
 
 [functions.trip-builder-admin]
 verify_jwt = false
+
+[functions.trip-builder-test-emails]
+verify_jwt = false

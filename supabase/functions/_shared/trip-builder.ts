@@ -90,7 +90,8 @@ export async function handleTripBuilderPaid(sb: SupabaseClient, session: Stripe.
     }
     const contact = row.contact_via === "whatsapp" ? `WhatsApp ${row.whatsapp ?? ""}` : `Email ${row.email ?? ""}`;
     const ops = tripBuilderOpsEmail({
-      ref: row.ref, name: String(row.name), contact, guestEmail: guestEmail ?? "", people: Number(row.party_size ?? 1),
+      ref: row.ref, name: String(row.name), contact, guestEmail: guestEmail ?? "", guestWhatsapp: row.contact_via === "whatsapp" ? String(row.whatsapp ?? "") : "",
+      people: Number(row.party_size ?? 1),
       route: row.route ?? "", days: Number(row.days ?? 0), startDate: fmtDay(row.start_date), dates: String(row.dates_flex ?? ""),
       estTotal: row.est_total_usd != null ? `${usd(Number(row.est_total_usd))} (builder estimate)` : "",
       deposit, allInMatch: String(row.all_in_match ?? ""), notes: String(row.notes ?? ""), itinerary: String(row.itinerary ?? ""),

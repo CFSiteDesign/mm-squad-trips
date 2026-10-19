@@ -122,6 +122,7 @@
         (x.hold && (x.status === 'submitted' || x.status === 'checking') ? '<div class="humans" style="background:var(--yellow)"><b>Beds held</b> until ' + fmtDT(x.hold.until) + ' while we check it.</div>' : '') +
         '<div class="qnav"><a class="btn" href="' + esc(x.link) + '">Open my trip</a>' + (x.status === 'declined' ? '' : '<a class="btn btn--paper" href="' + esc(String(x.link).replace('#/build/', '#/pack/')) + '">Open my trip pack</a>') +
         (x.status === 'pending_payment' && x.payLink && !justPaid ? '<a class="btn btn--pink" href="' + esc(x.payLink) + '">Pay ' + usd(dep.amount) + ' deposit</a>' : '') +
+        (C.WHATSAPP && x.status !== 'pending_payment' ? '<a class="btn btn--paper" href="https://wa.me/' + C.WHATSAPP + '?text=' + encodeURIComponent('Hi Mad Monkey, it\'s about my trip ' + x.ref + ': ' + x.route + '. ' + u.baseUrl() + '#/trip/' + x.ref) + '" target="_blank" rel="noopener">Message the crew on WhatsApp</a>' : '') +
         (x.status === 'ready' ? '<button class="btn btn--pink" data-act="approve" type="button">Approve + pay balance</button>' : '') + '</div>' +
         (demo ? '<div class="demo" style="margin-top:var(--s-5)">DEMO: move it along to see each state. <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">' + STEPS.map(function (s) { return '<button class="chip" data-act="demostatus" data-s="' + s.k + '" type="button">' + s.t + '</button>'; }).join('') + '</div></div>' : '') +
         '</div></div></section>' + u.footer();
