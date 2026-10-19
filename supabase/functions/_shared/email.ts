@@ -29,7 +29,8 @@ export const TRIP_OPS_CC: Array<{ match: string; email: string }> = [
   { match: "indonesia", email: "marco@madmonkeyhostels.com" },
   { match: "indonesia", email: "rade@madmonkeyhostels.com" },
   { match: "indonesia", email: "josh@madmonkeyhostels.com" },
-  { match: "indonesia", email: "dimas@madmonkeyhostels.com" },
+  // Nusa Lembongan GM (Benji replaced Dimas, 19 Oct 2026)
+  { match: "indonesia", email: "benji.taiaroa@madmonkeyhostels.com" },
   { match: "indonesia", email: "kylewalters@madmonkeyhostels.com" },
   { match: "cambodia", email: "adrian@madmonkeyhostels.com" },
   { match: "cambodia", email: "kassy@madmonkeyhostels.com" },
