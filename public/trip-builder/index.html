@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Trip Builder · Mad Monkey</title>
+  <meta name="description" content="Build your own Southeast Asia trip: 23 Mad Monkey hostels, every bus, boat and flight between them, real activity prices. Send it to the crew, or jump on an ALL IN.">
+  <meta name="theme-color" content="#0a0a0a">
+  <meta property="og:title" content="BUILD THE TRIP YOU ACTUALLY WANT · Mad Monkey">
+  <meta property="og:description" content="Pick your stops, see what it really costs, send it to the crew.">
+  <!--og:start--><meta property="og:type" content="website"><meta name="twitter:card" content="summary_large_image"><!--og:end-->
+  <link rel="icon" type="image/png" href="assets/logo/favicon.png">
+  <link rel="apple-touch-icon" href="assets/logo/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700;900&family=Bungee&display=swap">
+  <link rel="stylesheet" href="styles.css?v=38">
+</head>
+<body data-view="home">
+  <header class="hdr" id="hdr">
+    <a class="hdr__logo" href="#/" aria-label="Mad Monkey Trip Builder, home"><img src="assets/logo/mad-monkey-white.png" alt="Mad Monkey" width="100" height="30"></a>
+    <nav class="hdr__nav" aria-label="Main">
+      <a class="navbtn" href="../">ALL IN</a>
+      <button class="navbtn opt" data-go="home" type="button">Trips</button>
+      <button class="navbtn" data-go="build" type="button">Builder</button>
+      <button class="navbtn opt" data-go="quiz" type="button">Quiz</button>
+      <span class="cur"><label class="sr" for="cursel">Currency</label><select id="cursel" aria-label="Currency"><option value="USD">USD $</option><option value="GBP">GBP £</option><option value="EUR">EUR €</option><option value="AUD">AUD A$</option><option value="CAD">CAD C$</option></select></span>
+    </nav>
+  </header>
+
+  <main id="app"></main>
+
+  <!-- Ewan's Google pages (guides, trips, routes, hostels) aren't part of the ALL IN copy, so their footer links are left out. -->
+  <noscript><p style="padding:24px;text-align:center">The trip builder needs JavaScript. <a href="../">See the ALL IN trips</a>.</p></noscript>
+  <div id="modal-root"></div>
+  <div id="toast-root" aria-live="polite"></div>
+
+  <script src="data/map-data.js?v=38"></script>
+  <script src="data/places.js?v=38"></script>
+  <script src="data/activities.js?v=38"></script>
+  <script src="data/media.js?v=38"></script>
+  <script src="data/legs.js?v=38"></script>
+  <script src="data/trips.js?v=38"></script>
+  <script src="data/entry.js?v=38"></script>
+  <script src="data/gallery.js?v=38"></script>
+  <script src="data/rules.js?v=38"></script>
+  <script src="data/guide.js?v=38"></script>
+  <script src="logic.js?v=38"></script>
+  <script src="extras.js?v=38"></script>
+  <script src="group.js?v=38"></script>
+  <script src="config.js?v=38"></script>
+  <script src="ui-map.js?v=38"></script>
+  <script src="ui-story.js?v=38"></script>
+  <script src="app.js?v=38"></script>
+  <script src="ui-review.js?v=38"></script>
+  <script src="ui-group.js?v=38"></script>
+  <script src="ui-live.js?v=38"></script>
+  <script src="ui-extras.js?v=38"></script>
+  <script src="ui-pack.js?v=38"></script>
+</body>
+</html>

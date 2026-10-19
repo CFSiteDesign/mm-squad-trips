@@ -49,3 +49,12 @@ verify_jwt = false
 
 [functions.loyalty-allin-bookings]
 verify_jwt = false
+
+[functions.trip-builder-request]
+verify_jwt = false
+
+[functions.trip-builder-status]
+verify_jwt = false
+
+[functions.trip-builder-admin]
+verify_jwt = false

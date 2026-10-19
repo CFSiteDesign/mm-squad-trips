@@ -10,6 +10,7 @@ import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/comp
 
 import { AdminWalkthrough } from "@/components/admin/AdminWalkthrough";
 import SquadAdmin, { clearSquadCache } from "./SquadAdmin";
+import TripBuilderAdmin from "@/components/admin/TripBuilderAdmin";
 
 type TravelerInfo = {
   role: string;
@@ -270,7 +271,7 @@ const TABS: { id: AdminTable; label: string }[] = [
 export default function Admin({ preview = false }: { preview?: boolean } = {}) {
   setAdminPreview(preview);
   const [authed, setAuthed] = useState<boolean>(() => preview || !!getAdminToken());
-  const [view, setView] = useState<"database" | "squad">("database");
+  const [view, setView] = useState<"database" | "squad" | "builder">("database");
   const [refreshKey, setRefreshKey] = useState(0);
 
   if (!authed) return <Login onSuccess={() => setAuthed(true)} />;
@@ -314,6 +315,12 @@ export default function Admin({ preview = false }: { preview?: boolean } = {}) {
               >
                 SQUAD LEADERS
               </button>
+              <button
+                onClick={() => setView("builder")}
+                className={`border-l-[2px] border-mm-black px-3 py-1.5 font-sticker text-[10px] tracking-[0.15em] ${view === "builder" ? "bg-mm-pink text-mm-bone" : "bg-mm-bone text-mm-black"}`}
+              >
+                TRIP BUILDER
+              </button>
             </div>
           </div>
           <div className="flex gap-2">
@@ -338,6 +345,10 @@ export default function Admin({ preview = false }: { preview?: boolean } = {}) {
         {view === "squad" ? (
           <div className="mx-auto max-w-7xl">
             <SquadAdmin refreshKey={refreshKey} />
+          </div>
+        ) : view === "builder" ? (
+          <div className="mx-auto max-w-7xl">
+            <TripBuilderAdmin refreshKey={refreshKey} />
           </div>
         ) : (
           <Tabs defaultValue="trips" className="mx-auto max-w-7xl">

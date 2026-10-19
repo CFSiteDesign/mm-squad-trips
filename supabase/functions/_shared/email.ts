@@ -753,6 +753,102 @@ export function underfilledCrewNoticeEmail(v: {
   };
 }
 
+// ---------- Trip builder (Ewan's builder at /trip-builder, 19 Oct 2026) ----------
+// A guest sends a trip for checking with a $50 per person deposit; the crew
+// checks it in Admin > Trip builder and sends the balance link from there.
+
+const tbButton = (href: string, label: string) =>
+  `<a href="${escapeHtml(href)}" style="display:inline-block;background:#ff6600;color:#0a0a0a;font-weight:900;text-transform:uppercase;padding:14px 22px;border:2px solid #0a0a0a;text-decoration:none">${escapeHtml(label)}</a>`;
+const tbP = (html: string) => `<p style="margin:0 0 12px 0">${html}</p>`;
+const tbShell = (title: string, headline: string, body: string) =>
+  shell(title, `<tr><td style="padding:16px 24px 8px 24px">
+<h1 style="margin:0;font-size:28px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em">${escapeHtml(headline)}</h1>
+</td></tr>
+<tr><td style="padding:0 24px 16px 24px;font-size:16px;line-height:1.5">
+${body}
+</td></tr>`);
+
+/** Guest: deposit paid, the trip is with the crew. */
+export function tripBuilderDepositEmail(v: {
+  firstName: string; ref: string; route: string; days: number; startDate: string;
+  deposit: string; people: number; holdUntil: string; statusUrl: string;
+}): { subject: string; html: string } {
+  const e = escapeHtml;
+  const body = [
+    tbP(`Hey ${e(v.firstName)},`),
+    tbP(`Thanks for your <strong>${e(v.deposit)}</strong> deposit${v.people > 1 ? ` (${v.people} people)` : ""}. Your trip is with the crew: <strong>${e(v.route)}</strong>, ${v.days} days${v.startDate ? `, starting ${e(v.startDate)}` : ""}.`),
+    v.holdUntil ? tbP(`We're holding your beds until <strong>${e(v.holdUntil)}</strong> while a real Mad Monkey crew member checks the routes, beds, dates and prices.`) : tbP("A real Mad Monkey crew member is checking the routes, beds and prices, and will help you pin down dates."),
+    tbP("Next, you'll get a confirmed plan and the final price. Your deposit comes off it. If we can't make the trip work, you get your deposit back."),
+    `<p style="margin:18px 0">${tbButton(v.statusUrl, "Track my trip")}</p>`,
+    `<p style="margin:0;font-size:13px;color:#555">Reference: <strong>${e(v.ref)}</strong></p>`,
+  ].join("\n");
+  return { subject: `Your trip is with the crew (${v.ref})`, html: tbShell("Your trip is with the crew", "It's with the crew 🐒", body) };
+}
+
+/** Ops: a new trip to check, deposit paid. */
+export function tripBuilderOpsEmail(v: {
+  ref: string; name: string; contact: string; guestEmail: string; people: number; route: string; days: number;
+  startDate: string; dates: string; estTotal: string; deposit: string; allInMatch: string; notes: string;
+  itinerary: string; tripLink: string; adminUrl: string; holdUntil: string;
+}): { subject: string; html: string } {
+  const e = escapeHtml;
+  const row = (k: string, val: string) =>
+    `<tr><td style="padding:6px 10px;border-bottom:1px solid #0a0a0a;font-weight:700;white-space:nowrap">${e(k)}</td><td style="padding:6px 10px;border-bottom:1px solid #0a0a0a">${e(val || "None")}</td></tr>`;
+  const body = [
+    tbP(`<strong>${e(v.name)}</strong> sent a trip from the trip builder and paid a <strong>${e(v.deposit)}</strong> deposit. Check it and send the balance link (or decline and refund) from Admin &gt; Trip builder.`),
+    v.holdUntil ? tbP(`They were promised a bed hold until <strong>${e(v.holdUntil)}</strong>. Please hold the nights below.`) : "",
+    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #0a0a0a;margin:0 0 16px 0;font-size:14px;border-collapse:collapse">
+${row("Ref", v.ref)}${row("Contact", v.contact)}${row("Receipt email", v.guestEmail)}${row("People", String(v.people))}${row("Route", v.route)}${row("Days", String(v.days))}${row("Start", v.startDate)}${row("Dates", v.dates)}${row("Builder estimate", v.estTotal)}${row("Looks like ALL IN", v.allInMatch)}${row("Notes", v.notes)}
+</table>`,
+    `<pre style="margin:0 0 16px 0;padding:12px;border:2px solid #0a0a0a;background:#f5efe2;font-size:12px;line-height:1.45;white-space:pre-wrap;font-family:Menlo,Consolas,monospace">${e(v.itinerary)}</pre>`,
+    `<p style="margin:0 0 8px 0">${tbButton(v.adminUrl, "Open admin")} &nbsp; <a href="${e(v.tripLink)}" style="color:#0a0a0a">Open the trip in the builder</a></p>`,
+  ].join("\n");
+  return { subject: `Trip builder: ${v.name} paid a ${v.deposit} deposit · ${v.route}`, html: tbShell("New trip builder request", "New trip to check", body) };
+}
+
+/** Guest: checked, here's the final price and the balance link. */
+export function tripBuilderReadyEmail(v: {
+  firstName: string; ref: string; route: string; balance: string; note: string; payUrl: string; statusUrl: string;
+}): { subject: string; html: string } {
+  const e = escapeHtml;
+  const body = [
+    tbP(`Hey ${e(v.firstName)},`),
+    tbP(`Good news: the crew has checked your trip, <strong>${e(v.route)}</strong>.`),
+    v.note ? `<div style="margin:16px 0;padding:14px;border:2px solid #0a0a0a;background:#ccff01"><div style="font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px">From the crew</div><div style="font-size:15px;white-space:pre-line">${e(v.note)}</div></div>` : "",
+    tbP(`The balance to pay is <strong>${e(v.balance)}</strong> (your deposit is already taken off). Pay it to lock in your beds.`),
+    `<p style="margin:18px 0">${tbButton(v.payUrl, "Approve + pay balance")}</p>`,
+    `<p style="margin:0;font-size:13px;color:#555">Want something changed first? Just reply to this email. Reference: <strong>${e(v.ref)}</strong> · <a href="${e(v.statusUrl)}" style="color:#0a0a0a">Trip status</a></p>`,
+  ].join("\n");
+  return { subject: `Your trip is checked: approve and pay the balance (${v.ref})`, html: tbShell("Your trip is ready", "Ready for your OK", body) };
+}
+
+/** Guest: balance paid, all booked. */
+export function tripBuilderConfirmedEmail(v: { firstName: string; ref: string; route: string; paid: string; statusUrl: string }): { subject: string; html: string } {
+  const e = escapeHtml;
+  const body = [
+    tbP(`Hey ${e(v.firstName)},`),
+    tbP(`We've got your <strong>${e(v.paid)}</strong> balance, so you're paid in full and your beds are locked in for <strong>${e(v.route)}</strong>.`),
+    tbP("The crew will be in touch with anything you need before you go."),
+    `<p style="margin:18px 0">${tbButton(v.statusUrl, "My trip")}</p>`,
+    `<p style="margin:0;font-size:13px;color:#555">Reference: <strong>${e(v.ref)}</strong></p>`,
+  ].join("\n");
+  return { subject: `You're booked: ${v.route} (${v.ref})`, html: tbShell("You're all set", "You're all set 🎉", body) };
+}
+
+/** Guest: the crew couldn't make it work; deposit refunded. */
+export function tripBuilderDeclinedEmail(v: { firstName: string; ref: string; route: string; note: string; refunded: string; statusUrl: string }): { subject: string; html: string } {
+  const e = escapeHtml;
+  const body = [
+    tbP(`Hey ${e(v.firstName)},`),
+    tbP(`A crew member looked at your trip, <strong>${e(v.route)}</strong>, and couldn't make this exact version work.`),
+    v.note ? `<div style="margin:16px 0;padding:14px;border:2px solid #0a0a0a;background:#ffc000"><div style="font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px">From the crew</div><div style="font-size:15px;white-space:pre-line">${e(v.note)}</div></div>` : "",
+    v.refunded ? tbP(`We've refunded your <strong>${e(v.refunded)}</strong> deposit to the card you paid with. It usually shows within 5 to 10 working days.`) : "",
+    tbP("Reply to this email and we'll help you find a version that works."),
+    `<p style="margin:0;font-size:13px;color:#555">Reference: <strong>${e(v.ref)}</strong> · <a href="${e(v.statusUrl)}" style="color:#0a0a0a">Trip status</a></p>`,
+  ].join("\n");
+  return { subject: `About your trip (${v.ref})`, html: tbShell("About your trip", "About your trip", body) };
+}
+
 // Flag for the sign-off of guest emails, by trip country.
 const COUNTRY_FLAGS: Record<string, string> = {
   Vietnam: "🇻🇳",

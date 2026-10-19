@@ -20,6 +20,7 @@ import {
 } from "../_shared/email.ts";
 import { triggerCommissionPush } from "../_shared/push-commission.ts";
 import { enqueueKlaviyo } from "../_shared/klaviyo.ts";
+import { handleTripBuilderPaid } from "../_shared/trip-builder.ts";
 import {
   matesByLeader,
   settleForLeaderEmail,
@@ -66,6 +67,9 @@ Deno.serve(async (req) => {
       const kind = (session.metadata as Record<string, string> | null)?.kind;
       if (kind === "balance") {
         await markBalancePaid(session);
+      } else if (kind === "trip_builder_deposit" || kind === "trip_builder_balance") {
+        // Ewan's trip builder (public/trip-builder): not an ALL IN booking.
+        await handleTripBuilderPaid(envClient(), session);
       } else {
         await writeBookings(session);
       }
