@@ -14,10 +14,17 @@ import {
   tripBuilderOpsEmail,
   TRIP_BUILDER_CONTACT,
 } from "./email.ts";
+import { crewReviewUrl, readSummary, signCrewKey, suggestBalance } from "./trip-builder-crew.ts";
 
 // Trip builder enquiries are Ewan's (Charlie, 19 Oct 2026): every alert goes to
 // him and every guest email replies to him, not the ALL IN ops list or cs@.
 const EWAN = TRIP_BUILDER_CONTACT;
+
+/** Anyone else who should get the new-trip email, e.g. TRIP_BUILDER_TEAM_EMAILS="sam@madmonkeyhostels.com, jo@madmonkeyhostels.com". Optional. */
+export function teamCc(): string[] | undefined {
+  const list = (Deno.env.get("TRIP_BUILDER_TEAM_EMAILS") ?? "").split(",").map((x) => x.trim()).filter((x) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(x) && x.toLowerCase() !== EWAN.toLowerCase());
+  return list.length ? list : undefined;
+}
 
 export const DEPOSIT_PER_PERSON_USD = 50;
 export const HOLD_HOURS = 48;
@@ -89,6 +96,10 @@ export async function handleTripBuilderPaid(sb: SupabaseClient, session: Stripe.
       await sendEmail({ to: guestEmail, subject: m.subject, html: m.html, replyTo: EWAN, templateName: "trip_builder_deposit" }).catch((e) => console.warn("trip builder guest email failed", e));
     }
     const contact = row.contact_via === "whatsapp" ? `WhatsApp ${row.whatsapp ?? ""}` : `Email ${row.email ?? ""}`;
+    // The whole trip as the guest built it (payload.summary), and three one-tap links into the crew review page. Older trips have no summary: the email falls back to the plain itinerary.
+    const summary = readSummary(row.payload);
+    const key = await signCrewKey(row.ref);
+    const origin = meta.origin || null;
     const ops = tripBuilderOpsEmail({
       ref: row.ref, name: String(row.name), contact, guestEmail: guestEmail ?? "", guestWhatsapp: row.contact_via === "whatsapp" ? String(row.whatsapp ?? "") : "",
       people: Number(row.party_size ?? 1),
@@ -96,8 +107,12 @@ export async function handleTripBuilderPaid(sb: SupabaseClient, session: Stripe.
       estTotal: row.est_total_usd != null ? `${usd(Number(row.est_total_usd))} (builder estimate)` : "",
       deposit, allInMatch: String(row.all_in_match ?? ""), notes: String(row.notes ?? ""), itinerary: String(row.itinerary ?? ""),
       tripLink: String(row.trip_link ?? ""), adminUrl: `${APP_URL}/admin`, holdUntil: fmtDayTime(holdUntil),
+      summary,
+      reviewUrl: crewReviewUrl(origin, row.ref, key), approveUrl: crewReviewUrl(origin, row.ref, key, "approve"),
+      declineUrl: crewReviewUrl(origin, row.ref, key, "decline"), editUrl: crewReviewUrl(origin, row.ref, key, "edit"),
+      suggestedBalance: summary ? usd(suggestBalance(summary, Number(row.deposit_amount))) : "",
     });
-    await sendEmail({ to: EWAN, subject: ops.subject, html: ops.html, replyTo: guestEmail ?? undefined, templateName: "trip_builder_ops" }).catch((e) => console.warn("trip builder ops email failed", e));
+    await sendEmail({ to: EWAN, cc: teamCc(), subject: ops.subject, html: ops.html, replyTo: guestEmail ?? undefined, templateName: "trip_builder_ops" }).catch((e) => console.warn("trip builder ops email failed", e));
     return;
   }
 

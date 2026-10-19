@@ -94,6 +94,18 @@ export default function TripBuilderAdmin({ refreshKey }: { refreshKey?: number }
     }
   }
 
+  // The same review page the new-trip email links to: the whole trip as the guest built it, with Approve / Not approved / Edit it.
+  async function openReview(r: Req) {
+    const w = window.open("about:blank", "_blank"); // opened first so the browser doesn't treat it as a pop-up
+    try {
+      const d = await call({ action: "link", ref: r.ref });
+      if (w) w.location.href = d.url as string; else window.location.href = d.url as string;
+    } catch (e) {
+      w?.close();
+      toast.error(e instanceof Error ? e.message : "Couldn't open the review page");
+    }
+  }
+
   if (!rows) {
     return <div className="p-8 text-center font-sticker text-[11px] tracking-[0.15em] text-mm-black/60">{error ?? "LOADING…"}</div>;
   }
@@ -161,6 +173,11 @@ export default function TripBuilderAdmin({ refreshKey }: { refreshKey?: number }
                           <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
                             <div>
                               <div className="flex flex-wrap gap-2">
+                                {["submitted", "checking", "ready"].includes(r.status) && (
+                                  <button onClick={() => openReview(r)} className="inline-flex items-center gap-1 border-[2px] border-mm-black bg-mm-lime px-2 py-1 font-sticker text-[10px] tracking-[0.15em]">
+                                    REVIEW PAGE: APPROVE / DECLINE / EDIT <ExternalLink className="h-3 w-3" />
+                                  </button>
+                                )}
                                 {r.trip_link && <a href={r.trip_link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 border-[2px] border-mm-black bg-mm-bone px-2 py-1 font-sticker text-[10px] tracking-[0.15em]">OPEN THEIR TRIP <ExternalLink className="h-3 w-3" /></a>}
                                 <span className="text-xs text-mm-black/70 self-center">
                                   Builder estimate {usd(r.est_total_usd)} per person, incl. their spending money{r.all_in_match ? ` · looks like ALL IN ${r.all_in_match}` : ""}{r.from_place ? ` · now in ${r.from_place}` : ""}{r.campaign_ref ? ` · ref ${r.campaign_ref}` : ""}{r.from_hostel ? ` · QR at ${r.from_hostel}` : ""}

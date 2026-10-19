@@ -2,6 +2,12 @@
 // sees exactly what he and the guests get. It can only ever email Ewan, the
 // content is fixed sample data, and it runs at most once every 5 minutes.
 // POST, no body.
+//
+// The new-trip email's Approve / Not approved / Edit it buttons open the crew
+// review page for a real (but sample) request, MM-SAMPLE, which this function
+// creates or resets each time. It shows up in Admin > Trip builder as "Charlie
+// (sample)". Approving it sends the sample guest, who is Ewan, a real payment
+// link; just don't pay it. Declining it clears it from the To do list.
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import {
@@ -13,6 +19,8 @@ import {
   tripBuilderOpsEmail,
   tripBuilderReadyEmail,
 } from "../_shared/email.ts";
+import { crewReviewUrl, readSummary, signCrewKey, suggestBalance } from "../_shared/trip-builder-crew.ts";
+import { SAMPLE_TRIP } from "../_shared/trip-builder-sample.ts";
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -27,6 +35,24 @@ Deno.serve(async (req) => {
   if ((count ?? 0) > 0) return json({ error: "Test emails went out in the last 5 minutes. Try again shortly." }, 429);
 
   const ref = "MM-DDYYVA";
+  // A real sample request, so the buttons in the new-trip email open something that works. Reset every time.
+  const SAMPLE_REF = "MM-SAMPLE";
+  const nowIso = new Date().toISOString();
+  const SAMPLE = {
+    ref: SAMPLE_REF, status: "submitted", name: "Charlie (sample)", contact_via: "email", email: TRIP_BUILDER_CONTACT, whatsapp: null, guest_email: TRIP_BUILDER_CONTACT,
+    from_place: "Leeds", party_size: 2, dates_flex: "flex", start_date: null, route: SAMPLE_TRIP.route, days: SAMPLE_TRIP.days, nights: SAMPLE_TRIP.nights,
+    stops: [...SAMPLE_TRIP.stops], countries: [...SAMPLE_TRIP.countries], est_total_usd: SAMPLE_TRIP.est, all_in_match: "cambodia",
+    trip_link: `https://madmonkeyhostels.com/all-in-trips/trip-builder/#/build/${SAMPLE_TRIP.state}`, itinerary: SAMPLE_TRIP.crewText,
+    notes: "This is a sample trip so you can try the Approve, Not approved and Edit it buttons. Nothing here is a real booking.",
+    deposit_amount: 100, deposit_paid_at: nowIso, deposit_payment_intent: null, deposit_session_id: null, deposit_url: null, hold_until: null,
+    balance_amount: null, balance_session_id: null, balance_url: null, balance_payment_intent: null, balance_paid_at: null, refund_id: null, refunded_at: null,
+    crew_note: null, updated_at: nowIso,
+    payload: { v: 1, source: "trip-builder-sample", summary: SAMPLE_TRIP.summary, crewText: SAMPLE_TRIP.crewText },
+  };
+  const { error: sampleErr } = await sb.from("trip_builder_requests").upsert(SAMPLE, { onConflict: "ref" });
+  if (sampleErr) return json({ error: `Couldn't set up the sample trip: ${sampleErr.message}` }, 500);
+  const sampleSummary = readSummary(SAMPLE.payload);
+  const sampleKey = await signCrewKey(SAMPLE_REF);
   const route = "Phnom Penh → Koh Sdach → Koh Rong → Kampot";
   const statusUrl = `https://madmonkeyhostels.com/all-in-trips/trip-builder/#/trip/${ref}`;
   const itinerary = [
@@ -42,10 +68,13 @@ Deno.serve(async (req) => {
   ].join("\n");
   const emails = [
     { tpl: "trip_builder_test_ops", m: tripBuilderOpsEmail({
-      ref, name: "Charlie (test)", contact: "WhatsApp +44 7495 794060", guestEmail: "charlieboyy02+tripbuilder-test@gmail.com",
-      guestWhatsapp: "+447495794060", people: 2, route, days: 13, startDate: "", dates: "fixed", estTotal: "$612 (builder estimate)",
-      deposit: "$100", allInMatch: "cambodia", notes: "Test send: this is what lands in your inbox when a guest pays a deposit.", itinerary,
-      tripLink: statusUrl, adminUrl: "https://madmonkeyhostels.com/all-in-trips/admin", holdUntil: "",
+      ref: SAMPLE_REF, name: "Charlie (sample)", contact: `Email ${TRIP_BUILDER_CONTACT}`, guestEmail: TRIP_BUILDER_CONTACT,
+      guestWhatsapp: "", people: 2, route: SAMPLE_TRIP.route, days: SAMPLE_TRIP.days, startDate: "", dates: "flex", estTotal: `$${SAMPLE_TRIP.est} (builder estimate)`,
+      deposit: "$100", allInMatch: "cambodia", notes: SAMPLE.notes, itinerary: SAMPLE_TRIP.crewText,
+      tripLink: SAMPLE.trip_link, adminUrl: "https://madmonkeyhostels.com/all-in-trips/admin", holdUntil: "",
+      summary: sampleSummary, reviewUrl: crewReviewUrl(null, SAMPLE_REF, sampleKey), approveUrl: crewReviewUrl(null, SAMPLE_REF, sampleKey, "approve"),
+      declineUrl: crewReviewUrl(null, SAMPLE_REF, sampleKey, "decline"), editUrl: crewReviewUrl(null, SAMPLE_REF, sampleKey, "edit"),
+      suggestedBalance: `$${suggestBalance(sampleSummary, 100)}`,
     }) },
     { tpl: "trip_builder_test_deposit", m: tripBuilderDepositEmail({
       firstName: "Charlie", ref, route, days: 13, startDate: "", deposit: "$100", people: 2, holdUntil: "", statusUrl,

@@ -1,6 +1,8 @@
 // Shared Resend email helper for the ALL IN — Mad Monkey app.
 // Verified Resend domain: all.in.trips.madmonkeyhostels.com
 
+import type { Summary } from "./trip-builder-crew.ts";
+
 export const EMAIL_FROM = "ALL IN - Mad Monkey <hello@all.in.trips.madmonkeyhostels.com>";
 export const EMAIL_REPLY_TO = "cs@madmonkeyhostels.com";
 export const APP_URL = "https://madmonkeyhostels.com/all-in-trips";
@@ -791,36 +793,152 @@ export function tripBuilderDepositEmail(v: {
   return { subject: `Your trip is with the crew (${v.ref})`, html: tbShell("Your trip is with the crew", "It's with the crew 🐒", body) };
 }
 
-/** Ops: a new trip to check, deposit paid. */
+/** Ops: a new trip to check, deposit paid. Shows the whole trip the way the guest built it, with Approve / Not approved / Edit it buttons. */
 export function tripBuilderOpsEmail(v: {
   ref: string; name: string; contact: string; guestEmail: string; guestWhatsapp?: string; people: number; route: string; days: number;
   startDate: string; dates: string; estTotal: string; deposit: string; allInMatch: string; notes: string;
   itinerary: string; tripLink: string; adminUrl: string; holdUntil: string;
+  /** What the builder sent (payload.summary). Null for trips sent before the summary existed: the email falls back to the plain itinerary. */
+  summary?: Summary | null;
+  /** Links to the crew review page, one per button. */
+  reviewUrl?: string; approveUrl?: string; declineUrl?: string; editUrl?: string;
+  /** "$602" – the trip cost for everyone less the deposit. A starting figure only. */
+  suggestedBalance?: string;
 }): { subject: string; html: string } {
   const e = escapeHtml;
-  const row = (k: string, val: string) =>
-    `<tr><td style="padding:6px 10px;border-bottom:1px solid #0a0a0a;font-weight:700;white-space:nowrap">${e(k)}</td><td style="padding:6px 10px;border-bottom:1px solid #0a0a0a">${e(val || "None")}</td></tr>`;
+  const D = "color:#0a0a0a";
+  const sum = v.summary ?? null;
+  const first = (v.name || "").trim().split(/\s+/)[0] || "them";
+  const waDigits = (v.guestWhatsapp ?? "").replace(/\D/g, "");
+  const money = (n: number) => `$${Math.round(n).toLocaleString("en-US")}`;
+  const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const day = (iso: string, year = false) => {
+    const d = /^\d{4}-\d{2}-\d{2}$/.test(iso) ? new Date(`${iso}T00:00:00Z`) : null;
+    return d ? `${DOW[d.getUTCDay()]} ${d.getUTCDate()} ${MON[d.getUTCMonth()]}${year ? ` ${d.getUTCFullYear()}` : ""}` : "";
+  };
+
+  /* ---- the three buttons ---- */
+  const actions = (v.approveUrl && v.declineUrl && v.editUrl)
+    ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 6px 0"><tr>
+<td width="34%" style="padding:0 4px 0 0"><a href="${e(v.approveUrl)}" style="display:block;background:#ccff01;${D};font-weight:900;font-size:13px;text-transform:uppercase;text-align:center;padding:14px 4px;border:2px solid #0a0a0a;text-decoration:none">Approve</a></td>
+<td width="34%" style="padding:0 4px"><a href="${e(v.declineUrl)}" style="display:block;background:#ff01aa;${D};font-weight:900;font-size:13px;text-transform:uppercase;text-align:center;padding:14px 4px;border:2px solid #0a0a0a;text-decoration:none">Not approved</a></td>
+<td width="32%" style="padding:0 0 0 4px"><a href="${e(v.editUrl)}" style="display:block;background:#ff6600;${D};font-weight:900;font-size:13px;text-transform:uppercase;text-align:center;padding:14px 4px;border:2px solid #0a0a0a;text-decoration:none">Edit it</a></td>
+</tr></table>
+<p style="margin:0 0 16px 0;font-size:12px;color:#555">Each button opens ${e(first)}'s trip exactly as they built it. Nothing is sent, charged or refunded until you confirm on that page.</p>`
+    : "";
+
+  /* ---- who ---- */
+  const contactLine = waDigits.length >= 8
+    ? `WhatsApp <a href="https://wa.me/${waDigits}" style="${D}">${e(v.guestWhatsapp ?? "")}</a>`
+    : v.guestEmail ? `Email <a href="mailto:${e(v.guestEmail)}" style="${D}">${e(v.guestEmail)}</a>` : e(v.contact);
+  const who = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #0a0a0a;margin:0 0 16px 0;font-size:14px;line-height:1.5"><tr><td style="padding:12px 14px">
+<div style="font-size:18px;font-weight:900;${D}">${e(v.name)}</div>
+<div style="${D}">${v.people > 1 ? `Party of ${v.people}` : "Travelling solo"} · ${contactLine}</div>
+<div style="${D}">Deposit paid <strong>${e(v.deposit)}</strong>${v.holdUntil ? ` · beds held until <strong>${e(v.holdUntil)}</strong>` : " · no start date, so no beds to hold yet"}</div>
+<div style="font-size:12px;color:#555">Ref ${e(v.ref)}${v.guestEmail && waDigits.length >= 8 ? ` · receipts to ${e(v.guestEmail)}` : ""}</div>
+</td></tr></table>`;
+
+  /* ---- no summary (older trip): the plain version ---- */
+  if (!sum) {
+    const row = (k: string, val: string) =>
+      `<tr><td style="padding:6px 10px;border-bottom:1px solid #0a0a0a;font-weight:700;white-space:nowrap">${e(k)}</td><td style="padding:6px 10px;border-bottom:1px solid #0a0a0a">${e(val || "None")}</td></tr>`;
+    const body = [
+      actions, who,
+      `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #0a0a0a;margin:0 0 16px 0;font-size:14px;border-collapse:collapse">${row("Route", v.route)}${row("Days", String(v.days))}${row("Start", v.startDate)}${row("Dates", v.dates)}${row("Builder estimate", v.estTotal)}${row("Looks like ALL IN", v.allInMatch)}${row("Notes", v.notes)}</table>`,
+      `<pre style="margin:0 0 16px 0;padding:12px;border:2px solid #0a0a0a;background:#f5efe2;font-size:12px;line-height:1.45;white-space:pre-wrap;font-family:Menlo,Consolas,monospace">${e(v.itinerary)}</pre>`,
+      actions,
+      `<p style="margin:0 0 8px 0;font-size:13px"><a href="${e(v.tripLink)}" style="${D}">Open the trip in the builder</a> · <a href="${e(v.adminUrl)}" style="${D}">Open admin</a></p>`,
+    ].join("\n");
+    return { subject: `Trip to check: ${v.name} · ${v.route} · ${v.days} days`, html: tbShell("New trip to check", "New trip to check", body) };
+  }
+
+  /* ---- at a glance ---- */
+  const b = sum.budget;
+  const cell = (label: string, big: string, small: string) =>
+    `<td valign="top" style="padding:10px 12px;border-right:2px solid #0a0a0a"><div style="font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;color:#555">${e(label)}</div><div style="font-size:17px;font-weight:900;${D};line-height:1.2">${e(big)}</div><div style="font-size:12px;color:#333">${e(small)}</div></td>`;
+  const glance = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #0a0a0a;margin:0 0 16px 0;background:#f5efe2"><tr>
+${cell("Length", `${sum.days} days`, `${sum.nights} nights`)}
+${cell("Stops", `${sum.stopCount}`, sum.countries.join(" + "))}
+${cell("Dates", sum.start ? day(sum.start) : "Not set", sum.start ? `to ${day(sum.end, true)}${sum.datesLabel ? ` · ${sum.datesLabel.replace("Dates are ", "").replace("Dates ", "")}` : ""}` : (sum.datesLabel || "Needs dates"))}
+<td valign="top" style="padding:10px 12px"><div style="font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;color:#555">Estimate</div><div style="font-size:17px;font-weight:900;${D};line-height:1.2">${money(b.total)}</div><div style="font-size:12px;color:#333">each${sum.people > 1 ? ` · ${money(b.totalAllPeople)} for ${sum.people}` : ""}</div></td>
+</tr></table>`;
+
+  /* ---- stop by stop ---- */
+  const stopCards = sum.stops.map((s, i) => {
+    const when = s.from ? `${day(s.from)} to ${day(s.to)}` : "";
+    const head = s.kind === "allin"
+      ? `${e(s.name)} <span style="font-weight:700">· ${s.days} days · ${money(s.usd)}</span>`
+      : `${e(s.name)}${s.country ? ` <span style="font-weight:700;color:#444">· ${e(s.country)}</span>` : ""}`;
+    const sub = s.kind === "allin"
+      ? `${e(s.route)}`
+      : `${s.nights} ${s.nights === 1 ? "night" : "nights"}${when ? ` · ${e(when)}` : ""} · bed from ${money(s.bedUsd)} a night${s.partner ? " (partner hostel, estimate)" : ""}`;
+    const tours = s.tours.length
+      ? s.tours.map((t) => {
+        const price = t.payOnDay ? "pay on the day" : `${money(t.usd ?? 0)}${t.est ? " est." : ""}`;
+        const dt = t.date ? day(t.date) : t.day ? `day ${t.day}` : "";
+        return `<tr><td valign="top" style="padding:3px 0;font-size:13px;${D}">${t.fits ? "" : `<span style="background:#ffc000;padding:0 4px;font-weight:900;font-size:11px">NO ROOM</span> `}${e(t.name)}</td><td valign="top" align="right" style="padding:3px 0 3px 10px;font-size:13px;white-space:nowrap;${D}">${e(price)}${dt ? `<br><span style="font-size:11px;color:#555">${e(dt)}</span>` : ""}</td></tr>`;
+      }).join("")
+      : (s.kind === "allin" ? "" : `<tr><td colspan="2" style="padding:3px 0;font-size:13px;color:#777">No tours picked</td></tr>`);
+    const next = s.next
+      ? `<tr><td colspan="2" style="padding:8px 0 0 0"><div style="border-top:1px dashed #0a0a0a;padding-top:6px;font-size:12px;${D}"><strong>Then</strong> ${e(s.next.mode)} to ${e(s.next.to)} · ${e(s.next.hours)} · ${money(s.next.usd)}${s.next.overnight ? " · overnight" : ""}${s.next.date ? ` · ${e(day(s.next.date))}` : ""}</div></td></tr>`
+      : "";
+    return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #0a0a0a;margin:0 0 8px 0"><tr>
+<td width="34" valign="top" align="center" style="background:#ccff01;border-right:2px solid #0a0a0a;font-weight:900;font-size:16px;${D};padding:10px 0">${i + 1}</td>
+<td style="padding:10px 12px"><div style="font-size:15px;font-weight:900;text-transform:uppercase;${D}">${head}</div><div style="font-size:12px;color:#333;margin:2px 0 6px 0">${sub}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0">${tours}${next}</table></td></tr></table>`;
+  }).join("\n");
+
+  /* ---- the money ---- */
+  const mrow = (k: string, val: string, bold = false, note = "") =>
+    `<tr><td style="padding:5px 12px;font-size:13px;${bold ? "font-weight:900;" : ""}${D}">${e(k)}${note ? `<div style="font-size:11px;font-weight:400;color:#555">${e(note)}</div>` : ""}</td><td align="right" style="padding:5px 12px;font-size:13px;white-space:nowrap;${bold ? "font-weight:900;" : ""}${D}">${e(val)}</td></tr>`;
+  const money2 = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #0a0a0a;margin:0 0 16px 0">
+<tr><td colspan="2" style="background:#0a0a0a;color:#ffffff;padding:6px 12px;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.12em">The money · each person, US dollars</td></tr>
+${mrow("Beds", money(b.beds))}${mrow("Tours", money(b.tours))}${mrow("Getting around", money(b.transport))}${b.allIn ? mrow("ALL IN trip", money(b.allIn)) : ""}${b.squadDiscount ? mrow("Squad discount", `-${money(-b.squadDiscount)}`) : ""}
+${mrow("Trip cost", money(b.tripCost), true)}
+${mrow("Their spending money", money(b.spendFund), false, `${money(b.spendPerDay)} a day for food and fun. Theirs to spend, not charged by us.`)}
+${mrow("Estimated total", money(b.total), true)}
+${sum.people > 1 ? mrow(`For all ${sum.people}`, `${money(b.tripCostAllPeople)} trip cost · ${money(b.totalAllPeople)} with spending money`, true) : ""}
+${b.guestBudget ? mrow("Their own budget", `${money(b.guestBudget)} each`, false, b.budgetLeft == null ? "" : b.budgetLeft >= 0 ? `${money(b.budgetLeft)} to spare` : `${money(-b.budgetLeft)} over`) : ""}
+<tr><td colspan="2" style="background:#ccff01;padding:8px 12px;font-size:13px;${D}">Deposit paid <strong>${e(v.deposit)}</strong>${v.suggestedBalance ? ` · suggested balance <strong>${e(v.suggestedBalance)}</strong> <span style="font-size:11px">(trip cost${sum.people > 1 ? ` for ${sum.people}` : ""} less the deposit). You set the final figure when you approve.</span>` : ""}</td></tr>
+</table>`;
+
+  /* ---- heads up ---- */
+  const flags = sum.flags.length
+    ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #0a0a0a;margin:0 0 16px 0">
+<tr><td style="background:#ffc000;padding:6px 12px;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;${D}">Heads up before you decide</td></tr>
+${sum.flags.map((f) => `<tr><td style="padding:6px 12px;font-size:13px;line-height:1.4;border-top:1px solid #ddd;${D}">${f.level === "warn" ? `<strong style="background:#ffc000;padding:0 5px">!</strong> ` : `<span style="color:#888">&bull;</span> `}${e(f.text)}</td></tr>`).join("")}
+</table>`
+    : "";
+
+  const note = v.notes
+    ? `<div style="margin:0 0 16px 0;padding:12px 14px;border:2px solid #0a0a0a;background:#f5efe2"><div style="font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;color:#555;margin-bottom:4px">${e(first)}'s note</div><div style="font-size:14px;line-height:1.5;white-space:pre-line;${D}">${e(v.notes)}</div></div>`
+    : "";
+
   const body = [
-    tbP(`<strong>${e(v.name)}</strong> sent a trip from the trip builder and paid a <strong>${e(v.deposit)}</strong> deposit. Check it and send the balance link (or decline and refund) from Admin &gt; Trip builder.`),
-    v.holdUntil ? tbP(`They were promised a bed hold until <strong>${e(v.holdUntil)}</strong>. Please hold the nights below.`) : "",
-    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #0a0a0a;margin:0 0 16px 0;font-size:14px;border-collapse:collapse">
-${row("Ref", v.ref)}${row("Contact", v.contact)}${row("Receipt email", v.guestEmail)}${row("People", String(v.people))}${row("Route", v.route)}${row("Days", String(v.days))}${row("Start", v.startDate)}${row("Dates", v.dates)}${row("Builder estimate", v.estTotal)}${row("Looks like ALL IN", v.allInMatch)}${row("Notes", v.notes)}
-</table>`,
-    `<pre style="margin:0 0 16px 0;padding:12px;border:2px solid #0a0a0a;background:#f5efe2;font-size:12px;line-height:1.45;white-space:pre-wrap;font-family:Menlo,Consolas,monospace">${e(v.itinerary)}</pre>`,
-    `<p style="margin:0 0 8px 0">${tbButton(v.adminUrl, "Open admin")} &nbsp; <a href="${e(v.tripLink)}" style="color:#0a0a0a">Open the trip in the builder</a>${v.guestWhatsapp && v.guestWhatsapp.replace(/\D/g, "").length >= 8 ? ` &nbsp; <a href="https://wa.me/${v.guestWhatsapp.replace(/\D/g, "")}" style="color:#0a0a0a">WhatsApp ${e(v.name)}</a>` : ""}</p>`,
+    actions, who, glance,
+    `<p style="margin:0 0 8px 0;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;color:#555">The trip, stop by stop</p>`,
+    stopCards, `<div style="height:8px"></div>`, money2, flags, note,
+    `<p style="margin:0 0 8px 0;font-size:14px;font-weight:900;${D}">Happy with it?</p>`, actions,
+    `<p style="margin:12px 0 0 0;font-size:13px;line-height:1.7">${v.reviewUrl ? `<a href="${e(v.reviewUrl)}" style="${D}">Open the review page</a> · ` : ""}<a href="${e(v.tripLink)}" style="${D}">Open it in the builder</a> · <a href="${e(v.adminUrl)}" style="${D}">Admin</a></p>`,
   ].join("\n");
-  return { subject: `Trip builder: ${v.name} paid a ${v.deposit} deposit · ${v.route}`, html: tbShell("New trip builder request", "New trip to check", body) };
+  return {
+    subject: `Trip to check: ${v.name}${v.people > 1 ? ` + ${v.people - 1}` : ""} · ${sum.headline || v.route} · ${sum.days} days${sum.start ? ` · from ${day(sum.start)}` : ""}`,
+    html: tbShell("New trip to check", "New trip to check", body),
+  };
 }
 
 /** Guest: checked, here's the final price and the balance link. */
 export function tripBuilderReadyEmail(v: {
   firstName: string; ref: string; route: string; balance: string; note: string; payUrl: string; statusUrl: string;
+  /** The checked plan (the crew may have tweaked it), so the guest can see exactly what they're paying for. */
+  planUrl?: string;
 }): { subject: string; html: string } {
   const e = escapeHtml;
   const body = [
     tbP(`Hey ${e(v.firstName)},`),
     tbP(`Good news: the crew has checked your trip, <strong>${e(v.route)}</strong>.`),
     v.note ? `<div style="margin:16px 0;padding:14px;border:2px solid #0a0a0a;background:#ccff01"><div style="font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px">From the crew</div><div style="font-size:15px;white-space:pre-line">${e(v.note)}</div></div>` : "",
+    v.planUrl ? tbP(`Have a look at the plan we checked: <a href="${e(v.planUrl)}" style="color:#0a0a0a">see your trip</a>.`) : "",
     tbP(`The balance to pay is <strong>${e(v.balance)}</strong> (your deposit is already taken off). Pay it to lock in your beds.`),
     `<p style="margin:18px 0">${tbButton(v.payUrl, "Approve + pay balance")}</p>`,
     `<p style="margin:0;font-size:13px;color:#555">Want something changed first? Just reply to this email. Reference: <strong>${e(v.ref)}</strong> · <a href="${e(v.statusUrl)}" style="color:#0a0a0a">Trip status</a></p>`,

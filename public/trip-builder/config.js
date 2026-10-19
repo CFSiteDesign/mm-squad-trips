@@ -35,6 +35,9 @@ window.MM_CONFIG = {
   // Deposit per person taken when a trip is sent for checking (Charlie, 19 Oct 2026). The server charges this too.
   DEPOSIT_PER_PERSON: 50,
 
+  // The crew review page (#/crew/<ref>, opened from the buttons in the new-trip email). Ewan, 20 Oct 2026.
+  CREW_ENDPOINT: 'https://bilhhkzcmicygufsdfxi.supabase.co/functions/v1/trip-builder-admin',
+
   // Optional. GET <url>?ref=MM-XXXXXX -> { status: 'submitted'|'checking'|'ready'|'approved', note?, payLink? } powers the trip status page.
   STATUS_ENDPOINT: 'https://bilhhkzcmicygufsdfxi.supabase.co/functions/v1/trip-builder-status',
 

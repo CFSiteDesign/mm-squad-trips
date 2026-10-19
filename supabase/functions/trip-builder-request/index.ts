@@ -80,7 +80,8 @@ Deno.serve(async (req) => {
       est_total_usd: Number.isFinite(Number(trip.estTotalUsd)) ? Number(trip.estTotalUsd) : null,
       all_in_match: str(trip.allInMatch, 40) || null,
       trip_link: str(trip.link, 2000) || null,
-      itinerary: str(p.itinerary, 20_000) || null,
+      // crewText is the stop-by-stop brief for the team (builder crew.js); older builders only send the day-by-day itinerary.
+      itinerary: str(p.crewText, 20_000) || str(p.itinerary, 20_000) || null,
       notes: str(contact.notes, 2000) || null,
       campaign_ref: str(p.ref, 60) || null,
       from_hostel: str(p.fromHostel, 60) || null,
