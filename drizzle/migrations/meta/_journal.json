@@ -50,6 +50,13 @@
       "when": 1792414298997,
       "tag": "0006_trip_builder_requests",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792582167440,
+      "tag": "0007_uni_trip_payments",
+      "breakpoints": true
     }
   ]
 }
