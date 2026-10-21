@@ -21,6 +21,7 @@ import {
 import { triggerCommissionPush } from "../_shared/push-commission.ts";
 import { enqueueKlaviyo } from "../_shared/klaviyo.ts";
 import { handleTripBuilderPaid } from "../_shared/trip-builder.ts";
+import { isUniTripKind, relayUniTripPaid } from "../_shared/uni-trip.ts";
 import {
   matesByLeader,
   settleForLeaderEmail,
@@ -65,6 +66,14 @@ Deno.serve(async (req) => {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
       const kind = (session.metadata as Record<string, string> | null)?.kind;
+      if (isUniTripKind(kind)) {
+        // UNI Advisors' uni trip (uni-trip-pay): a separate product, never an ALL IN
+        // booking. Relayed to UNI Advisors; a failed relay answers 500 so Stripe retries.
+        const r = await relayUniTripPaid(envClient(), stripe, session);
+        return new Response(JSON.stringify({ received: r.ok, ...(r.error ? { error: r.error } : {}) }), {
+          status: r.ok ? 200 : 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       if (kind === "balance") {
         await markBalancePaid(session);
       } else if (kind === "trip_builder_deposit" || kind === "trip_builder_balance") {

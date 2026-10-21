@@ -13,6 +13,12 @@ verify_jwt = false
 [functions.ambassador-code]
 verify_jwt = false
 
+# Called by UNI Advisors' functions (different Supabase project, no JWT): opens
+# uni trip payments, charges saved cards and refunds on this site's Stripe. The
+# uni trip stays separate from ALL IN trips. Guarded by app_config('uni_advisors_api_key').
+[functions.uni-trip-pay]
+verify_jwt = false
+
 # Called internally (webhook/cancel/cron) without a JWT — guarded by the
 # Vault CRON_SECRET instead.
 [functions.push-creator-commission]
