@@ -982,6 +982,69 @@ export type Database = {
         }
         Relationships: []
       }
+      uni_trip_payments: {
+        Row: {
+          amount_pence: number
+          created_at: string
+          currency: string
+          error: string | null
+          id: string
+          kind: string
+          purpose: string | null
+          relay_error: string | null
+          relayed_at: string | null
+          status: string
+          stripe_customer_id: string | null
+          stripe_payment_intent_id: string | null
+          stripe_refund_id: string | null
+          stripe_session_id: string | null
+          uni_booking_id: string
+          uni_payment_ids: string | null
+          uni_slug: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_pence: number
+          created_at?: string
+          currency?: string
+          error?: string | null
+          id?: string
+          kind: string
+          purpose?: string | null
+          relay_error?: string | null
+          relayed_at?: string | null
+          status: string
+          stripe_customer_id?: string | null
+          stripe_payment_intent_id?: string | null
+          stripe_refund_id?: string | null
+          stripe_session_id?: string | null
+          uni_booking_id: string
+          uni_payment_ids?: string | null
+          uni_slug?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_pence?: number
+          created_at?: string
+          currency?: string
+          error?: string | null
+          id?: string
+          kind?: string
+          purpose?: string | null
+          relay_error?: string | null
+          relayed_at?: string | null
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_payment_intent_id?: string | null
+          stripe_refund_id?: string | null
+          stripe_session_id?: string | null
+          uni_booking_id?: string
+          uni_payment_ids?: string | null
+          uni_slug?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
