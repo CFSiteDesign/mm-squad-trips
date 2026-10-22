@@ -16,6 +16,7 @@ import {
   TRIP_BUILDER_CONTACT,
 } from "./email.ts";
 import { crewReviewUrl, guestTripUrl, readSummary, signCrewKey, signGuestKey, suggestBalance } from "./trip-builder-crew.ts";
+import type { Update } from "./trip-builder-revise.ts";
 import { allPaid, type Item, type Plan, readSchedule } from "./trip-builder-pay.ts";
 
 // Trip builder enquiries are Ewan's (Charlie, 19 Oct 2026): every alert goes to
@@ -93,6 +94,29 @@ export async function notifyBooked(row: Row, items: Item[], origin: string | nul
 }
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
+/** The new-trip email to Ewan and the team: the whole trip as the guest built it, with Approve / Not approved / Edit it. With `update` it is the guest's changed version of a trip the crew already has. */
+export async function notifyCrew(row: Row, guestEmail: string | null, holdUntil: string | null, origin: string | null, update?: Update): Promise<void> {
+  const deposit = usd(Number(row.deposit_amount));
+  const contact = row.contact_via === "whatsapp" ? `WhatsApp ${row.whatsapp ?? ""}` : `Email ${row.email ?? ""}`;
+  // The whole trip as the guest built it (payload.summary), and three one-tap links into the crew review page. Older trips have no summary: the email falls back to the plain itinerary.
+  const summary = readSummary(row.payload);
+  const key = await signCrewKey(row.ref);
+  const ops = tripBuilderOpsEmail({
+    ref: row.ref, name: String(row.name), contact, guestEmail: guestEmail ?? "", guestWhatsapp: row.contact_via === "whatsapp" ? String(row.whatsapp ?? "") : "",
+    people: Number(row.party_size ?? 1),
+    route: row.route ?? "", days: Number(row.days ?? 0), startDate: fmtDay(row.start_date), dates: String(row.dates_flex ?? ""),
+    estTotal: row.est_total_usd != null ? `${usd(Number(row.est_total_usd))} (builder estimate)` : "",
+    deposit, allInMatch: String(row.all_in_match ?? ""), notes: update ? update.note : String(row.notes ?? ""), itinerary: String(row.itinerary ?? ""),
+    tripLink: String(row.trip_link ?? ""), adminUrl: `${APP_URL}/admin`, holdUntil: fmtDayTime(holdUntil),
+    summary,
+    reviewUrl: crewReviewUrl(origin, row.ref, key), approveUrl: crewReviewUrl(origin, row.ref, key, "approve"),
+    declineUrl: crewReviewUrl(origin, row.ref, key, "decline"), editUrl: crewReviewUrl(origin, row.ref, key, "edit"),
+    suggestedBalance: summary ? usd(suggestBalance(summary, Number(row.deposit_amount))) : "",
+    update,
+  });
+  await sendEmail({ to: EWAN, cc: teamCc(), subject: ops.subject, html: ops.html, replyTo: guestEmail ?? undefined, templateName: update ? "trip_builder_ops_update" : "trip_builder_ops" }).catch((e) => console.warn("trip builder ops email failed", e));
+}
+
 /** checkout.session.completed with metadata.kind trip_builder_deposit / trip_builder_balance / trip_builder_instalment. Idempotent. */
 export async function handleTripBuilderPaid(sb: SupabaseClient, session: Stripe.Checkout.Session): Promise<void> {
   const meta = (session.metadata ?? {}) as Record<string, string>;
@@ -139,28 +163,11 @@ export async function handleTripBuilderPaid(sb: SupabaseClient, session: Stripe.
       const m = tripBuilderDepositEmail({
         firstName: first, ref: row.ref, route: row.route ?? "Your trip", days: Number(row.days ?? 0),
         startDate: fmtDay(row.start_date), deposit, people: Number(row.party_size ?? 1),
-        holdUntil: fmtDayTime(holdUntil), statusUrl,
+        holdUntil: fmtDayTime(holdUntil), statusUrl: guestTripUrl(meta.origin || null, row.ref, await signGuestKey(row.ref)),   // with their key: it's how they change the trip after sending it
       });
       await sendEmail({ to: guestEmail, subject: m.subject, html: m.html, replyTo: EWAN, templateName: "trip_builder_deposit" }).catch((e) => console.warn("trip builder guest email failed", e));
     }
-    const contact = row.contact_via === "whatsapp" ? `WhatsApp ${row.whatsapp ?? ""}` : `Email ${row.email ?? ""}`;
-    // The whole trip as the guest built it (payload.summary), and three one-tap links into the crew review page. Older trips have no summary: the email falls back to the plain itinerary.
-    const summary = readSummary(row.payload);
-    const key = await signCrewKey(row.ref);
-    const origin = meta.origin || null;
-    const ops = tripBuilderOpsEmail({
-      ref: row.ref, name: String(row.name), contact, guestEmail: guestEmail ?? "", guestWhatsapp: row.contact_via === "whatsapp" ? String(row.whatsapp ?? "") : "",
-      people: Number(row.party_size ?? 1),
-      route: row.route ?? "", days: Number(row.days ?? 0), startDate: fmtDay(row.start_date), dates: String(row.dates_flex ?? ""),
-      estTotal: row.est_total_usd != null ? `${usd(Number(row.est_total_usd))} (builder estimate)` : "",
-      deposit, allInMatch: String(row.all_in_match ?? ""), notes: String(row.notes ?? ""), itinerary: String(row.itinerary ?? ""),
-      tripLink: String(row.trip_link ?? ""), adminUrl: `${APP_URL}/admin`, holdUntil: fmtDayTime(holdUntil),
-      summary,
-      reviewUrl: crewReviewUrl(origin, row.ref, key), approveUrl: crewReviewUrl(origin, row.ref, key, "approve"),
-      declineUrl: crewReviewUrl(origin, row.ref, key, "decline"), editUrl: crewReviewUrl(origin, row.ref, key, "edit"),
-      suggestedBalance: summary ? usd(suggestBalance(summary, Number(row.deposit_amount))) : "",
-    });
-    await sendEmail({ to: EWAN, cc: teamCc(), subject: ops.subject, html: ops.html, replyTo: guestEmail ?? undefined, templateName: "trip_builder_ops" }).catch((e) => console.warn("trip builder ops email failed", e));
+    await notifyCrew(row, guestEmail, holdUntil, meta.origin || null);
     return;
   }
 

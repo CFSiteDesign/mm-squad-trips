@@ -7,7 +7,8 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { builderStatusUrl, DEPOSIT_PER_PERSON_USD, HOLD_HOURS, MAX_PEOPLE } from "../_shared/trip-builder.ts";
+import { DEPOSIT_PER_PERSON_USD, HOLD_HOURS, MAX_PEOPLE } from "../_shared/trip-builder.ts";
+import { guestTripUrl, signGuestKey } from "../_shared/trip-builder-crew.ts";
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -94,7 +95,9 @@ Deno.serve(async (req) => {
   if (!ref) return json({ error: "Couldn't save your trip. Please try again." }, 500);
 
   const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-  const back = builderStatusUrl(origin, ref);
+  // The guest's own key goes back to their browser and into their trip page link: it's how they change the trip after sending it.
+  const guestKey = await signGuestKey(ref);
+  const back = guestTripUrl(origin, ref, guestKey);
   try {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -132,6 +135,7 @@ Deno.serve(async (req) => {
       ref,
       status: "pending_payment",
       checkoutUrl: session.url,
+      key: guestKey,
       deposit: { amount: depositUsd, perPerson: DEPOSIT_PER_PERSON_USD, people },
       hold: start ? { until: new Date(Date.now() + HOLD_HOURS * 3600_000).toISOString() } : null,
     });

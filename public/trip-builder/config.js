@@ -62,6 +62,10 @@ window.MM_CONFIG = {
 
   // Where "ALL IN details" links and the ALL IN nav button go. The live copy at madmonkeyhostels.com/all-in-trips/trip-builder/ sets '../'.
   ALLIN_BASE: '../',
+
+  // Optional. A guest can change a trip they have already sent, until it is booked: POST { ref, k, trip, summary, ... }. The change REPLACES the trip on the same request, so the crew
+  // only ever checks the latest plan. With the ALL IN backend it is the trip-builder-revise function. Blank = derived from STATUS_ENDPOINT. See docs/EDITING.md.
+  REVISE_ENDPOINT: 'https://bilhhkzcmicygufsdfxi.supabase.co/functions/v1/trip-builder-revise',
 };
 
 // With an API, fill in every endpoint that wasn't set by hand.

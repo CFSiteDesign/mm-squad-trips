@@ -68,6 +68,10 @@ verify_jwt = false
 [functions.trip-builder-pay]
 verify_jwt = false
 
+# The guest changes a trip they already sent (replaces it on the same request; the crew gets an UPDATED email).
+[functions.trip-builder-revise]
+verify_jwt = false
+
 # Daily job (cron secret checked inside): charges due trip builder payments and sends reminders.
 [functions.charge-trip-builder-payments]
 verify_jwt = false

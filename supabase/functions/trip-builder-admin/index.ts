@@ -21,6 +21,7 @@ import { sendEmail, TRIP_BUILDER_CONTACT, tripBuilderDeclinedEmail, tripBuilderR
 import { builderStatusUrl, fmtDay, usd } from "../_shared/trip-builder.ts";
 import { crewReviewUrl, guestTripUrl, readSummary, signCrewKey, signGuestKey, suggestBalance, verifyCrewKey } from "../_shared/trip-builder-crew.ts";
 import { LATE_DAYS, payOptions, readSchedule } from "../_shared/trip-builder-pay.ts";
+import { currentRev, lastRevision } from "../_shared/trip-builder-revise.ts";
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -81,7 +82,14 @@ Deno.serve(async (req) => {
     const pl = (row.payload ?? {}) as Record<string, unknown>;
     const orig = pl.original as { trip?: Record<string, unknown> } | undefined;
     const original = orig?.trip ? { trip: { route: String(orig.trip.route ?? "").slice(0, 400), days: Number(orig.trip.days) || 0, estTotalUsd: orig.trip.estTotalUsd == null ? null : Number(orig.trip.estTotalUsd), link: String(orig.trip.link ?? "").slice(0, 2000) } } : null;
-    return json({ ok: true, request, summary: sum, suggestedBalance: suggestBalance(sum, Number(row.deposit_amount)), revision: pl.revision ?? null, original, canAct: OPEN.includes(String(row.status)) });
+    // rev counts the guest's changes after sending; guestRevision is the latest one (what moved, their note, what it replaced).
+    return json({ ok: true, request, summary: sum, suggestedBalance: suggestBalance(sum, Number(row.deposit_amount)), revision: pl.revision ?? null, original, canAct: OPEN.includes(String(row.status)), rev: currentRev(pl), guestRevision: lastRevision(pl) });
+  }
+  // The crew page tells us which version of the trip it was showing. If the guest has changed it since, nothing is approved, declined or edited
+  // on a plan nobody has seen: they reload and look at the new one first.
+  const WRITES = ["checking", "revise", "booked", "balance", "decline"];
+  if (WRITES.includes(action) && body.rev !== undefined && Number(body.rev) !== currentRev(row.payload)) {
+    return json({ error: "The guest has just changed this trip. Reload the page to see their new version before you decide.", stale: true }, 409);
   }
   if (action === "link") {
     const k = await signCrewKey(row.ref);

@@ -900,3 +900,65 @@ a.navbtn{text-decoration:none;display:inline-flex;align-items:center}
 .steps+.humans,.humans+.humans,.humans+.paypick{margin-top:var(--s-3)} .paypick+.fine{margin-top:var(--s-4)}
 .miss__more,.doc__more{min-height:40px}
 .seg button,.cur select{min-height:36px}
+
+/* ---------- editing: undo / redo bar, "add a stop" picker, day plan controls ---------- */
+.editbar{display:flex;flex-wrap:wrap;gap:var(--s-2);margin:var(--s-5) 0 var(--s-3)} .editbar .btn[disabled]{opacity:.35;box-shadow:3px 3px 0 var(--shadow-on)}
+.legc__add{display:block;width:100%;text-align:center;background:transparent;border:0;border-bottom:2px dashed var(--black);padding:8px 10px;min-height:40px;font-weight:900;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--black);cursor:pointer}
+.legc__add:hover,.legc__add:focus-visible{background:var(--lime)}
+.picker{list-style:none;margin:var(--s-3) 0 0;padding:0;display:flex;flex-direction:column;gap:6px;max-height:min(52vh,460px);overflow:auto} .picker li[hidden]{display:none}
+.picker__b{width:100%;display:flex;gap:10px;align-items:flex-start;text-align:left;background:var(--paper);border:2px solid var(--black);padding:10px 12px;min-height:56px;cursor:pointer}
+.picker__b:hover,.picker__b:focus-visible{background:var(--lime)} .picker__b .dotc{margin-top:5px;flex:0 0 auto}
+.picker__b b{display:block;font-weight:900;text-transform:uppercase;font-size:14px} .picker__b em{font-style:normal;font-size:10px;font-weight:900;background:var(--yellow);padding:0 5px;border:2px solid var(--black);margin-left:6px;vertical-align:1px}
+.picker__b small{display:block;font-size:12px;font-weight:500;color:var(--ink-dim);line-height:1.35}
+.days li{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px} .day__ctl{display:inline-flex;align-items:center;gap:6px;margin-left:auto}
+.mvday{font:inherit;font-weight:700;font-size:12px;border:2px solid var(--black);background:var(--paper);padding:5px 8px;min-height:36px;max-width:190px;color:var(--black)}
+.addrow{list-style:none} .addday{max-width:100%;border-style:dashed;background:transparent}
+.iconbtn--sm{width:32px;height:32px;font-size:14px}
+.toast--act{display:flex;align-items:center;gap:14px;padding:8px 8px 8px 20px;text-transform:none;letter-spacing:.02em;font-size:14px}
+.toast--act button{background:var(--lime);color:var(--black);border:2px solid var(--black);border-radius:9999px;font-weight:900;font-size:12px;letter-spacing:.08em;text-transform:uppercase;padding:6px 14px;min-height:36px;cursor:pointer}
+/* messages stack in a column instead of sitting on top of each other, and clear the sticky bar on a phone */
+#toast-root{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);display:flex;flex-direction:column-reverse;align-items:center;gap:8px;z-index:200;pointer-events:none;width:max-content;max-width:92vw}
+#toast-root .toast{position:static;transform:none;pointer-events:auto;max-width:100%}
+body[data-view="build"] #toast-root{bottom:88px}
+@media (min-width:1001px){body[data-view="build"] #toast-root{bottom:24px}}
+
+/* ---------- removing and adding stops: worded buttons where the stop is, not a row of unlabelled icons ---------- */
+.stopc__acts{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s-2);padding:0 var(--s-3) var(--s-3)}
+.stopc__acts .btn{box-shadow:3px 3px 0 var(--shadow-on)}
+.stopc__rm{--shadow-on:var(--pink);border-color:var(--black)} .stopc__rm:hover{background:var(--pink)}
+.stopc__move{display:inline-flex;align-items:center;gap:5px;margin-left:auto}
+.stopc__movelbl{font-size:10.5px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-dim)}
+.stopc__picks .pick{cursor:pointer;display:inline-flex;align-items:center;gap:6px;background:var(--lime);border:2px solid var(--black);color:var(--black);padding:3px 10px;min-height:30px;font-family:inherit;font-weight:700}
+.stopc__picks .pick b{font-size:14px;line-height:1} .stopc__picks .pick:hover,.stopc__picks .pick:focus-visible{background:var(--pink)}
+.blockc__rm{background:transparent;color:var(--paper);border-color:var(--paper);box-shadow:none} .blockc__rm:hover{background:var(--pink);color:var(--black);border-color:var(--pink);box-shadow:none;transform:none}
+.addbar__btn{align-self:flex-start}
+.addstop{display:flex;flex-direction:column;align-items:center;gap:4px;width:100%;margin-top:var(--s-4);padding:var(--s-4) var(--s-3);background:transparent;border:var(--bw) dashed var(--black);color:var(--black);cursor:pointer;text-align:center;font-family:inherit}
+.addstop b{font-weight:900;font-size:16px;letter-spacing:.08em;text-transform:uppercase} .addstop span{font-size:13px;font-weight:500;color:var(--ink-dim);max-width:34em}
+.addstop:hover,.addstop:focus-visible{background:var(--lime);border-style:solid}
+.legc__add{border-bottom-width:3px;font-size:12px;min-height:44px}
+/* the home page offers the trip you were building */
+.resume{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--s-3);margin-top:var(--s-5);padding:var(--s-3) var(--s-4);border:var(--bw) solid var(--lime);color:var(--paper);max-width:560px}
+.resume>div{display:flex;flex-direction:column;gap:2px;min-width:0} .resume .over{color:var(--lime)} .resume b{font-weight:900;font-size:15px;overflow-wrap:anywhere} .resume .fine{color:var(--ink-dim-on-black)}
+@media (max-width:560px){.stopc__move{margin-left:0;width:100%}.stopc__acts .btn{flex:1 1 140px}.stopc__picks .pick{min-height:44px}}
+
+/* ---------- quick tour ---------- */
+.linkbtn{background:none;border:0;padding:0 0 0 4px;font:inherit;font-weight:900;text-decoration:underline;color:inherit;cursor:pointer;min-height:44px}
+.tour{position:fixed;inset:0;z-index:300;pointer-events:none}
+.tour__dim{position:absolute;inset:0;background:rgba(10,10,10,.62);pointer-events:auto}
+.tour__ring{position:fixed;border:3px solid var(--lime);box-shadow:0 0 0 9999px rgba(10,10,10,.62);pointer-events:none;transition:left .25s,top .25s,width .25s,height .25s}
+.tour__card{position:fixed;pointer-events:auto;background:var(--bone);color:var(--black);border:var(--bw) solid var(--black);box-shadow:8px 8px 0 var(--pink);padding:var(--s-4) var(--s-4) var(--s-3);max-height:calc(100vh - 24px);overflow:auto}
+.tour__card h2{font-size:26px;margin:4px 0 8px} .tour__card p{margin:0 0 10px;font-size:14.5px;line-height:1.5} .tour__n{color:var(--ink-dim)}
+.tour__wait{font-weight:700;background:var(--lime);border:2px solid var(--black);padding:6px 10px}
+.tour__off{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;margin:0 0 10px;min-height:32px} .tour__off input{width:18px;height:18px;accent-color:var(--black)}
+.tour__btns{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s-2)}
+.tour__skip{margin-left:auto;background:none;border:0;font:inherit;font-weight:700;font-size:13px;text-decoration:underline;cursor:pointer;color:var(--ink-dim);min-height:44px;padding:0 6px}
+@media (prefers-reduced-motion:reduce){.tour__ring{transition:none}}
+@media (max-width:699px){.tour__card{box-shadow:5px 5px 0 var(--pink)} .tour__card h2{font-size:22px} .tour__off{min-height:44px}}
+@media print{.tour{display:none!important}}
+
+/* ---------- changing a trip you already sent ---------- */
+.revbar{display:flex;flex-wrap:wrap;gap:var(--s-3);align-items:center;justify-content:space-between;padding:var(--s-3) var(--s-4);background:var(--pink);color:var(--black);border:var(--bw) solid var(--black);box-shadow:5px 5px 0 var(--black)}
+.revbar__t{display:flex;flex-direction:column;gap:3px;flex:1 1 260px;min-width:0} .revbar__t b{font-weight:900;font-size:15px} .revbar__t .fine{color:var(--black);font-size:12.5px}
+.revbar__b{display:flex;gap:var(--s-2);flex-wrap:wrap} .revbar .btn--ghost{border-color:var(--black);color:var(--black)} .revbar .btn--ghost:hover{background:var(--black);color:var(--paper)}
+.revbar .btn--pink{background:var(--lime)} .revbar .btn[disabled]{opacity:.5}
+.revchg{background:var(--lime);border:var(--bw) solid var(--black);padding:10px 14px;margin:var(--s-3) 0} .revchg ul{margin:6px 0 0;padding-left:18px;font-weight:700;font-size:14px;line-height:1.45}

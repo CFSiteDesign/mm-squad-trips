@@ -4,6 +4,7 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { verifyGuestKey } from "../_shared/trip-builder-crew.ts";
+import { currentRev, guestCanEdit } from "../_shared/trip-builder-revise.ts";
 import { daysUntil, isoDay, payOptions, readSchedule } from "../_shared/trip-builder-pay.ts";
 
 const json = (body: unknown, status = 200) =>
@@ -17,7 +18,7 @@ Deno.serve(async (req) => {
   const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
   const { data: r, error } = await sb
     .from("trip_builder_requests")
-    .select("ref,status,route,days,start_date,trip_link,crew_note,hold_until,deposit_amount,deposit_url,deposit_paid_at,refunded_at,balance_amount,balance_paid_at,stripe_payment_method_id,pay_plan,pay_schedule")
+    .select("ref,status,route,days,start_date,trip_link,crew_note,party_size,dates_flex,payload,hold_until,deposit_amount,deposit_url,deposit_paid_at,refunded_at,balance_amount,balance_paid_at,stripe_payment_method_id,pay_plan,pay_schedule")
     .eq("ref", ref)
     .maybeSingle();
   if (error) return json({ error: "Couldn't look that up" }, 500);
@@ -39,6 +40,11 @@ Deno.serve(async (req) => {
     deposit: { amount: Number(r.deposit_amount), paid: !!r.deposit_paid_at, refunded: !!r.refunded_at },
     balance: { amount: balance, paid: !!r.balance_paid_at },
     keyed,
+    // Whether they can change the trip they sent (needs their key), and what the crew has: so "Edit my trip" only shows when it will work.
+    canEdit: keyed && guestCanEdit(r.status),
+    rev: currentRev(r.payload),
+    people: r.party_size,
+    datesFlex: r.dates_flex ?? "",
     // How they can pay the rest, once the crew has checked the trip (needs their key).
     pay: keyed && r.status === "ready" && balance != null
       ? { balance, daysToGo: daysUntil(r.start_date), options: payOptions({ balance, start: r.start_date, cardSaved: !!r.stripe_payment_method_id }) }

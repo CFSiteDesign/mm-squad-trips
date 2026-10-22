@@ -804,6 +804,8 @@ export function tripBuilderOpsEmail(v: {
   reviewUrl?: string; approveUrl?: string; declineUrl?: string; editUrl?: string;
   /** "$602" – the trip cost for everyone less the deposit. A starting figure only. */
   suggestedBalance?: string;
+  /** Set when the guest has changed a trip they already sent: this email is the new version, and says what moved. */
+  update?: { rev: number; changes: string[]; note: string; withdrawn: boolean; was: { route: string; days: number; total: string; start: string } };
 }): { subject: string; html: string } {
   const e = escapeHtml;
   const D = "color:#0a0a0a";
@@ -838,18 +840,33 @@ export function tripBuilderOpsEmail(v: {
 <div style="font-size:12px;color:#555">Ref ${e(v.ref)}${v.guestEmail && waDigits.length >= 8 ? ` · receipts to ${e(v.guestEmail)}` : ""}</div>
 </td></tr></table>`;
 
+  /* ---- the guest changed a trip they had already sent ---- */
+  const upd = v.update;
+  const banner = upd
+    ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:3px solid #0a0a0a;background:#ff01aa;margin:0 0 16px 0"><tr><td style="padding:12px 14px;${D}">
+<div style="font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.12em">Updated by ${e(first)} · version ${upd.rev}</div>
+<div style="font-size:16px;font-weight:900;margin:2px 0 6px 0">${e(first)} changed their plan after sending it. This replaces the version you saw before.</div>
+${upd.changes.length ? `<ul style="margin:0 0 6px 18px;padding:0;font-size:13px;line-height:1.45">${upd.changes.map((c) => `<li>${e(c)}</li>`).join("")}</ul>` : ""}
+<div style="font-size:12px">Before: ${e(upd.was.route || "")}${upd.was.days ? ` · ${upd.was.days} days` : ""}${upd.was.total ? ` · ${e(upd.was.total)}` : ""}${upd.was.start ? ` · from ${e(upd.was.start)}` : ""}</div>
+${upd.note ? `<div style="margin-top:6px;font-size:13px">“${e(upd.note)}”</div>` : ""}
+${upd.withdrawn ? `<div style="margin-top:8px;font-weight:900;font-size:13px">You had approved the earlier version. That approval and the balance are withdrawn, so nothing is waiting for ${e(first)} to pay. Approve this one when you're happy with it.</div>` : ""}
+</td></tr></table>`
+    : "";
+  const title = upd ? "Trip updated" : "New trip to check";
+  const subjectLead = upd ? `UPDATED (v${upd.rev}) · ` : "";
+
   /* ---- no summary (older trip): the plain version ---- */
   if (!sum) {
     const row = (k: string, val: string) =>
       `<tr><td style="padding:6px 10px;border-bottom:1px solid #0a0a0a;font-weight:700;white-space:nowrap">${e(k)}</td><td style="padding:6px 10px;border-bottom:1px solid #0a0a0a">${e(val || "None")}</td></tr>`;
     const body = [
-      actions, who,
+      banner, actions, who,
       `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #0a0a0a;margin:0 0 16px 0;font-size:14px;border-collapse:collapse">${row("Route", v.route)}${row("Days", String(v.days))}${row("Start", v.startDate)}${row("Dates", v.dates)}${row("Builder estimate", v.estTotal)}${row("Looks like ALL IN", v.allInMatch)}${row("Notes", v.notes)}</table>`,
       `<pre style="margin:0 0 16px 0;padding:12px;border:2px solid #0a0a0a;background:#f5efe2;font-size:12px;line-height:1.45;white-space:pre-wrap;font-family:Menlo,Consolas,monospace">${e(v.itinerary)}</pre>`,
       actions,
       `<p style="margin:0 0 8px 0;font-size:13px"><a href="${e(v.tripLink)}" style="${D}">Open the trip in the builder</a> · <a href="${e(v.adminUrl)}" style="${D}">Open admin</a></p>`,
     ].join("\n");
-    return { subject: `Trip to check: ${v.name} · ${v.route} · ${v.days} days`, html: tbShell("New trip to check", "New trip to check", body) };
+    return { subject: `${subjectLead}Trip to check: ${v.name} · ${v.route} · ${v.days} days`, html: tbShell(title, title, body) };
   }
 
   /* ---- at a glance ---- */
@@ -915,15 +932,15 @@ ${sum.flags.map((f) => `<tr><td style="padding:6px 12px;font-size:13px;line-heig
     : "";
 
   const body = [
-    actions, who, glance,
+    banner, actions, who, glance,
     `<p style="margin:0 0 8px 0;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;color:#555">The trip, stop by stop</p>`,
     stopCards, `<div style="height:8px"></div>`, money2, flags, note,
     `<p style="margin:0 0 8px 0;font-size:14px;font-weight:900;${D}">Happy with it?</p>`, actions,
     `<p style="margin:12px 0 0 0;font-size:13px;line-height:1.7">${v.reviewUrl ? `<a href="${e(v.reviewUrl)}" style="${D}">Open the review page</a> · ` : ""}<a href="${e(v.tripLink)}" style="${D}">Open it in the builder</a> · <a href="${e(v.adminUrl)}" style="${D}">Admin</a></p>`,
   ].join("\n");
   return {
-    subject: `Trip to check: ${v.name}${v.people > 1 ? ` + ${v.people - 1}` : ""} · ${sum.headline || v.route} · ${sum.days} days${sum.start ? ` · from ${day(sum.start)}` : ""}`,
-    html: tbShell("New trip to check", "New trip to check", body),
+    subject: `${subjectLead}Trip to check: ${v.name}${v.people > 1 ? ` + ${v.people - 1}` : ""} · ${sum.headline || v.route} · ${sum.days} days${sum.start ? ` · from ${day(sum.start)}` : ""}`,
+    html: tbShell(title, title, body),
   };
 }
 
@@ -1034,6 +1051,21 @@ export function tripBuilderDeclinedEmail(v: { firstName: string; ref: string; ro
     `<p style="margin:0;font-size:13px;color:#555">Reference: <strong>${e(v.ref)}</strong> · <a href="${e(v.statusUrl)}" style="color:#0a0a0a">Trip status</a></p>`,
   ].join("\n");
   return { subject: `About your trip (${v.ref})`, html: tbShell("About your trip", "About your trip", body) };
+}
+
+/** Guest: we've got your changes. The crew will check this version instead of the one sent before. */
+export function tripBuilderRevisedEmail(v: { firstName: string; ref: string; route: string; days: number; changes: string[]; withdrawn: boolean; statusUrl: string }): { subject: string; html: string } {
+  const e = escapeHtml;
+  const body = [
+    tbP(`Hey ${e(v.firstName)},`),
+    tbP(`We've got your changes. The crew will check this version, <strong>${e(v.route)}</strong> (${v.days} days), instead of the one you sent before. There's nothing else for you to do.`),
+    v.changes.length ? `<ul style="margin:0 0 12px 0;padding-left:20px">${v.changes.map((c) => `<li style="margin:0 0 4px 0">${e(c)}</li>`).join("")}</ul>` : "",
+    v.withdrawn ? tbP("A crew member had already approved your earlier version. Because the plan has changed they'll check the new one and come back to you with the final price. Nothing is due in the meantime.") : "",
+    tbP("Your deposit and your beds carry on as they were. You can keep changing your trip from your trip page until it's booked."),
+    `<p style="margin:18px 0">${tbButton(v.statusUrl, "Track my trip")}</p>`,
+    `<p style="margin:0;font-size:13px;color:#555">Reference: <strong>${e(v.ref)}</strong></p>`,
+  ].join("\n");
+  return { subject: `We've got your changes (${v.ref})`, html: tbShell("Changes received", "We've got your changes", body) };
 }
 
 // Flag for the sign-off of guest emails, by trip country.
