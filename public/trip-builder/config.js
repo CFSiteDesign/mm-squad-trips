@@ -66,6 +66,10 @@ window.MM_CONFIG = {
   // Optional. A guest can change a trip they have already sent, until it is booked: POST { ref, k, trip, summary, ... }. The change REPLACES the trip on the same request, so the crew
   // only ever checks the latest plan. With the ALL IN backend it is the trip-builder-revise function. Blank = derived from STATUS_ENDPOINT. See docs/EDITING.md.
   REVISE_ENDPOINT: 'https://bilhhkzcmicygufsdfxi.supabase.co/functions/v1/trip-builder-revise',
+
+  // Optional. "Log in with your email" (continue your travels): POST { email } emails the guest a link to the trips they have sent. With the ALL IN backend it is the
+  // trip-builder-login function. Blank = derived from STATUS_ENDPOINT, or the log-in explains it is a demo.
+  LOGIN_ENDPOINT: 'https://bilhhkzcmicygufsdfxi.supabase.co/functions/v1/trip-builder-login',
 };
 
 // With an API, fill in every endpoint that wasn't set by hand.

@@ -24,8 +24,8 @@
 
   /* ---------- the pack ---------- */
   A.views.pack = function (enc) {
-    enc = decodeURIComponent(enc || ''); var root = document.getElementById('app'), st = MM.decodeState(enc);
-    if (!st.items.length) { root.innerHTML = '<section class="quiz"><div class="wrap"><div class="qbox"><span class="over">Trip pack</span><h2 class="disp">Nothing to pack yet.</h2><p class="qhelp">Build a trip first, then come back for your pack.</p><div class="qnav"><button class="btn" data-go="build" type="button">Open the builder</button></div></div></div></section>'; return; }
+    try { enc = decodeURIComponent(enc || ''); } catch (e) { enc = enc || ''; } var root = document.getElementById('app'), st = MM.decodeState(enc);
+    if (!st.items.length) { root.innerHTML = '<section class="quiz"><div class="wrap"><div class="qbox"><span class="over">Trip pack</span><h1 class="disp">Nothing to pack yet.</h1><p class="qhelp">Build a trip first, then come back for your pack.</p><div class="qnav"><button class="btn" data-go="build" type="button">Open the builder</button></div></div></div></section>'; return; }
     var pl = MM.plan(st), rec = packRec(enc), checked = rec && (rec.status === 'ready' || rec.status === 'approved'), T = pl.totals, pass = A.passport || '';
     var first = pl.places[0], last = pl.places[pl.places.length - 1];
     var contact = [C.WHATSAPP ? 'WhatsApp +' + C.WHATSAPP.replace(/^\+/, '') : '', C.CREW_EMAIL || ''].filter(Boolean).join('  ·  ');
@@ -36,7 +36,7 @@
       '<div class="pack__facts"><div><b>' + T.days + '</b><span>days</span></div><div><b>' + T.nights + '</b><span>nights</span></div><div><b>' + pl.places.length + '</b><span>stops</span></div><div><b>' + pl.countries.length + '</b><span>' + (pl.countries.length === 1 ? 'country' : 'countries') + '</span></div><div><b>~' + money(T.total, A.cur) + '</b><span>est. each</span></div></div>' +
       (st.start ? '<p class="pack__dates">' + fmtD(U.parseDate(st.start)) + ' to ' + fmtD(U.addDays(U.parseDate(st.start), T.days - 1)) + ', ' + U.parseDate(st.start).getUTCFullYear() + '</p>' : '<p class="pack__dates">Dates not set yet. Add a start date in the builder and your pack fills in.</p>') +
       (rec ? '<p class="pack__ref">Reference <b>' + esc(rec.ref) + '</b></p>' : '') +
-      (checked ? '' : '<p class="pack__note">This is a draft of your trip, not a booking. Hold your beds' + (C.DEPOSIT_PER_PERSON > 0 ? ' with a $' + C.DEPOSIT_PER_PERSON + ' deposit per person' : '') + ' and a real crew member checks the routes, dates and prices before you pay' + (C.DEPOSIT_PER_PERSON > 0 ? ' the rest' : '') + '.</p>') + '</header>';
+      (checked ? '' : '<p class="pack__note">This is a draft of your trip, not a booking. Hold your beds' + (C.DEPOSIT_PER_PERSON > 0 ? ' with a $' + C.DEPOSIT_PER_PERSON + ' deposit per person' : ' (sending it is free)') + ' and a real crew member checks the routes, dates and prices before you pay' + (C.DEPOSIT_PER_PERSON > 0 ? ' the rest' : '') + '.</p>') + '</header>';
 
     // 1. where you sleep
     h += '<section class="pack__sec"><h2 class="disp">Where you\'re sleeping</h2><div class="pack__stays">' + pl.segs.map(function (sg, i) {
@@ -82,7 +82,7 @@
 
     // 6. packing + costs
     h += '<section class="pack__sec"><h2 class="disp">Packing list</h2><div class="pack__pk">' + MM.packing(pl).map(function (g) { return '<div><b>' + esc(g.g) + '</b><ul class="chk">' + g.items.map(function (i) { return '<li>' + esc(i) + '</li>'; }).join('') + '</ul></div>'; }).join('') + '</div></section>';
-    h += '<section class="pack__sec"><h2 class="disp">What it adds up to</h2><table class="pack__t"><tbody><tr><td>Beds</td><td>' + money(T.beds, A.cur) + '</td></tr><tr><td>Transport</td><td>' + money(T.transport, A.cur) + '</td></tr><tr><td>Activities</td><td>' + money(T.acts, A.cur) + '</td></tr>' + (T.allin ? '<tr><td>ALL IN trips</td><td>' + money(T.allin, A.cur) + '</td></tr>' : '') + '<tr><td>Food + fun fund</td><td>' + money(Math.max(0, T.total - T.beds - T.transport - T.acts - (T.allin || 0) + (T.squad || 0)), A.cur) + '</td></tr><tr class="tot"><td>Estimated total, per person</td><td>~' + money(T.total, A.cur) + '</td></tr></tbody></table><p class="fine">Estimates, not quotes. Flights to and from the region aren\'t included.</p></section>';
+    h += '<section class="pack__sec"><h2 class="disp">What it adds up to</h2><table class="pack__t"><tbody><tr><td>Beds</td><td>' + money(T.beds, A.cur) + '</td></tr><tr><td>Transport</td><td>' + money(T.transport, A.cur) + '</td></tr><tr><td>Activities</td><td>' + money(T.acts, A.cur) + '</td></tr>' + (T.allin ? '<tr><td>ALL IN trips</td><td>' + money(T.allin, A.cur) + '</td></tr>' : '') + '<tr><td>Food + fun fund</td><td>' + money(T.fund, A.cur) + '</td></tr>' + (T.squad ? '<tr><td>Squad Leader</td><td>-' + money(-T.squad, A.cur) + '</td></tr>' : '') + '<tr class="tot"><td>Estimated total, per person</td><td>~' + money(T.total, A.cur) + '</td></tr></tbody></table><p class="fine">Estimates, not quotes. Flights to and from the region aren\'t included.</p></section>';
     h += '<footer class="pack__ft"><b>Questions? The crew is a message away.</b><p>' + (contact ? esc(contact) : 'Reply to your confirmation message and a real person answers.') + '</p>' + A.appCard() + '</footer></article>';
     root.innerHTML = h;
     $('#packprint').addEventListener('click', function () { u.track('pack_print'); window.print(); });
