@@ -16,7 +16,8 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { adminAuthHeaderToken, verifyAdminToken } from "../_shared/admin-auth.ts";
+import { adminAuthHeaderToken, safeEqual, verifyAdminToken } from "../_shared/admin-auth.ts";
+import { isTrustedOrigin } from "../_shared/app-base.ts";
 import { sendEmail, TRIP_BUILDER_CONTACT, tripBuilderDeclinedEmail, tripBuilderReadyEmail } from "../_shared/email.ts";
 import { builderStatusUrl, fmtDay, usd } from "../_shared/trip-builder.ts";
 import { crewReviewUrl, guestTripUrl, readSummary, signCrewKey, signGuestKey, suggestBalance, verifyCrewKey } from "../_shared/trip-builder-crew.ts";
@@ -26,6 +27,8 @@ import { currentRev, lastRevision } from "../_shared/trip-builder-revise.ts";
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 const LIVE_ORIGIN = "https://madmonkeyhostels.com";
+/** A link to the trip builder on one of our own sites (the crew's edited trip, and what we hand back to the page). */
+const ownLink = (u: string) => { try { return isTrustedOrigin(new URL(u).origin) && u.includes("#/build/"); } catch { return false; } };
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -40,7 +43,7 @@ Deno.serve(async (req) => {
   let authed = bearer ? await verifyAdminToken(bearer) : false;
   if (!authed) {
     const pw = typeof body.password === "string" ? body.password.trim() : "";
-    authed = !!pw && pw === adminPassword;
+    authed = !!pw && safeEqual(pw, adminPassword);
   }
   // The key in a crew review link: good for one trip only.
   const bodyRef = typeof body.ref === "string" ? body.ref.trim().toUpperCase() : "";
@@ -81,7 +84,7 @@ Deno.serve(async (req) => {
     for (const k of VIEW) request[k] = (row as Record<string, unknown>)[k] ?? null;
     const pl = (row.payload ?? {}) as Record<string, unknown>;
     const orig = pl.original as { trip?: Record<string, unknown> } | undefined;
-    const original = orig?.trip ? { trip: { route: String(orig.trip.route ?? "").slice(0, 400), days: Number(orig.trip.days) || 0, estTotalUsd: orig.trip.estTotalUsd == null ? null : Number(orig.trip.estTotalUsd), link: String(orig.trip.link ?? "").slice(0, 2000) } } : null;
+    const original = orig?.trip ? { trip: { route: String(orig.trip.route ?? "").slice(0, 400), days: Number(orig.trip.days) || 0, estTotalUsd: orig.trip.estTotalUsd == null ? null : Number(orig.trip.estTotalUsd), link: ownLink(String(orig.trip.link ?? "")) ? String(orig.trip.link).slice(0, 2000) : "" } } : null;
     // rev counts the guest's changes after sending; guestRevision is the latest one (what moved, their note, what it replaced).
     return json({ ok: true, request, summary: sum, suggestedBalance: suggestBalance(sum, Number(row.deposit_amount)), revision: pl.revision ?? null, original, canAct: OPEN.includes(String(row.status)), rev: currentRev(pl), guestRevision: lastRevision(pl) });
   }
@@ -128,7 +131,7 @@ Deno.serve(async (req) => {
       const link = typeof t.link === "string" ? t.link.trim().slice(0, 2000) : "";
       const route = typeof t.route === "string" ? t.route.trim().slice(0, 400) : "";
       const days = Math.round(Number(t.days) || 0);
-      if (!/^https?:\/\/[^\s]+#\/build\//.test(link) || !route || days < 1) return json({ error: "That edited trip didn't come through properly. Open it from the email again and retry." }, 400);
+      if (!ownLink(link) || !route || days < 1) return json({ error: "That edited trip didn't come through properly. Open it from the email again and retry." }, 400);
       const strs = (v: unknown, n: number) => (Array.isArray(v) ? v.map((x) => String(x).trim().slice(0, 60)).filter(Boolean).slice(0, n) : []);
       const payload = ((row.payload ?? {}) as Record<string, unknown>);
       const original = payload.original ?? { trip: { link: row.trip_link, route: row.route, days: row.days, nights: row.nights, stops: row.stops, start: row.start_date, estTotalUsd: row.est_total_usd }, summary: payload.summary ?? null };

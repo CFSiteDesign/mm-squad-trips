@@ -5,7 +5,7 @@
 // so nobody reviews a plan the guest has already moved on from. Rules per status are in _shared/trip-builder-revise.ts.
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { appBase } from "../_shared/app-base.ts";
+import { trustedBase } from "../_shared/app-base.ts";
 import { sendEmail, TRIP_BUILDER_CONTACT, tripBuilderRevisedEmail } from "../_shared/email.ts";
 import { fmtDay, notifyCrew, usd } from "../_shared/trip-builder.ts";
 import { guestTripUrl, verifyGuestKey } from "../_shared/trip-builder-crew.ts";
@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
   if (!(await verifyGuestKey(ref, b.k))) return json({ error: "This link has expired or isn't yours. Open your trip from the email we sent you." }, 401);
 
   const origin = req.headers.get("origin");
-  const c = cleanRevision(b, new URL(appBase(origin)).origin);
+  const c = cleanRevision(b, new URL(trustedBase(origin)).origin);
   if (!c.ok) return json({ error: c.error }, 400);
 
   const sb = createClient(url, key);

@@ -153,6 +153,12 @@ export async function sendEmail({ to, subject, html, replyTo, cc, templateName, 
 }
 
 
+/** A link we are willing to print in an email: plain http(s), no spaces or quotes. Anything else (a `javascript:` link, say) comes back empty and the link is left out. */
+export function safeHref(u: unknown): string {
+  const t = typeof u === "string" ? u.trim() : "";
+  return /^https?:\/\/[^\s"'<>]+$/i.test(t) ? t : "";
+}
+
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, "&amp;")
@@ -852,8 +858,19 @@ ${upd.note ? `<div style="margin-top:6px;font-size:13px">“${e(upd.note)}”</d
 ${upd.withdrawn ? `<div style="margin-top:8px;font-weight:900;font-size:13px">You had approved the earlier version. That approval and the balance are withdrawn, so nothing is waiting for ${e(first)} to pay. Approve this one when you're happy with it.</div>` : ""}
 </td></tr></table>`
     : "";
-  const title = upd ? "Trip updated" : "New trip to check";
-  const subjectLead = upd ? `UPDATED (v${upd.rev}) · ` : "";
+  /* ---- a later stage of a journey ---- */
+  const stg = sum?.stage ?? null;
+  const stageBanner = stg
+    ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:3px solid #0a0a0a;background:#00fef3;margin:0 0 16px 0"><tr><td style="padding:12px 14px;${D}">
+<div style="font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.12em">Stage ${stg.n} of their journey</div>
+<div style="font-size:16px;font-weight:900;margin:2px 0 6px 0">${e(first)} is already travelling. Only the new stops need checking.</div>
+${stg.from ? `<div style="font-size:13px">Starting from <strong>${e(stg.from.name)}</strong>${stg.arrival ? `: ${e(stg.arrival.mode)} to ${e(stg.arrival.to)} · ${e(stg.arrival.hours)} · ${money(stg.arrival.usd)}${stg.arrival.overnight ? " · overnight" : ""}` : ""}</div>` : ""}
+${stg.been.length ? `<div style="font-size:13px">Already been to ${stg.been.map((x) => e(x)).join(", ")}. None of these were suggested.</div>` : ""}
+${stg.parent ? `<div style="font-size:12px;margin-top:4px">The earlier stage is ${e(stg.parent)} (find it in Admin &gt; Trip builder).</div>` : ""}
+</td></tr></table>`
+    : "";
+  const title = upd ? "Trip updated" : stg ? `Stage ${stg.n} to check` : "New trip to check";
+  const subjectLead = (upd ? `UPDATED (v${upd.rev}) · ` : "") + (stg ? `Stage ${stg.n} · ` : "");
 
   /* ---- no summary (older trip): the plain version ---- */
   if (!sum) {
@@ -864,7 +881,7 @@ ${upd.withdrawn ? `<div style="margin-top:8px;font-weight:900;font-size:13px">Yo
       `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #0a0a0a;margin:0 0 16px 0;font-size:14px;border-collapse:collapse">${row("Route", v.route)}${row("Days", String(v.days))}${row("Start", v.startDate)}${row("Dates", v.dates)}${row("Builder estimate", v.estTotal)}${row("Looks like ALL IN", v.allInMatch)}${row("Notes", v.notes)}</table>`,
       `<pre style="margin:0 0 16px 0;padding:12px;border:2px solid #0a0a0a;background:#f5efe2;font-size:12px;line-height:1.45;white-space:pre-wrap;font-family:Menlo,Consolas,monospace">${e(v.itinerary)}</pre>`,
       actions,
-      `<p style="margin:0 0 8px 0;font-size:13px"><a href="${e(v.tripLink)}" style="${D}">Open the trip in the builder</a> · <a href="${e(v.adminUrl)}" style="${D}">Open admin</a></p>`,
+      `<p style="margin:0 0 8px 0;font-size:13px">${safeHref(v.tripLink) ? `<a href="${e(safeHref(v.tripLink))}" style="${D}">Open the trip in the builder</a> · ` : ""}<a href="${e(v.adminUrl)}" style="${D}">Open admin</a></p>`,
     ].join("\n");
     return { subject: `${subjectLead}Trip to check: ${v.name} · ${v.route} · ${v.days} days`, html: tbShell(title, title, body) };
   }
@@ -932,11 +949,11 @@ ${sum.flags.map((f) => `<tr><td style="padding:6px 12px;font-size:13px;line-heig
     : "";
 
   const body = [
-    banner, actions, who, glance,
+    banner, stageBanner, actions, who, glance,
     `<p style="margin:0 0 8px 0;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;color:#555">The trip, stop by stop</p>`,
     stopCards, `<div style="height:8px"></div>`, money2, flags, note,
     `<p style="margin:0 0 8px 0;font-size:14px;font-weight:900;${D}">Happy with it?</p>`, actions,
-    `<p style="margin:12px 0 0 0;font-size:13px;line-height:1.7">${v.reviewUrl ? `<a href="${e(v.reviewUrl)}" style="${D}">Open the review page</a> · ` : ""}<a href="${e(v.tripLink)}" style="${D}">Open it in the builder</a> · <a href="${e(v.adminUrl)}" style="${D}">Admin</a></p>`,
+    `<p style="margin:12px 0 0 0;font-size:13px;line-height:1.7">${v.reviewUrl ? `<a href="${e(v.reviewUrl)}" style="${D}">Open the review page</a> · ` : ""}${safeHref(v.tripLink) ? `<a href="${e(safeHref(v.tripLink))}" style="${D}">Open it in the builder</a> · ` : ""}<a href="${e(v.adminUrl)}" style="${D}">Admin</a></p>`,
   ].join("\n");
   return {
     subject: `${subjectLead}Trip to check: ${v.name}${v.people > 1 ? ` + ${v.people - 1}` : ""} · ${sum.headline || v.route} · ${sum.days} days${sum.start ? ` · from ${day(sum.start)}` : ""}`,
@@ -957,7 +974,7 @@ export function tripBuilderReadyEmail(v: {
     tbP(`Hey ${e(v.firstName)},`),
     tbP(`Good news: the crew has checked your trip, <strong>${e(v.route)}</strong>.`),
     v.note ? `<div style="margin:16px 0;padding:14px;border:2px solid #0a0a0a;background:#ccff01"><div style="font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px">From the crew</div><div style="font-size:15px;white-space:pre-line">${e(v.note)}</div></div>` : "",
-    v.planUrl ? tbP(`Have a look at the plan we checked: <a href="${e(v.planUrl)}" style="color:#0a0a0a">see your trip</a>.`) : "",
+    safeHref(v.planUrl) ? tbP(`Have a look at the plan we checked: <a href="${e(safeHref(v.planUrl))}" style="color:#0a0a0a">see your trip</a>.`) : "",
     tbP(`The rest to pay is <strong>${e(v.balance)}</strong>. Your deposit is already taken off, and it's the same card that carries on.`),
     v.choices && v.choices.length ? `<ul style="margin:0 0 12px 0;padding-left:20px">${v.choices.map((c) => `<li style="margin:0 0 4px 0">${e(c)}</li>`).join("")}</ul>` : "",
     `<p style="margin:18px 0">${tbButton(v.payUrl, "Choose how to pay")}</p>`,
@@ -985,6 +1002,25 @@ export function tripBuilderBookedEmail(v: {
     `<p style="margin:0;font-size:13px;color:#555">Reference: <strong>${e(v.ref)}</strong></p>`,
   ].join("\n");
   return { subject: `You're booked: ${v.route} (${v.ref})`, html: tbShell("You're booked", "You're booked", body) };
+}
+
+/** Guest: "log in" by email: a link to each trip they have sent (with their key), to change it or plan the next stage from any device. */
+export function tripBuilderLoginEmail(v: {
+  firstName: string; trips: { ref: string; route: string; days: number; status: string; url: string }[];
+}): { subject: string; html: string } {
+  const e = escapeHtml;
+  const label: Record<string, string> = { submitted: "With the crew", checking: "Being checked", ready: "Ready for your OK", approved: "Booked" };
+  const rows = v.trips.map((t) =>
+    `<tr><td style="padding:10px 0;border-top:2px solid #0a0a0a"><div style="font-size:16px;font-weight:900;text-transform:uppercase">${e(t.route)}</div><div style="font-size:12px;color:#555">${e(t.ref)} · ${e(label[t.status] ?? "Sent")}${t.days ? ` · ${t.days} days` : ""}</div><div style="margin-top:8px">${tbButton(t.url, "Open this trip")}</div></td></tr>`
+  ).join("");
+  const body = [
+    tbP(`Hey ${e(v.firstName)},`),
+    tbP("Here's your link to carry on. From your trip you can change it, or plan your next stage once you're there. We remember where you've been, so we never suggest it twice."),
+    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 12px 0">${rows}</table>`,
+    tbP("A real person checks every trip before anything is booked. Questions? Reply to this email, or ask Ewan on WhatsApp: " + `<a href="${TB_WA_LINK}" style="color:#0a0a0a">${TRIP_BUILDER_WHATSAPP}</a>.`),
+    `<p style="margin:0;font-size:12px;color:#555">Didn't ask for this? You can ignore it. The link only opens your own trip.</p>`,
+  ].join("\n");
+  return { subject: v.trips.length > 1 ? "Your Mad Monkey trips" : `Your Mad Monkey trip: ${v.trips[0]?.route ?? ""}`, html: tbShell("Your trip link", "Your trip link", body) };
 }
 
 /** Guest: a payment comes out in a few days. */

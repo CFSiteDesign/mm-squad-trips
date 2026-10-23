@@ -72,6 +72,10 @@ verify_jwt = false
 [functions.trip-builder-revise]
 verify_jwt = false
 
+# "Log in": emails a guest a link to the trips they have sent (no passwords; the answer never says whether an address has trips).
+[functions.trip-builder-login]
+verify_jwt = false
+
 # Daily job (cron secret checked inside): charges due trip builder payments and sends reminders.
 [functions.charge-trip-builder-payments]
 verify_jwt = false

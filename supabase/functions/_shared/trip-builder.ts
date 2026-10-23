@@ -5,7 +5,7 @@
 // handleTripBuilderPaid below. Table: trip_builder_requests.
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import Stripe from "https://esm.sh/stripe@18.5.0";
-import { appBase } from "./app-base.ts";
+import { trustedBase } from "./app-base.ts";
 import {
   APP_URL,
   sendEmail,
@@ -38,7 +38,7 @@ export const usd = (n: number) =>
 
 /** The builder's own address for a request's status page, on whichever site the guest used. */
 export function builderStatusUrl(origin: string | null, ref: string): string {
-  return `${appBase(origin)}/trip-builder/#/trip/${encodeURIComponent(ref)}`;
+  return `${trustedBase(origin)}/trip-builder/#/trip/${encodeURIComponent(ref)}`;
 }
 
 export function fmtDay(iso: string | null | undefined): string {

@@ -180,7 +180,7 @@ export default function TripBuilderAdmin({ refreshKey }: { refreshKey?: number }
                                     REVIEW PAGE: APPROVE / DECLINE / EDIT <ExternalLink className="h-3 w-3" />
                                   </button>
                                 )}
-                                {r.trip_link && <a href={r.trip_link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 border-[2px] border-mm-black bg-mm-bone px-2 py-1 font-sticker text-[10px] tracking-[0.15em]">OPEN THEIR TRIP <ExternalLink className="h-3 w-3" /></a>}
+                                {r.trip_link && /^https?:\/\//i.test(r.trip_link) && <a href={r.trip_link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 border-[2px] border-mm-black bg-mm-bone px-2 py-1 font-sticker text-[10px] tracking-[0.15em]">OPEN THEIR TRIP <ExternalLink className="h-3 w-3" /></a>}
                                 <span className="text-xs text-mm-black/70 self-center">
                                   Builder estimate {usd(r.est_total_usd)} per person, incl. their spending money{r.all_in_match ? ` · looks like ALL IN ${r.all_in_match}` : ""}{r.from_place ? ` · now in ${r.from_place}` : ""}{r.campaign_ref ? ` · ref ${r.campaign_ref}` : ""}{r.from_hostel ? ` · QR at ${r.from_hostel}` : ""}
                                 </span>

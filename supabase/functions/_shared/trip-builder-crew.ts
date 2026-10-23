@@ -13,7 +13,7 @@
 // declined or refunded until a person presses the confirm button on the page, so
 // an email scanner that follows the links can't trigger anything.
 
-import { appBase } from "./app-base.ts";
+import { trustedBase } from "./app-base.ts";
 
 export const KEY_DAYS = 30;
 
@@ -25,8 +25,13 @@ async function mac(secret: string, text: string): Promise<string> {
   return hex(await crypto.subtle.sign("HMAC", k, enc.encode(text))).slice(0, 40);
 }
 
+let warnedSecret = false;
 export function crewSecret(): string {
-  return Deno.env.get("TRIP_BUILDER_LINK_SECRET") || Deno.env.get("ADMIN_PASSWORD") || "";
+  const own = Deno.env.get("TRIP_BUILDER_LINK_SECRET");
+  if (own) return own;
+  // Links signed with the admin password work, but anyone holding one link (every guest does) could guess passwords against its signature offline.
+  if (!warnedSecret) { warnedSecret = true; console.warn("TRIP_BUILDER_LINK_SECRET is not set: trip builder links are signed with ADMIN_PASSWORD. Set a long random value (openssl rand -hex 32) instead."); }
+  return Deno.env.get("ADMIN_PASSWORD") || "";
 }
 
 // A key proves a link came from one of our emails. It is bound to one kind of link ("crew" or "guest") and one trip,
@@ -59,7 +64,7 @@ export const verifyGuestKey = (ref: string, key: unknown, secret = crewSecret(),
 
 /** The guest's own trip page, with their key so they can choose how to pay. */
 export function guestTripUrl(origin: string | null, ref: string, key?: string): string {
-  return `${appBase(origin)}/trip-builder/#/trip/${encodeURIComponent(ref)}${key ? `?k=${encodeURIComponent(key)}` : ""}`;
+  return `${trustedBase(origin)}/trip-builder/#/trip/${encodeURIComponent(ref)}${key ? `?k=${encodeURIComponent(key)}` : ""}`;
 }
 
 export type CrewAction = "review" | "approve" | "decline" | "edit";
@@ -67,13 +72,15 @@ export type CrewAction = "review" | "approve" | "decline" | "edit";
 /** The link in the email. `do` tells the page which panel to open first. */
 export function crewReviewUrl(origin: string | null, ref: string, key: string, action: CrewAction = "review"): string {
   const q = `k=${encodeURIComponent(key)}${action === "review" ? "" : `&do=${action}`}`;
-  return `${appBase(origin)}/trip-builder/#/crew/${encodeURIComponent(ref)}?${q}`;
+  return `${trustedBase(origin)}/trip-builder/#/crew/${encodeURIComponent(ref)}?${q}`;
 }
 
 /* ---------- the summary the builder sends (crew.js), made safe to print ---------- */
 
 export type Tour = { name: string; usd: number | null; est: boolean; payOnDay: boolean; date: string; day: number; fits: boolean; includesBeds: boolean };
 export type Next = { to: string; mode: string; hours: string; usd: number; overnight: boolean; date: string };
+/** A later stage of a journey (the builder's "Plan my next stage"): where they start, where they have already been, and which trip came before. */
+export type Stage = { n: number; parent: string; from: { id: string; name: string } | null; been: string[]; arrival: { to: string; mode: string; hours: string; usd: number; overnight: boolean; date: string } | null };
 export type Stop = {
   kind: "stop" | "allin"; name: string; country: string; nights: number; days: number; usd: number; from: string; to: string;
   route: string; bedUsd: number; bedsUsd: number; partner: boolean; tours: Tour[]; next: Next | null;
@@ -85,6 +92,7 @@ export type Budget = {
 export type Summary = {
   headline: string; days: number; nights: number; stopCount: number; countries: string[]; start: string; end: string; datesLabel: string;
   people: number; pref: string; stops: Stop[]; budget: Budget; flags: { level: "warn" | "info"; text: string }[];
+  stage: Stage | null;
 };
 
 const s = (v: unknown, max = 300) => (typeof v === "string" ? v.slice(0, max) : "");
@@ -116,6 +124,20 @@ export function readSummary(payload: unknown): Summary | null {
       guestBudget: n(b.guestBudget), budgetLeft: b.budgetLeft == null ? null : n(b.budgetLeft),
     },
     flags: (Array.isArray(x.flags) ? (x.flags as Record<string, unknown>[]) : []).slice(0, 16).map((f) => ({ level: f.level === "warn" ? "warn" as const : "info" as const, text: s(f.text, 400) })),
+    stage: readStage(x.stage),
+  };
+}
+
+/** The stage block of a summary, made safe to print: anything unexpected is dropped. */
+export function readStage(v: unknown): Stage | null {
+  if (!v || typeof v !== "object") return null;
+  const g = v as Record<string, unknown>, f = g.from as Record<string, unknown> | null, a = g.arrival as Record<string, unknown> | null;
+  return {
+    n: Math.min(20, Math.max(2, Math.round(Number(g.n)) || 2)),
+    parent: typeof g.parent === "string" && /^MM-[A-Z0-9]{6}$/.test(g.parent) ? g.parent : "",
+    from: f && typeof f === "object" ? { id: s(f.id, 40), name: s(f.name, 80) } : null,
+    been: (Array.isArray(g.been) ? g.been : []).slice(0, 40).map((x) => s(x, 80)).filter(Boolean),
+    arrival: a && typeof a === "object" ? { to: s(a.to, 80), mode: s(a.mode, 60), hours: s(a.hours, 20), usd: n(a.usd), overnight: a.overnight === true, date: isoDay(a.date) } : null,
   };
 }
 

@@ -8,13 +8,27 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { DEPOSIT_PER_PERSON_USD, HOLD_HOURS, MAX_PEOPLE } from "../_shared/trip-builder.ts";
-import { guestTripUrl, signGuestKey } from "../_shared/trip-builder-crew.ts";
+import { trustedBase } from "../_shared/app-base.ts";
+import { crewSecret, guestTripUrl, signGuestKey } from "../_shared/trip-builder-crew.ts";
+import { ownTripLink } from "../_shared/trip-builder-revise.ts";
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 const str = (v: unknown, max = 500) => (typeof v === "string" ? v.trim().slice(0, max) : "");
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Who is asking, as a keyed hash: enough to count how many trips one address sends in an hour, and never the address itself. */
+async function hashIp(req: Request): Promise<string> {
+  const ip = req.headers.get("cf-connecting-ip")
+    || (req.headers.get("x-forwarded-for") ?? "").split(",").map((s) => s.trim()).filter(Boolean).pop()   // the last one is added by our own gateway; the first can be made up
+    || "";
+  const secret = crewSecret();
+  if (!ip || !secret) return "";
+  const k = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const sig = new Uint8Array(await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(`tbip:${ip}`)));
+  return Array.from(sig.slice(0, 12), (b) => b.toString(16).padStart(2, "0")).join("");
+}
 
 function newRef() {
   const a = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -58,6 +72,22 @@ Deno.serve(async (req) => {
   const origin = req.headers.get("origin");
   const sb = createClient(url, key);
 
+  // Anyone on the internet can call this, so keep a runaway script from filling Admin with junk: a few trips an hour from one
+  // contact and from one address. (Not a global cap: that would let one script lock every real guest out.)
+  const ipHash = await hashIp(req);
+  const since = new Date(Date.now() - 3600_000).toISOString();
+  const sentRecently = async (col: string, val: string) => {
+    const { data } = await sb.from("trip_builder_requests").select("ref").eq(col, val).gte("created_at", since).limit(12);
+    return Array.isArray(data) ? data.length : 0;
+  };
+  if ((await sentRecently(via === "email" ? "email" : "whatsapp", via === "email" ? email : whatsapp)) >= 5 || (ipHash && (await sentRecently("payload->>ipHash", ipHash)) >= 10)) {
+    return json({ error: "That's a few trips from you in the last hour. Check your email for the link, or message the crew and we'll sort it out." }, 429);
+  }
+  // The link goes into emails the crew and the guest open, so it has to lead to our own trip builder (see _shared/app-base.ts).
+  const tripLink = ownTripLink(str(trip.link, 2000), new URL(trustedBase(origin)).origin) ? str(trip.link, 2000) : null;
+  delete p.ipHash;
+  if (ipHash) p.ipHash = ipHash;
+
   // Save first, with a fresh reference (retry on the unlikely clash).
   let ref = "";
   for (let i = 0; i < 5 && !ref; i++) {
@@ -80,7 +110,7 @@ Deno.serve(async (req) => {
       countries: Array.isArray(trip.countries) ? trip.countries.map((s) => str(s, 4)).filter(Boolean).slice(0, 10) : [],
       est_total_usd: Number.isFinite(Number(trip.estTotalUsd)) ? Number(trip.estTotalUsd) : null,
       all_in_match: str(trip.allInMatch, 40) || null,
-      trip_link: str(trip.link, 2000) || null,
+      trip_link: tripLink,
       // crewText is the stop-by-stop brief for the team (builder crew.js); older builders only send the day-by-day itinerary.
       itinerary: str(p.crewText, 20_000) || str(p.itinerary, 20_000) || null,
       notes: str(contact.notes, 2000) || null,
