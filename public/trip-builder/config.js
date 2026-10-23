@@ -32,8 +32,9 @@ window.MM_CONFIG = {
   // Only promise what ops can honour: the hold itself happens on YOUR side when the lead arrives.
   HOLD_HOURS: 48,
 
-  // Deposit per person taken when a trip is sent for checking (Charlie, 19 Oct 2026). The server charges this too.
-  DEPOSIT_PER_PERSON: 50,
+  // Sending a trip for checking is FREE (Ewan, 23 Oct 2026): 0 here. The guest pays only after the crew has checked the trip and set the price (they choose how to pay then).
+  // To take a deposit per person again, set a number here AND the Supabase secret TRIP_BUILDER_DEPOSIT_PER_PERSON to the same number (docs/trip-builder-free-send.md).
+  DEPOSIT_PER_PERSON: 0,
 
   // The crew review page (#/crew/<ref>, opened from the buttons in the new-trip email). Ewan, 20 Oct 2026.
   CREW_ENDPOINT: 'https://bilhhkzcmicygufsdfxi.supabase.co/functions/v1/trip-builder-admin',

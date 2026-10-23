@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
       }
       if (kind === "balance") {
         await markBalancePaid(session);
-      } else if (kind === "trip_builder_deposit" || kind === "trip_builder_balance" || kind === "trip_builder_instalment") {
+      } else if (kind === "trip_builder_deposit" || kind === "trip_builder_balance" || kind === "trip_builder_instalment" || kind === "trip_builder_card") {
         // Ewan's trip builder (public/trip-builder): not an ALL IN booking.
         await handleTripBuilderPaid(envClient(), session);
       } else {

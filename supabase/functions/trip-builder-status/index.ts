@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
   const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
   const { data: r, error } = await sb
     .from("trip_builder_requests")
-    .select("ref,status,route,days,start_date,trip_link,crew_note,party_size,dates_flex,payload,hold_until,deposit_amount,deposit_url,deposit_paid_at,refunded_at,balance_amount,balance_paid_at,stripe_payment_method_id,pay_plan,pay_schedule")
+    .select("ref,status,route,days,start_date,trip_link,crew_note,party_size,dates_flex,payload,hold_until,deposit_amount,deposit_url,deposit_paid_at,refunded_at,balance_amount,balance_paid_at,pay_plan,pay_schedule")
     .eq("ref", ref)
     .maybeSingle();
   if (error) return json({ error: "Couldn't look that up" }, 500);
@@ -47,8 +47,10 @@ Deno.serve(async (req) => {
     datesFlex: r.dates_flex ?? "",
     // How they can pay the rest, once the crew has checked the trip (needs their key).
     pay: keyed && r.status === "ready" && balance != null
-      ? { balance, daysToGo: daysUntil(r.start_date), options: payOptions({ balance, start: r.start_date, cardSaved: !!r.stripe_payment_method_id }) }
+      ? { balance, daysToGo: daysUntil(r.start_date), options: payOptions({ balance, start: r.start_date }) }
       : null,
+    // The crew has set the price, so the guest can pay (the page tells them to open the link from their email when they haven't got their key).
+    canPay: r.status === "ready" && balance != null,
     // Their payments once they are booked, and anything overdue they can pay by hand (needs their key).
     plan: keyed ? r.pay_plan : null,
     schedule: keyed ? items.map((i) => ({ n: i.n, amount: i.amount, due: i.due, status: i.status })) : [],

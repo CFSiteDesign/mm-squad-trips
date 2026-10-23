@@ -1,6 +1,6 @@
 # Trip builder: guests change a trip after sending it
 
-A guest can change the trip they already sent, until it is booked. The change **replaces** the trip on the same request (same reference, same deposit, same beds held), so the crew only ever reviews the latest plan and never one the guest has already moved on from. No migration, no new secret, nothing extra to pay for: it uses the `payload` the request already stores.
+A guest can change the trip they already sent, until it is booked. The change **replaces** the trip on the same request (same reference, same deposit if there was one, same beds held), so the crew only ever reviews the latest plan and never one the guest has already moved on from. No migration, no new secret, nothing extra to pay for: it uses the `payload` the request already stores.
 
 ## How it works
 
@@ -11,7 +11,7 @@ A guest can change the trip they already sent, until it is booked. The change **
 
 | Status | What a change does |
 |---|---|
-| `pending_payment` (deposit not paid) | replaced quietly; nobody is emailed (the crew hasn't seen it). Their first email will already be the new version |
+| `pending_payment` (only with the deposit switch on, deposit not paid) | replaced quietly; nobody is emailed (the crew hasn't seen it). Their first email will already be the new version |
 | `submitted`, `checking` | replaced; crew emailed |
 | `ready` (approved, price set) | the approval and price are **withdrawn** (`balance_*`, `pay_plan`, `pay_schedule` cleared), back to `checking`; crew emailed and told so; the guest is told nothing is due |
 | `approved` (booked) | refused with 409: money is moving, so a payment is never left pointing at a plan that moved. The guest is told to message the crew |

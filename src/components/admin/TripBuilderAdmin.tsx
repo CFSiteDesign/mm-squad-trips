@@ -6,9 +6,10 @@ import { getAdminToken, isAdminPreview } from "@/lib/admin";
 import { publicUrl } from "@/lib/base-path";
 
 // Admin > Trip builder (19 Oct 2026). Trips sent from Ewan's builder at
-// /trip-builder with a $50 per person deposit. The crew checks each one, then
-// sends the balance link (guest gets the "ready" email) or declines it and
-// refunds the deposit. Backend: trip-builder-admin.
+// /trip-builder (free to send; a deposit per person only if the backend secret
+// TRIP_BUILDER_DEPOSIT_PER_PERSON is set). The crew checks each one, then
+// sets the price (guest gets the "ready" email and chooses how to pay) or declines
+// it (refunding a deposit if there was one). Backend: trip-builder-admin.
 
 type Req = {
   ref: string; status: string; name: string; contact_via: string | null; email: string | null; whatsapp: string | null;
@@ -119,7 +120,7 @@ export default function TripBuilderAdmin({ refreshKey }: { refreshKey?: number }
             <div className="font-sticker text-[10px] tracking-[0.15em] text-mm-lime">TRIP BUILDER</div>
             <h2 className="mt-1 font-display text-3xl">CUSTOM TRIPS</h2>
             <p className="mt-1 max-w-2xl text-sm text-mm-bone/80">
-              Trips guests built in the trip builder, each with a $50 per person deposit. Check the plan, then send the balance link, or decline it and refund the deposit.
+              Trips guests built in the trip builder. Sending is free. Check the plan, then set the price so the guest can choose how to pay, or decline it (a deposit, if one was paid, is refunded).
             </p>
           </div>
           <a href={publicUrl("trip-builder/")} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 border-[2px] border-mm-bone px-3 py-1.5 font-sticker text-[10px] tracking-[0.15em]">
@@ -162,7 +163,7 @@ export default function TripBuilderAdmin({ refreshKey }: { refreshKey?: number }
                         {r.guest_email && r.guest_email !== r.email && <div className="text-xs text-mm-black/50">Receipts: {r.guest_email}</div>}</td>
                       <td className="px-3 py-3"><div>{r.route}</div><div className="text-xs text-mm-black/60">{r.days} days · {r.start_date ? `from ${day(r.start_date)}` : "no date yet"}{r.dates_flex ? ` · ${r.dates_flex}` : ""}</div></td>
                       <td className="px-3 py-3">{r.party_size}</td>
-                      <td className="px-3 py-3">{usd(r.deposit_amount)}<div className="text-xs text-mm-black/60">{r.refunded_at ? "refunded" : r.deposit_paid_at ? "paid" : "not paid"}</div></td>
+                      <td className="px-3 py-3">{r.deposit_amount > 0 ? usd(r.deposit_amount) : "None"}<div className="text-xs text-mm-black/60">{r.deposit_amount > 0 ? (r.refunded_at ? "refunded" : r.deposit_paid_at ? "paid" : "not paid") : "free to send"}</div></td>
                       <td className="px-3 py-3"><span className={`inline-flex border-[2px] border-mm-black px-2 py-0.5 font-sticker text-[10px] tracking-[0.12em] ${st.cls}`}>{st.label}</span>
                         {r.status === "ready" && r.balance_amount != null && <div className="mt-1 text-xs">{usd(r.balance_amount)} to pay, their choice of how</div>}
                         {r.pay_plan && (r.pay_schedule ?? []).length > 0 && <div className="mt-1 text-xs">{r.pay_plan === "later" ? "pays a week before they leave" : r.pay_plan === "instalments" ? "instalments" : "paid all at once"} · {(r.pay_schedule ?? []).filter((i) => i.status === "paid").length}/{(r.pay_schedule ?? []).length} paid</div>}
@@ -220,7 +221,7 @@ export default function TripBuilderAdmin({ refreshKey }: { refreshKey?: number }
                                     </div>
                                     {r.balance_url && <button onClick={() => navigator.clipboard.writeText(r.balance_url!).then(() => toast.success("Copied"))} className="mt-2 text-xs underline">Copy the current balance link</button>}
                                   </div>
-                                  <button disabled={busy === r.ref} onClick={() => act(r, "decline", { refund: true }, `Decline ${r.ref} and refund the ${usd(r.deposit_amount)} deposit to ${r.name}?`)}
+                                  <button disabled={busy === r.ref} onClick={() => act(r, "decline", { refund: true }, r.deposit_amount > 0 ? `Decline ${r.ref} and refund the ${usd(r.deposit_amount)} deposit to ${r.name}?` : `Decline ${r.ref} for ${r.name}?`)}
                                     className="w-full border-[2px] border-mm-black bg-mm-paper px-3 py-2 font-sticker text-[10px] tracking-[0.15em] disabled:opacity-60">CAN'T DO IT: DECLINE + REFUND DEPOSIT</button>
                                   <button disabled={busy === r.ref} onClick={() => act(r, "booked", {}, `Mark ${r.ref} as booked without taking the balance here?`)}
                                     className="w-full px-3 py-1 text-xs underline disabled:opacity-60">Paid another way: mark as booked</button>

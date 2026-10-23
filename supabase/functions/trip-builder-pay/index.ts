@@ -1,7 +1,8 @@
-// Trip builder: the guest chooses how to pay the rest (Ewan, 20 Oct 2026). POST JSON { ref, k, plan, n? }.
-//   plan "now"          pay the whole balance on a Checkout page
-//   plan "later"        the card they paid the deposit with is charged a week before they leave; they are booked straight away
-//   plan "instalments"  the first payment on a Checkout page now, the rest charged to that card every 30 days
+// Trip builder: the guest chooses how to pay (Ewan, 20 Oct 2026; free to send since 23 Oct). POST JSON { ref, k, plan, n? }.
+//   plan "now"          pay the whole price on a Checkout page
+//   plan "later"        a card is charged a week before they leave. With a card on file (a deposit was paid) they are booked straight away;
+//                       otherwise they are sent to a Checkout page to SAVE a card (nothing is charged) and booked when it is saved (stripe-webhook, kind trip_builder_card)
+//   plan "instalments"  the first payment on a Checkout page now (that card is saved), the rest charged to it every 30 days
 //   plan "due"          pay a payment that was missed (or is due) by hand, on a Checkout page
 // `k` is the key from the link in the "your trip is checked" email (guest key, one trip, 90 days).
 // The rules (who is offered what) live in _shared/trip-builder-pay.ts; this only applies them and talks to Stripe.
@@ -38,14 +39,16 @@ Deno.serve(async (req) => {
   const back = guestTripUrl(origin, ref, gkey);
   const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
   const now = new Date(), nowIso = now.toISOString();
-  const checkout = async (amount: number, kind: string, n: number, what: string) => {
+  const guestAddress = (row.guest_email as string | null) || (row.email as string | null) || undefined;
+  // `saveCard`: keep the card they pay with, for the later payments (the first instalment of a trip that has no card on file).
+  const checkout = async (amount: number, kind: string, n: number, what: string, saveCard = false) => {
     const s = await stripe.checkout.sessions.create({
       mode: "payment",
-      ...(row.stripe_customer_id ? { customer: row.stripe_customer_id as string } : { customer_email: (row.guest_email as string | null) || (row.email as string | null) || undefined }),
+      ...(row.stripe_customer_id ? { customer: row.stripe_customer_id as string } : { customer_email: guestAddress, ...(saveCard ? { customer_creation: "always" } : {}) }),
       line_items: [{ price_data: { currency: "usd", unit_amount: Math.round(amount * 100), product_data: { name: `Mad Monkey trip: ${what}`, description: `${String(row.route ?? "").slice(0, 200)} · ref ${ref}` } }, quantity: 1 }],
       success_url: back, cancel_url: back,
       metadata: { kind, ref, n: String(n), origin: origin ?? "" },
-      payment_intent_data: { description: `Trip builder ${what} · ref ${ref}`, metadata: { kind, ref, n: String(n) } },
+      payment_intent_data: { description: `Trip builder ${what} · ref ${ref}`, metadata: { kind, ref, n: String(n) }, ...(saveCard ? { setup_future_usage: "off_session" } : {}) },
     });
     return s.url as string;
   };
@@ -67,10 +70,22 @@ Deno.serve(async (req) => {
     if (String(row.status) !== "ready" || !(Number(row.balance_amount) >= 1)) return json({ error: "The crew hasn't finished checking this trip yet." }, 409);
 
     const balance = Number(row.balance_amount);
-    const offered = payOptions({ balance, start: row.start_date as string | null, cardSaved: !!row.stripe_payment_method_id, now });
+    const offered = payOptions({ balance, start: row.start_date as string | null, now });
     if (!offered.some((o) => o.plan === plan)) return json({ error: "That way of paying isn't available for this trip. Pick one of the others." }, 400);
     const items = buildSchedule(plan as Plan, balance, row.start_date as string | null, now);
 
+    if (plan === "later" && !(row.stripe_payment_method_id && row.stripe_customer_id)) {
+      // No card on file (the trip was free to send): save one on a Checkout page first. Nothing is charged there. They are booked when the card is saved, and only
+      // if the price is still the one they were shown (stripe-webhook, kind trip_builder_card).
+      const s = await stripe.checkout.sessions.create({
+        mode: "setup", currency: "usd", payment_method_types: ["card"],
+        ...(row.stripe_customer_id ? { customer: row.stripe_customer_id as string } : { customer_email: guestAddress, customer_creation: "always" }),
+        success_url: back, cancel_url: back,
+        metadata: { kind: "trip_builder_card", ref, plan: "later", amt: String(balance), origin: origin ?? "" },
+        setup_intent_data: { description: `Trip builder card · ref ${ref}`, metadata: { kind: "trip_builder_card", ref } },
+      });
+      return json({ ok: true, checkoutUrl: s.url as string, plan, card: true });
+    }
     if (plan === "later") {
       // Booked now, charged to the saved card a week before they leave.
       const { data: won, error: uErr } = await sb.from("trip_builder_requests").update({ pay_plan: "later", pay_schedule: items, plan_chosen_at: nowIso, status: "approved", updated_at: nowIso }).eq("ref", ref).eq("status", "ready").select("ref");
@@ -85,7 +100,7 @@ Deno.serve(async (req) => {
     const { error: uErr } = await sb.from("trip_builder_requests").update({ pay_plan: plan, pay_schedule: items, updated_at: nowIso }).eq("ref", ref);
     if (uErr) return json({ error: "Couldn't save that. Try again." }, 500);
     const first = items[0];
-    const checkoutUrl = await checkout(first.amount, plan === "now" ? "trip_builder_balance" : "trip_builder_instalment", 1, plan === "now" ? "balance" : `payment 1 of ${items.length}`);
+    const checkoutUrl = await checkout(first.amount, plan === "now" ? "trip_builder_balance" : "trip_builder_instalment", 1, plan === "now" ? "balance" : `payment 1 of ${items.length}`, plan === "instalments" && !row.stripe_payment_method_id);
     return json({ ok: true, checkoutUrl, plan, first: { amount: first.amount, label: usd(first.amount) } });
   } catch (e) {
     console.error("trip builder pay failed:", e instanceof Error ? e.message : e);

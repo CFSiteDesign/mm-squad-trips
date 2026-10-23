@@ -5,7 +5,7 @@
 A guest who has sent a trip can "log in" from any device: the builder asks for the email they used and POSTs `{ email }` here. We email them a link to each trip they have sent (newest first, up to five), each with its own signed guest key (the same key as in the "your trip is checked" emails, valid 90 days). Opening the link gives them their trip page, where they can change the trip or plan the next stage. There is no password and no account.
 
 - The answer is always `{ ok: true }`, whether or not the address has a trip, and a throttled address gets the same answer. It can't be used to find out who has booked.
-- Only trips whose deposit was paid and that are still live (submitted, checking, ready, approved) are included.
+- Only trips that are still live (submitted, checking, ready, approved) are included: not declined, and not one waiting on an unpaid deposit (the deposit is off by default now, so a free trip is live as soon as it is sent, see [trip-builder-free-send.md](trip-builder-free-send.md)). What is printed about a trip is only plain text.
 - Three emails an hour per address, counted from `email_send_log` (template `trip_builder_login`). No new table, no migration.
 - A hidden `website` field that is filled in is treated as a bot (same answer, nothing sent).
 - An address is matched as plain text only: `_`, `%`, `\` and `*` in it can't act as wildcards, so `a_b@x.com` never matches `aXb@x.com`'s trips.
@@ -13,7 +13,7 @@ A guest who has sent a trip can "log in" from any device: the builder asks for t
 
 ## Later stages
 
-The builder's "Plan my next stage" sends a new request (its own deposit, its own review) marked as stage 2, 3...: `payload.stage = { n, parent, from, been }` and `payload.summary.stage` (where they start, the first journey, where they have already been, the earlier trip's reference). `readSummary` reads it defensively (`readStage`): the number is clamped, the parent has to look like a trip reference, everything else is length-limited text. The crew's new-trip email gets a "Stage 2 of their journey" box and a `Stage 2 ·` subject, and the review page shows the same box. No migration: it all lives in `payload`.
+The builder's "Plan my next stage" sends a new request (its own review, and its own deposit only if the deposit switch is on) marked as stage 2, 3...: `payload.stage = { n, parent, from, been }` and `payload.summary.stage` (where they start, the first journey, where they have already been, the earlier trip's reference). `readSummary` reads it defensively (`readStage`): the number is clamped, the parent has to look like a trip reference, everything else is length-limited text. The crew's new-trip email gets a "Stage 2 of their journey" box and a `Stage 2 ·` subject, and the review page shows the same box. No migration: it all lives in `payload`.
 
 ## Links in our emails only point at our own sites
 

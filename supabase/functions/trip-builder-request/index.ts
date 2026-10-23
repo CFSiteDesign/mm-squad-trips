@@ -1,13 +1,19 @@
 // Trip builder: "Hold my beds + get it checked" (Charlie, 19 Oct 2026).
 // The builder (public/trip-builder) posts the guest's whole plan here (Ewan's
-// lead payload, docs in his repo's docs/LEADS.md, plus deposit.people). We save
-// it as pending_payment and return a Stripe Checkout link for the deposit:
-// $50 per person, charged here, never trusted from the browser. stripe-webhook
-// marks it paid (_shared/trip-builder.ts) and it shows up in Admin > Trip builder.
+// lead payload, docs in his repo's docs/LEADS.md).
+//
+// FREE TO SEND (Ewan, 23 Oct 2026): we save it as "submitted" and email the crew and
+// the guest straight away. Nothing is paid until the crew has checked the trip and the
+// guest chooses how to pay (trip-builder-pay). No Stripe is involved here.
+//
+// With the secret TRIP_BUILDER_DEPOSIT_PER_PERSON set (a switch back to the old way) we
+// save it as pending_payment and return a Stripe Checkout link for the deposit, charged
+// here, never trusted from the browser; stripe-webhook marks it paid
+// (_shared/trip-builder.ts). Either way it shows up in Admin > Trip builder.
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { DEPOSIT_PER_PERSON_USD, HOLD_HOURS, MAX_PEOPLE } from "../_shared/trip-builder.ts";
+import { depositPerPerson, handleTripBuilderSubmitted, HOLD_HOURS, MAX_PEOPLE } from "../_shared/trip-builder.ts";
 import { trustedBase } from "../_shared/app-base.ts";
 import { crewSecret, guestTripUrl, signGuestKey } from "../_shared/trip-builder-crew.ts";
 import { ownTripLink } from "../_shared/trip-builder-revise.ts";
@@ -43,7 +49,9 @@ Deno.serve(async (req) => {
   const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
   const url = Deno.env.get("SUPABASE_URL");
   const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  if (!stripeKey || !url || !key) return json({ error: "Payments aren't set up yet." }, 503);
+  const perPerson = depositPerPerson();           // 0 = free to send (the default)
+  const free = perPerson === 0;
+  if (!url || !key || (!free && !stripeKey)) return json({ error: free ? "Not set up yet." : "Payments aren't set up yet." }, 503);
 
   const raw = await req.text();
   if (raw.length > 200_000) return json({ error: "That trip is too big to send." }, 413);
@@ -67,7 +75,7 @@ Deno.serve(async (req) => {
   if (!route || days < 1) return json({ error: "Add a stop to your trip first." }, 400);
 
   const people = Math.min(MAX_PEOPLE, Math.max(1, Math.round(Number(deposit.people ?? contact.partySize) || 1)));
-  const depositUsd = DEPOSIT_PER_PERSON_USD * people;
+  const depositUsd = perPerson * people;
   const start = typeof trip.start === "string" && DATE.test(trip.start) ? trip.start : null;
   const origin = req.headers.get("origin");
   const sb = createClient(url, key);
@@ -88,13 +96,25 @@ Deno.serve(async (req) => {
   delete p.ipHash;
   if (ipHash) p.ipHash = ipHash;
 
+  // Free to send: the same guest pressing Send twice, or trying again after a dropped connection (common on a phone abroad), must not put two copies of the trip in front of the
+  // crew. The same contact and the same trip within ten minutes is the one already sent: say so, without a second email and WITHOUT the guest key (it is in the first reply and the
+  // first email; handing it to whoever repeats a contact and a trip would let a stranger open someone's trip).
+  if (free && tripLink) {
+    const { data: same } = await sb.from("trip_builder_requests").select("ref,status,hold_until")
+      .eq(via === "email" ? "email" : "whatsapp", via === "email" ? email : whatsapp).eq("trip_link", tripLink).in("status", ["submitted", "checking", "ready"])
+      .gte("created_at", new Date(Date.now() - 10 * 60_000).toISOString()).limit(1);
+    const dup = Array.isArray(same) ? same[0] : null;
+    if (dup) return json({ ref: dup.ref, status: dup.status, duplicate: true, deposit: { amount: 0, perPerson: 0, people }, hold: dup.hold_until ? { until: dup.hold_until } : null });
+  }
+  // A free trip is with the crew from the start, and starts its bed hold now; a paid deposit starts the hold when it lands (stripe-webhook).
+  const holdUntil = free && start ? new Date(Date.now() + HOLD_HOURS * 3600_000).toISOString() : null;
   // Save first, with a fresh reference (retry on the unlikely clash).
-  let ref = "";
+  let ref = "", saved: Record<string, unknown> = {};
   for (let i = 0; i < 5 && !ref; i++) {
     const candidate = newRef();
-    const { error } = await sb.from("trip_builder_requests").insert({
+    const record = {
       ref: candidate,
-      status: "pending_payment",
+      status: free ? "submitted" : "pending_payment",
       name,
       contact_via: via,
       email: email || null,
@@ -118,13 +138,22 @@ Deno.serve(async (req) => {
       from_hostel: str(p.fromHostel, 60) || null,
       payload: p,
       deposit_amount: depositUsd,
-    });
-    if (!error) ref = candidate;
+      hold_until: holdUntil,
+    };
+    const { error } = await sb.from("trip_builder_requests").insert(record);
+    if (!error) { ref = candidate; saved = record; }
     else if (!/duplicate|unique/i.test(error.message)) return json({ error: "Couldn't save your trip. Please try again." }, 500);
   }
   if (!ref) return json({ error: "Couldn't save your trip. Please try again." }, 500);
 
-  const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+  // Free to send: it's with the crew now. Tell them (and the guest), and hand the guest their key: it's how they change the trip after sending it.
+  if (free) {
+    await handleTripBuilderSubmitted({ ...saved, guest_email: null, deposit_paid_at: null, balance_paid_at: null, balance_amount: null } as never, origin)
+      .catch((e) => console.error("trip builder: new-trip emails failed:", e instanceof Error ? e.message : e));
+    return json({ ref, status: "submitted", key: await signGuestKey(ref), deposit: { amount: 0, perPerson: 0, people }, hold: holdUntil ? { until: holdUntil } : null });
+  }
+
+  const stripe = new Stripe(stripeKey as string, { apiVersion: "2025-08-27.basil" });
   // The guest's own key goes back to their browser and into their trip page link: it's how they change the trip after sending it.
   const guestKey = await signGuestKey(ref);
   const back = guestTripUrl(origin, ref, guestKey);
@@ -135,7 +164,7 @@ Deno.serve(async (req) => {
       line_items: [{
         price_data: {
           currency: "usd",
-          unit_amount: DEPOSIT_PER_PERSON_USD * 100,
+          unit_amount: perPerson * 100,
           product_data: {
             name: "Mad Monkey trip deposit",
             description: `${route.slice(0, 200)} · ${days} days · ref ${ref}. Comes off your trip total; refunded if the crew can't make it work.`,
@@ -166,7 +195,7 @@ Deno.serve(async (req) => {
       status: "pending_payment",
       checkoutUrl: session.url,
       key: guestKey,
-      deposit: { amount: depositUsd, perPerson: DEPOSIT_PER_PERSON_USD, people },
+      deposit: { amount: depositUsd, perPerson, people },
       hold: start ? { until: new Date(Date.now() + HOLD_HOURS * 3600_000).toISOString() } : null,
     });
   } catch (e) {

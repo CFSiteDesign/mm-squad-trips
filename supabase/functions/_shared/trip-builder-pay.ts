@@ -1,13 +1,13 @@
 // Trip builder: how a guest pays the rest once the crew has approved their trip (Ewan, 20 Oct 2026).
 //
-// The deposit taken when the trip was sent (and the card it was paid with) carries straight on:
-// the crew sets the balance, the guest picks how to pay it, and the plan follows the same rules
-// as ALL IN bookings:
+// Sending a trip is free (Ewan, 23 Oct 2026), so the crew sets the price once they have checked it, the guest picks how
+// to pay it, and the plan follows the same rules as ALL IN bookings. (If a deposit was taken when the trip was sent,
+// it counts towards the price and the card it was paid with carries on.)
 //   now          pay the whole balance straight away
-//   later        the saved card is charged automatically LATE_DAYS before departure (a reminder goes first)
-//   instalments  only when departure is INSTALMENT_MIN_DAYS or more away: equal payments, the first one now,
-//                the rest charged to the saved card every INSTALMENT_EVERY_DAYS days, the last at least
-//                LATE_DAYS before departure
+//   later        a card is saved now (nothing is charged) and charged automatically LATE_DAYS before departure (a reminder goes first)
+//   instalments  only when departure is INSTALMENT_MIN_DAYS or more away: equal payments, the first one now (the card
+//                it is paid with is saved), the rest charged to that card every INSTALMENT_EVERY_DAYS days, the last at
+//                least LATE_DAYS before departure
 // Pure functions only (no Stripe, no database), so every rule here is covered by trip-builder-pay.test.ts.
 
 export const LATE_DAYS = 7;
@@ -62,14 +62,14 @@ export function buildSchedule(plan: Plan, balance: number, start: string | null,
   return splitCents(cents, n).map((c, i) => mk(i + 1, c, addDays(today, i * INSTALMENT_EVERY_DAYS), i === 0 ? "checkout" : "card"));
 }
 
-/** What this guest can choose. "later" and "instalments" need a card saved at the deposit and a departure date. */
-export function payOptions(o: { balance: number; start: string | null; cardSaved: boolean; now?: Date }): Option[] {
+/** What this guest can choose. "later" and "instalments" need a departure date far enough away. The card they are charged is saved as part of choosing (or is the one already on file). */
+export function payOptions(o: { balance: number; start: string | null; now?: Date }): Option[] {
   const now = o.now ?? new Date(), days = daysUntil(o.start, now), out: Option[] = [];
   if (!(o.balance >= 1)) return out;
   const view = (plan: Plan): Option => { const items = buildSchedule(plan, o.balance, o.start, now); return { plan, count: items.length, amount: o.balance, items: items.map((i) => ({ amount: i.amount, due: i.due })) }; };
   out.push(view("now"));
-  if (o.cardSaved && days != null && days > LATE_DAYS) out.push(view("later"));
-  if (o.cardSaved && instalmentCount(days, o.balance) >= 2) out.push(view("instalments"));
+  if (days != null && days > LATE_DAYS) out.push(view("later"));
+  if (instalmentCount(days, o.balance) >= 2) out.push(view("instalments"));
   return out;
 }
 

@@ -16,10 +16,10 @@ import {
   tripBuilderBookedEmail,
   tripBuilderConfirmedEmail,
   tripBuilderDeclinedEmail,
-  tripBuilderDepositEmail,
   tripBuilderOpsEmail,
   tripBuilderPaymentFailedEmail,
   tripBuilderReadyEmail,
+  tripBuilderReceivedEmail,
   tripBuilderReceiptEmail,
   tripBuilderReminderEmail,
 } from "../_shared/email.ts";
@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
     stops: [...SAMPLE_TRIP.stops], countries: [...SAMPLE_TRIP.countries], est_total_usd: SAMPLE_TRIP.est, all_in_match: "cambodia",
     trip_link: `https://madmonkeyhostels.com/all-in-trips/trip-builder/#/build/${SAMPLE_TRIP.state}`, itinerary: SAMPLE_TRIP.crewText,
     notes: "This is a sample trip so you can try the Approve, Not approved and Edit it buttons. Nothing here is a real booking.",
-    deposit_amount: 100, deposit_paid_at: nowIso, deposit_payment_intent: null, deposit_session_id: null, deposit_url: null, hold_until: null,
+    deposit_amount: 0, deposit_paid_at: null, deposit_payment_intent: null, deposit_session_id: null, deposit_url: null, hold_until: null,      // free to send: nothing paid
     balance_amount: null, balance_session_id: null, balance_url: null, balance_payment_intent: null, balance_paid_at: null, refund_id: null, refunded_at: null,
     crew_note: null, updated_at: nowIso,
     payload: { v: 1, source: "trip-builder-sample", summary: SAMPLE_TRIP.summary, crewText: SAMPLE_TRIP.crewText },
@@ -74,22 +74,23 @@ Deno.serve(async (req) => {
     { tpl: "trip_builder_test_ops", m: tripBuilderOpsEmail({
       ref: SAMPLE_REF, name: "Charlie (sample)", contact: `Email ${TRIP_BUILDER_CONTACT}`, guestEmail: TRIP_BUILDER_CONTACT,
       guestWhatsapp: "", people: 2, route: SAMPLE_TRIP.route, days: SAMPLE_TRIP.days, startDate: "", dates: "flex", estTotal: `$${SAMPLE_TRIP.est} (builder estimate)`,
-      deposit: "$100", allInMatch: "cambodia", notes: SAMPLE.notes, itinerary: SAMPLE_TRIP.crewText,
+      deposit: "", allInMatch: "cambodia", notes: SAMPLE.notes, itinerary: SAMPLE_TRIP.crewText,
       tripLink: SAMPLE.trip_link, adminUrl: "https://madmonkeyhostels.com/all-in-trips/admin", holdUntil: "",
       summary: sampleSummary, reviewUrl: crewReviewUrl(null, SAMPLE_REF, sampleKey), approveUrl: crewReviewUrl(null, SAMPLE_REF, sampleKey, "approve"),
       declineUrl: crewReviewUrl(null, SAMPLE_REF, sampleKey, "decline"), editUrl: crewReviewUrl(null, SAMPLE_REF, sampleKey, "edit"),
-      suggestedBalance: `$${suggestBalance(sampleSummary, 100)}`,
+      suggestedBalance: `$${suggestBalance(sampleSummary, 0)}`,
     }) },
-    { tpl: "trip_builder_test_deposit", m: tripBuilderDepositEmail({
-      firstName: "Charlie", ref, route, days: 13, startDate: "", deposit: "$100", people: 2, holdUntil: "", statusUrl,
+    { tpl: "trip_builder_test_received", m: tripBuilderReceivedEmail({
+      firstName: "Charlie", ref, route, days: 13, startDate: "", people: 2, holdUntil: "", statusUrl,
     }) },
     { tpl: "trip_builder_test_ready", m: tripBuilderReadyEmail({
       firstName: "Charlie", ref, route, balance: "$512",
       note: "All checked. We swapped the Kampot bus for a morning minivan so you arrive in daylight.", payUrl: guestTripUrl(null, SAMPLE_REF, await signGuestKey(SAMPLE_REF)), statusUrl,
       planUrl: SAMPLE.trip_link, choices: ["Pay all $512 now", "Pay $512 automatically on Mon 4 Jan, 7 days before you leave", "Pay in 3 instalments of about $171: the first now, then one every 30 days"],
+      hasDeposit: false,
     }) },
     { tpl: "trip_builder_test_booked", m: tripBuilderBookedEmail({
-      firstName: "Charlie", ref, route, planLabel: "pay the rest in instalments", deposit: "$100", statusUrl, startDate: "Mon 11 Jan 2027",
+      firstName: "Charlie", ref, route, planLabel: "pay in instalments", deposit: "", statusUrl, startDate: "Mon 11 Jan 2027",
       schedule: [{ amount: "$171", due: "Today", paid: true }, { amount: "$171", due: "Wed 18 Nov", paid: false }, { amount: "$170", due: "Fri 18 Dec", paid: false }],
     }) },
     { tpl: "trip_builder_test_reminder", m: tripBuilderReminderEmail({ firstName: "Charlie", ref, route, amount: "$171", due: "Wed 18 Nov", statusUrl }) },
@@ -97,7 +98,7 @@ Deno.serve(async (req) => {
     { tpl: "trip_builder_test_payment_failed", m: tripBuilderPaymentFailedEmail({ firstName: "Charlie", ref, route, amount: "$171", nextTry: "Fri 20 Nov", final: false, statusUrl }) },
     { tpl: "trip_builder_test_confirmed", m: tripBuilderConfirmedEmail({ firstName: "Charlie", ref, route, paid: "$512", statusUrl }) },
     { tpl: "trip_builder_test_declined", m: tripBuilderDeclinedEmail({
-      firstName: "Charlie", ref, route, note: "Koh Sdach is full on those nights. Want to swap it for Koh Rong Samloem?", refunded: "$100", statusUrl,
+      firstName: "Charlie", ref, route, note: "Koh Sdach is full on those nights. Want to swap it for Koh Rong Samloem?", refunded: "", statusUrl,
     }) },
   ];
   const sent: string[] = [];

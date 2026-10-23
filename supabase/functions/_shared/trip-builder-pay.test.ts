@@ -56,15 +56,14 @@ Deno.test("instalments: first now through Checkout, the rest on the card every 3
   }
 });
 
-Deno.test("options: now always; later and instalments only with a saved card and enough time", () => {
+Deno.test("options: now always; later and instalments only with enough time before departure", () => {
   const plans = (o: Parameters<typeof payOptions>[0]) => payOptions({ ...o, now: NOW }).map((x) => x.plan);
-  assertEquals(plans({ balance: 500, start: plus(120), cardSaved: true }), ["now", "later", "instalments"]);
-  assertEquals(plans({ balance: 500, start: plus(30), cardSaved: true }), ["now", "later"], "30 days out: no instalments");
-  assertEquals(plans({ balance: 500, start: plus(7), cardSaved: true }), ["now"], "leaving in a week: the 7-day charge date is already here");
-  assertEquals(plans({ balance: 500, start: plus(8), cardSaved: true }), ["now", "later"], "8 days out: charge tomorrow");
-  assertEquals(plans({ balance: 500, start: plus(120), cardSaved: false }), ["now"], "no saved card (deposit taken before this existed)");
-  assertEquals(plans({ balance: 500, start: null, cardSaved: true }), ["now"], "no date: nothing to schedule against");
-  assertEquals(plans({ balance: 0.5, start: plus(120), cardSaved: true }), [], "nothing to pay");
+  assertEquals(plans({ balance: 500, start: plus(120) }), ["now", "later", "instalments"], "free to send: no card on file yet, it is collected when they choose");
+  assertEquals(plans({ balance: 500, start: plus(30) }), ["now", "later"], "30 days out: no instalments");
+  assertEquals(plans({ balance: 500, start: plus(7) }), ["now"], "leaving in a week: the 7-day charge date is already here");
+  assertEquals(plans({ balance: 500, start: plus(8) }), ["now", "later"], "8 days out: charge tomorrow");
+  assertEquals(plans({ balance: 500, start: null }), ["now"], "no date: nothing to schedule against");
+  assertEquals(plans({ balance: 0.5, start: plus(120) }), [], "nothing to pay");
 });
 
 Deno.test("what is due today, and what needs a reminder", () => {

@@ -2,10 +2,12 @@
 // plan the next stage from any device. No passwords: the link carries the same signed guest key as the "your trip" emails (_shared/trip-builder-crew.ts).
 //
 // The answer is always { ok: true } whether or not that address has a trip, and a throttled address gets the same answer, so this can't be used to find
-// out who has booked. Only trips whose deposit was paid and that are still live (not declined) are included. A few emails an hour per address.
+// out who has booked. Only trips that are still live (with the crew, being checked, ready or booked: not declined, not waiting on an unpaid deposit) are included.
+// A few emails an hour per address. What is printed about a trip is only plain text (anyone can send a trip with anyone's email, so a route is whatever they typed).
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { sendEmail, tripBuilderLoginEmail } from "../_shared/email.ts";
+import { plainFirstName, plainText } from "../_shared/trip-builder.ts";
 import { guestTripUrl, signGuestKey } from "../_shared/trip-builder-crew.ts";
 
 const json = (body: unknown, status = 200) =>
@@ -13,7 +15,7 @@ const json = (body: unknown, status = 200) =>
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const LIVE = ["submitted", "checking", "ready", "approved"];
 const MAX_PER_HOUR = 3;
-const COLS = "ref,name,status,route,days,created_at,deposit_paid_at,email,guest_email";
+const COLS = "ref,name,status,route,days,created_at,email,guest_email";
 /** An email address as a LIKE pattern that can only match itself ("_" and "%" are wildcards, and "_" is common in an address like a_b@x.com). */
 const exactLike = (s: string) => s.replace(/[\\%_]/g, "\\$&");
 
@@ -40,7 +42,7 @@ Deno.serve(async (req) => {
   ]);
   const seen = new Set<string>();
   const rows = [...(byContact.data ?? []), ...(byReceipt.data ?? [])]
-    .filter((r) => r.deposit_paid_at && (String(r.email ?? "").toLowerCase() === email || String(r.guest_email ?? "").toLowerCase() === email))
+    .filter((r) => String(r.email ?? "").toLowerCase() === email || String(r.guest_email ?? "").toLowerCase() === email)
     .filter((r) => (seen.has(r.ref) ? false : (seen.add(r.ref), true)))
     .sort((x, y) => String(y.created_at ?? "").localeCompare(String(x.created_at ?? "")))
     .slice(0, 5);
@@ -48,9 +50,9 @@ Deno.serve(async (req) => {
 
   const origin = req.headers.get("origin");
   const trips = await Promise.all(rows.map(async (r) => ({
-    ref: String(r.ref), route: String(r.route ?? "your trip"), days: Number(r.days) || 0, status: String(r.status), url: guestTripUrl(origin, r.ref, await signGuestKey(r.ref)),
+    ref: String(r.ref), route: plainText(r.route) || "your trip", days: Number(r.days) || 0, status: String(r.status), url: guestTripUrl(origin, r.ref, await signGuestKey(r.ref)),
   })));
-  const first = String(rows[0].name ?? "").trim().split(/\s+/)[0] || "there";
+  const first = plainFirstName(rows[0].name);
   const m = tripBuilderLoginEmail({ firstName: first, trips });
   await sendEmail({ to: email, subject: m.subject, html: m.html, templateName: "trip_builder_login", metadata: { trips: trips.length } });
   return json({ ok: true });

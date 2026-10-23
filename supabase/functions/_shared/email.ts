@@ -762,8 +762,9 @@ export function underfilledCrewNoticeEmail(v: {
 }
 
 // ---------- Trip builder (Ewan's builder at /trip-builder, 19 Oct 2026) ----------
-// A guest sends a trip for checking with a $50 per person deposit; the crew
-// checks it in Admin > Trip builder and sends the balance link from there.
+// A guest sends a trip for checking (free since 23 Oct 2026; with a deposit per person if
+// TRIP_BUILDER_DEPOSIT_PER_PERSON is set); the crew checks it (the review page, or Admin >
+// Trip builder) and sets the price, then the guest chooses how to pay.
 // All trip builder comms go through Ewan: alerts to him, guest replies to him.
 
 const tbButton = (href: string, label: string) =>
@@ -799,16 +800,33 @@ export function tripBuilderDepositEmail(v: {
   return { subject: `Your trip is with the crew (${v.ref})`, html: tbShell("Your trip is with the crew", "It's with the crew 🐒", body) };
 }
 
-/** Ops: a new trip to check, deposit paid. Shows the whole trip the way the guest built it, with Approve / Not approved / Edit it buttons. */
+/** Guest: a free trip is with the crew (nothing paid yet). The route is only printed when it is plain text (it is whatever the sender typed). */
+export function tripBuilderReceivedEmail(v: {
+  firstName: string; ref: string; route: string; days: number; startDate: string; people: number; holdUntil: string; statusUrl: string;
+}): { subject: string; html: string } {
+  const e = escapeHtml;
+  const body = [
+    tbP(`Hey ${e(v.firstName)},`),
+    tbP(`Thanks for sending your trip${v.people > 1 ? ` (${v.people} people)` : ""}${v.route ? `: <strong>${e(v.route)}</strong>` : ""}, ${v.days} days${v.startDate ? `, starting ${e(v.startDate)}` : ""}. It's with the crew, and <strong>you haven't paid anything</strong>.`),
+    v.holdUntil ? tbP(`We're holding your beds until <strong>${e(v.holdUntil)}</strong> while a real Mad Monkey crew member checks the routes, beds, dates and prices.`) : tbP("A real Mad Monkey crew member is checking the routes, beds and prices, and will help you pin down dates."),
+    tbP("Next, you'll get a confirmed plan and the final price. Only then do you choose how to pay, and only if you say yes. If we can't make the trip work, there's nothing to pay and nothing to refund."),
+    `<p style="margin:18px 0">${tbButton(v.statusUrl, "Track my trip")}</p>`,
+    tbP(`Questions? Reply to this email or message Ewan on WhatsApp: <a href="${TB_WA_LINK}" style="color:#0a0a0a">${TRIP_BUILDER_WHATSAPP}</a>.`),
+    `<p style="margin:0;font-size:13px;color:#555">Reference: <strong>${e(v.ref)}</strong></p>`,
+  ].join("\n");
+  return { subject: `Your trip is with the crew (${v.ref})`, html: tbShell("Your trip is with the crew", "It's with the crew 🐒", body) };
+}
+
+/** Ops: a new trip to check (deposit paid, or free to send). Shows the whole trip the way the guest built it, with Approve / Not approved / Edit it buttons. */
 export function tripBuilderOpsEmail(v: {
   ref: string; name: string; contact: string; guestEmail: string; guestWhatsapp?: string; people: number; route: string; days: number;
-  startDate: string; dates: string; estTotal: string; deposit: string; allInMatch: string; notes: string;
+  startDate: string; dates: string; estTotal: string; /** "$100" once a deposit is paid; "" when the trip was free to send. */ deposit: string; allInMatch: string; notes: string;
   itinerary: string; tripLink: string; adminUrl: string; holdUntil: string;
   /** What the builder sent (payload.summary). Null for trips sent before the summary existed: the email falls back to the plain itinerary. */
   summary?: Summary | null;
   /** Links to the crew review page, one per button. */
   reviewUrl?: string; approveUrl?: string; declineUrl?: string; editUrl?: string;
-  /** "$602" – the trip cost for everyone less the deposit. A starting figure only. */
+  /** "$602" – the trip cost for everyone, less the deposit if there was one. A starting figure only. */
   suggestedBalance?: string;
   /** Set when the guest has changed a trip they already sent: this email is the new version, and says what moved. */
   update?: { rev: number; changes: string[]; note: string; withdrawn: boolean; was: { route: string; days: number; total: string; start: string } };
@@ -842,7 +860,7 @@ export function tripBuilderOpsEmail(v: {
   const who = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #0a0a0a;margin:0 0 16px 0;font-size:14px;line-height:1.5"><tr><td style="padding:12px 14px">
 <div style="font-size:18px;font-weight:900;${D}">${e(v.name)}</div>
 <div style="${D}">${v.people > 1 ? `Party of ${v.people}` : "Travelling solo"} · ${contactLine}</div>
-<div style="${D}">Deposit paid <strong>${e(v.deposit)}</strong>${v.holdUntil ? ` · beds held until <strong>${e(v.holdUntil)}</strong>` : " · no start date, so no beds to hold yet"}</div>
+<div style="${D}">${v.deposit ? `Deposit paid <strong>${e(v.deposit)}</strong>` : "Free to send: <strong>nothing paid yet</strong>"}${v.holdUntil ? ` · beds held until <strong>${e(v.holdUntil)}</strong>` : " · no start date, so no beds to hold yet"}</div>
 <div style="font-size:12px;color:#555">Ref ${e(v.ref)}${v.guestEmail && waDigits.length >= 8 ? ` · receipts to ${e(v.guestEmail)}` : ""}</div>
 </td></tr></table>`;
 
@@ -933,7 +951,7 @@ ${mrow("Their spending money", money(b.spendFund), false, `${money(b.spendPerDay
 ${mrow("Estimated total", money(b.total), true)}
 ${sum.people > 1 ? mrow(`For all ${sum.people}`, `${money(b.tripCostAllPeople)} trip cost · ${money(b.totalAllPeople)} with spending money`, true) : ""}
 ${b.guestBudget ? mrow("Their own budget", `${money(b.guestBudget)} each`, false, b.budgetLeft == null ? "" : b.budgetLeft >= 0 ? `${money(b.budgetLeft)} to spare` : `${money(-b.budgetLeft)} over`) : ""}
-<tr><td colspan="2" style="background:#ccff01;padding:8px 12px;font-size:13px;${D}">Deposit paid <strong>${e(v.deposit)}</strong>${v.suggestedBalance ? ` · suggested balance <strong>${e(v.suggestedBalance)}</strong> <span style="font-size:11px">(trip cost${sum.people > 1 ? ` for ${sum.people}` : ""} less the deposit). You set the final figure when you approve.</span>` : ""}</td></tr>
+<tr><td colspan="2" style="background:#ccff01;padding:8px 12px;font-size:13px;${D}">${v.deposit ? `Deposit paid <strong>${e(v.deposit)}</strong>` : "Nothing paid yet (free to send)"}${v.suggestedBalance ? ` · suggested ${v.deposit ? "balance" : "price"} <strong>${e(v.suggestedBalance)}</strong> <span style="font-size:11px">(trip cost${sum.people > 1 ? ` for ${sum.people}` : ""}${v.deposit ? " less the deposit" : ""}). You set the final figure when you approve.</span>` : ""}</td></tr>
 </table>`;
 
   /* ---- heads up ---- */
@@ -964,6 +982,8 @@ ${sum.flags.map((f) => `<tr><td style="padding:6px 12px;font-size:13px;line-heig
 /** Guest: checked, here's the final price. The button opens their trip page, where they choose how to pay the rest. */
 export function tripBuilderReadyEmail(v: {
   firstName: string; ref: string; route: string; balance: string; note: string; payUrl: string; statusUrl: string;
+  /** False when nothing was paid when the trip was sent (the usual case now): it is the whole price, not "the rest". */
+  hasDeposit?: boolean;
   /** The checked plan (the crew may have tweaked it), so the guest can see exactly what they're paying for. */
   planUrl?: string;
   /** What they can choose, e.g. ["Pay it all now", "Pay it automatically on Tue 12 Jan, a week before you leave", "Pay in 3 instalments"]. */
@@ -975,12 +995,14 @@ export function tripBuilderReadyEmail(v: {
     tbP(`Good news: the crew has checked your trip, <strong>${e(v.route)}</strong>.`),
     v.note ? `<div style="margin:16px 0;padding:14px;border:2px solid #0a0a0a;background:#ccff01"><div style="font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px">From the crew</div><div style="font-size:15px;white-space:pre-line">${e(v.note)}</div></div>` : "",
     safeHref(v.planUrl) ? tbP(`Have a look at the plan we checked: <a href="${e(safeHref(v.planUrl))}" style="color:#0a0a0a">see your trip</a>.`) : "",
-    tbP(`The rest to pay is <strong>${e(v.balance)}</strong>. Your deposit is already taken off, and it's the same card that carries on.`),
+    v.hasDeposit === false
+      ? tbP(`The price for your trip is <strong>${e(v.balance)}</strong>. You haven't paid anything yet. Choose how you'd like to pay below, and we'll lock in your beds.`)
+      : tbP(`The rest to pay is <strong>${e(v.balance)}</strong>. Your deposit is already taken off, and it's the same card that carries on.`),
     v.choices && v.choices.length ? `<ul style="margin:0 0 12px 0;padding-left:20px">${v.choices.map((c) => `<li style="margin:0 0 4px 0">${e(c)}</li>`).join("")}</ul>` : "",
     `<p style="margin:18px 0">${tbButton(v.payUrl, "Choose how to pay")}</p>`,
     `<p style="margin:0;font-size:13px;color:#555">Want something changed first? Just reply to this email. Reference: <strong>${e(v.ref)}</strong></p>`,
   ].join("\n");
-  return { subject: `Your trip is checked: choose how to pay the rest (${v.ref})`, html: tbShell("Your trip is ready", "Ready for your OK", body) };
+  return { subject: `Your trip is checked: choose how to pay${v.hasDeposit === false ? "" : " the rest"} (${v.ref})`, html: tbShell("Your trip is ready", "Ready for your OK", body) };
 }
 
 type PayRow = { amount: string; due: string; paid: boolean };
@@ -989,15 +1011,15 @@ const tbTable = (rows: PayRow[]) => `<table role="presentation" width="100%" cel
 
 /** Guest: they have chosen how to pay and the first payment (if any) is in. Their trip is booked. */
 export function tripBuilderBookedEmail(v: {
-  firstName: string; ref: string; route: string; planLabel: string; deposit: string; schedule: PayRow[]; statusUrl: string; startDate?: string;
+  firstName: string; ref: string; route: string; planLabel: string; /** "" when nothing was paid when the trip was sent. */ deposit: string; schedule: PayRow[]; statusUrl: string; startDate?: string;
 }): { subject: string; html: string } {
   const e = escapeHtml;
   const body = [
     tbP(`Hey ${e(v.firstName)},`),
-    tbP(`You're booked: <strong>${e(v.route)}</strong>${v.startDate ? `, starting ${e(v.startDate)}` : ""}. Your <strong>${e(v.deposit)}</strong> deposit is counted, and you've chosen to ${e(v.planLabel)}.`),
+    tbP(`You're booked: <strong>${e(v.route)}</strong>${v.startDate ? `, starting ${e(v.startDate)}` : ""}. ${v.deposit ? `Your <strong>${e(v.deposit)}</strong> deposit is counted, and you've` : "You've"} chosen to ${e(v.planLabel)}.`),
     `<p style="margin:0 0 6px 0;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;color:#555">Your payments</p>`,
     tbTable(v.schedule),
-    tbP("Payments after today are charged to the card you paid your deposit with. We'll email you a few days before each one. Want to pay one sooner? Open your trip below."),
+    tbP(`Payments after today are charged to the card you ${v.deposit ? "paid your deposit with" : "saved with us"}. We'll email you a few days before each one. Want to pay one sooner? Open your trip below.`),
     `<p style="margin:18px 0">${tbButton(v.statusUrl, "My trip")}</p>`,
     `<p style="margin:0;font-size:13px;color:#555">Reference: <strong>${e(v.ref)}</strong></p>`,
   ].join("\n");
@@ -1028,7 +1050,7 @@ export function tripBuilderReminderEmail(v: { firstName: string; ref: string; ro
   const e = escapeHtml;
   const body = [
     tbP(`Hey ${e(v.firstName)},`),
-    tbP(`A reminder that <strong>${e(v.amount)}</strong> for <strong>${e(v.route)}</strong> comes out of the card you paid your deposit with on <strong>${e(v.due)}</strong>. There's nothing you need to do.`),
+    tbP(`A reminder that <strong>${e(v.amount)}</strong> for <strong>${e(v.route)}</strong> comes out of the card you saved with us on <strong>${e(v.due)}</strong>. There's nothing you need to do.`),
     tbP("Need to change something first? Reply to this email and we'll sort it."),
     `<p style="margin:18px 0">${tbButton(v.statusUrl, "My trip")}</p>`,
     `<p style="margin:0;font-size:13px;color:#555">Reference: <strong>${e(v.ref)}</strong></p>`,
@@ -1067,7 +1089,7 @@ export function tripBuilderConfirmedEmail(v: { firstName: string; ref: string; r
   const e = escapeHtml;
   const body = [
     tbP(`Hey ${e(v.firstName)},`),
-    tbP(`We've got your <strong>${e(v.paid)}</strong> balance, so you're paid in full and your beds are locked in for <strong>${e(v.route)}</strong>.`),
+    tbP(`We've got your <strong>${e(v.paid)}</strong>, so you're paid in full and your beds are locked in for <strong>${e(v.route)}</strong>.`),
     tbP("The crew will be in touch with anything you need before you go."),
     `<p style="margin:18px 0">${tbButton(v.statusUrl, "My trip")}</p>`,
     `<p style="margin:0;font-size:13px;color:#555">Reference: <strong>${e(v.ref)}</strong></p>`,
@@ -1097,7 +1119,7 @@ export function tripBuilderRevisedEmail(v: { firstName: string; ref: string; rou
     tbP(`We've got your changes. The crew will check this version, <strong>${e(v.route)}</strong> (${v.days} days), instead of the one you sent before. There's nothing else for you to do.`),
     v.changes.length ? `<ul style="margin:0 0 12px 0;padding-left:20px">${v.changes.map((c) => `<li style="margin:0 0 4px 0">${e(c)}</li>`).join("")}</ul>` : "",
     v.withdrawn ? tbP("A crew member had already approved your earlier version. Because the plan has changed they'll check the new one and come back to you with the final price. Nothing is due in the meantime.") : "",
-    tbP("Your deposit and your beds carry on as they were. You can keep changing your trip from your trip page until it's booked."),
+    tbP("Your beds carry on as they were. You can keep changing your trip from your trip page until it's booked."),
     `<p style="margin:18px 0">${tbButton(v.statusUrl, "Track my trip")}</p>`,
     `<p style="margin:0;font-size:13px;color:#555">Reference: <strong>${e(v.ref)}</strong></p>`,
   ].join("\n");

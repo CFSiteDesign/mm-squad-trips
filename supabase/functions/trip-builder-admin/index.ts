@@ -2,7 +2,7 @@
 // token, or the admin password in the body).
 //   list                              every request, newest first
 //   checking   {ref, note?}           a crew member has picked it up
-//   balance    {ref, amount, note?}   Stripe link for the balance; guest gets "ready" email
+//   balance    {ref, amount, note?}   approve: the price the guest pays (less any deposit); they get the "ready" email and choose how to pay
 //   decline    {ref, note?, refund}   can't make it work; refunds the deposit when refund=true
 //   booked     {ref, note?}           paid some other way: mark it done
 //   note       {ref, note}            save the crew note only
@@ -19,7 +19,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { adminAuthHeaderToken, safeEqual, verifyAdminToken } from "../_shared/admin-auth.ts";
 import { isTrustedOrigin } from "../_shared/app-base.ts";
 import { sendEmail, TRIP_BUILDER_CONTACT, tripBuilderDeclinedEmail, tripBuilderReadyEmail } from "../_shared/email.ts";
-import { builderStatusUrl, fmtDay, usd } from "../_shared/trip-builder.ts";
+import { builderStatusUrl, fmtDay, needsDeposit, usd } from "../_shared/trip-builder.ts";
 import { crewReviewUrl, guestTripUrl, readSummary, signCrewKey, signGuestKey, suggestBalance, verifyCrewKey } from "../_shared/trip-builder-crew.ts";
 import { LATE_DAYS, payOptions, readSchedule } from "../_shared/trip-builder-pay.ts";
 import { currentRev, lastRevision } from "../_shared/trip-builder-revise.ts";
@@ -116,13 +116,13 @@ Deno.serve(async (req) => {
       return json({ ok: true });
     }
     if (action === "checking") {
-      if (!row.deposit_paid_at) return json({ error: "The deposit isn't paid yet." }, 400);
+      if (needsDeposit(row)) return json({ error: "The deposit isn't paid yet." }, 400);
       await save({ status: "checking", crew_note: note || null });
       return json({ ok: true });
     }
     if (action === "revise") {
       // The crew's edited version of the guest's trip (the builder's "Edit it" bar). The guest's own version is kept in payload.original.
-      if (!row.deposit_paid_at) return json({ error: "The deposit isn't paid yet." }, 400);
+      if (needsDeposit(row)) return json({ error: "The deposit isn't paid yet." }, 400);
       if (!["submitted", "checking"].includes(String(row.status))) {
         return json({ error: "The balance link has already gone out. Save a note instead, or use Approve to send a new link." }, 409);
       }
@@ -159,22 +159,22 @@ Deno.serve(async (req) => {
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
     if (action === "balance") {
-      // The crew approves the trip: record the balance and invite the guest to choose how to pay it. No Stripe link is made here:
-      // the Checkout page is made when they choose, so it never goes stale in their inbox. Their deposit is already counted.
-      if (!row.deposit_paid_at) return json({ error: "The deposit isn't paid yet." }, 400);
+      // The crew approves the trip: record the price and invite the guest to choose how to pay it. No Stripe link is made here:
+      // the Checkout page is made when they choose, so it never goes stale in their inbox. Any deposit they paid is already counted.
+      if (needsDeposit(row)) return json({ error: "The deposit isn't paid yet." }, 400);
       if (row.balance_paid_at) return json({ error: "The balance is already paid." }, 400);
       if (String(row.status) === "approved" && readSchedule(row.pay_schedule).length) return json({ error: "They've already chosen how to pay and are booked. Change a payment from Stripe, or reply to them." }, 409);
       const amount = Math.round(Number(body.amount) * 100) / 100;
-      if (!(amount >= 1 && amount <= 50_000)) return json({ error: "Enter the balance in US dollars (after the deposit)." }, 400);
+      if (!(amount >= 1 && amount <= 50_000)) return json({ error: Number(row.deposit_amount) > 0 ? "Enter the balance in US dollars (after the deposit)." : "Enter the price in US dollars." }, 400);
       await save({ status: "ready", balance_amount: amount, balance_session_id: null, balance_url: null, pay_plan: null, pay_schedule: [], crew_note: note || null });
       const tripUrl = guestTripUrl(LIVE_ORIGIN, row.ref, await signGuestKey(row.ref));
       let emailed = false;
       if (to) {
-        const opts = payOptions({ balance: amount, start: row.start_date as string | null, cardSaved: !!row.stripe_payment_method_id });
+        const opts = payOptions({ balance: amount, start: row.start_date as string | null });
         const choices = opts.map((o) => o.plan === "now" ? `Pay all ${usd(amount)} now`
           : o.plan === "later" ? `Pay ${usd(amount)} automatically on ${fmtDay(o.items[0].due)}, ${LATE_DAYS} days before you leave`
           : `Pay in ${o.count} instalments of about ${usd(o.items[0].amount)}: the first now, then one every 30 days`);
-        const m = tripBuilderReadyEmail({ firstName: first, ref: row.ref, route: row.route ?? "your trip", balance: usd(amount), note, payUrl: tripUrl, statusUrl, planUrl: (row.trip_link as string | null) || undefined, choices });
+        const m = tripBuilderReadyEmail({ firstName: first, ref: row.ref, route: row.route ?? "your trip", balance: usd(amount), note, payUrl: tripUrl, statusUrl, planUrl: (row.trip_link as string | null) || undefined, choices, hasDeposit: Number(row.deposit_amount) > 0 });
         await sendEmail({ to, subject: m.subject, html: m.html, replyTo: TRIP_BUILDER_CONTACT, templateName: "trip_builder_ready" });
         emailed = true;
       }

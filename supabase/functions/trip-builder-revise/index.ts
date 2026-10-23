@@ -1,13 +1,13 @@
 // Trip builder: the guest changes the trip they already sent (Ewan, 23 Oct 2026).
 // POST { ref, k, trip, summary, crewText, itinerary, note?, changes? }  (the same trip shape the builder sends in the first place)
 //   k is the guest key from their trip page link (the one in their emails), so only they can do it.
-// It REPLACES the trip on the same request: same reference, same deposit, same beds held. The crew gets an UPDATED email with what moved,
+// It REPLACES the trip on the same request: same reference, same deposit (if there was one), same beds held. The crew gets an UPDATED email with what moved,
 // so nobody reviews a plan the guest has already moved on from. Rules per status are in _shared/trip-builder-revise.ts.
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { trustedBase } from "../_shared/app-base.ts";
 import { sendEmail, TRIP_BUILDER_CONTACT, tripBuilderRevisedEmail } from "../_shared/email.ts";
-import { fmtDay, notifyCrew, usd } from "../_shared/trip-builder.ts";
+import { fmtDay, notifyCrew, plainFirstName, plainText, usd } from "../_shared/trip-builder.ts";
 import { guestTripUrl, verifyGuestKey } from "../_shared/trip-builder-crew.ts";
 import { cleanRevision, guestCanEdit, MAX_REVISIONS, revisionPatch, type Update } from "../_shared/trip-builder-revise.ts";
 
@@ -49,8 +49,8 @@ Deno.serve(async (req) => {
   const { error: uErr } = await sb.from("trip_builder_requests").update({ ...r.patch, updated_at: now }).eq("ref", ref);
   if (uErr) { console.error("trip builder revise save failed:", uErr.message); return json({ error: "Couldn't save your changes. Please try again." }, 500); }
 
-  // The crew only knows about it once the deposit is paid; before that nobody has seen the first version, so there is nobody to tell.
-  if (row.deposit_paid_at) {
+  // The crew only knows about it once the trip is with them (not while it waits for a deposit); before that nobody has seen the first version, so there is nobody to tell.
+  if (String(row.status) !== "pending_payment") {
     const update: Update = {
       rev: r.rev, changes: c.changes, note: c.note, wasStatus: String(row.status), withdrawn: r.withdrawn,
       was: { route: String(row.route ?? ""), days: Number(row.days ?? 0), total: row.est_total_usd != null ? usd(Number(row.est_total_usd)) : "", start: fmtDay(row.start_date) },
@@ -59,9 +59,10 @@ Deno.serve(async (req) => {
     await notifyCrew(fresh, (row.guest_email as string | null) || null, (row.hold_until as string | null) || null, origin, update)
       .catch((e) => console.warn("trip builder revise: crew email failed", e));
     const to = (row.guest_email as string | null) || (row.email as string | null);
-    if (to) {
-      const first = String(row.name ?? "").trim().split(/\s+/)[0] || "there";
-      const m = tripBuilderRevisedEmail({ firstName: first, ref, route: c.f.route, days: c.f.days, changes: c.changes, withdrawn: r.withdrawn, statusUrl: guestTripUrl(origin, ref, String(b.k)) });
+    // A trip that was sent free and that nobody on the crew has picked up yet gets no confirmation email: the page has already told them, and an email would carry whatever
+    // was typed into it to an address nobody has checked. Once the crew has it (or a deposit was paid) they get one, with only plain text in it.
+    if (to && (Number(row.deposit_amount) > 0 || String(row.status) !== "submitted")) {
+      const m = tripBuilderRevisedEmail({ firstName: plainFirstName(row.name), ref, route: plainText(c.f.route) || "your trip", days: c.f.days, changes: c.changes.map((x) => plainText(x, 140)).filter(Boolean), withdrawn: r.withdrawn, statusUrl: guestTripUrl(origin, ref, String(b.k)) });
       await sendEmail({ to, subject: m.subject, html: m.html, replyTo: TRIP_BUILDER_CONTACT, templateName: "trip_builder_revised" }).catch((e) => console.warn("trip builder revise: guest email failed", e));
     }
   }
