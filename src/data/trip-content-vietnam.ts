@@ -38,7 +38,7 @@ export const VN_INCLUDED = [
   "14 days, 5 destinations",
   "All scheduled transport, including Hanoi–Lan Ha Bay transfers, Ha Giang transport, the VIP cabin sleeper bus to Hoi An and all boat transfers",
   "24/7 local crew",
-  "Free pre-night — arrive the night before and it's on us",
+  "Free pre-night: arrive the night before and it's on us",
   "11 breakfasts, 7 lunches and 5 dinners",
   "Lots of free drinks included",
   "All activities included in the itinerary",

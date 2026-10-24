@@ -49,7 +49,7 @@ export const KH_INCLUDED = [
   "14 days, 4 destinations",
   "All scheduled transport, including the bus to Siem Reap, the overnight VIP sleeper to Sihanoukville, ferries to Koh Rong and Koh Sdach, e-bikes for the island loop, and the transfer back to Phnom Penh",
   "24/7 local crew",
-  "Free pre-night — arrive the night before and it's on us",
+  "Free pre-night: arrive the night before and it's on us",
   "1 breakfast, 3 lunches and 5 dinners",
   "Lots of free drinks included",
   "All activities included in the itinerary",

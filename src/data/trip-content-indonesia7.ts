@@ -39,7 +39,7 @@ export const I7_INCLUDED = [
   "7 days, 2 destinations",
   "All scheduled transport — boat and private transfer from Gili T to Kuta Lombok",
   "24/7 local crew",
-  "Free pre-night — arrive the night before and it's on us",
+  "Free pre-night: arrive the night before and it's on us",
   "4 breakfasts and 5 dinners",
   "Lots of free drinks included",
   "All activities included in the itinerary",

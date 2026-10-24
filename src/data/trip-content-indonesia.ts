@@ -43,7 +43,7 @@ export const INCLUDED = [
   "12 days, 4 destinations",
   "All transfers + island boats",
   "24/7 local crew",
-  "Free pre-night — arrive the night before and it's on us",
+  "Free pre-night: arrive the night before and it's on us",
   "4 breakfasts, 5 lunches and 5 dinners",
   "Lots of free drinks included",
   "All activities included in the itinerary",

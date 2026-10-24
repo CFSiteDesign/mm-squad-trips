@@ -43,6 +43,11 @@ import khHero from "@/assets/kh-hero.png";
 export const TRIP_CONTENT_SLUGS = ["indonesia", "indonesia-7", "vietnam", "vietnam-7", "cambodia", "thailand", "laos"] as const;
 export type TripSlug = (typeof TRIP_CONTENT_SLUGS)[number];
 
+/** The small print under the free pre-night in "What's included" (Charlie, 24 Oct 2026). */
+export const PRE_NIGHT_EMAIL = "cs@madmonkeyhostels.com";
+export const PRE_NIGHT_NOTE = `Subject to availability. Claim via ${PRE_NIGHT_EMAIL}`;
+export const isPreNight = (item: string) => /^free pre-(trip )?night/i.test(item);
+
 export type Review = { property: string; author: string | null; rating: number; when: string | null; body: string };
 export type Highlight = { title: string; image: string | null; /** Tailwind object-position, e.g. "object-right". */ position?: string };
 /** A paid extra on top of the trip ("Want to go bigger?"). Not part of the from price. */

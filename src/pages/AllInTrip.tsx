@@ -14,7 +14,7 @@ import { SiteFooter } from "@/components/trip/SiteFooter";
 import { TripCrossSell } from "@/components/trip/TripCrossSell";
 import { Starburst } from "@/components/brand/Sticker";
 import { SubNav, StickyCta, SCROLL_OFFSET } from "@/components/allin/Chrome";
-import { getTripContent, type TripSlug } from "@/data/trip-content";
+import { getTripContent, isPreNight, PRE_NIGHT_EMAIL, type TripSlug } from "@/data/trip-content";
 import { Booking } from "@/components/allin/Booking";
 import { independentContent, modeParams, useTravellerMode } from "@/lib/traveller-mode";
 import { nextDeparture } from "@/lib/departures";
@@ -291,7 +291,15 @@ export default function AllInTrip({ slug: slugProp, unlisted = false }: { slug?:
               {visibleIncluded.map((i) => (
                 <div key={i} className="flex items-start gap-2 bg-mm-bone p-3">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-mm-black" strokeWidth={3} />
-                  <span className="text-sm text-mm-black">{i}</span>
+                  <span className="text-sm text-mm-black">
+                    {i}
+                    {isPreNight(i) && (
+                      <span className="mt-1 block text-xs font-bold italic">
+                        Subject to availability. Claim via{" "}
+                        <a href={`mailto:${PRE_NIGHT_EMAIL}`} className="underline underline-offset-2">{PRE_NIGHT_EMAIL}</a>
+                      </span>
+                    )}
+                  </span>
                 </div>
               ))}
             </div>

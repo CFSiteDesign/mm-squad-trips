@@ -9,7 +9,7 @@
 // reads as the page loading. Same words as the page, never hidden with CSS:
 // hiding it would be cloaking.
 import { TRIPS } from "@/data/trips";
-import { getTripContent, type TripSlug } from "@/data/trip-content";
+import { getTripContent, isPreNight, PRE_NIGHT_NOTE, type TripSlug } from "@/data/trip-content";
 import { getTripFallback } from "@/data/tripFallbacks";
 import { weekdayName } from "@/lib/trip-dates";
 import { SQUAD_BENEFITS } from "@/data/squad-benefits";
@@ -208,7 +208,7 @@ function tripPage(slug: SeoSlug): PrerenderPage {
       `<p class="${P}">${esc(s.blurb)}</p>` +
       `<h3 class="${H3}">IS THIS TRIP FOR ME?</h3>${list(c.isThisForMe.map((r) => `${r.k}: ${r.v}`))}`) +
     (c.highlights.length ? section("Bucket-list moments made for the group chat", list(c.highlights.map((h) => h.title))) : "") +
-    section("What your $99 deposit unlocks", `${list(c.included)}<h3 class="${H3}">NOT INCLUDED</h3>${list(c.notIncluded)}` +
+    section("What your $99 deposit unlocks", `${list(c.included.map((i) => (isPreNight(i) ? `${i}. ${PRE_NIGHT_NOTE}` : i)))}<h3 class="${H3}">NOT INCLUDED</h3>${list(c.notIncluded)}` +
       (c.addOns?.length
         ? `<h3 class="${H3}">WANT TO GO BIGGER?</h3>${list(c.addOns.map((a) => `${a.name} (${a.price}): ${a.body}`))}${c.addOnsNote ? `<p class="${P}">${esc(c.addOnsNote)}</p>` : ""}`
         : "")) +

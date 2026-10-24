@@ -37,7 +37,7 @@ export const VN7_INCLUDED = [
   "7 days, 2 destinations",
   "All scheduled transport to and from Ha Giang",
   "24/7 local crew",
-  "Free pre-night — arrive the night before and it's on us",
+  "Free pre-night: arrive the night before and it's on us",
   "7 breakfasts, 3 lunches and 4 dinners",
   "Lots of free drinks included",
   "All activities included in the itinerary",
