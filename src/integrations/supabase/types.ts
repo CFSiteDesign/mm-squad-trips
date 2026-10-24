@@ -825,7 +825,10 @@ export type Database = {
           nights: number | null
           notes: string | null
           party_size: number
+          pay_plan: string | null
+          pay_schedule: Json
           payload: Json
+          plan_chosen_at: string | null
           ref: string
           refund_id: string | null
           refunded_at: string | null
@@ -833,6 +836,8 @@ export type Database = {
           start_date: string | null
           status: string
           stops: string[]
+          stripe_customer_id: string | null
+          stripe_payment_method_id: string | null
           trip_link: string | null
           updated_at: string
           whatsapp: string | null
@@ -868,7 +873,10 @@ export type Database = {
           nights?: number | null
           notes?: string | null
           party_size?: number
+          pay_plan?: string | null
+          pay_schedule?: Json
           payload: Json
+          plan_chosen_at?: string | null
           ref: string
           refund_id?: string | null
           refunded_at?: string | null
@@ -876,6 +884,8 @@ export type Database = {
           start_date?: string | null
           status?: string
           stops?: string[]
+          stripe_customer_id?: string | null
+          stripe_payment_method_id?: string | null
           trip_link?: string | null
           updated_at?: string
           whatsapp?: string | null
@@ -911,7 +921,10 @@ export type Database = {
           nights?: number | null
           notes?: string | null
           party_size?: number
+          pay_plan?: string | null
+          pay_schedule?: Json
           payload?: Json
+          plan_chosen_at?: string | null
           ref?: string
           refund_id?: string | null
           refunded_at?: string | null
@@ -919,6 +932,8 @@ export type Database = {
           start_date?: string | null
           status?: string
           stops?: string[]
+          stripe_customer_id?: string | null
+          stripe_payment_method_id?: string | null
           trip_link?: string | null
           updated_at?: string
           whatsapp?: string | null
