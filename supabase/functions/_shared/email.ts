@@ -661,6 +661,8 @@ export function balanceFailedEmail(v: {
   attempts: number;
   nextAttemptDate: string;
   bookingRef: string;
+  /** /pay-balance link for this booking, so the guest can pay by hand straight away (Cai, 30 Oct 2026). */
+  payBalanceUrl: string;
 }): { subject: string; html: string } {
   const inner = render(
     `<tr><td style="padding:16px 24px 8px 24px">
@@ -674,7 +676,9 @@ export function balanceFailedEmail(v: {
 <tr><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a"><strong>Attempt</strong></td><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a">{{attempts}}</td></tr>
 <tr><td style="padding:10px 14px"><strong>Next retry</strong></td><td style="padding:10px 14px">{{nextAttemptDate}}</td></tr>
 </table>
-<p style="margin:0 0 16px 0">We'll retry automatically in 2 days. If you'd like to update the card on file or settle this manually before then, just reply to this email and we'll send you a new payment link.</p>
+<p style="margin:0 0 12px 0">Pay it now with any card using the button below. If you don't, we'll try your card again on {{nextAttemptDate}}.</p>
+<p style="margin:18px 0"><a href="{{payBalanceUrl}}" style="display:inline-block;background:#ff6600;color:#0a0a0a;font-weight:900;text-transform:uppercase;padding:14px 22px;border:2px solid #0a0a0a;text-decoration:none">Pay balance now</a></p>
+<p style="margin:0 0 16px 0">Questions? Just reply to this email.</p>
 <p style="margin:0;font-size:13px;color:#555">Booking ref: <strong>{{bookingRef}}</strong></p>
 </td></tr>`,
     v as unknown as Record<string, string>,

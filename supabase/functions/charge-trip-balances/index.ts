@@ -283,6 +283,7 @@ Deno.serve(async (req) => {
           attempts,
           nextAttemptDate: fmtDate(next.toISOString()),
           bookingRef: (row.booking_ref as string) || sessionId,
+          payBalanceUrl: `${APP_URL}/pay-balance?ref=${encodeURIComponent((row.booking_ref as string) ?? "")}&email=${encodeURIComponent(row.lead_email as string)}`,
         });
         sendEmail({ to: row.lead_email as string, subject, html, templateName: "balance_failed" }).catch((e) =>
           console.warn("balance-failed email failed", e),
