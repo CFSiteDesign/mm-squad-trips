@@ -686,6 +686,53 @@ export function balanceFailedEmail(v: {
   return { subject: `Action needed: final payment for ${v.tripName} declined`, html: shell("Final payment failed", inner) };
 }
 
+/** CS copy of every failed balance charge (Charlie, 30 Oct 2026), so the team hears it from us, not Stripe. */
+export function balanceFailedOpsEmail(v: {
+  guestName: string;
+  guestEmail: string;
+  bookingRef: string;
+  tripName: string;
+  departureDate: string;
+  amountDue: string;
+  /** Stripe's reason, or why we stopped trying. */
+  reason: string;
+  attempts: number;
+  /** "We'll try the card again on Sat, 31 Oct 2026." or "We've stopped trying: ..." */
+  nextStep: string;
+  /** True when we've stopped retrying, so a person has to act. */
+  final: boolean;
+  /** True when the guest got the "Pay balance now" email. */
+  guestEmailed: boolean;
+  payBalanceUrl: string;
+}): { subject: string; html: string } {
+  const row = (k: string, val: string) =>
+    `<tr><td style="padding:8px 12px;border-bottom:1px solid #0a0a0a;width:38%"><strong>${k}</strong></td><td style="padding:8px 12px;border-bottom:1px solid #0a0a0a">${val}</td></tr>`;
+  const inner = render(
+    `<tr><td style="padding:16px 24px 8px 24px">
+<h1 style="margin:0;font-size:22px;font-weight:900;text-transform:uppercase;letter-spacing:-.01em">${v.final ? "Payment failed: we've stopped trying" : "Payment failed"}</h1>
+</td></tr>
+<tr><td style="padding:0 24px 16px 24px;font-size:15px;line-height:1.5">
+<p style="margin:0 0 12px 0">The final balance for <strong>{{bookingRef}}</strong> didn't go through. {{nextStep}}</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #0a0a0a;margin:0 0 16px 0">
+${row("Guest", "{{guestName}}")}
+${row("Email", "{{guestEmail}}")}
+${row("Booking ref", "{{bookingRef}}")}
+${row("Trip", "{{tripName}}")}
+${row("Departure", "{{departureDate}}")}
+${row("Amount due", "{{amountDue}}")}
+${row("Reason", "{{reason}}")}
+${row("Attempt", "{{attempts}}")}
+</table>
+<p style="margin:0 0 12px 0">${v.guestEmailed ? "The guest has been emailed a &quot;Pay balance now&quot; button." : "<strong>The guest has not been emailed.</strong> Please get in touch with them."} If you need to send them a link, this is their pay page:</p>
+<p style="margin:0 0 12px 0;word-break:break-all"><a href="{{payBalanceUrl}}" style="color:#0a0a0a">{{payBalanceUrl}}</a></p>
+<p style="margin:0;font-size:13px;color:#555">Once they pay through that page the retries stop on their own.</p>
+</td></tr>`,
+    v as unknown as Record<string, string>,
+  );
+  const subject = `${v.final ? "ACTION NEEDED: " : ""}ALL IN payment failed · ${v.guestName} · ${v.bookingRef} · ${v.amountDue}`;
+  return { subject, html: shell("Payment failed", inner) };
+}
+
 export function departureCancelledEmail(v: {
   firstName: string;
   tripName: string;

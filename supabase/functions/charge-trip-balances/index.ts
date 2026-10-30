@@ -7,7 +7,7 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { APP_URL, balanceFailedEmail, balancePaidEmail, sendEmail } from "../_shared/email.ts";
+import { APP_URL, balanceFailedEmail, balanceFailedOpsEmail, balancePaidEmail, EMAIL_REPLY_TO, sendEmail } from "../_shared/email.ts";
 import { enqueueKlaviyo } from "../_shared/klaviyo.ts";
 
 function fmtUsd(n: number): string {
@@ -149,6 +149,23 @@ Deno.serve(async (req) => {
     const sessionId = row.stripe_session_id as string;
     const depDate = (row.departures as { departure_date?: string } | null)?.departure_date ?? null;
     const totalCents = Math.round(Number(row.balance_amount) * Number(row.group_size) * 100);
+    const payBalanceUrl = `${APP_URL}/pay-balance?ref=${encodeURIComponent((row.booking_ref as string) ?? "")}&email=${encodeURIComponent((row.lead_email as string) ?? "")}`;
+    // Every failed charge is copied to CS (Charlie, 30 Oct 2026), so the team
+    // hears it from us rather than from Stripe. Never blocks the run.
+    const alertCs = (o: { reason: string; attempts: number; nextStep: string; final: boolean; guestEmailed: boolean }) => {
+      const { subject, html } = balanceFailedOpsEmail({
+        guestName: ((row.lead_name as string | null) ?? "").replace(/\s+/g, " ").trim() || "Unknown guest",
+        guestEmail: (row.lead_email as string | null) ?? "",
+        bookingRef: (row.booking_ref as string) || sessionId,
+        tripName: (row.trips as { name?: string } | null)?.name ?? "ALL IN trip",
+        departureDate: fmtDate(depDate),
+        amountDue: fmtUsd(totalCents / 100),
+        payBalanceUrl,
+        ...o,
+      });
+      return sendEmail({ to: EMAIL_REPLY_TO, subject, html, replyTo: (row.lead_email as string | null) ?? undefined, templateName: "balance_failed_ops" })
+        .catch((e) => console.warn("balance-failed CS email failed", e));
+    };
 
     // Past departure → give up
     if (depDate && depDate < today) {
@@ -156,6 +173,15 @@ Deno.serve(async (req) => {
         .update({ balance_status: "failed_final", balance_last_error: "departure passed without successful charge", balance_next_attempt_at: null })
         .eq("stripe_session_id", sessionId);
       await enqueueKlaviyo(sb, sessionId, "balance_failed", { amount: totalCents / 100, final: true });
+      if (totalCents > 0) {
+        await alertCs({
+          reason: "The departure date passed before the balance was paid.",
+          attempts: Number(row.balance_attempts ?? 0),
+          nextStep: "We've stopped trying. Please contact the guest.",
+          final: true,
+          guestEmailed: false,
+        });
+      }
       results.push({ sessionId, skipped: "past_departure" });
       continue;
     }
@@ -165,6 +191,15 @@ Deno.serve(async (req) => {
         .update({ balance_status: "failed_final", balance_last_error: "missing card-on-file", balance_next_attempt_at: null })
         .eq("stripe_session_id", sessionId);
       await enqueueKlaviyo(sb, sessionId, "balance_failed", { amount: totalCents / 100, final: true });
+      if (totalCents > 0) {
+        await alertCs({
+          reason: "No card saved on this booking, so it can't be charged automatically.",
+          attempts: Number(row.balance_attempts ?? 0),
+          nextStep: "We can't retry without a card. Please send the guest the pay link below.",
+          final: true,
+          guestEmailed: false,
+        });
+      }
       results.push({ sessionId, skipped: "no_card" });
       continue;
     }
@@ -283,12 +318,21 @@ Deno.serve(async (req) => {
           attempts,
           nextAttemptDate: fmtDate(next.toISOString()),
           bookingRef: (row.booking_ref as string) || sessionId,
-          payBalanceUrl: `${APP_URL}/pay-balance?ref=${encodeURIComponent((row.booking_ref as string) ?? "")}&email=${encodeURIComponent(row.lead_email as string)}`,
+          payBalanceUrl,
         });
         sendEmail({ to: row.lead_email as string, subject, html, templateName: "balance_failed" }).catch((e) =>
           console.warn("balance-failed email failed", e),
         );
       }
+      await alertCs({
+        reason: msg.slice(0, 300),
+        attempts,
+        nextStep: depDate && next.toISOString().slice(0, 10) > depDate
+          ? `The trip leaves ${fmtDate(depDate)}, before the next retry, so please chase the guest.`
+          : `We'll try the card again on ${fmtDate(next.toISOString())}.`,
+        final: false,
+        guestEmailed: !!row.lead_email,
+      });
     }
   }
 
