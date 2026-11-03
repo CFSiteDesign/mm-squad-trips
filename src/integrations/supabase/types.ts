@@ -793,6 +793,45 @@ export type Database = {
           },
         ]
       }
+      trip_builder_crew_intros: {
+        Row: {
+          a: string
+          b: string
+          status: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          a: string
+          b: string
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          a?: string
+          b?: string
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_builder_crew_intros_a_fkey"
+            columns: ["a"]
+            isOneToOne: false
+            referencedRelation: "trip_builder_requests"
+            referencedColumns: ["ref"]
+          },
+          {
+            foreignKeyName: "trip_builder_crew_intros_b_fkey"
+            columns: ["b"]
+            isOneToOne: false
+            referencedRelation: "trip_builder_requests"
+            referencedColumns: ["ref"]
+          },
+        ]
+      }
       trip_builder_requests: {
         Row: {
           all_in_match: string | null
@@ -815,6 +854,7 @@ export type Database = {
           deposit_url: string | null
           email: string | null
           est_total_usd: number | null
+          find_crew: Json | null
           from_hostel: string | null
           from_place: string | null
           guest_email: string | null
@@ -863,6 +903,7 @@ export type Database = {
           deposit_url?: string | null
           email?: string | null
           est_total_usd?: number | null
+          find_crew?: Json | null
           from_hostel?: string | null
           from_place?: string | null
           guest_email?: string | null
@@ -911,6 +952,7 @@ export type Database = {
           deposit_url?: string | null
           email?: string | null
           est_total_usd?: number | null
+          find_crew?: Json | null
           from_hostel?: string | null
           from_place?: string | null
           guest_email?: string | null
