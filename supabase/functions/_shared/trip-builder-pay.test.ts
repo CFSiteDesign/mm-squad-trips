@@ -1,5 +1,5 @@
 import { assert, assertEquals } from "jsr:@std/assert@1";
-import { addDays, allPaid, buildSchedule, daysUntil, dueNow, instalmentCount, laterDepositTotal, needReminder, parseLaterDeposit, paymentFits, payOptions, readSchedule, splitCents } from "./trip-builder-pay.ts";
+import { addDays, allPaid, buildSchedule, cancelUnpaid, daysUntil, dueNow, instalmentCount, laterDepositTotal, needReminder, parseLaterDeposit, paymentFits, payOptions, readSchedule, splitCents } from "./trip-builder-pay.ts";
 
 const NOW = new Date("2026-10-20T10:00:00Z");
 const plus = (n: number) => addDays("2026-10-20", n);
@@ -77,6 +77,26 @@ Deno.test("a payment page left open while the plan changed is never counted as t
   assert(paymentFits("trip_builder_balance", now[0], 927, 927), "pay it all now");
   assert(paymentFits("trip_builder_balance", undefined, 927, 927), "an old whole-balance payment with no schedule");
   assert(!paymentFits("trip_builder_balance", undefined, 927, 1000), "the crew changed the price");
+});
+
+Deno.test("stopping a trip's payments: the daily job never charges what is left, what was paid stays", () => {
+  const s = buildSchedule("later", 150, plus(40), NOW, 99);
+  s[0].status = "paid";
+  const c = cancelUnpaid(s);
+  assertEquals([c.count, c.amount], [1, 51]);
+  assertEquals(c.items.map((i) => i.status), ["paid", "cancelled"]);
+  const due = new Date(`${plus(33)}T10:00:00Z`);
+  assertEquals(dueNow(s, due).map((i) => i.n), [2], "without it, the $51 is charged on the day, refund or no refund");
+  assertEquals(dueNow(c.items, due).length, 0);
+  assertEquals(needReminder(c.items, 3, new Date(`${plus(30)}T10:00:00Z`)).length, 0, "and no reminder");
+  assertEquals(readSchedule(JSON.parse(JSON.stringify(c.items)))[1].status, "cancelled", "stays cancelled once saved");
+  assert(!paymentFits("trip_builder_instalment", c.items[1], 51, 150), "a payment page left open can't bring it back");
+  assertEquals(cancelUnpaid(c.items).count, 0, "nothing left the second time");
+  const f = buildSchedule("instalments", 600, plus(120), NOW);
+  f[0].status = "paid"; f[1].status = "failed"; f[1].retry_after = "2026-11-22T14:00:00Z"; f[2].status = "gave_up";
+  const g = cancelUnpaid(f);
+  assertEquals(g.items.map((i) => i.status).slice(0, 3), ["paid", "cancelled", "gave_up"]);
+  assertEquals(g.items[1].retry_after, null);
 });
 
 Deno.test("the deposit secret: unset or a typo is $99, 0 is off", () => {

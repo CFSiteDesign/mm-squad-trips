@@ -85,6 +85,7 @@ export default function TripBuilderAdmin({ refreshKey }: { refreshKey?: number }
       const d = await call({ action, ref: r.ref, note: notes[r.ref] ?? r.crew_note ?? "", ...extra });
       toast.success(
         action === "balance" ? (d.emailed ? "Final price sent: they choose how to pay" : "Price saved (no email on file: send them the link yourself)")
+        : action === "cancel-payments" ? `Stopped: ${usd(d.cancelled)} won't be charged. Refund what they paid in Stripe, and tell them yourself.`
         : action === "decline" ? (d.refunded ? `Declined, ${usd(d.refunded)} refunded` : "Declined")
         : "Saved",
       );
@@ -190,7 +191,7 @@ export default function TripBuilderAdmin({ refreshKey }: { refreshKey?: number }
                                 <ul className="mt-3 border-[2px] border-mm-black bg-mm-bone text-sm">
                                   {(r.pay_schedule ?? []).map((i) => (
                                     <li key={i.n} className={`flex justify-between gap-3 border-t-[1px] border-mm-black/10 px-3 py-1.5 first:border-t-0 ${i.status === "paid" ? "bg-mm-lime/40" : i.status === "failed" || i.status === "gave_up" ? "bg-mm-yellow" : ""}`}>
-                                      <span>Payment {i.n}: {day(i.due)}</span><span>{usd(i.amount)} · {i.status === "paid" ? "paid" : i.status === "failed" ? "failed, retrying" : i.status === "gave_up" ? "not taken" : "due"}</span>
+                                      <span>Payment {i.n}: {day(i.due)}</span><span>{usd(i.amount)} · {i.status === "paid" ? "paid" : i.status === "failed" ? "failed, retrying" : i.status === "gave_up" ? "not taken" : i.status === "cancelled" ? "cancelled" : "due"}</span>
                                     </li>
                                   ))}
                                 </ul>
@@ -226,6 +227,10 @@ export default function TripBuilderAdmin({ refreshKey }: { refreshKey?: number }
                                   <button disabled={busy === r.ref} onClick={() => act(r, "booked", {}, `Mark ${r.ref} as booked without taking the balance here?`)}
                                     className="w-full px-3 py-1 text-xs underline disabled:opacity-60">Paid another way: mark as booked</button>
                                 </>
+                              )}
+                              {r.status === "approved" && (r.pay_schedule ?? []).some((i) => i.status === "pending" || i.status === "failed") && (
+                                <button disabled={busy === r.ref} onClick={() => act(r, "cancel-payments", {}, `Stop the ${usd((r.pay_schedule ?? []).filter((i) => i.status === "pending" || i.status === "failed").reduce((a, i) => a + i.amount, 0))} still to come from ${r.name} and close ${r.ref}? This doesn't refund anything (do that in Stripe) and doesn't email them.`)}
+                                  className="w-full border-[2px] border-mm-black bg-mm-paper px-3 py-2 font-sticker text-[10px] tracking-[0.15em] disabled:opacity-60">TRIP'S OFF: STOP THE REMAINING PAYMENTS</button>
                               )}
                               <button disabled={busy === r.ref} onClick={() => act(r, "note")} className="w-full border-[2px] border-mm-black bg-mm-bone px-3 py-1.5 font-sticker text-[10px] tracking-[0.15em] disabled:opacity-60">SAVE NOTE ONLY</button>
                             </div>

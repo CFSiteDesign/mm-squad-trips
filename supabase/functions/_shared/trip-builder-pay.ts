@@ -22,7 +22,7 @@ export const MAX_ATTEMPTS = 4;
 export const LATER_DEPOSIT_USD = 99;
 
 export type Plan = "now" | "later" | "instalments";
-export type ItemStatus = "pending" | "paid" | "failed" | "gave_up";
+export type ItemStatus = "pending" | "paid" | "failed" | "gave_up" | "cancelled";
 export type Item = {
   n: number; amount: number; due: string; how: "checkout" | "card"; status: ItemStatus;
   attempts: number; last_error: string | null; retry_after: string | null; paid_at: string | null; payment_intent: string | null; reminded: boolean;
@@ -91,8 +91,19 @@ export function payOptions(o: { balance: number; start: string | null; now?: Dat
 
 /** Does money paid on a Checkout page match what is scheduled? Not if the page was left open while the plan changed underneath it (they chose again, the crew reset the price, the guest edited the trip). */
 export function paymentFits(kind: string, item: Item | undefined, paid: number, balance: unknown): boolean {
+  if (item?.status === "cancelled") return false;
   const expected = item ? item.amount : kind === "trip_builder_balance" ? Number(balance) : null;
   return expected != null && Math.abs(paid - expected) < 0.005;
+}
+
+/** The crew stopped this trip's payments: everything still to be taken is cancelled, so the daily job never charges it. What was paid or given up on stays as it was. */
+export function cancelUnpaid(items: Item[]): { items: Item[]; count: number; amount: number } {
+  const open = (i: Item) => i.status === "pending" || i.status === "failed";
+  const left = items.filter(open);
+  return {
+    items: items.map((i) => (open(i) ? { ...i, status: "cancelled" as const, retry_after: null } : i)),
+    count: left.length, amount: Math.round(left.reduce((a, i) => a + i.amount * 100, 0)) / 100,
+  };
 }
 
 export const allPaid = (items: Item[]) => items.length > 0 && items.every((i) => i.status === "paid");
@@ -115,7 +126,7 @@ export function readSchedule(v: unknown): Item[] {
     const r = (x ?? {}) as Record<string, unknown>;
     return {
       n: Number(r.n) || k + 1, amount: Number(r.amount) || 0, due: parseDay(String(r.due)) ? String(r.due) : "", how: r.how === "checkout" ? "checkout" : "card",
-      status: (["pending", "paid", "failed", "gave_up"].includes(String(r.status)) ? r.status : "pending") as ItemStatus, attempts: Number(r.attempts) || 0,
+      status: (["pending", "paid", "failed", "gave_up", "cancelled"].includes(String(r.status)) ? r.status : "pending") as ItemStatus, attempts: Number(r.attempts) || 0,
       last_error: r.last_error ? String(r.last_error).slice(0, 300) : null, retry_after: r.retry_after ? String(r.retry_after) : null, paid_at: r.paid_at ? String(r.paid_at) : null,
       payment_intent: r.payment_intent ? String(r.payment_intent) : null, reminded: r.reminded === true,
     };

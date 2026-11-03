@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
     canPay: r.status === "ready" && balance != null,
     // Their payments once they are booked, and anything overdue they can pay by hand (needs their key).
     plan: keyed ? r.pay_plan : null,
-    schedule: keyed ? items.map((i) => ({ n: i.n, amount: i.amount, due: i.due, status: i.status })) : [],
+    schedule: keyed ? items.filter((i) => i.status !== "cancelled").map((i) => ({ n: i.n, amount: i.amount, due: i.due, status: i.status })) : [],
     owing: keyed ? items.filter((i) => i.how === "card" && (i.status === "failed" || (i.status === "pending" && i.due <= today))).map((i) => ({ n: i.n, amount: i.amount, due: i.due })) : [],
   });
 });

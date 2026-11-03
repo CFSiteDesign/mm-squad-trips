@@ -9,12 +9,13 @@
 //   view       {ref}                  one request, with the trip summary and a suggested balance (the crew review page)
 //   revise     {ref, trip, summary, crewText, note}   the crew's edited version of the guest's trip (Edit it)
 //   link       {ref}                  a fresh signed link to the crew review page (admin only)
+//   cancel-payments {ref, note?}      stop what is left to pay on a booked trip and close it (admin only). Refunds are still done by hand in Stripe, and nothing is emailed
 //   crew-list                         Find your crew: everyone opted in whose trip isn't declined or over, and where each introduction is (admin only)
 //   crew-intro {a, b, status, by}     record where an introduction is: new / asked / yes / introduced / no (admin only)
 //   crew-off   {ref}                  they asked to stop: their answers are removed and they drop off the board (admin only)
 //
 // Two ways in. The admin token / password can do everything. A crew key (from the link in the
-// new-trip email, see _shared/trip-builder-crew.ts) can do everything EXCEPT list, link and the crew-* actions, and only
+// new-trip email, see _shared/trip-builder-crew.ts) can do everything EXCEPT list, link, cancel-payments and the crew-* actions, and only
 // for the one trip it was made for, and only while that trip is still being checked.
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import Stripe from "https://esm.sh/stripe@18.5.0";
@@ -25,7 +26,7 @@ import { sendEmail, TRIP_BUILDER_CONTACT, tripBuilderDeclinedEmail, tripBuilderR
 import { builderStatusUrl, fmtDay, laterDeposit, needsDeposit, usd } from "../_shared/trip-builder.ts";
 import { crewReviewUrl, guestTripUrl, readSummary, signCrewKey, signGuestKey, suggestBalance, verifyCrewKey } from "../_shared/trip-builder-crew.ts";
 import { INTRO_STATUSES, introPair, onCrewBoard } from "../_shared/trip-builder-find-crew.ts";
-import { LATE_DAYS, payOptions, readSchedule } from "../_shared/trip-builder-pay.ts";
+import { cancelUnpaid, LATE_DAYS, paidSoFar, payOptions, readSchedule } from "../_shared/trip-builder-pay.ts";
 import { currentRev, lastRevision } from "../_shared/trip-builder-revise.ts";
 
 const json = (body: unknown, status = 200) =>
@@ -57,7 +58,7 @@ Deno.serve(async (req) => {
   const sb = createClient(url, key);
   const action = typeof body.action === "string" ? body.action : "list";
 
-  if (keyed && (action === "list" || action === "link" || action.startsWith("crew-"))) return json({ error: "Unauthorized" }, 401);
+  if (keyed && (action === "list" || action === "link" || action === "cancel-payments" || action.startsWith("crew-"))) return json({ error: "Unauthorized" }, 401);
 
   // Find your crew. Only the crew board reads this, and the site never shows it to another guest.
   if (action === "crew-list") {
@@ -191,6 +192,14 @@ Deno.serve(async (req) => {
       return json({ ok: true });
     }
 
+    if (action === "cancel-payments") {
+      // The trip is off after they have paid something (a refund in Stripe does not stop the schedule). Closing it takes it out of the daily charge job.
+      const c = cancelUnpaid(readSchedule(row.pay_schedule));
+      if (!c.count) return json({ error: "There are no payments left to cancel on this trip." }, 409);
+      await save({ status: "declined", pay_schedule: c.items, crew_note: note || null });
+      return json({ ok: true, cancelled: c.amount, count: c.count, paid: paidSoFar(c.items) });
+    }
+
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) return json({ error: "Stripe not configured" }, 503);
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
@@ -222,7 +231,7 @@ Deno.serve(async (req) => {
     if (action === "decline") {
       // Declining only ever refunds the deposit, so once they've paid anything towards the balance it has to be settled by hand.
       if (row.balance_paid_at || readSchedule(row.pay_schedule).some((i) => i.status === "paid")) {
-        return json({ error: "They've already paid towards this trip, so it can't be declined here. Refund the payments from Stripe, then mark it as you see fit." }, 409);
+        return json({ error: "They've already paid towards this trip, so it can't be declined here. Use Stop the remaining payments in Admin > Trip builder, and refund what they paid in Stripe." }, 409);
       }
       let refunded = 0;
       if (body.refund === true && row.deposit_payment_intent && !row.refunded_at) {

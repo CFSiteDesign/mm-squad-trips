@@ -283,9 +283,9 @@ export async function handleTripBuilderPaid(sb: SupabaseClient, session: Stripe.
     if (item ? item.status === "paid" : !!row.balance_paid_at) return; // this payment is already counted (webhook delivered twice)
     const paidNow = (session.amount_total ?? 0) / 100;
     // The money is in, but it doesn't match what is scheduled. Never count it as the payment, or a $99 deposit could read as paid in full. Ewan sorts it out with them.
-    if (!paymentFits(meta.kind, item, paidNow, row.balance_amount)) {
+    if (String(row.status) === "declined" || !paymentFits(meta.kind, item, paidNow, row.balance_amount)) {
       await alertEwan(`Trip builder: ${row.name} paid ${usd(paidNow)}, but their plan had changed · ${row.ref}`,
-        `<p><strong>${esc(String(row.name))}</strong> (${row.ref}) paid ${usd(paidNow)} on a payment page that was opened before their plan or price changed, so it has NOT been counted and they are not booked on it. Check the payment in Stripe (${esc(pi ?? "no payment id")}), then either refund it or agree the rest with them.</p>`, "trip_builder_stale_payment_ops");
+        `<p><strong>${esc(String(row.name))}</strong> (${row.ref}) paid ${usd(paidNow)} on a payment page that was opened before their plan or price changed, or before the trip was closed, so it has NOT been counted and they are not booked on it. Check the payment in Stripe (${esc(pi ?? "no payment id")}), then either refund it or agree the rest with them.</p>`, "trip_builder_stale_payment_ops");
       return;
     }
     if (item) { item.status = "paid"; item.paid_at = now.toISOString(); item.payment_intent = pi; item.last_error = null; item.retry_after = null; }
