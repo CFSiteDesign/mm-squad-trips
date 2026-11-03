@@ -879,6 +879,8 @@ export function tripBuilderOpsEmail(v: {
   reviewUrl?: string; approveUrl?: string; declineUrl?: string; editUrl?: string;
   /** "$602" – the trip cost for everyone, less the deposit if there was one. A starting figure only. */
   suggestedBalance?: string;
+  /** Their Find your crew answers, when they ticked it: asked to be introduced to other travellers, by a person, once both have said yes. */
+  findCrew?: { k: string; v: string }[];
   /** Set when the guest has changed a trip they already sent: this email is the new version, and says what moved. */
   update?: { rev: number; changes: string[]; note: string; withdrawn: boolean; was: { route: string; days: number; total: string; start: string } };
 }): { subject: string; html: string } {
@@ -942,11 +944,18 @@ ${stg.parent ? `<div style="font-size:12px;margin-top:4px">The earlier stage is 
   const subjectLead = (upd ? `UPDATED (v${upd.rev}) · ` : "") + (stg ? `Stage ${stg.n} · ` : "");
 
   /* ---- no summary (older trip): the plain version ---- */
+  const crewBox = v.findCrew?.length
+    ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #0a0a0a;margin:0 0 16px 0;font-size:14px;border-collapse:collapse">
+<tr><td colspan="2" style="background:#ccff01;padding:8px 12px;font-size:13px;${D}"><strong>Find your crew is on.</strong> ${e(first)} wants to meet other travellers. Ask both people first: only share these answers once you both have a yes.</td></tr>
+${v.findCrew.map((r) => `<tr><td style="padding:6px 12px;border-top:1px solid #ddd;font-size:12px;color:#555;white-space:nowrap;vertical-align:top">${e(r.k)}</td><td style="padding:6px 12px;border-top:1px solid #ddd;${D}">${e(r.v)}</td></tr>`).join("")}
+</table>`
+    : "";
+
   if (!sum) {
     const row = (k: string, val: string) =>
       `<tr><td style="padding:6px 10px;border-bottom:1px solid #0a0a0a;font-weight:700;white-space:nowrap">${e(k)}</td><td style="padding:6px 10px;border-bottom:1px solid #0a0a0a">${e(val || "None")}</td></tr>`;
     const body = [
-      banner, actions, who,
+      banner, actions, who, crewBox,
       `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #0a0a0a;margin:0 0 16px 0;font-size:14px;border-collapse:collapse">${row("Route", v.route)}${row("Days", String(v.days))}${row("Start", v.startDate)}${row("Dates", v.dates)}${row("Builder estimate", v.estTotal)}${row("Looks like ALL IN", v.allInMatch)}${row("Notes", v.notes)}</table>`,
       `<pre style="margin:0 0 16px 0;padding:12px;border:2px solid #0a0a0a;background:#f5efe2;font-size:12px;line-height:1.45;white-space:pre-wrap;font-family:Menlo,Consolas,monospace">${e(v.itinerary)}</pre>`,
       actions,
@@ -1018,7 +1027,7 @@ ${sum.flags.map((f) => `<tr><td style="padding:6px 12px;font-size:13px;line-heig
     : "";
 
   const body = [
-    banner, stageBanner, actions, who, glance,
+    banner, stageBanner, actions, who, glance, crewBox,
     `<p style="margin:0 0 8px 0;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;color:#555">The trip, stop by stop</p>`,
     stopCards, `<div style="height:8px"></div>`, money2, flags, note,
     `<p style="margin:0 0 8px 0;font-size:14px;font-weight:900;${D}">Happy with it?</p>`, actions,

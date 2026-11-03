@@ -9,9 +9,12 @@
 //   view       {ref}                  one request, with the trip summary and a suggested balance (the crew review page)
 //   revise     {ref, trip, summary, crewText, note}   the crew's edited version of the guest's trip (Edit it)
 //   link       {ref}                  a fresh signed link to the crew review page (admin only)
+//   crew-list                         Find your crew: everyone opted in whose trip isn't declined or over, and where each introduction is (admin only)
+//   crew-intro {a, b, status, by}     record where an introduction is: new / asked / yes / introduced / no (admin only)
+//   crew-off   {ref}                  they asked to stop: their answers are removed and they drop off the board (admin only)
 //
 // Two ways in. The admin token / password can do everything. A crew key (from the link in the
-// new-trip email, see _shared/trip-builder-crew.ts) can do everything EXCEPT list and link, and only
+// new-trip email, see _shared/trip-builder-crew.ts) can do everything EXCEPT list, link and the crew-* actions, and only
 // for the one trip it was made for, and only while that trip is still being checked.
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import Stripe from "https://esm.sh/stripe@18.5.0";
@@ -19,8 +22,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { adminAuthHeaderToken, safeEqual, verifyAdminToken } from "../_shared/admin-auth.ts";
 import { isTrustedOrigin } from "../_shared/app-base.ts";
 import { sendEmail, TRIP_BUILDER_CONTACT, tripBuilderDeclinedEmail, tripBuilderReadyEmail } from "../_shared/email.ts";
-import { builderStatusUrl, fmtDay, needsDeposit, usd } from "../_shared/trip-builder.ts";
+import { builderStatusUrl, fmtDay, laterDeposit, needsDeposit, usd } from "../_shared/trip-builder.ts";
 import { crewReviewUrl, guestTripUrl, readSummary, signCrewKey, signGuestKey, suggestBalance, verifyCrewKey } from "../_shared/trip-builder-crew.ts";
+import { INTRO_STATUSES, introPair, onCrewBoard } from "../_shared/trip-builder-find-crew.ts";
 import { LATE_DAYS, payOptions, readSchedule } from "../_shared/trip-builder-pay.ts";
 import { currentRev, lastRevision } from "../_shared/trip-builder-revise.ts";
 
@@ -53,7 +57,40 @@ Deno.serve(async (req) => {
   const sb = createClient(url, key);
   const action = typeof body.action === "string" ? body.action : "list";
 
-  if (keyed && (action === "list" || action === "link")) return json({ error: "Unauthorized" }, 401);
+  if (keyed && (action === "list" || action === "link" || action.startsWith("crew-"))) return json({ error: "Unauthorized" }, 401);
+
+  // Find your crew. Only the crew board reads this, and the site never shows it to another guest.
+  if (action === "crew-list") {
+    const { data, error } = await sb.from("trip_builder_requests")
+      .select("ref,status,name,party_size,contact_via,email,guest_email,whatsapp,route,start_date,days,trip_link,find_crew")
+      .not("find_crew", "is", null).order("created_at", { ascending: false }).limit(1000);
+    if (error) return json({ error: error.message }, 500);
+    const travellers = (data ?? []).filter((r) => onCrewBoard(r)).map((r) => ({
+      ref: r.ref, name: r.name, party_size: r.party_size, contact_via: r.contact_via, email: r.email || r.guest_email || null, whatsapp: r.whatsapp, route: r.route,
+      start_date: r.start_date, days: r.days, trip_link: r.trip_link, find_crew: r.find_crew,
+    }));
+    const on = new Set(travellers.map((t) => t.ref));
+    const { data: pairs, error: iErr } = await sb.from("trip_builder_crew_intros").select("a,b,status,updated_by,updated_at").limit(5000);
+    if (iErr) return json({ error: iErr.message }, 500);
+    const intros = (pairs ?? []).filter((i) => on.has(i.a) && on.has(i.b)).map((i) => ({ a: i.a, b: i.b, status: i.status, by: i.updated_by, at: i.updated_at }));
+    return json({ ok: true, travellers, intros });
+  }
+  if (action === "crew-intro") {
+    const pair = introPair(body.a, body.b);
+    if (!pair) return json({ error: "That needs two different trips." }, 400);
+    if (typeof body.status !== "string" || !INTRO_STATUSES.includes(body.status)) return json({ error: `Status must be one of ${INTRO_STATUSES.join(", ")}.` }, 400);
+    const at = new Date().toISOString();
+    const { error } = await sb.from("trip_builder_crew_intros").upsert({ ...pair, status: body.status, updated_by: typeof body.by === "string" ? body.by.trim().slice(0, 60) || null : null, updated_at: at }, { onConflict: "a,b" });
+    if (error) return json({ error: /foreign key/i.test(error.message) ? "One of those trips doesn't exist." : error.message }, /foreign key/i.test(error.message) ? 404 : 500);
+    return json({ ok: true, ...pair, status: body.status, at });
+  }
+  if (action === "crew-off") {
+    if (!/^MM-[A-Z0-9]{6}$/.test(bodyRef)) return json({ error: "Unknown trip" }, 404);
+    const { data, error } = await sb.from("trip_builder_requests").update({ find_crew: null, updated_at: new Date().toISOString() }).eq("ref", bodyRef).select("ref");
+    if (error) return json({ error: error.message }, 500);
+    if (!data?.length) return json({ error: `No trip ${bodyRef}` }, 404);
+    return json({ ok: true, ref: bodyRef });
+  }
 
   if (action === "list") {
     const { data, error } = await sb
@@ -79,7 +116,7 @@ Deno.serve(async (req) => {
     const sum = readSummary(row.payload);
     const VIEW = ["ref", "status", "name", "contact_via", "email", "whatsapp", "guest_email", "from_place", "party_size", "dates_flex", "start_date", "route", "days", "nights", "est_total_usd",
       "all_in_match", "trip_link", "itinerary", "notes", "campaign_ref", "from_hostel", "deposit_amount", "deposit_paid_at", "hold_until", "balance_amount", "balance_url", "balance_paid_at",
-      "pay_plan", "pay_schedule", "refunded_at", "crew_note", "created_at", "updated_at"];
+      "pay_plan", "pay_schedule", "refunded_at", "crew_note", "created_at", "updated_at", "find_crew"];
     const request: Record<string, unknown> = {};
     for (const k of VIEW) request[k] = (row as Record<string, unknown>)[k] ?? null;
     const pl = (row.payload ?? {}) as Record<string, unknown>;
@@ -170,8 +207,9 @@ Deno.serve(async (req) => {
       const tripUrl = guestTripUrl(LIVE_ORIGIN, row.ref, await signGuestKey(row.ref));
       let emailed = false;
       if (to) {
-        const opts = payOptions({ balance: amount, start: row.start_date as string | null });
+        const opts = payOptions({ balance: amount, start: row.start_date as string | null, laterDeposit: laterDeposit(row) });
         const choices = opts.map((o) => o.plan === "now" ? `Pay all ${usd(amount)} now`
+          : o.plan === "later" && o.count === 2 ? `Pay a ${usd(o.items[0].amount)} deposit now and the rest (${usd(o.items[1].amount)}) automatically on ${fmtDay(o.items[1].due)}, a week before you leave`
           : o.plan === "later" ? `Pay ${usd(amount)} automatically on ${fmtDay(o.items[0].due)}, ${LATE_DAYS} days before you leave`
           : `Pay in ${o.count} instalments of about ${usd(o.items[0].amount)}: the first now, then one every 30 days`);
         const m = tripBuilderReadyEmail({ firstName: first, ref: row.ref, route: row.route ?? "your trip", balance: usd(amount), note, payUrl: tripUrl, statusUrl, planUrl: (row.trip_link as string | null) || undefined, choices, hasDeposit: Number(row.deposit_amount) > 0 });

@@ -1,6 +1,7 @@
 // Trip builder: the guest chooses how to pay (Ewan, 20 Oct 2026; free to send since 23 Oct). POST JSON { ref, k, plan, n? }.
 //   plan "now"          pay the whole price on a Checkout page
-//   plan "later"        a card is charged a week before they leave. With a card on file (a deposit was paid) they are booked straight away;
+//   plan "later"        a $99 per person deposit on a Checkout page now (that card is saved), the rest charged a week before they leave. They are booked when the deposit lands (Ewan, 3 Nov 2026).
+//                       With no deposit to take: with a card on file (a deposit was paid when they sent it) they are booked straight away;
 //                       otherwise they are sent to a Checkout page to SAVE a card (nothing is charged) and booked when it is saved (stripe-webhook, kind trip_builder_card)
 //   plan "instalments"  the first payment on a Checkout page now (that card is saved), the rest charged to it every 30 days
 //   plan "due"          pay a payment that was missed (or is due) by hand, on a Checkout page
@@ -11,7 +12,7 @@ import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { guestTripUrl, signGuestKey, verifyGuestKey } from "../_shared/trip-builder-crew.ts";
 import { buildSchedule, isoDay, payOptions, type Plan, readSchedule } from "../_shared/trip-builder-pay.ts";
-import { notifyBooked, usd } from "../_shared/trip-builder.ts";
+import { laterDeposit, notifyBooked, usd } from "../_shared/trip-builder.ts";
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -70,11 +71,13 @@ Deno.serve(async (req) => {
     if (String(row.status) !== "ready" || !(Number(row.balance_amount) >= 1)) return json({ error: "The crew hasn't finished checking this trip yet." }, 409);
 
     const balance = Number(row.balance_amount);
-    const offered = payOptions({ balance, start: row.start_date as string | null, now });
+    const dep = laterDeposit(row);
+    const offered = payOptions({ balance, start: row.start_date as string | null, now, laterDeposit: dep });
     if (!offered.some((o) => o.plan === plan)) return json({ error: "That way of paying isn't available for this trip. Pick one of the others." }, 400);
-    const items = buildSchedule(plan as Plan, balance, row.start_date as string | null, now);
+    const items = buildSchedule(plan as Plan, balance, row.start_date as string | null, now, dep);
+    const laterWithDeposit = plan === "later" && dep > 0;
 
-    if (plan === "later" && !(row.stripe_payment_method_id && row.stripe_customer_id)) {
+    if (plan === "later" && !laterWithDeposit && !(row.stripe_payment_method_id && row.stripe_customer_id)) {
       // No card on file (the trip was free to send): save one on a Checkout page first. Nothing is charged there. They are booked when the card is saved, and only
       // if the price is still the one they were shown (stripe-webhook, kind trip_builder_card).
       const s = await stripe.checkout.sessions.create({
@@ -86,7 +89,7 @@ Deno.serve(async (req) => {
       });
       return json({ ok: true, checkoutUrl: s.url as string, plan, card: true });
     }
-    if (plan === "later") {
+    if (plan === "later" && !laterWithDeposit) {
       // Booked now, charged to the saved card a week before they leave.
       const { data: won, error: uErr } = await sb.from("trip_builder_requests").update({ pay_plan: "later", pay_schedule: items, plan_chosen_at: nowIso, status: "approved", updated_at: nowIso }).eq("ref", ref).eq("status", "ready").select("ref");
       if (uErr) return json({ error: "Couldn't save that. Try again." }, 500);
@@ -96,11 +99,13 @@ Deno.serve(async (req) => {
       return json({ ok: true, booked: true, plan, schedule: items });
     }
 
-    // Now / instalments: save the plan, then send them to pay the first payment. They are booked when it lands (stripe-webhook).
+    // Now / instalments / the "later" deposit: save the plan, then send them to pay the first payment. They are booked when it lands (stripe-webhook).
     const { error: uErr } = await sb.from("trip_builder_requests").update({ pay_plan: plan, pay_schedule: items, updated_at: nowIso }).eq("ref", ref);
     if (uErr) return json({ error: "Couldn't save that. Try again." }, 500);
     const first = items[0];
-    const checkoutUrl = await checkout(first.amount, plan === "now" ? "trip_builder_balance" : "trip_builder_instalment", 1, plan === "now" ? "balance" : `payment 1 of ${items.length}`, plan === "instalments" && !row.stripe_payment_method_id);
+    const checkoutUrl = laterWithDeposit
+      ? await checkout(first.amount, "trip_builder_instalment", 1, "deposit", true)
+      : await checkout(first.amount, plan === "now" ? "trip_builder_balance" : "trip_builder_instalment", 1, plan === "now" ? "balance" : `payment 1 of ${items.length}`, plan === "instalments" && !row.stripe_payment_method_id);
     return json({ ok: true, checkoutUrl, plan, first: { amount: first.amount, label: usd(first.amount) } });
   } catch (e) {
     console.error("trip builder pay failed:", e instanceof Error ? e.message : e);

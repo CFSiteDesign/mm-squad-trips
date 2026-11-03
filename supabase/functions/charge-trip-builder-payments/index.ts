@@ -1,5 +1,6 @@
 // Daily job: take the trip builder payments that are due, and send the reminders (Ewan, 20 Oct 2026).
 // For every booked trip whose guest chose "pay a week before I leave" or instalments:
+//   (the "week before" deposit and first instalments are paid on Checkout, not here: see trip-builder-pay)
 //   - 3 days before a card payment is due: a reminder email (once)
 //   - on the day: charge the card the deposit was paid with, off session (same as ALL IN balances)
 //       paid     -> receipt email (or "paid in full")
@@ -105,7 +106,7 @@ Deno.serve(async (req) => {
       const done = allPaid(items);
       const { error: uErr } = await sb.from("trip_builder_requests").update({ pay_schedule: items, balance_paid_at: done ? now.toISOString() : null, updated_at: now.toISOString() }).eq("ref", ref);
       if (uErr) console.error(`trip builder schedule save failed for ${ref}:`, uErr.message);
-      if (done) await alertEwan(`Trip builder: ${row.name} is paid in full · ${ref}`, `<p><strong>${esc(String(row.name))}</strong> (${ref}), ${esc(route)}: all ${items.length} payments are in (${usd(paidSoFar(items))} on top of the deposit). </p>`, "trip_builder_paid_ops");
+      if (done) await alertEwan(`Trip builder: ${row.name} is paid in full · ${ref}`, `<p><strong>${esc(String(row.name))}</strong> (${ref}), ${esc(route)}: all ${items.length} payments are in (${usd(paidSoFar(items))}${Number(row.deposit_amount) > 0 ? " on top of the deposit" : ""}).</p>`, "trip_builder_paid_ops");
     }
   }
   return json({ ok: true, processed: rows?.length ?? 0, results });

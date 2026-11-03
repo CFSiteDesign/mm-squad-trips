@@ -16,6 +16,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { depositPerPerson, handleTripBuilderSubmitted, HOLD_HOURS, MAX_PEOPLE } from "../_shared/trip-builder.ts";
 import { trustedBase } from "../_shared/app-base.ts";
 import { crewSecret, guestTripUrl, signGuestKey } from "../_shared/trip-builder-crew.ts";
+import { cleanCrew } from "../_shared/trip-builder-find-crew.ts";
 import { ownTripLink } from "../_shared/trip-builder-revise.ts";
 
 const json = (body: unknown, status = 200) =>
@@ -95,6 +96,9 @@ Deno.serve(async (req) => {
   const tripLink = ownTripLink(str(trip.link, 2000), new URL(trustedBase(origin)).origin) ? str(trip.link, 2000) : null;
   delete p.ipHash;
   if (ipHash) p.ipHash = ipHash;
+  // Find your crew: cleaned here whatever the browser sent, and the raw copy never stays in the saved payload.
+  const findCrew = cleanCrew(p.findCrew);
+  delete p.findCrew;
 
   // Free to send: the same guest pressing Send twice, or trying again after a dropped connection (common on a phone abroad), must not put two copies of the trip in front of the
   // crew. The same contact and the same trip within ten minutes is the one already sent: say so, without a second email and WITHOUT the guest key (it is in the first reply and the
@@ -137,6 +141,7 @@ Deno.serve(async (req) => {
       campaign_ref: str(p.ref, 60) || null,
       from_hostel: str(p.fromHostel, 60) || null,
       payload: p,
+      find_crew: findCrew,
       deposit_amount: depositUsd,
       hold_until: holdUntil,
     };

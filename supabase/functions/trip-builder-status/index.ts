@@ -6,6 +6,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { verifyGuestKey } from "../_shared/trip-builder-crew.ts";
 import { currentRev, guestCanEdit } from "../_shared/trip-builder-revise.ts";
 import { daysUntil, isoDay, payOptions, readSchedule } from "../_shared/trip-builder-pay.ts";
+import { laterDeposit } from "../_shared/trip-builder.ts";
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -18,7 +19,7 @@ Deno.serve(async (req) => {
   const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
   const { data: r, error } = await sb
     .from("trip_builder_requests")
-    .select("ref,status,route,days,start_date,trip_link,crew_note,party_size,dates_flex,payload,hold_until,deposit_amount,deposit_url,deposit_paid_at,refunded_at,balance_amount,balance_paid_at,pay_plan,pay_schedule")
+    .select("ref,status,route,days,start_date,trip_link,crew_note,party_size,dates_flex,payload,hold_until,deposit_amount,deposit_url,deposit_paid_at,refunded_at,balance_amount,balance_paid_at,pay_plan,pay_schedule,find_crew")
     .eq("ref", ref)
     .maybeSingle();
   if (error) return json({ error: "Couldn't look that up" }, 500);
@@ -45,9 +46,10 @@ Deno.serve(async (req) => {
     rev: currentRev(r.payload),
     people: r.party_size,
     datesFlex: r.dates_flex ?? "",
+    findCrew: !!r.find_crew,
     // How they can pay the rest, once the crew has checked the trip (needs their key).
     pay: keyed && r.status === "ready" && balance != null
-      ? { balance, daysToGo: daysUntil(r.start_date), options: payOptions({ balance, start: r.start_date }) }
+      ? { balance, daysToGo: daysUntil(r.start_date), options: payOptions({ balance, start: r.start_date, laterDeposit: laterDeposit(r) }) }
       : null,
     // The crew has set the price, so the guest can pay (the page tells them to open the link from their email when they haven't got their key).
     canPay: r.status === "ready" && balance != null,

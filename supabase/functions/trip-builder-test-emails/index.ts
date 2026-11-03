@@ -24,6 +24,7 @@ import {
   tripBuilderReminderEmail,
 } from "../_shared/email.ts";
 import { crewReviewUrl, guestTripUrl, readSummary, signCrewKey, signGuestKey, suggestBalance } from "../_shared/trip-builder-crew.ts";
+import { crewAnswers } from "../_shared/trip-builder-find-crew.ts";
 import { SAMPLE_TRIP } from "../_shared/trip-builder-sample.ts";
 
 const json = (body: unknown, status = 200) =>
@@ -79,6 +80,7 @@ Deno.serve(async (req) => {
       summary: sampleSummary, reviewUrl: crewReviewUrl(null, SAMPLE_REF, sampleKey), approveUrl: crewReviewUrl(null, SAMPLE_REF, sampleKey, "approve"),
       declineUrl: crewReviewUrl(null, SAMPLE_REF, sampleKey, "decline"), editUrl: crewReviewUrl(null, SAMPLE_REF, sampleKey, "edit"),
       suggestedBalance: `$${suggestBalance(sampleSummary, 0)}`,
+      findCrew: crewAnswers({ on: true, consent: true, adult: true, age: "22-25", gender: "", home: "Leeds", life: ["gap-year"], vibes: ["party", "islands"], about: "Sample answers: this box only shows when a guest ticks Find your crew.", want: { ages: "near" } }),
     }) },
     { tpl: "trip_builder_test_received", m: tripBuilderReceivedEmail({
       firstName: "Charlie", ref, route, days: 13, startDate: "", people: 2, holdUntil: "", statusUrl,
@@ -86,7 +88,7 @@ Deno.serve(async (req) => {
     { tpl: "trip_builder_test_ready", m: tripBuilderReadyEmail({
       firstName: "Charlie", ref, route, balance: "$512",
       note: "All checked. We swapped the Kampot bus for a morning minivan so you arrive in daylight.", payUrl: guestTripUrl(null, SAMPLE_REF, await signGuestKey(SAMPLE_REF)), statusUrl,
-      planUrl: SAMPLE.trip_link, choices: ["Pay all $512 now", "Pay $512 automatically on Mon 4 Jan, 7 days before you leave", "Pay in 3 instalments of about $171: the first now, then one every 30 days"],
+      planUrl: SAMPLE.trip_link, choices: ["Pay all $512 now", "Pay a $99 deposit now and the rest ($413) automatically on Mon 4 Jan, a week before you leave", "Pay in 3 instalments of about $171: the first now, then one every 30 days"],
       hasDeposit: false,
     }) },
     { tpl: "trip_builder_test_booked", m: tripBuilderBookedEmail({

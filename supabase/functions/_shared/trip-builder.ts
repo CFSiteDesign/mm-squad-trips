@@ -19,9 +19,10 @@ import {
   tripBuilderReceivedEmail,
   TRIP_BUILDER_CONTACT,
 } from "./email.ts";
+import { crewAnswers } from "./trip-builder-find-crew.ts";
 import { crewReviewUrl, guestTripUrl, readSummary, signCrewKey, signGuestKey, suggestBalance } from "./trip-builder-crew.ts";
 import type { Update } from "./trip-builder-revise.ts";
-import { allPaid, buildSchedule, daysUntil, type Item, LATE_DAYS, type Plan, readSchedule } from "./trip-builder-pay.ts";
+import { allPaid, buildSchedule, daysUntil, type Item, LATE_DAYS, laterDepositTotal, parseLaterDeposit, paymentFits, type Plan, readSchedule } from "./trip-builder-pay.ts";
 
 // Trip builder enquiries are Ewan's (Charlie, 19 Oct 2026): every alert goes to
 // him and every guest email replies to him, not the ALL IN ops list or cs@.
@@ -51,6 +52,13 @@ export function parseDeposit(v: unknown): number {
 }
 /** True while a deposit is owed and not yet paid, so the crew can't act on the trip. A trip sent free has no deposit, so it is never waiting on one. */
 export const needsDeposit = (row: { deposit_amount?: unknown; deposit_paid_at?: unknown }) => Number(row.deposit_amount) > 0 && !row.deposit_paid_at;
+
+/** What "pay a week before I leave" takes today for this trip (trip-builder-pay.ts). The secret TRIP_BUILDER_LATER_DEPOSIT_PER_PERSON is read on every request. */
+export function laterDeposit(row: { deposit_paid_at?: unknown; party_size?: unknown }): number {
+  let v: string | undefined;
+  try { v = Deno.env.get("TRIP_BUILDER_LATER_DEPOSIT_PER_PERSON"); } catch { /* no permission to read it, as in a plain `deno test`: the normal deposit */ }
+  return laterDepositTotal(parseLaterDeposit(v), row);
+}
 
 /** A first name that is safe to print in an email to somebody else's address: letters and a few marks only, otherwise "there". (A free trip can be sent with anyone's email.) */
 export function plainFirstName(name: unknown): string {
@@ -111,15 +119,17 @@ export async function notifyBooked(row: Row, items: Item[], origin: string | nul
   const to = (row.guest_email as string | null) || (row.email as string | null);
   const statusUrl = guestTripUrl(origin, row.ref, key);
   const plan = String(row.pay_plan ?? "now");
+  // The deposit they paid when they sent the trip, or the one "pay a week before I leave" just took (item 1 of two).
+  const depositPaid = Number(row.deposit_amount) > 0 ? Number(row.deposit_amount) : plan === "later" && items.length === 2 ? items[0].amount : 0;
   if (to) {
-    const m = tripBuilderBookedEmail({ firstName: first, ref: row.ref, route: row.route ?? "your trip", planLabel: planLabel(plan, Number(row.deposit_amount) > 0), deposit: Number(row.deposit_amount) > 0 ? usd(Number(row.deposit_amount)) : "", schedule: scheduleRows(items), statusUrl, startDate: fmtDay(row.start_date) });
+    const m = tripBuilderBookedEmail({ firstName: first, ref: row.ref, route: row.route ?? "your trip", planLabel: planLabel(plan, depositPaid > 0), deposit: depositPaid > 0 ? usd(depositPaid) : "", schedule: scheduleRows(items), statusUrl, startDate: fmtDay(row.start_date) });
     await sendEmail({ to, subject: m.subject, html: m.html, replyTo: EWAN, templateName: "trip_builder_booked" }).catch((e) => console.warn("trip builder booked email failed", e));
   }
   const rows = items.map((i) => `${i.status === "paid" ? "Paid" : "Due"} ${fmtDay(i.due)}: ${usd(i.amount)}`).join("<br>");
   await sendEmail({
     to: EWAN, cc: teamCc(),
-    subject: `Trip builder: ${row.name} is booked and will ${planLabel(plan, Number(row.deposit_amount) > 0)} · ${row.ref}`,
-    html: `<p><strong>${esc(String(row.name))}</strong> approved ${esc(String(row.route ?? ""))} (${row.ref}) and chose to ${esc(planLabel(plan, Number(row.deposit_amount) > 0))}. It's booked: make sure the beds are locked in.</p><p>${rows}</p>`,
+    subject: `Trip builder: ${row.name} is booked and will ${planLabel(plan, depositPaid > 0)} · ${row.ref}`,
+    html: `<p><strong>${esc(String(row.name))}</strong> approved ${esc(String(row.route ?? ""))} (${row.ref}) and chose to ${esc(planLabel(plan, depositPaid > 0))}. It's booked: make sure the beds are locked in.</p><p>${rows}</p>`,
     templateName: "trip_builder_booked_ops",
   }).catch((e) => console.warn("trip builder booked ops email failed", e));
 }
@@ -143,6 +153,7 @@ export async function notifyCrew(row: Row, guestEmail: string | null, holdUntil:
     reviewUrl: crewReviewUrl(origin, row.ref, key), approveUrl: crewReviewUrl(origin, row.ref, key, "approve"),
     declineUrl: crewReviewUrl(origin, row.ref, key, "decline"), editUrl: crewReviewUrl(origin, row.ref, key, "edit"),
     suggestedBalance: summary ? usd(suggestBalance(summary, Number(row.deposit_amount))) : "",
+    findCrew: crewAnswers(row.find_crew),
     update,
   });
   await sendEmail({ to: EWAN, cc: teamCc(), subject: ops.subject, html: ops.html, replyTo: guestEmail ?? undefined, templateName: update ? "trip_builder_ops_update" : "trip_builder_ops" }).catch((e) => console.warn("trip builder ops email failed", e));
@@ -271,6 +282,12 @@ export async function handleTripBuilderPaid(sb: SupabaseClient, session: Stripe.
     const item = items.find((i) => i.n === n);
     if (item ? item.status === "paid" : !!row.balance_paid_at) return; // this payment is already counted (webhook delivered twice)
     const paidNow = (session.amount_total ?? 0) / 100;
+    // The money is in, but it doesn't match what is scheduled. Never count it as the payment, or a $99 deposit could read as paid in full. Ewan sorts it out with them.
+    if (!paymentFits(meta.kind, item, paidNow, row.balance_amount)) {
+      await alertEwan(`Trip builder: ${row.name} paid ${usd(paidNow)}, but their plan had changed · ${row.ref}`,
+        `<p><strong>${esc(String(row.name))}</strong> (${row.ref}) paid ${usd(paidNow)} on a payment page that was opened before their plan or price changed, so it has NOT been counted and they are not booked on it. Check the payment in Stripe (${esc(pi ?? "no payment id")}), then either refund it or agree the rest with them.</p>`, "trip_builder_stale_payment_ops");
+      return;
+    }
     if (item) { item.status = "paid"; item.paid_at = now.toISOString(); item.payment_intent = pi; item.last_error = null; item.retry_after = null; }
     const complete = items.length ? allPaid(items) : true;
     const firstBooking = String(row.status) !== "approved"; // read before we save: this payment is what books them
@@ -279,8 +296,8 @@ export async function handleTripBuilderPaid(sb: SupabaseClient, session: Stripe.
     const needsCard = !row.stripe_payment_method_id && items.some((i) => i.how === "card" && i.status !== "paid");
     const card = needsCard ? await readCard(session, pi, null) : { customer: null, method: null };
     if (needsCard && !card.method) {
-      await alertEwan(`Trip builder: no card saved for ${row.name}'s instalments · ${row.ref}`,
-        `<p><strong>${esc(String(row.name))}</strong> (${row.ref}) paid the first instalment of ${esc(String(row.route ?? ""))}, but Stripe didn't give us a card to charge the rest to. The later payments can't be taken automatically: ask them to pay each one from their trip page, or take it from them yourself.</p>`, "trip_builder_no_card_ops");
+      await alertEwan(`Trip builder: no card saved for ${row.name}'s later payments · ${row.ref}`,
+        `<p><strong>${esc(String(row.name))}</strong> (${row.ref}) made the first payment for ${esc(String(row.route ?? ""))}, but Stripe didn't give us a card to charge the rest to. The later payments can't be taken automatically: ask them to pay each one from their trip page, or take it from them yourself.</p>`, "trip_builder_no_card_ops");
     }
     const { error: uErr } = await sb.from("trip_builder_requests").update({
       ...(card.method ? { stripe_customer_id: card.customer, stripe_payment_method_id: card.method } : {}),
@@ -307,7 +324,7 @@ export async function handleTripBuilderPaid(sb: SupabaseClient, session: Stripe.
         templateName: "trip_builder_balance_ops",
       }).catch((e) => console.warn("trip builder balance ops email failed", e));
     } else if (firstBooking) {
-      // First instalment in: they're booked, with the rest scheduled.
+      // First payment in (the first instalment, or the "week before" deposit): they're booked, with the rest scheduled.
       await notifyBooked({ ...row, pay_plan: plan, plan_chosen_at: now.toISOString() } as Row, items, meta.origin || null, await signGuestKey(row.ref));
     } else {
       await sendEmail({
