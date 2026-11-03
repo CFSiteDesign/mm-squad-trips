@@ -44,6 +44,62 @@
   }
   function parseRef(rest) { var p = u.dec(rest || '').split('?'), q = {}; (p[1] || '').split('&').forEach(function (kv) { var i = kv.indexOf('='); if (i > 0) q[kv.slice(0, i)] = u.dec(kv.slice(i + 1)); }); return { ref: (p[0] || '').toUpperCase(), k: q.k || '' }; }
 
+  /* ---------- Find your crew ----------
+     Ticked on the send form: the guest tells us a little about themselves and who they'd like to meet, and a real person on the crew introduces them to
+     travellers on a similar route at the same time, once both have said yes. Offered in demo mode and when the backend keeps it (FIND_CREW). docs/FIND-YOUR-CREW.md */
+  var crewOffered = function () { return C.FIND_CREW === true || !C.LEAD_ENDPOINT; };
+  var crewWho = function () { return C.ASK_NAME || 'The crew'; };
+  function crewSection() {
+    var F = MM.FIND, quiz = (A.profile && A.profile.vibes) || (A.quiz && A.quiz.a && A.quiz.a.vibes) || [], vibes = MM.VIBES.map(function (v) { return [v.k, v.n]; });
+    var pre = quiz.filter(function (k) { return vibes.some(function (v) { return v[0] === k; }); }).slice(0, F.PICKS);
+    var opts = function (list) { return list.map(function (o) { return '<option value="' + esc(o[0]) + '"' + (o[0] === 'women' ? ' disabled' : '') + '>' + esc(o[1]) + '</option>'; }).join(''); };
+    var chips = function (name, label, list, on) {
+      return '<div class="field full"><span class="lbl" id="fc-' + name + '-l">' + label + ' <small>(up to ' + F.PICKS + ')</small></span><div class="fcrew__chips" role="group" aria-labelledby="fc-' + name + '-l" data-pick="fc_' + name + '">' +
+        list.map(function (o) { return '<button type="button" class="chip" data-k="' + esc(o[0]) + '" aria-pressed="' + (on.indexOf(o[0]) > -1) + '">' + esc(o[1]) + '</button>'; }).join('') +
+        '</div><input type="hidden" name="fc_' + name + '" value="' + esc(on.join(',')) + '"></div>';
+    };
+    var genders = F.GENDERS.filter(function (g) { return !g[0]; }).concat(F.GENDERS.filter(function (g) { return g[0]; }));
+    return '<div class="fcrew full"><label class="chk fcrew__on"><input type="checkbox" name="fc_on" id="fc-on" aria-controls="fc-body" aria-expanded="false"><span><b>Find your crew.</b> Travelling solo, or keen for company? ' +
+      esc(crewWho()) + ' looks for travellers on a similar route at the same time, asks you both first, and only introduces you if you both say yes.</span></label>' +
+      '<div class="fcrew__body" id="fc-body" hidden><div class="form2">' +
+      '<div class="field"><label for="fc-age">Your age</label><select class="select" id="fc-age" name="fc_age"><option value="">Pick one</option>' + opts(F.AGES) + '</select></div>' +
+      '<div class="field"><label for="fc-gender">You are</label><select class="select" id="fc-gender" name="fc_gender">' + opts(genders) + '</select></div>' +
+      '<div class="field"><label for="fc-home">Where you\'re from</label><input class="input" id="fc-home" name="fc_home" maxlength="40" autocomplete="country-name" placeholder="your country"></div>' +
+      '<div class="field"><label for="fc-who">Who you\'d like to meet</label><select class="select" id="fc-who" name="fc_who" aria-describedby="fc-whohint">' + opts(F.WHO) + '</select><span class="fine" id="fc-whohint">Women-only crews are for women.</span></div>' +
+      '<div class="field"><label for="fc-ages">Their age</label><select class="select" id="fc-ages" name="fc_ages">' + F.AGEPREF.map(function (o) { return '<option value="' + o[0] + '">' + esc(o[1]) + '</option>'; }).join('') + '</select></div>' +
+      '<label class="chk fcrew__solo"><input type="checkbox" name="fc_solo"><span>Only people travelling solo</span></label>' +
+      chips('life', 'Where you\'re at', F.LIFE, []) + chips('vibes', 'Your vibe', vibes, pre) +
+      '<div class="field full"><label for="fc-about">One line about you <small>(the people you\'re introduced to see it)</small></label><input class="input" id="fc-about" name="fc_about" maxlength="140" placeholder="just quit finance, here for sunsets, cliff jumps and a big night out"></div>' +
+      '<label class="chk full"><input type="checkbox" name="fc_ok"><span>I\'m 18 or over. When there\'s a match, the crew can tell them my first name, age, where I\'m from, this line and where our trips cross. Only after we\'ve both said yes, and never my number or email before then.</span></label>' +
+      '</div></div></div>';
+  }
+  function crewMount(m) {
+    var on = $('#fc-on', m), body = $('#fc-body', m), gender = $('#fc-gender', m), who = $('#fc-who', m);
+    if (!on) return;
+    on.addEventListener('change', function () { body.hidden = !on.checked; on.setAttribute('aria-expanded', on.checked); if (on.checked) $('#fc-age', m).focus(); });
+    gender.addEventListener('change', function () { var w = who.querySelector('option[value="women"]'), woman = gender.value === 'woman'; w.disabled = !woman; if (!woman && who.value === 'women') who.value = 'anyone'; });
+    m.addEventListener('click', function (e) {
+      var b = e.target.closest('.fcrew__chips .chip'); if (!b) return;
+      var box = b.parentNode, input = box.parentNode.querySelector('input[name="' + box.getAttribute('data-pick') + '"]'), now = b.getAttribute('aria-pressed') === 'true';
+      if (!now && box.querySelectorAll('[aria-pressed="true"]').length >= MM.FIND.PICKS) { u.toast('Pick up to ' + MM.FIND.PICKS); return; }
+      b.setAttribute('aria-pressed', !now);
+      input.value = Array.prototype.map.call(box.querySelectorAll('[aria-pressed="true"]'), function (x) { return x.getAttribute('data-k'); }).join(',');
+    });
+  }
+  // What they ticked, cleaned the same way the server cleans it; { err } if something they need is missing; null if they left it off.
+  function crewRead(v) {
+    if (!v.fc_on) return null;
+    if (!v.fc_age) return { err: 'Find your crew: pick your age, or untick it.' };
+    if (!v.fc_ok) return { err: 'Find your crew: tick the box to say you\'re 18 or over and happy to be introduced, or untick it.' };
+    var list = function (s) { return String(s || '').split(',').filter(Boolean); };
+    return MM.cleanCrew({ on: true, age: v.fc_age, gender: v.fc_gender || '', home: v.fc_home || '', life: list(v.fc_life), vibes: list(v.fc_vibes), about: v.fc_about || '',
+      want: { who: v.fc_who, ages: v.fc_ages, solo: !!v.fc_solo }, consent: true, adult: true });
+  }
+  function crewNote(demo) {
+    return '<div class="humans fcrew__note"><b>Find your crew is on.</b> ' + (demo ? 'In live mode, ' + esc(crewWho().replace(/^The /, 'the ')) + ' looks for travellers on your route at the same time and asks you both before introducing anyone.'
+      : 'If someone\'s on your route at the same time, ' + esc(crewWho().replace(/^The /, 'the ')) + ' messages you first. Nothing is shared until you\'ve both said yes.') + '</div>';
+  }
+
   /* ---------- the modal ---------- */
   function open() {
     if (A.revise) return openRevise();
@@ -63,6 +119,7 @@
       '<div class="humans full holdbox" style="margin:0"><span>' + (hasDate ? '<b>We hold your beds for these dates</b> while the crew checks it (up to ' + hold() + ' hours).' : '<b>No start date yet</b>, so there are no nights to hold. The crew will help you pick dates.') + '</span></div>' +
       '<div class="field full"><label for="lf-notes">Anything the crew should know?</label><textarea class="input" id="lf-notes" name="notes" placeholder="budget worries, who you\'re bringing, must-dos…"></textarea></div>' +
       '<div class="full" style="display:none"><label>Leave empty <input name="website" tabindex="-1" autocomplete="off"></label></div>' +
+      (crewOffered() ? crewSection() : '') +
       '<label class="chk full"><input type="checkbox" name="consent" required><span>It\'s OK for Mad Monkey to contact me about this trip. We only use your details to plan it with you.' + (C.PRIVACY_URL ? ' <a href="' + esc(C.PRIVACY_URL) + '" target="_blank" rel="noopener">Privacy</a>' : '') + '</span></label>' +
       (dep ? '<div class="refbox full" style="margin:0"><span class="over">Deposit today</span><b id="lf-dep">' + usd(per()) + '</b></div>' : '') + '</div>' +
       '<div id="leaderr" class="warn" style="display:none;margin-top:var(--s-3)"><i>!</i><span></span></div>' +
@@ -75,6 +132,7 @@
           if (live) pay.textContent = 'Pay ' + usd(total) + ' deposit';
         });
         $('#leadf', m).addEventListener('submit', submit);
+        crewMount(m);
       });
   }
 
@@ -85,18 +143,20 @@
     if (!v.name) return show('Pop your first name in.');
     var ct = u.readContact(v); if (ct.err) return show(ct.err);
     if (!v.consent) return show('Tick the box so we\'re allowed to reply.');
+    var fc = crewRead(v); if (fc && fc.err) return show(fc.err);
     u.store('mm-lead', { name: v.name, via: ct.via, email: v.email, whatsapp: v.whatsapp, from: v.from });
     var plan = u.getPlan(), wantHold = !!A.state.start, people = Math.min(8, Math.max(1, +v.size || 1)), dep = deposit();
     var payload = MM.leadPayload(A.state, plan, { name: v.name, via: ct.via, email: ct.email, whatsapp: ct.whatsapp, from: v.from || '', partySize: people, dates: v.flex, notes: v.notes || '', consent: true },
       { ref: A.meta.ref, fromHostel: A.meta.from, link: u.shareLink(), stage: A.stage ? { n: A.stage.n, parent: A.stage.parent } : null });
     payload.type = 'review_request'; payload.status = 'submitted'; payload.hold = { requested: wantHold, hours: hold() };
     if (dep) payload.deposit = { perPersonUsd: per(), people: people };
-    u.track('review_request', { stops: plan.places.length, days: plan.totals.days, hold: wantHold });
+    if (fc) payload.findCrew = fc;
+    u.track('review_request', { stops: plan.places.length, days: plan.totals.days, hold: wantHold, crew: !!fc });
     var btn = $('button[type=submit]', f), label = btn.textContent; btn.disabled = true; btn.textContent = dep && C.LEAD_ENDPOINT ? 'Opening secure payment…' : 'Sending…';
     function record(data, demo) {
       var r = (data && data.ref) || ref(), now = new Date(), had = subs().filter(function (x) { return x.ref === r; })[0], rec = { ref: r, createdAt: now.toISOString(), status: (data && data.status) || 'submitted', route: payload.trip.route, days: payload.trip.days, link: payload.trip.link,
         hold: wantHold ? { until: (data && data.hold && data.hold.until) || new Date(now.getTime() + hold() * 3600000).toISOString() } : null, demo: !!demo, name: v.name, email: ct.email, whatsapp: ct.whatsapp, via: ct.via,
-        deposit: dep ? { amount: per() * people, paid: false } : null, payLink: (data && data.checkoutUrl) || '', key: (data && data.key) || (had && had.key) || '', people: people, datesFlex: v.flex || '', stage: A.stage ? { n: A.stage.n, parent: A.stage.parent } : null };
+        deposit: dep ? { amount: per() * people, paid: false } : null, payLink: (data && data.checkoutUrl) || '', key: (data && data.key) || (had && had.key) || '', people: people, datesFlex: v.flex || '', stage: A.stage ? { n: A.stage.n, parent: A.stage.parent } : null, crew: !!fc || !!(had && had.crew) };
       saveRec(rec); return rec;
     }
     if (!C.LEAD_ENDPOINT) return setTimeout(function () { A._lastLead = payload; success(record(null, true), payload); }, 400);
@@ -119,6 +179,7 @@
       (rec.demo ? '<div class="demo">DEMO MODE: nothing was sent, nothing was charged and no beds were held. Set <code>LEAD_ENDPOINT</code> in config.js and this goes straight to the crew.</div>' : '') +
       '<div class="refbox"><span class="over">Your reference</span><b>' + esc(rec.ref) + '</b></div>' +
       (rec.hold ? '<p style="font-weight:600">' + (rec.demo ? 'In live mode we\'d hold your beds until ' : 'We\'re holding your beds until ') + '<b>' + fmtDT(rec.hold.until) + '</b> while a real person checks the trip.</p>' : '') + stepsHTML(rec.status) +
+      (payload.findCrew ? crewNote(rec.demo) : '') +
       '<div style="display:flex;gap:var(--s-2);flex-wrap:wrap"><a class="btn btn--sm" href="#/trip/' + esc(rec.ref) + '" data-act="close">Track my trip</a>' + (wa ? '<a class="btn btn--sm btn--pink" href="' + wa + '" target="_blank" rel="noopener">' + esc(u.askLabel()) + ' on WhatsApp</a>' : '') +
       '<button class="btn btn--sm btn--paper" data-act="copylead" type="button">Copy review card</button><button class="btn btn--sm btn--ghost" data-act="close" type="button">Done</button></div><input type="hidden" id="statusurl" value="' + esc(statusUrl) + '"></div>');
   }
@@ -188,6 +249,7 @@
   function optionCopy(o, withDep) {
     var first = o.items[0];
     if (o.plan === 'now') return { t: 'Pay it all now', big: usd(o.amount), d: 'One payment today, and you\'re fully paid up.', go: 'Pay ' + usd(o.amount) + ' now' };
+    if (o.plan === 'later' && o.items.length > 1) return { t: usd(first.amount) + ' now, the rest on ' + fmtDay(o.items[1].due), big: usd(first.amount) + ' today', d: 'A ' + usd(first.amount) + ' deposit books your trip today. The other ' + usd(o.items[1].amount) + ' is charged to the same card a week before you leave, and we email you a reminder first. The deposit comes off your total. It\'s non-refundable if you cancel, but if we can\'t make your trip work, we refund it.', go: 'Pay ' + usd(first.amount) + ' deposit and book' };
     if (o.plan === 'later') return withDep
       ? { t: 'Pay on ' + fmtDay(first.due), big: usd(o.amount), d: 'You\'re booked today. We charge the card you paid your deposit with, a week before you leave, and email you a reminder first.', go: 'Book my trip' }
       : { t: 'Pay on ' + fmtDay(first.due), big: usd(o.amount), d: 'You\'re booked once you\'ve added a card. Nothing is charged today: we charge it a week before you leave, and email you a reminder first.', go: 'Add a card and book' };
@@ -225,7 +287,7 @@
       var demo = !C.LEAD_ENDPOINT || x.demo, dep = x.deposit || {}, bal = x.balance || {}, depMode = !!(dep.amount);
       // booked through the pay-your-way screen (a plan and a schedule), with or without a deposit
       var hasPlan = !!(x.plan || (x.schedule && x.schedule.length));
-      var titles = { pending_payment: waiting ? 'Confirming your payment…' : 'Deposit not paid yet.', submitted: 'It\'s with the crew.', checking: 'A human is checking it.', ready: waiting ? (waitPlan === 'later' ? 'Saving your card…' : 'Confirming your payment…') : 'Ready for your OK.', approved: depMode || hasPlan ? 'You\'re booked.' : 'You\'re all set.', declined: 'We need to tweak it.' };
+      var titles = { pending_payment: waiting ? 'Confirming your payment…' : 'Deposit not paid yet.', submitted: 'It\'s with the crew.', checking: 'A human is checking it.', ready: waiting ? (waitPlan === 'card' ? 'Saving your card…' : 'Confirming your payment…') : 'Ready for your OK.', approved: depMode || hasPlan ? 'You\'re booked.' : 'You\'re all set.', declined: 'We need to tweak it.' };
       x._sel = sel; var ready = x.status === 'ready' && !waiting;
       root.innerHTML = '<section class="quiz"><div class="wrap"><div class="qbox"><span class="over">Trip ' + esc(x.ref) + '</span><h1 class="disp">' + (titles[x.status] || titles.submitted) + '</h1><p class="qhelp">' + esc(x.route) + ' · ' + (Math.round(+x.days) || 0) + ' days' + (x.start ? ' · from ' + esc(fmtDay(x.start)) : '') + '. Every trip is checked by a real person before you pay' + (depMode ? ' the rest' : ' anything') + '.</p>' +
         (x.status === 'declined' || x.status === 'approved' ? '' : stepsHTML(x.status, depMode)) +
@@ -241,6 +303,7 @@
         (x.status === 'approved' ? scheduleHTML(x) : '') +
         (x.hold && (x.status === 'submitted' || x.status === 'checking') ? '<div class="humans" style="background:var(--yellow)"><b>Beds held</b> until ' + fmtDT(x.hold.until) + ' while we check it.</div>' : '') +
         changeHTML(x, demo) +
+        (x.crew && x.status !== 'declined' ? '<div class="humans humans--ask" style="margin-top:0"><span><b>Find your crew is on.</b> If someone\'s on your route at the same time, ' + esc(crewWho().replace(/^The /, 'the ')) + ' messages you first. Changed your mind? Ask, and we\'ll switch it off.</span>' + u.ask('btn btn--sm btn--pink') + '</div>' : '') +
         (['submitted', 'checking', 'ready', 'approved'].indexOf(x.status) > -1 ? '<div class="humans humans--ask" style="margin-top:0"><span><b>Not sure where you\'re heading after this?</b> Decide once you\'re there. Come back, log in with your email, and we\'ll remember where you\'ve been, so we never suggest it twice.</span><button class="btn btn--sm btn--pink" type="button" data-act="nextstage" data-ref="' + esc(x.ref) + '">Plan my next stage</button></div>' : '') +
         '<div class="qnav"><a class="btn" href="' + esc(u.url(x.link) || '#/build') + '">Open my trip</a>' + (x.status === 'declined' ? '' : '<a class="btn btn--paper" href="' + esc(String(u.url(x.link) || '#/build').replace('#/build/', '#/pack/')) + '">Open my trip pack</a>') +
         (x.status === 'pending_payment' && x.payLink && !waiting ? '<a class="btn btn--pink" href="' + esc(u.url(x.payLink, true)) + '">Pay ' + usd(dep.amount) + ' deposit</a>' : '') +
@@ -264,7 +327,7 @@
         if (!alive) return;                     // they have moved on to another screen: don't draw this one over it
         if (!d || !d.status) { var h = root.querySelector('.disp'); if (!rec && h) h.textContent = 'Can\'t find that trip.'; return; }
         rec = Object.assign(rec || {}, { ref: r, key: key || (rec && rec.key) || '', canEdit: !!d.canEdit, people: d.people || (rec && rec.people) || 1, datesFlex: d.datesFlex || (rec && rec.datesFlex) || '', status: d.status, route: d.route || (rec && rec.route) || '', days: d.days || (rec && rec.days) || 0, start: d.start || '', link: d.link || (rec && rec.link) || '#/build',
-          payLink: d.payLink || '', hold: d.hold ? { until: d.hold.until } : null, deposit: d.deposit || {}, balance: d.balance || {}, pay: d.pay || null, canPay: !!d.canPay, schedule: d.schedule || [], owing: d.owing || [], plan: d.plan || null, demo: false });
+          payLink: d.payLink || '', hold: d.hold ? { until: d.hold.until } : null, crew: !!(d.findCrew || (rec && rec.crew)), deposit: d.deposit || {}, balance: d.balance || {}, pay: d.pay || null, canPay: !!d.canPay, schedule: d.schedule || [], owing: d.owing || [], plan: d.plan || null, demo: false });
         saveRec(Object.assign({}, rec, { pay: null, schedule: [], owing: [] }));
         // Back from Stripe before the payment webhook has landed: check again for up to 30 seconds.
         if (wait && d.status === wait && polls++ < 10) setTimeout(fetchStatus, 3000);
@@ -278,7 +341,7 @@
       u.timed(payEndpoint(), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ref: r, k: key, plan: plan }) }, 30000)
         .then(function (res) { return res.json().catch(function () { return {}; }).then(function (d) { if (!res.ok || d.ok === false) throw new Error(d.error || 'Something went wrong. Try again.'); return d; }); })
         .then(function (d) {
-          if (d.checkoutUrl) { try { sessionStorage.setItem('mm-paying', r + ':' + (rec.status || 'ready') + ':' + (/^[a-z]{1,12}$/.test(plan) ? plan : '')); } catch (x) { /* ignore */ } if (u.url(d.checkoutUrl, true)) { window.location.href = u.url(d.checkoutUrl, true); return; } throw new Error('Something went wrong. Try again.'); }
+          if (d.checkoutUrl) { try { sessionStorage.setItem('mm-paying', r + ':' + (rec.status || 'ready') + ':' + (d.card ? 'card' : /^[a-z]{1,12}$/.test(plan) ? plan : '')); } catch (x) { /* ignore */ } if (u.url(d.checkoutUrl, true)) { window.location.href = u.url(d.checkoutUrl, true); return; } throw new Error('Something went wrong. Try again.'); }
           busy = false; wait = null; fetchStatus(); u.toast(d.booked ? 'You\'re booked' : 'Done');
         }).catch(function (e) { busy = false; if (b) { b.disabled = false; b.textContent = txt; } perr(e.message); });
     }
