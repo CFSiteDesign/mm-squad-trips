@@ -1,9 +1,11 @@
 // Admin CRUD over the five tables. Token-gated.
 // POST body: { table, op, ...args }
-//   op = "list" | "create" | "update" | "delete"
+//   op = "list" | "create" | "update" | "delete" | "cancel-booking"
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { verifyAdminToken, adminAuthHeaderToken } from "../_shared/admin-auth.ts";
+import { cancelBookingValues } from "../_shared/booking-cancel.ts";
+import { triggerCommissionPush } from "../_shared/push-commission.ts";
 
 const TABLES = new Set([
   "trips",
@@ -71,6 +73,20 @@ Deno.serve(async (req) => {
       return jr({ ok: true });
     }
 
+    // Bookings stay read-only otherwise. Every row of the booking goes together, whichever row was opened.
+    if (op === "cancel-booking") {
+      if (table !== "bookings") return jr({ error: "Only bookings can be cancelled" }, 400);
+      const { id } = body;
+      if (!id) return jr({ error: "id required" }, 400);
+      const { data: row, error: readErr } = await sb.from("bookings").select("stripe_session_id,balance_status").eq("id", id).maybeSingle();
+      if (readErr) return jr({ error: readErr.message }, 400);
+      if (!row) return jr({ error: "Booking not found" }, 404);
+      const match = sb.from("bookings").update(cancelBookingValues(row.balance_status));
+      const { data: done, error } = await (row.stripe_session_id ? match.eq("stripe_session_id", row.stripe_session_id) : match.eq("id", id)).select("id");
+      if (error) return jr({ error: error.message }, 400);
+      await triggerCommissionPush(sb);
+      return jr({ ok: true, spots: done?.length ?? 0 });
+    }
 
     return jr({ error: "Unknown op" }, 400);
   } catch (e) {

@@ -134,6 +134,8 @@ Deno.serve(async (req) => {
     .select("id,stripe_session_id,stripe_customer_id,stripe_payment_method_id,balance_amount,balance_attempts,balance_due_date,group_size,lead_email,lead_name,trip_id,departure_id,booking_ref,trips(name,slug),departures(departure_date)")
     .in("balance_status", ["scheduled", "failed"])
     .eq("spot_number", 1)
+    // A cancelled booking is never charged, whatever its balance fields still say.
+    .or("status.is.null,status.neq.Cancelled")
     .lte("balance_next_attempt_at", nowIso);
 
   if (error) {

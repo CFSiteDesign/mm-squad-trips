@@ -1048,6 +1048,21 @@ function RowEditor({ table, row, isNew, onClose, onSaved, siblings = [] }: {
 
   function setVal(k: string, v: unknown) { setValues((s) => ({ ...s, [k]: v })); }
 
+  async function cancelBooking() {
+    const spots = Number(row.group_size ?? 1) || 1;
+    if (!confirm(`Cancel ${row.booking_ref ?? "this booking"} for ${row.lead_name ?? "this guest"} (${spots} spot${spots === 1 ? "" : "s"})?\n\nThis stops any payment still to come and frees the spots. It doesn't refund or email anyone: refund in Stripe and tell the guest yourself. It can't be undone here.`)) return;
+    setSaving(true);
+    try {
+      await adminApi.cancelBooking(String(row.id));
+      toast.success("Booking cancelled. No more payments will be taken.");
+      onSaved();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not cancel the booking");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function save() {
     setSaving(true);
     try {
@@ -1152,7 +1167,17 @@ function RowEditor({ table, row, isNew, onClose, onSaved, siblings = [] }: {
           })}
         </div>
         <div className="mt-5 flex justify-end gap-2">
-          <Button variant="outline" onClick={onClose} className="rounded-none border-[2px] border-mm-black">CANCEL</Button>
+          {table === "bookings" && !isNew && String(row.status ?? "") !== "Cancelled" && (
+            <Button
+              variant="outline"
+              onClick={cancelBooking}
+              disabled={saving}
+              className="mr-auto rounded-none border-[2px] border-mm-black text-mm-pink"
+            >
+              CANCEL BOOKING
+            </Button>
+          )}
+          <Button variant="outline" onClick={onClose} className="rounded-none border-[2px] border-mm-black">CLOSE</Button>
           <Button
             onClick={save}
             disabled={saving}

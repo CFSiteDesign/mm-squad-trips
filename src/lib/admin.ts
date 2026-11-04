@@ -82,6 +82,9 @@ export const adminApi = {
     call<{ row: T }>({ table, op: "update", id, values }).then((r) => r.row),
   remove: (table: AdminTable, id: string) =>
     call<{ ok: true }>({ table, op: "delete", id }),
+  /** Cancels every row of the booking: stops any remaining charge and frees the spots. No refund, no email. */
+  cancelBooking: (id: string) =>
+    call<{ ok: true; spots: number }>({ table: "bookings", op: "cancel-booking", id }),
 };
 
 export async function addCompBooking(values: {
