@@ -3,6 +3,7 @@
 // for and where it sits on the page.
 import { ArrowRight } from "lucide-react";
 import { formatPrice, paymentLine } from "@/lib/trip-helpers";
+import { saleOff } from "@/lib/black-friday";
 import { dayLabel, tripEndDate } from "@/lib/trip-dates";
 import { tripNights } from "@/data/trips";
 import { type Checkout, type CheckoutFields, type CodeStatus } from "@/lib/use-checkout";
@@ -11,7 +12,9 @@ import type { Trip, Departure } from "@/types/trip";
 export function CheckoutPanel({ trip, departure, checkout, independent = false }: { trip: Trip; departure: Departure; checkout: Checkout; independent?: boolean }) {
   const { form, setField, spots, setSpots, maxSpots, submitting, codesPending, squadStatus, discountStatus, discountAmount, appliedDiscount, whatsappOptIn, setWhatsappOptIn, submit } = checkout;
 
-  const pay = paymentLine(departure.date, spots, departure.price);
+  const pay = paymentLine(departure.date, spots, departure.price, trip.slug);
+  const off = saleOff(trip.slug);
+  const saveCardOnly = pay.type === "deposit" && pay.amount === 0;
   const total = departure.price * spots;
   const due = Math.max(0, total - discountAmount);
   const today = pay.type === "deposit" ? pay.amount : due;
@@ -102,7 +105,7 @@ export function CheckoutPanel({ trip, departure, checkout, independent = false }
           {dayLabel(departure.date)} → {dayLabel(tripEndDate(departure.date, trip))} · {tripNights(trip)} nights · {spots} spot{spots === 1 ? "" : "s"}
         </p>
         <dl className="mt-3 space-y-1 border-t-[2px] border-mm-black/15 pt-3 text-sm">
-          <div className="flex justify-between"><dt className="text-mm-black/70">Trip total</dt><dd className="text-mm-black">{formatPrice(total)}</dd></div>
+          <div className="flex justify-between"><dt className="text-mm-black/70">{off > 0 ? `Trip total, with $${off} per spot off for Black Friday` : "Trip total"}</dt><dd className="text-mm-black">{formatPrice(total)}</dd></div>
           {discountAmount > 0 && (
             <div className="flex justify-between"><dt className="text-mm-black/70">Discount {appliedDiscount}</dt><dd className="text-mm-black">− {formatPrice(discountAmount)}</dd></div>
           )}
@@ -137,9 +140,9 @@ export function CheckoutPanel({ trip, departure, checkout, independent = false }
           disabled={submitting || codesPending}
           className="mt-4 flex w-full items-center justify-center gap-2 border-[3px] border-mm-black bg-mm-pink px-5 py-3.5 font-sticker text-xs tracking-[0.14em] text-mm-black transition-transform hover:-translate-y-0.5 disabled:opacity-60"
         >
-          {submitting ? "STARTING CHECKOUT…" : codesPending ? "CHECKING YOUR CODE…" : "CONTINUE TO PAYMENT"} <ArrowRight className="h-4 w-4" />
+          {submitting ? "STARTING CHECKOUT…" : codesPending ? "CHECKING YOUR CODE…" : saveCardOnly ? "SAVE YOUR CARD, PAY $0 TODAY" : "CONTINUE TO PAYMENT"} <ArrowRight className="h-4 w-4" />
         </button>
-        <p className="mt-2 text-center text-[11px] text-mm-black/55">Secure Stripe checkout · spot held on payment</p>
+        <p className="mt-2 text-center text-[11px] text-mm-black/55">{saveCardOnly ? "Secure Stripe checkout · spot held once your card is saved" : "Secure Stripe checkout · spot held on payment"}</p>
       </div>
     </div>
   );

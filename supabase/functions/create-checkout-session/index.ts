@@ -4,10 +4,13 @@
 // - Resolves price: month override → trip default
 // - Applies validated discount code (full price only — not deposits)
 // - 7-day rule: $99/spot deposit if departure ≥7 days out, else pay in full
+// - Black Friday (_shared/black-friday.ts): money off per spot, and the deposit is $0: a Stripe
+//   setup session saves the card and the webhook schedules the whole price for 7 days before.
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { appBase } from "../_shared/app-base.ts";
+import { previewAllowed, saleOffPerSpot } from "../_shared/black-friday.ts";
 
 const DEPOSIT_PER_SPOT = 99;
 const DEPOSIT_THRESHOLD_DAYS = 7;
@@ -85,6 +88,8 @@ Deno.serve(async (req) => {
     travellerMode?: "independent" | "crew";
     /** Ticked "Keep me posted on WhatsApp" at checkout (trip updates only). */
     whatsappOptIn?: boolean;
+    /** Black Friday preview key (?bfpreview=), so the sale can be tested before it starts. */
+    salePreview?: string;
   };
   try { payload = await req.json(); } catch { return err("Invalid JSON body"); }
 
@@ -201,6 +206,11 @@ Deno.serve(async (req) => {
     const originalPrice = pricePerSpot * groupSize;
     const subtotal = originalPrice;
 
+    // Black Friday. Codes are worked out on the sale price, and only creator codes count during it.
+    const saleOff = saleOffPerSpot(tripSlug, Date.now(), previewAllowed(payload.salePreview, Deno.env.get("BLACK_FRIDAY_PREVIEW_KEY"))) * groupSize;
+    const onSale = saleOff > 0;
+    const salePrice = Math.max(0, subtotal - saleOff);
+
     // 4. Discount
     let discountAmount = 0;
     let appliedCode: string | null = null;
@@ -210,7 +220,7 @@ Deno.serve(async (req) => {
     // Two-code stacking: one fixed + one percent, both stackable — fixed off
     // first, then the % on the remainder. Validated again server-side here so
     // the client can't force a combination the rules reject.
-    if (discountCode && secondDiscountCode) {
+    if (discountCode && secondDiscountCode && !onSale) {
       const c1 = String(discountCode).toUpperCase();
       const c2 = String(secondDiscountCode).toUpperCase();
       const { data: pair } = await sb
@@ -236,7 +246,7 @@ Deno.serve(async (req) => {
         const pctRow = d1!.discount_type === "percent" ? d1! : d2!;
         const fixed = Number(fixedRow.discount_amount) || 0;
         const pct = Math.min(100, Math.max(0, Number(pctRow.discount_amount) || 0));
-        discountAmount = Math.round((fixed + Math.max(0, subtotal - fixed) * (pct / 100)) * 100) / 100;
+        discountAmount = Math.round((fixed + Math.max(0, salePrice - fixed) * (pct / 100)) * 100) / 100;
         const { data: capRow } = await sb
           .from("app_config").select("value").eq("key", "max_discount_usd").maybeSingle();
         const cap = Number(capRow?.value) || 0;
@@ -262,7 +272,7 @@ Deno.serve(async (req) => {
         const months: number[] = d.applicable_months ?? [];
         const depMonthOk = months.length === 0 ||
           months.includes(new Date(depDate + "T00:00:00Z").getUTCMonth() + 1);
-        if (d.active && !expired && !exhausted && applies && depMonthOk) {
+        if (d.active && !expired && !exhausted && applies && depMonthOk && (!onSale || d.is_creator === true)) {
           // Percent codes: discount_amount holds the percentage of the subtotal.
           // Stacked codes: fixed off first, then stack_percent of the remainder
           // (Michele 27 Jul). app_config max_discount_usd caps the total.
@@ -270,10 +280,10 @@ Deno.serve(async (req) => {
           const stackPct = d.discount_type !== "percent"
             ? Math.min(100, Math.max(0, Number(d.stack_percent) || 0)) : 0;
           discountAmount = d.discount_type === "percent"
-            ? Math.round(subtotal * Math.min(100, Math.max(0, raw))) / 100
+            ? Math.round(salePrice * Math.min(100, Math.max(0, raw))) / 100
             : raw;
           if (stackPct > 0) {
-            const afterFixed = Math.max(0, subtotal - raw);
+            const afterFixed = Math.max(0, salePrice - raw);
             discountAmount = Math.round((raw + afterFixed * (stackPct / 100)) * 100) / 100;
           }
           const { data: capRow } = await sb
@@ -311,8 +321,10 @@ Deno.serve(async (req) => {
 
     // 5. 60-day rule
     const isDeposit = daysUntil(depDate) >= DEPOSIT_THRESHOLD_DAYS;
-    const fullDue = Math.max(0, subtotal - discountAmount);
-    const amountToday = isDeposit ? DEPOSIT_PER_SPOT * groupSize : fullDue;
+    const totalOff = saleOff + discountAmount;
+    const fullDue = Math.max(0, subtotal - totalOff);
+    const saveCardOnly = isDeposit && onSale;
+    const amountToday = saveCardOnly ? 0 : isDeposit ? DEPOSIT_PER_SPOT * groupSize : fullDue;
     const lineLabel = isDeposit
       ? `${trip.name} — Deposit ($99 × ${groupSize})`
       : `${trip.name} — Pay in full`;
@@ -352,7 +364,9 @@ Deno.serve(async (req) => {
       // the prize-draw + 2-free-nights perks block.
       creator_code: appliedIsCreator ? (appliedCode ?? "") : "",
       discount_code_id: discountRecordId ?? "",
-      discount_amount: String(discountAmount),
+      discount_amount: String(totalOff),
+      sale: onSale ? "black_friday" : "",
+      sale_off: onSale ? String(saleOff) : "",
       squad_code: squadCode ?? "",
       final_price: String(fullDue),
       full_due: String(fullDue),
@@ -395,17 +409,18 @@ Deno.serve(async (req) => {
       metadata[`traveler_${i + 1}`] = compact.slice(0, 490);
     });
 
-    const showDiscount = !isDeposit && discountAmount > 0 && appliedCode;
+    const showDiscount = !isDeposit && totalOff > 0;
+    const offName = [onSale ? "Black Friday" : "", appliedCode ? `Discount ${appliedCode}` : ""].filter(Boolean).join(" + ");
     let discountsParam: Array<{ coupon: string }> | undefined;
     if (showDiscount) {
       try {
         const coupon = await stripe.coupons.create({
-          amount_off: Math.round(discountAmount * 100),
+          amount_off: Math.round(totalOff * 100),
           currency: "usd",
           duration: "once",
-          name: `Discount ${appliedCode}`,
+          name: offName,
           max_redemptions: 1,
-          metadata: { code: appliedCode!, trip_slug: tripSlug },
+          metadata: { code: appliedCode ?? "BLACK_FRIDAY", trip_slug: tripSlug },
         });
         discountsParam = [{ coupon: coupon.id }];
       } catch (e) {
@@ -413,6 +428,47 @@ Deno.serve(async (req) => {
       }
     }
     const lineUnitAmount = discountsParam ? originalPrice : amountToday;
+
+    // A checkout started during the sale can't sit open for Stripe's usual 24 hours and keep the price.
+    const saleExpiry = onSale ? { expires_at: Math.floor(Date.now() / 1000) + 3600 } : {};
+    const checkoutUrls = {
+      success_url: `${origin}/booking-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/${tripSlug}?cancelled=1#booking`,
+    };
+
+    if (saveCardOnly) {
+      const offLine = appliedCode && discountAmount > 0
+        ? `Black Friday price, plus ${appliedIsCreator ? "creator code" : "code"} ${appliedCode}`
+        : "Black Friday price";
+      const perks = appliedIsCreator
+        ? " You're in the prize draw, and 2 free nights will be added to your Mad Monkey Loyalty account (valid 3 months)."
+        : "";
+      const session = await stripe.checkout.sessions.create({
+        mode: "setup",
+        currency: "usd",
+        customer: customerId,
+        customer_email: customerId ? undefined : lead.email,
+        ...(!customerId ? { customer_creation: "always" as const } : {}),
+        metadata,
+        setup_intent_data: {
+          metadata,
+          description: `${trip.name} × ${groupSize} · ${depDate}`,
+        },
+        custom_text: {
+          submit: {
+            message:
+              `${trip.name}, ${groupSize} spot${groupSize === 1 ? "" : "s"}, departing ${depDate}. Nothing is charged today. ` +
+              `${offLine}: ${fullDue.toFixed(0)} will be automatically charged to this card 7 days before departure. ` +
+              `If the charge fails we'll retry every 2 days and email you.${perks}`,
+          },
+        },
+        ...saleExpiry,
+        ...checkoutUrls,
+      });
+      return new Response(JSON.stringify({ url: session.url }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -457,8 +513,8 @@ Deno.serve(async (req) => {
             },
           }
         : {}),
-      success_url: `${origin}/booking-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/${tripSlug}?cancelled=1#booking`,
+      ...saleExpiry,
+      ...checkoutUrls,
     });
 
 

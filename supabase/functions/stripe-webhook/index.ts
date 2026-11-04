@@ -368,17 +368,31 @@ async function writeBookings(session: Stripe.Checkout.Session) {
 
   // Card-on-file + balance schedule for deposit bookings
   if (paymentType === "Deposit") {
+    // Black Friday $0 deposit: nothing has been taken, so a booking with no schedule would never be
+    // paid at all. It always gets one; with no card, charge-trip-balances tells CS on the due date.
+    const saveCardOnly = session.mode === "setup";
+    const scheduleDue = new Date(String(m.departure_date) + "T00:00:00Z");
+    scheduleDue.setUTCDate(scheduleDue.getUTCDate() - 7);
+    if (saveCardOnly) {
+      const { error: holdErr } = await sb.from("bookings").update({
+        balance_amount: Math.round(perSpotFinal * 100) / 100,
+        balance_due_date: scheduleDue.toISOString().slice(0, 10),
+        balance_status: perSpotFinal > 0 ? "scheduled" : "not_required",
+        balance_next_attempt_at: perSpotFinal > 0 ? new Date(scheduleDue.getTime() + 14 * 3_600_000).toISOString() : null,
+      }).eq("stripe_session_id", sessionId);
+      if (holdErr) console.error("$0 deposit schedule failed:", sessionId, holdErr.message);
+    }
     try {
       const stripeKey = Deno.env.get("STRIPE_SECRET_KEY")!;
       const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
       const full = await stripe.checkout.sessions.retrieve(sessionId, {
-        expand: ["payment_intent", "payment_intent.payment_method"],
+        expand: ["payment_intent", "payment_intent.payment_method", "setup_intent"],
       });
       const pi = full.payment_intent as Stripe.PaymentIntent | null;
       const customerId = (typeof full.customer === "string" ? full.customer : full.customer?.id) ?? null;
-      const pmId =
-        (typeof pi?.payment_method === "string" ? pi?.payment_method : pi?.payment_method?.id) ??
-        null;
+      const si = full.setup_intent as Stripe.SetupIntent | null;
+      const paidWith = pi?.payment_method ?? si?.payment_method ?? null;
+      const pmId = (typeof paidWith === "string" ? paidWith : paidWith?.id) ?? null;
       const piId = pi?.id ?? null;
 
       const depDateIso = m.departure_date as string;
@@ -401,8 +415,8 @@ async function writeBookings(session: Stripe.Checkout.Session) {
           stripe_payment_intent_id: piId,
           balance_amount: Math.round(balancePerSpot * 100) / 100,
           balance_due_date: balanceDueDate,
-          balance_status: balancePerSpot > 0 && pmId ? "scheduled" : "not_required",
-          balance_next_attempt_at: balancePerSpot > 0 && pmId ? nextAttempt.toISOString() : null,
+          balance_status: balancePerSpot > 0 && (pmId || saveCardOnly) ? "scheduled" : "not_required",
+          balance_next_attempt_at: balancePerSpot > 0 && (pmId || saveCardOnly) ? nextAttempt.toISOString() : null,
         })
         .eq("stripe_session_id", sessionId);
       if (updErr) console.warn("balance schedule update failed:", updErr.message);
@@ -556,6 +570,7 @@ async function writeBookings(session: Stripe.Checkout.Session) {
           bookingRef,
           bookingUrl: `${APP_URL}/booking-success?session_id=${encodeURIComponent(sessionId)}`,
           hasBalance: balanceTotal > 0,
+          nothingChargedToday: session.mode === "setup",
           creatorCode: m.creator_code || null,
         });
         sendEmail({ to: m.lead_email as string, subject, html, templateName: "booking_confirmed" }).catch((e) => console.warn("solo-confirmation email failed", e));
@@ -572,7 +587,7 @@ async function writeBookings(session: Stripe.Checkout.Session) {
           tripName: (m.trip_name as string) || (m.trip_slug as string) || "",
           departureDate: (m.departure_date as string) || "",
           spots: groupSize,
-          amount: `$${amountPaidTotal.toFixed(2)} ${(session.currency || "usd").toUpperCase()}`,
+          amount: `${amountPaidTotal.toFixed(2)} ${(session.currency || "usd").toUpperCase()}${m.sale === "black_friday" ? ` (Black Friday, ${m.sale_off} off${session.mode === "setup" ? `, card saved, ${fullDue.toFixed(2)} due 7 days before` : ""})` : ""}`,
           bookingRef,
           squadCode: (m.squad_code as string) || undefined,
           staffRecommendation: (m.staff_recommendation as string) || undefined,

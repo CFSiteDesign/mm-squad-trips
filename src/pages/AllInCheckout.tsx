@@ -149,7 +149,7 @@ function CheckoutBody({ trip, link }: { trip: Trip; link: LinkParams }) {
   }, [trip]);
 
   const meta = TRIPS.find((t) => t.slug === trip.slug);
-  const pay = chosen ? paymentLine(chosen.date, 1, chosen.price) : null;
+  const pay = chosen ? paymentLine(chosen.date, 1, chosen.price, trip.slug) : null;
 
   return (
     <>
@@ -185,7 +185,12 @@ function CheckoutBody({ trip, link }: { trip: Trip; link: LinkParams }) {
 
           {/* Deposit terms, on the page rather than only at Stripe's last step */}
           <div className="border-b-[3px] border-mm-black bg-mm-lime px-4 py-3 text-sm leading-snug text-mm-black/85">
-            {pay?.type === "deposit" ? (
+            {pay?.type === "deposit" && pay.amount === 0 ? (
+              <>
+                <strong className="text-mm-black">Black Friday: nothing to pay today.</strong> Save your card to hold your place. The full
+                price is charged automatically to that card 7 days before departure. If that charge fails we retry every 2 days and email you.
+              </>
+            ) : pay?.type === "deposit" ? (
               <>
                 <strong className="text-mm-black">$99 per spot holds your place today.</strong> The balance is charged
                 automatically to the same card 7 days before departure. If that charge fails we retry every 2 days and email you.

@@ -1,6 +1,7 @@
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { formatPrice, allDeparturesUnder60Days } from "@/lib/trip-helpers";
+import { depositText } from "@/lib/black-friday";
 import type { Trip } from "@/types/trip";
 import { Sticker, Starburst } from "@/components/brand/Sticker";
 import { DurationToggle } from "./DurationToggle";
@@ -12,6 +13,7 @@ export function Hero({ trip, heroImageUrl }: { trip: Trip; heroImageUrl?: string
   const headPrice = trip.departures[0]?.price ?? trip.defaultPrice;
   const headStrike = trip.departures[0]?.strikethrough ?? trip.defaultStrikethrough;
   const payInFull = allDeparturesUnder60Days(trip.departures);
+  const deposit = depositText(trip.slug);
   const hasVideo = /\.(mp4|webm|mov|m4v)(\?|$)/i.test(trip.heroVideoUrl ?? "");
   const showToggle = TOGGLE_BASE_SLUGS.has(trip.slug);
   // Router-relative path (works under the /all-in-trips basename on production).
@@ -93,9 +95,9 @@ export function Hero({ trip, heroImageUrl }: { trip: Trip; heroImageUrl?: string
               {trip.slug === "vietnam"
                 ? "Northern + Central Vietnam · 14 Days / 13 Nights · 5 stops · One unforgettable trip"
                 : trip.slug === "vietnam-7"
-                ? "Hanoi → Ha Giang Loop · 7 days · one unforgettable trip · Starts Wednesday · $310 · $99 deposit holds your spot"
+                ? `Hanoi → Ha Giang Loop · 7 days · one unforgettable trip · Starts Wednesday · ${formatPrice(headPrice)} · ${deposit} deposit holds your spot`
                 : trip.slug === "indonesia-7"
-                ? "Gili T → Kuta Lombok · 7 days · one unforgettable trip · Starts Thursday · $450 · $99 deposit holds your spot"
+                ? `Gili T → Kuta Lombok · 7 days · one unforgettable trip · Starts Thursday · ${formatPrice(headPrice)} · ${deposit} deposit holds your spot`
                 : `${displayDays} days · ${trip.stops.length} stops · ${trip.activityCount} activities · One crew`}
             </p>
 
@@ -135,7 +137,7 @@ export function Hero({ trip, heroImageUrl }: { trip: Trip; heroImageUrl?: string
               ) : null}
             </div>
             <p className="mt-2 font-sticker text-[10px] tracking-[0.18em] text-mm-bone/70">
-              {payInFull ? "PAY IN FULL" : "$99 DEPOSIT HOLDS YOUR SPOT"}
+              {payInFull ? "PAY IN FULL" : `${deposit} DEPOSIT HOLDS YOUR SPOT`}
             </p>
           </div>
 
@@ -173,9 +175,9 @@ export function Hero({ trip, heroImageUrl }: { trip: Trip; heroImageUrl?: string
               {trip.slug === "vietnam"
                 ? "Northern + Central Vietnam · 14 Days / 13 Nights · 5 stops · One unforgettable trip"
                 : trip.slug === "vietnam-7"
-                ? "Hanoi → Ha Giang Loop · 7 days · one unforgettable trip · Starts Wednesday · $310 · $99 deposit holds your spot"
+                ? `Hanoi → Ha Giang Loop · 7 days · one unforgettable trip · Starts Wednesday · ${formatPrice(headPrice)} · ${deposit} deposit holds your spot`
                 : trip.slug === "indonesia-7"
-                ? "Gili T → Kuta Lombok · 7 days · one unforgettable trip · Starts Thursday · $450 · $99 deposit holds your spot"
+                ? `Gili T → Kuta Lombok · 7 days · one unforgettable trip · Starts Thursday · ${formatPrice(headPrice)} · ${deposit} deposit holds your spot`
                 : `${displayDays} days · ${trip.stops.length} stops · ${trip.activityCount} activities · One crew`}
             </p>
 
@@ -215,7 +217,7 @@ export function Hero({ trip, heroImageUrl }: { trip: Trip; heroImageUrl?: string
                 ) : null}
               </div>
               <p className="mt-2 font-sticker text-[10px] tracking-[0.22em] text-mm-bone/70">
-                {payInFull ? "PAY IN FULL" : "$99 DEPOSIT HOLDS YOUR SPOT"}
+                {payInFull ? "PAY IN FULL" : `${deposit} DEPOSIT HOLDS YOUR SPOT`}
               </p>
             </div>
             <p className="font-sticker text-[10px] tracking-[0.22em] text-mm-bone/55">

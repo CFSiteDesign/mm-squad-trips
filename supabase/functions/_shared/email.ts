@@ -229,9 +229,12 @@ export function bookingConfirmedEmail(v: {
   bookingUrl: string;
   hasBalance: boolean;
   creatorCode?: string | null;
+  /** Black Friday $0 deposit: the card was saved and nothing was taken. */
+  nothingChargedToday?: boolean;
 }): { subject: string; html: string } {
   const balanceBlock = v.hasBalance
-    ? `<p style="margin:0 0 12px 0"><strong>Balance to settle:</strong></p>
+    ? `${v.nothingChargedToday ? `<p style="margin:0 0 12px 0">Nothing has been charged today. Your card is saved for the payment below. If you cancel before it's charged, you owe nothing. Once it's charged, our normal refund policy applies.</p>
+` : ""}<p style="margin:0 0 12px 0"><strong>Balance to settle:</strong></p>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #0a0a0a;margin:0 0 16px 0">
 <tr><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a"><strong>Spots</strong></td><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a">{{spots}}</td></tr>
 <tr><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a"><strong>Balance</strong></td><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a">{{balanceAmount}}</td></tr>

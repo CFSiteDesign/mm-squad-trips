@@ -428,6 +428,7 @@ export function BookingFlow({ trip, hideHeading = false }: { trip: Trip; hideHea
             <div className="-mx-5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-3 md:mx-0 md:grid md:grid-cols-3 md:gap-4 md:overflow-visible md:px-0">
               {visible.map((d) => (
                 <DepartureCard
+                  slug={trip.slug}
                   key={d.id}
                   dep={d}
                   groupSize={groupSize}
@@ -604,10 +605,10 @@ function FormStep({ n, label, children }: { n: number; label: string; children: 
 }
 
 function DepartureCard({
-  dep, groupSize, selected, onSelect,
-}: { dep: Departure; groupSize: number; selected: boolean; onSelect: () => void }) {
+  dep, slug, groupSize, selected, onSelect,
+}: { dep: Departure; slug: string; groupSize: number; selected: boolean; onSelect: () => void }) {
   const badge = spotBadge(dep.spotsRemaining);
-  const pay = paymentLine(dep.date, groupSize, dep.price);
+  const pay = paymentLine(dep.date, groupSize, dep.price, slug);
   return (
     <button
       type="button"
@@ -783,7 +784,7 @@ function Field({ label, v, onChange, type = "text" }: { label: string; v: string
 function PaymentSummary({
   trip, selected, groupSize, discountAmount = 0,
 }: { trip: Trip; selected: Departure; groupSize: number; discountAmount?: number }) {
-  const pay = paymentLine(selected.date, groupSize, selected.price);
+  const pay = paymentLine(selected.date, groupSize, selected.price, trip.slug);
   const subtotal = selected.price * groupSize;
   return (
     <div>

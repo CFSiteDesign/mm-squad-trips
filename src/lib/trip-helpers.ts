@@ -1,4 +1,5 @@
 import type { Departure } from "@/types/trip";
+import { saleOff } from "@/lib/black-friday";
 
 export const DEPOSIT_PER_SPOT = 99;
 // Trips departing in fewer than this many days require full payment (no deposit).
@@ -73,12 +74,14 @@ export function closedDepartures(deps: Departure[], slug?: string): Departure[] 
   );
 }
 
-export function paymentLine(dateIso: string, groupSize: number, price: number) {
+export function paymentLine(dateIso: string, groupSize: number, price: number, slug?: string) {
   if (isDepositEligible(dateIso)) {
+    // Black Friday: nothing today, on the trips in the sale.
+    const perSpot = slug && saleOff(slug) > 0 ? 0 : DEPOSIT_PER_SPOT;
     return {
       type: "deposit" as const,
-      label: `$${DEPOSIT_PER_SPOT * groupSize} deposit holds your spot`,
-      amount: DEPOSIT_PER_SPOT * groupSize,
+      label: `$${perSpot * groupSize} deposit holds your spot`,
+      amount: perSpot * groupSize,
     };
   }
   const full = price * groupSize;

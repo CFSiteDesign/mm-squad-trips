@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Trip } from "@/types/trip";
 import { getLocalPrice } from "@/data/pricingCalendar";
+import { saleOff, salePreviewKey } from "@/lib/black-friday";
 
 async function getFunctionErrorMessage(error: unknown): Promise<string> {
   if (!(error instanceof Error)) return "Request failed";
@@ -33,6 +34,14 @@ export async function fetchTrip(slug: string, squadCode?: string): Promise<Trip>
     return { ...d, price: local.price, strikethrough: local.strikethrough ?? d.strikethrough };
   });
 
+  // Black Friday: every page shows the sale price, struck through against the price it replaces.
+  const off = saleOff(slug);
+  if (off > 0) {
+    trip.departures = trip.departures.map((d) => ({ ...d, price: Math.max(0, d.price - off), strikethrough: d.price }));
+    trip.defaultStrikethrough = trip.defaultPrice;
+    trip.defaultPrice = Math.max(0, trip.defaultPrice - off);
+  }
+
   return trip;
 }
 
@@ -64,7 +73,7 @@ export async function validateDiscount(input: {
   /** ISO date of the selected departure — used for month-restricted codes. */
   departureDate?: string;
 }): Promise<DiscountResult> {
-  const { data, error } = await supabase.functions.invoke("validate-discount", { body: input });
+  const { data, error } = await supabase.functions.invoke("validate-discount", { body: { ...input, salePreview: salePreviewKey() } });
   if (error) return { valid: false, reason: error.message };
   return data as DiscountResult;
 }
@@ -102,7 +111,7 @@ export interface CreateCheckoutInput {
 }
 
 export async function createCheckoutSession(input: CreateCheckoutInput): Promise<{ url: string }> {
-  const { data, error } = await supabase.functions.invoke("create-checkout-session", { body: input });
+  const { data, error } = await supabase.functions.invoke("create-checkout-session", { body: { ...input, salePreview: salePreviewKey() } });
   if (error) throw new Error(await getFunctionErrorMessage(error));
   if (!data?.url) throw new Error(data?.error || "Could not create checkout session");
   return data as { url: string };

@@ -10,6 +10,8 @@ import { Check, X, ChevronDown, Star, ArrowRight } from "lucide-react";
 import { fetchTrip } from "@/lib/api";
 import { getTripFallback } from "@/data/tripFallbacks";
 import { formatPrice } from "@/lib/trip-helpers";
+import { depositText, saleOff } from "@/lib/black-friday";
+import { SaleStrip } from "@/components/allin/SaleStrip";
 import { SiteFooter } from "@/components/trip/SiteFooter";
 import { TripCrossSell } from "@/components/trip/TripCrossSell";
 import { Starburst } from "@/components/brand/Sticker";
@@ -134,7 +136,13 @@ export default function AllInTrip({ slug: slugProp, unlisted = false }: { slug?:
   if (!content) return <div className="min-h-screen bg-mm-bone" />;
   const { snapshot: SNAPSHOT, isThisForMe: IS_THIS_FOR_ME,
           notIncluded: NOT_INCLUDED, itinerary: ITINERARY, reviews: REVIEWS,
-          faqs: FAQS, hero: heroImg } = content;
+          hero: heroImg } = content;
+  const off = saleOff(slug);
+  const deposit = depositText(slug);
+  // During Black Friday the deal is the first question. Cancellation wording per Lexie, 4 Nov 2026.
+  const FAQS = off > 0
+    ? [{ q: "How does the Black Friday deal work?", a: `Book by Sunday 29 Nov, 23:59 Bali time, and you get $${off} off per person and pay nothing today. You save your card, and the full price is charged to it automatically 7 days before departure. Trips leaving inside 7 days are paid in full when you book, still with the money off. Creator codes work on top. If you cancel before your card is charged, you owe nothing. Once it's charged, our normal refund policy applies.` }, ...content.faqs]
+    : content.faqs;
   // Customers see finished tiles only.
   const HIGHLIGHTS = content.highlights.filter((h) => h.image);
   // Every trip departs weekly on its start weekday (the departures table is seeded that way).
@@ -170,11 +178,12 @@ export default function AllInTrip({ slug: slugProp, unlisted = false }: { slug?:
               <span className="block text-mm-lime">SORTED.</span>
             </h1>
             <p className="mt-5 max-w-[280px] text-[14px] leading-snug text-mm-bone/85">
-              {SNAPSHOT.from} → {SNAPSHOT.to} · {SNAPSHOT.days} days · from {formatPrice(price)} · $99 holds your spot
+              {SNAPSHOT.from} → {SNAPSHOT.to} · {SNAPSHOT.days} days · from {formatPrice(price)} · {deposit} holds your spot
             </p>
+            <SaleStrip slug={slug} className="mt-4" />
             <div className="mt-5 flex flex-wrap items-center gap-3">
               <button onClick={() => scrollToId("booking")} className="inline-flex items-center gap-2 border-[3px] border-mm-bone bg-mm-pink px-5 py-3 font-sticker text-xs tracking-[0.14em] text-mm-black shadow-mm-bone">
-                RESERVE FOR $99 <ArrowRight className="h-4 w-4" />
+                RESERVE FOR {deposit} <ArrowRight className="h-4 w-4" />
               </button>
               <button onClick={() => scrollToId("booking")} className="inline-flex items-center gap-2 border-[3px] border-mm-bone bg-transparent px-5 py-3 font-sticker text-xs tracking-[0.14em] text-mm-bone">
                 SEE ALL DATES
@@ -217,11 +226,12 @@ export default function AllInTrip({ slug: slugProp, unlisted = false }: { slug?:
                 <span className="block text-mm-lime">SORTED.</span>
               </h1>
               <p className="mt-7 max-w-xl text-lg leading-snug text-mm-bone/85">
-                {SNAPSHOT.from} → {SNAPSHOT.to} · {SNAPSHOT.days} days · from {formatPrice(price)} · $99 deposit holds your spot
+                {SNAPSHOT.from} → {SNAPSHOT.to} · {SNAPSHOT.days} days · from {formatPrice(price)} · {deposit} deposit holds your spot
               </p>
+              <SaleStrip slug={slug} className="mt-5" />
               <div className="mt-10 flex flex-wrap items-center gap-4">
                 <button onClick={() => scrollToId("booking")} className="inline-flex items-center gap-2 border-[3px] border-mm-bone bg-mm-pink px-5 py-3 font-sticker text-sm tracking-[0.14em] text-mm-black shadow-mm-bone transition-transform hover:-translate-x-[3px] hover:-translate-y-[3px]">
-                  RESERVE FOR $99 <ArrowRight className="h-4 w-4" />
+                  RESERVE FOR {deposit} <ArrowRight className="h-4 w-4" />
                 </button>
                 <button onClick={() => scrollToId("booking")} className="inline-flex items-center gap-2 border-[3px] border-mm-bone bg-transparent px-5 py-3 font-sticker text-sm tracking-[0.14em] text-mm-bone hover:bg-mm-bone hover:text-mm-black">
                   SEE ALL DATES
@@ -286,7 +296,7 @@ export default function AllInTrip({ slug: slugProp, unlisted = false }: { slug?:
 
           {/* What's included */}
           <section id="included" className="mt-16 scroll-mt-[116px]">
-            <H eyebrow="WHAT'S INCLUDED">WHAT YOUR $99{" "}<br />DEPOSIT UNLOCKS</H>
+            <H eyebrow="WHAT'S INCLUDED">WHAT YOUR {deposit}{" "}<br />DEPOSIT UNLOCKS</H>
             <div className="grid gap-px border-[3px] border-mm-black bg-mm-black sm:grid-cols-2">
               {visibleIncluded.map((i) => (
                 <div key={i} className="flex items-start gap-2 bg-mm-bone p-3">
@@ -438,7 +448,7 @@ export default function AllInTrip({ slug: slugProp, unlisted = false }: { slug?:
               </div>
             </div>
             <button onClick={() => scrollToId("booking")} className="mt-3 w-full border-[3px] border-mm-black bg-mm-pink px-4 py-3 font-sticker text-[11px] tracking-[0.14em] text-mm-black shadow-mm-sm">
-              RESERVE FOR $99
+              RESERVE FOR {deposit}
             </button>
             <button onClick={() => scrollToId("booking")} className="mt-2 w-full border-[3px] border-mm-black bg-mm-bone px-4 py-2.5 font-sticker text-[10px] tracking-[0.14em] text-mm-black">
               SEE ALL DATES
@@ -448,7 +458,7 @@ export default function AllInTrip({ slug: slugProp, unlisted = false }: { slug?:
               <div className="mt-3 border-[3px] border-mm-black bg-mm-lime p-2">
                 <p className="font-sticker text-[9px] tracking-[0.12em] text-mm-black">INDEPENDENT SOLO TRAVEL</p>
                 <p className="mt-1 text-[11px] leading-snug text-mm-black/80">
-                  Book whenever you want on a {weekdayName(trip?.startWeekday) ?? "departure day"}. Every single date is confirmed to go. Only $99 deposit.
+                  Book whenever you want on a {weekdayName(trip?.startWeekday) ?? "departure day"}. Every single date is confirmed to go. Only {deposit} deposit.
                 </p>
               </div>
             )}
@@ -487,7 +497,7 @@ export default function AllInTrip({ slug: slugProp, unlisted = false }: { slug?:
 
       <TripCrossSell currentSlug={slug} eyebrow="MORE ALL IN TRIPS" />
       <SiteFooter />
-      <StickyCta onClick={() => scrollToId("booking")} />
+      <StickyCta onClick={() => scrollToId("booking")} label={`RESERVE FOR ${deposit}`} />
     </div>
   );
 }

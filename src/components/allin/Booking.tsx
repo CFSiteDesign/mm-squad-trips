@@ -98,7 +98,7 @@ export function Booking({ trip }: { trip: Trip }) {
   const DateRow = ({ d }: { d: Departure }) => {
     const soldOut = !d.bookable || d.spotsRemaining <= 0;
     const open = chosen?.id === d.id;
-    const pay = paymentLine(d.date, 1, d.price);
+    const pay = paymentLine(d.date, 1, d.price, trip.slug);
     return (
       <div className="border-[3px] border-mm-black bg-mm-bone">
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">

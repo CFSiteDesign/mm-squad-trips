@@ -132,7 +132,7 @@ export default function BookingSuccess() {
               <Row k="Booking ref" v={refDisplay} bold />
               <Row k="Trip" v={info.tripName} />
               <Row k="Departure" v={info.departureDate} />
-              <Row k={info.paymentType === "Deposit" ? "Deposit paid" : "Paid in full"} v={`$${info.amountPaid}`} bold />
+              <Row k={info.paymentType === "Deposit" ? (info.amountPaid === 0 ? "Paid today" : "Deposit paid") : "Paid in full"} v={`$${info.amountPaid}`} bold />
               {info.balanceDue > 0 && <Row k="Balance auto-charged 7 days before departure" v={`$${info.balanceDue}`} muted />}
             </dl>
 

@@ -26,10 +26,11 @@ import { TripCrossSell } from "@/components/trip/TripCrossSell";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sticker } from "@/components/brand/Sticker";
+import { depositText } from "@/lib/black-friday";
 
 const TRIP_SLUGS = ["vietnam", "indonesia", "cambodia", "vietnam-7", "indonesia-7"];
 
-const BOOKING_TICKER = "$99 SECURES YOUR SPOT  ·  CHANGE OF PLANS? LIFETIME DEPOSIT GUARANTEE  ·  $99 SECURES YOUR SPOT  ·  ";
+const bookingTicker = (deposit: string) => `${deposit} SECURES YOUR SPOT  ·  CHANGE OF PLANS? LIFETIME DEPOSIT GUARANTEE  ·  ${deposit} SECURES YOUR SPOT  ·  `;
 
 
 function getSetupHint(_message: string, slug: string) {
@@ -133,8 +134,8 @@ export default function TripPage() {
       <BookingFlow trip={trip} />
       <div className="ticker bg-mm-lime text-mm-black">
         <div className="ticker-track text-2xl font-black uppercase tracking-tight md:text-3xl">
-          <span>{BOOKING_TICKER}{BOOKING_TICKER}{BOOKING_TICKER}</span>
-          <span>{BOOKING_TICKER}{BOOKING_TICKER}{BOOKING_TICKER}</span>
+          <span>{bookingTicker(depositText(trip.slug)).repeat(3)}</span>
+          <span>{bookingTicker(depositText(trip.slug)).repeat(3)}</span>
         </div>
       </div>
       <FAQ />

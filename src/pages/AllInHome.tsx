@@ -4,6 +4,8 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Check, X, BedDouble, Users, Sparkles, Star } from "lucide-react";
 import { fetchTrip } from "@/lib/api";
 import { formatPrice } from "@/lib/trip-helpers";
+import { depositText } from "@/lib/black-friday";
+import { SaleStrip } from "@/components/allin/SaleStrip";
 import { TRIPS } from "@/data/trips";
 import { SiteFooter } from "@/components/trip/SiteFooter";
 import { StickyCta } from "@/components/allin/Chrome";
@@ -70,6 +72,7 @@ export default function AllInHome() {
   const { mode } = useTravellerMode();
   const solo = mode === "independent";
   usePageTitle(HOME_SEO.title);
+  const deposit = depositText();
   const go = (id: string) => {
     const el = document.getElementById(id);
     if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 60, behavior: "smooth" });
@@ -104,9 +107,11 @@ export default function AllInHome() {
                 {solo ? HERO_SUB.independent : HERO_SUB.crew}
               </p>
 
+              <SaleStrip className="mt-4" />
+
               <div className="mt-5 flex flex-wrap items-center gap-3">
                 <button onClick={() => go("trips")} className="inline-flex items-center gap-2 border-[3px] border-mm-bone bg-mm-pink px-5 py-3 font-sticker text-xs tracking-[0.14em] text-mm-black shadow-mm-bone">
-                  SECURE YOUR SPOT FOR $99 <ArrowRight className="h-4 w-4" />
+                  SECURE YOUR SPOT FOR {deposit} <ArrowRight className="h-4 w-4" />
                 </button>
               </div>
             </div>
@@ -142,9 +147,11 @@ export default function AllInHome() {
                 {solo ? HERO_SUB.independent : HERO_SUB.crew}
               </p>
 
+              <SaleStrip className="mt-5" />
+
               <div className="mt-10 flex flex-wrap items-center gap-4">
                 <button onClick={() => go("trips")} className="inline-flex items-center gap-2 border-[3px] border-mm-bone bg-mm-pink px-5 py-3 font-sticker text-sm tracking-[0.14em] text-mm-black shadow-mm-bone transition-transform hover:-translate-x-[3px] hover:-translate-y-[3px]">
-                  SECURE YOUR SPOT FOR $99 <ArrowRight className="h-4 w-4" />
+                  SECURE YOUR SPOT FOR {deposit} <ArrowRight className="h-4 w-4" />
                 </button>
               </div>
             </div>
@@ -181,7 +188,7 @@ export default function AllInHome() {
       {/* ============ WHAT YOUR $99 DEPOSIT UNLOCKS ============ */}
       <section className="border-b-[4px] border-mm-black bg-mm-paper py-14">
         <div className="mx-auto max-w-5xl px-5 md:px-6">
-          <h2 className="font-display text-[clamp(1.9rem,5vw,3rem)] leading-[0.95] text-mm-black">WHAT YOUR $99<br />DEPOSIT UNLOCKS</h2>
+          <h2 className="font-display text-[clamp(1.9rem,5vw,3rem)] leading-[0.95] text-mm-black">WHAT YOUR {deposit}<br />DEPOSIT UNLOCKS</h2>
           <div className="mt-8 grid gap-6 md:grid-cols-2">
             <div>
               <h3 className="mb-3 font-sticker text-[11px] tracking-[0.16em] text-mm-black">WHAT'S IN</h3>
@@ -251,7 +258,7 @@ export default function AllInHome() {
       )}
 
       <SiteFooter />
-      <StickyCta onClick={() => go("trips")} label="RESERVE FOR $99" />
+      <StickyCta onClick={() => go("trips")} label={`RESERVE FOR ${deposit}`} />
     </div>
   );
 }
