@@ -74,6 +74,7 @@ export type Database = {
           balance_attempts: number
           balance_charged_at: string | null
           balance_due_date: string | null
+          balance_heads_up_sent_at: string | null
           balance_last_error: string | null
           balance_next_attempt_at: string | null
           balance_status: string | null
@@ -131,6 +132,7 @@ export type Database = {
           balance_attempts?: number
           balance_charged_at?: string | null
           balance_due_date?: string | null
+          balance_heads_up_sent_at?: string | null
           balance_last_error?: string | null
           balance_next_attempt_at?: string | null
           balance_status?: string | null
@@ -188,6 +190,7 @@ export type Database = {
           balance_attempts?: number
           balance_charged_at?: string | null
           balance_due_date?: string | null
+          balance_heads_up_sent_at?: string | null
           balance_last_error?: string | null
           balance_next_attempt_at?: string | null
           balance_status?: string | null
@@ -840,6 +843,7 @@ export type Database = {
           balance_payment_intent: string | null
           balance_session_id: string | null
           balance_url: string | null
+          booked_items: Json
           campaign_ref: string | null
           contact_via: string | null
           countries: string[]
@@ -889,6 +893,7 @@ export type Database = {
           balance_payment_intent?: string | null
           balance_session_id?: string | null
           balance_url?: string | null
+          booked_items?: Json
           campaign_ref?: string | null
           contact_via?: string | null
           countries?: string[]
@@ -938,6 +943,7 @@ export type Database = {
           balance_payment_intent?: string | null
           balance_session_id?: string | null
           balance_url?: string | null
+          booked_items?: Json
           campaign_ref?: string | null
           contact_via?: string | null
           countries?: string[]
