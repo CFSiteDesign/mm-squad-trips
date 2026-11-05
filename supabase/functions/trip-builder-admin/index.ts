@@ -9,24 +9,28 @@
 //   view       {ref}                  one request, with the trip summary and a suggested balance (the crew review page)
 //   revise     {ref, trip, summary, crewText, note}   the crew's edited version of the guest's trip (Edit it)
 //   link       {ref}                  a fresh signed link to the crew review page (admin only)
-//   cancel-payments {ref, note?}      stop what is left to pay on a booked trip and close it (admin only). Refunds are still done by hand in Stripe, and nothing is emailed
+//   cancel-payments {ref, note?}      the trip is off: close any booked trip, stop what is left to pay and free its ALL IN spots (admin only). Refunds are still done by hand in Stripe, and nothing is emailed
+//   move-dates {ref, start}           move a booked trip to a new start date: its ALL IN departure, the payments still to come and every date on it move together, and the guest, the crew and the ALL IN team are told (admin only)
+//   to-book-tick {ref, key, done}     tick an item on a booked trip's "to book" list, so nobody books it twice or misses it (admin only)
+//   add-all-in {ref}                  put the ALL IN part of a booked trip into bookings, for trips booked before this ran or that hit a problem (admin only)
 //   crew-list                         Find your crew: everyone opted in whose trip isn't declined or over, and where each introduction is (admin only)
 //   crew-intro {a, b, status, by}     record where an introduction is: new / asked / yes / introduced / no (admin only)
 //   crew-off   {ref}                  they asked to stop: their answers are removed and they drop off the board (admin only)
 //
 // Two ways in. The admin token / password can do everything. A crew key (from the link in the
-// new-trip email, see _shared/trip-builder-crew.ts) can do everything EXCEPT list, link, cancel-payments and the crew-* actions, and only
+// new-trip email, see _shared/trip-builder-crew.ts) can do everything EXCEPT list, link, cancel-payments, move-dates, to-book-tick, add-all-in and the crew-* actions, and only
 // for the one trip it was made for, and only while that trip is still being checked.
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { adminAuthHeaderToken, safeEqual, verifyAdminToken } from "../_shared/admin-auth.ts";
 import { isTrustedOrigin } from "../_shared/app-base.ts";
-import { sendEmail, TRIP_BUILDER_CONTACT, tripBuilderDeclinedEmail, tripBuilderReadyEmail } from "../_shared/email.ts";
-import { builderStatusUrl, fmtDay, laterDeposit, needsDeposit, usd } from "../_shared/trip-builder.ts";
+import { OPS_NOTIFY_EMAILS, sendEmail, TRIP_BUILDER_CONTACT, tripBuilderDatesMovedEmail, tripBuilderDeclinedEmail, tripBuilderReadyEmail, tripBuilderToBookBlock } from "../_shared/email.ts";
+import { builderStatusUrl, fmtDay, laterDeposit, needsDeposit, teamCc, usd } from "../_shared/trip-builder.ts";
 import { crewReviewUrl, guestTripUrl, readSummary, signCrewKey, signGuestKey, suggestBalance, verifyCrewKey } from "../_shared/trip-builder-crew.ts";
+import { allInKeysBooked, allInSessionForKey, closeTrip, moveAllInBookings, movedTrip, syncAllInBookings, toBookList } from "../_shared/trip-builder-book.ts";
 import { INTRO_STATUSES, introPair, onCrewBoard } from "../_shared/trip-builder-find-crew.ts";
-import { cancelUnpaid, LATE_DAYS, paidSoFar, payOptions, readSchedule } from "../_shared/trip-builder-pay.ts";
+import { LATE_DAYS, payOptions, readSchedule } from "../_shared/trip-builder-pay.ts";
 import { currentRev, lastRevision } from "../_shared/trip-builder-revise.ts";
 
 const json = (body: unknown, status = 200) =>
@@ -58,7 +62,7 @@ Deno.serve(async (req) => {
   const sb = createClient(url, key);
   const action = typeof body.action === "string" ? body.action : "list";
 
-  if (keyed && (action === "list" || action === "link" || action === "cancel-payments" || action.startsWith("crew-"))) return json({ error: "Unauthorized" }, 401);
+  if (keyed && (action === "list" || action === "link" || action === "cancel-payments" || action === "move-dates" || action === "to-book-tick" || action === "add-all-in" || action.startsWith("crew-"))) return json({ error: "Unauthorized" }, 401);
 
   // Find your crew. Only the crew board reads this, and the site never shows it to another guest.
   if (action === "crew-list") {
@@ -96,11 +100,19 @@ Deno.serve(async (req) => {
   if (action === "list") {
     const { data, error } = await sb
       .from("trip_builder_requests")
-      .select("ref,status,name,contact_via,email,whatsapp,guest_email,from_place,party_size,dates_flex,start_date,route,days,nights,stops,est_total_usd,all_in_match,trip_link,itinerary,notes,campaign_ref,from_hostel,deposit_amount,deposit_paid_at,hold_until,balance_amount,balance_url,balance_paid_at,pay_plan,pay_schedule,refunded_at,crew_note,created_at,updated_at")
+      .select("ref,status,name,contact_via,email,whatsapp,guest_email,from_place,party_size,dates_flex,start_date,route,days,nights,stops,est_total_usd,all_in_match,trip_link,itinerary,notes,campaign_ref,from_hostel,deposit_amount,deposit_paid_at,hold_until,balance_amount,balance_url,balance_paid_at,pay_plan,pay_schedule,refunded_at,crew_note,created_at,updated_at,payload,booked_items")
       .order("created_at", { ascending: false })
       .limit(500);
     if (error) return json({ error: error.message }, 500);
-    return json({ ok: true, requests: data ?? [] });
+    const inBookings = await allInKeysBooked(sb);
+    // A booked trip carries its "to book" list. The payload itself stays on the server.
+    const requests = (data ?? []).map(({ payload, ...r }) => ({
+      ...r,
+      to_book: r.status === "approved"
+        ? toBookList(readSummary(payload), Number(r.party_size ?? 1)).map((i) => ({ ...i, in_bookings: i.kind === "allin" && inBookings.has(allInSessionForKey(String(r.ref), i.key)) }))
+        : [],
+    }));
+    return json({ ok: true, requests });
   }
 
   const ref = typeof body.ref === "string" ? body.ref.trim().toUpperCase() : "";
@@ -189,15 +201,63 @@ Deno.serve(async (req) => {
     }
     if (action === "booked") {
       await save({ status: "approved", crew_note: note || null });
-      return json({ ok: true });
+      // Paid some other way, so the ALL IN part still has to go into bookings.
+      const allIn = await syncAllInBookings(sb, { ...row, status: "approved" });
+      return json({ ok: true, allIn });
+    }
+    if (action === "move-dates") {
+      const start = typeof body.start === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.start) ? body.start : "";
+      const today = now.slice(0, 10);
+      if (String(row.status) !== "approved") return json({ error: "Only a booked trip can be moved here. Before it's booked, use the review page." }, 409);
+      if (!row.start_date) return json({ error: "This trip has no start date to move." }, 409);
+      if (String(row.start_date) <= today) return json({ error: "This trip has already started, so it can't be moved here." }, 409);
+      if (!start || start <= today) return json({ error: "Pick a new start date in the future." }, 400);
+      if (start === row.start_date) return json({ error: "That's the date it already starts on." }, 400);
+      const people = Number(row.party_size ?? 1);
+      const before = toBookList(readSummary(row.payload), people);
+      const ticked = before.filter((i) => ((row.booked_items ?? {}) as Record<string, unknown>)[i.key]).map((i) => i.text);
+      const m = movedTrip(row, start);
+      const moved = await moveAllInBookings(sb, row, m.days);
+      if (moved.problem) return json({ error: moved.problem }, 409);
+      // Ticks are per date, so the old ones drop away: anything booked for the old dates has to be rebooked.
+      await save(m.patch);
+      const newRow = { ...row, ...m.patch };
+      const allIn = await syncAllInBookings(sb, newRow);
+      const route = String(row.route ?? "your trip");
+      if (to) {
+        const g = tripBuilderDatesMovedEmail({ firstName: first, ref, route, startDate: fmtDay(start), nextAmount: m.nextPayment ? usd(m.nextPayment.amount) : "", nextDue: m.nextPayment ? fmtDay(m.nextPayment.due) : "", statusUrl: guestTripUrl(LIVE_ORIGIN, ref, await signGuestKey(ref)) });
+        await sendEmail({ to, subject: g.subject, html: g.html, replyTo: TRIP_BUILDER_CONTACT, templateName: "trip_builder_dates_moved" }).catch((e) => console.warn("dates moved email failed", e));
+      }
+      const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      const list = tripBuilderToBookBlock({ ref, name: String(row.name), people, paid: "new dates", items: toBookList(readSummary(newRow.payload), people), allIn });
+      const undo = ticked.length ? `<p><strong>Already booked on the old dates, so these need changing:</strong></p><ul>${ticked.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>` : "";
+      await sendEmail({ to: TRIP_BUILDER_CONTACT, cc: teamCc(), subject: `Trip builder: ${row.name}'s trip moved to ${fmtDay(start)} · ${ref}`, html: `<p><strong>${esc(String(row.name))}</strong> (${ref}) now starts ${fmtDay(start)}, not ${fmtDay(String(row.start_date))}. Their ALL IN and later payments have moved and they've been emailed.</p>${undo}${list}`, templateName: "trip_builder_dates_moved_ops" }).catch((e) => console.warn("dates moved crew email failed", e));
+      if (moved.moved.length) {
+        await sendEmail({ to: OPS_NOTIFY_EMAILS, subject: `ALL IN booking moved: ${row.name} · ${ref}`, html: `<p><strong>${esc(String(row.name))}</strong> (${ref}, ${people} ${people === 1 ? "spot" : "spots"}) has moved:</p><ul>${moved.moved.map((x) => `<li>${esc(x.name)}: ${fmtDay(x.from)} to ${fmtDay(x.to)}</li>`).join("")}</ul><p>The spaces on both departures are already updated.</p>`, templateName: "trip_builder_all_in_moved_ops" }).catch((e) => console.warn("ALL IN moved email failed", e));
+      }
+      return json({ ok: true, days: m.days, allIn });
+    }
+    if (action === "add-all-in") {
+      if (String(row.status) !== "approved") return json({ error: "Only a booked trip can go into ALL IN bookings." }, 409);
+      const allIn = await syncAllInBookings(sb, row);
+      if (!allIn.length) return json({ error: "This trip has no ALL IN in it." }, 409);
+      const problem = allIn.find((a) => !a.added)?.problem;
+      if (problem) return json({ error: problem }, 409);
+      return json({ ok: true, allIn });
+    }
+    if (action === "to-book-tick") {
+      const tick = typeof body.key === "string" ? body.key.slice(0, 200) : "";
+      if (!tick) return json({ error: "Which item?" }, 400);
+      const booked = { ...((row.booked_items ?? {}) as Record<string, unknown>) };
+      if (body.done === true) booked[tick] = { at: now }; else delete booked[tick];
+      await save({ booked_items: booked });
+      return json({ ok: true, booked_items: booked });
     }
 
     if (action === "cancel-payments") {
-      // The trip is off after they have paid something (a refund in Stripe does not stop the schedule). Closing it takes it out of the daily charge job.
-      const c = cancelUnpaid(readSchedule(row.pay_schedule));
-      if (!c.count) return json({ error: "There are no payments left to cancel on this trip." }, 409);
-      await save({ status: "declined", pay_schedule: c.items, crew_note: note || null });
-      return json({ ok: true, cancelled: c.amount, count: c.count, paid: paidSoFar(c.items) });
+      // The trip is off, whether or not anything is left to pay (a refund in Stripe does not stop the schedule). Closing it takes it out of the daily charge job.
+      if (String(row.status) !== "approved") return json({ error: "Only a booked trip can be closed here." }, 409);
+      return json({ ok: true, ...(await closeTrip(sb, row, note)) });
     }
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");

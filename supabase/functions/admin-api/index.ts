@@ -5,6 +5,7 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { verifyAdminToken, adminAuthHeaderToken } from "../_shared/admin-auth.ts";
 import { cancelBookingValues } from "../_shared/booking-cancel.ts";
+import { closeTrip, tripRefFromSession } from "../_shared/trip-builder-book.ts";
 import { triggerCommissionPush } from "../_shared/push-commission.ts";
 
 const TABLES = new Set([
@@ -81,6 +82,16 @@ Deno.serve(async (req) => {
       const { data: row, error: readErr } = await sb.from("bookings").select("stripe_session_id,balance_status").eq("id", id).maybeSingle();
       if (readErr) return jr({ error: readErr.message }, 400);
       if (!row) return jr({ error: "Booking not found" }, 404);
+      // A trip builder booking is one part of a whole trip. Closing it closes the trip, or its later payments would carry on.
+      const tripRef = tripRefFromSession(row.stripe_session_id);
+      if (tripRef) {
+        const { data: trip } = await sb.from("trip_builder_requests").select("ref,status,pay_schedule").eq("ref", tripRef).maybeSingle();
+        if (trip) {
+          await closeTrip(sb, trip);
+          await triggerCommissionPush(sb);
+          return jr({ ok: true, trip: tripRef });
+        }
+      }
       const match = sb.from("bookings").update(cancelBookingValues(row.balance_status));
       const { data: done, error } = await (row.stripe_session_id ? match.eq("stripe_session_id", row.stripe_session_id) : match.eq("id", id)).select("id");
       if (error) return jr({ error: error.message }, 400);

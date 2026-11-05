@@ -77,7 +77,7 @@ export function closedDepartures(deps: Departure[], slug?: string): Departure[] 
 export function paymentLine(dateIso: string, groupSize: number, price: number, slug?: string) {
   if (isDepositEligible(dateIso)) {
     // Black Friday: nothing today, on the trips in the sale.
-    const perSpot = slug && saleOff(slug) > 0 ? 0 : DEPOSIT_PER_SPOT;
+    const perSpot = slug && saleOff(slug, dateIso) > 0 ? 0 : DEPOSIT_PER_SPOT;
     return {
       type: "deposit" as const,
       label: `$${perSpot * groupSize} deposit holds your spot`,

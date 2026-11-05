@@ -10,7 +10,7 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { appBase } from "../_shared/app-base.ts";
-import { previewAllowed, saleOffPerSpot } from "../_shared/black-friday.ts";
+import { saleAccessFor, saleOffPerSpot } from "../_shared/black-friday.ts";
 
 const DEPOSIT_PER_SPOT = 99;
 const DEPOSIT_THRESHOLD_DAYS = 7;
@@ -88,8 +88,8 @@ Deno.serve(async (req) => {
     travellerMode?: "independent" | "crew";
     /** Ticked "Keep me posted on WhatsApp" at checkout (trip updates only). */
     whatsappOptIn?: boolean;
-    /** Black Friday preview key (?bfpreview=), so the sale can be tested before it starts. */
-    salePreview?: string;
+    /** Black Friday key from the early access or test link (?early=). */
+    saleKey?: string;
   };
   try { payload = await req.json(); } catch { return err("Invalid JSON body"); }
 
@@ -207,7 +207,7 @@ Deno.serve(async (req) => {
     const subtotal = originalPrice;
 
     // Black Friday. Codes are worked out on the sale price, and only creator codes count during it.
-    const saleOff = saleOffPerSpot(tripSlug, Date.now(), previewAllowed(payload.salePreview, Deno.env.get("BLACK_FRIDAY_PREVIEW_KEY"))) * groupSize;
+    const saleOff = saleOffPerSpot(tripSlug, Date.now(), await saleAccessFor(payload.saleKey), depDate) * groupSize;
     const onSale = saleOff > 0;
     const salePrice = Math.max(0, subtotal - saleOff);
 
@@ -367,6 +367,7 @@ Deno.serve(async (req) => {
       discount_amount: String(totalOff),
       sale: onSale ? "black_friday" : "",
       sale_off: onSale ? String(saleOff) : "",
+      code_off: String(discountAmount),
       squad_code: squadCode ?? "",
       final_price: String(fullDue),
       full_due: String(fullDue),
@@ -458,7 +459,7 @@ Deno.serve(async (req) => {
           submit: {
             message:
               `${trip.name}, ${groupSize} spot${groupSize === 1 ? "" : "s"}, departing ${depDate}. Nothing is charged today. ` +
-              `${offLine}: ${fullDue.toFixed(0)} will be automatically charged to this card 7 days before departure. ` +
+              `${offLine}: $${fullDue.toFixed(0)} will be automatically charged to this card 7 days before departure. ` +
               `If the charge fails we'll retry every 2 days and email you.${perks}`,
           },
         },

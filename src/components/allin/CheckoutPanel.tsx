@@ -3,7 +3,7 @@
 // for and where it sits on the page.
 import { ArrowRight } from "lucide-react";
 import { formatPrice, paymentLine } from "@/lib/trip-helpers";
-import { saleOff } from "@/lib/black-friday";
+import { saleOff, SALE_TERMS_URL } from "@/lib/black-friday";
 import { dayLabel, tripEndDate } from "@/lib/trip-dates";
 import { tripNights } from "@/data/trips";
 import { type Checkout, type CheckoutFields, type CodeStatus } from "@/lib/use-checkout";
@@ -13,7 +13,7 @@ export function CheckoutPanel({ trip, departure, checkout, independent = false }
   const { form, setField, spots, setSpots, maxSpots, submitting, codesPending, squadStatus, discountStatus, discountAmount, appliedDiscount, whatsappOptIn, setWhatsappOptIn, submit } = checkout;
 
   const pay = paymentLine(departure.date, spots, departure.price, trip.slug);
-  const off = saleOff(trip.slug);
+  const off = saleOff(trip.slug, departure.date);
   const saveCardOnly = pay.type === "deposit" && pay.amount === 0;
   const total = departure.price * spots;
   const due = Math.max(0, total - discountAmount);
@@ -117,6 +117,11 @@ export function CheckoutPanel({ trip, departure, checkout, independent = false }
             <div className="flex justify-between"><dt className="text-mm-black/70">Balance, auto-charged 7 days before</dt><dd className="text-mm-black">{formatPrice(balance)}</dd></div>
           )}
         </dl>
+        {off > 0 && (
+          <p className="mt-2 text-[11px] text-mm-black/60">
+            <a href={SALE_TERMS_URL} target="_blank" rel="noreferrer" className="underline underline-offset-2">Black Friday terms and conditions</a> apply.
+          </p>
+        )}
         {pay.type === "full" && (
           <p className="mt-2 text-[11px] text-mm-black/60">Departures inside 7 days are paid in full — the deposit option isn't available this close to the date.</p>
         )}

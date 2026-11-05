@@ -1050,7 +1050,8 @@ function RowEditor({ table, row, isNew, onClose, onSaved, siblings = [] }: {
 
   async function cancelBooking() {
     const spots = Number(row.group_size ?? 1) || 1;
-    if (!confirm(`Cancel ${row.booking_ref ?? "this booking"} for ${row.lead_name ?? "this guest"} (${spots} spot${spots === 1 ? "" : "s"})?\n\nThis stops any payment still to come and frees the spots. It doesn't refund or email anyone: refund in Stripe and tell the guest yourself. It can't be undone here.`)) return;
+    const fromTripBuilder = String(row.stripe_session_id ?? "").startsWith("tb:");
+    if (!confirm(`Cancel ${row.booking_ref ?? "this booking"} for ${row.lead_name ?? "this guest"} (${spots} spot${spots === 1 ? "" : "s"})?\n\n${fromTripBuilder ? "This came from the trip builder, so it closes the whole trip there too.\n\n" : ""}This stops any payment still to come and frees the spots. It doesn't refund or email anyone: refund in Stripe and tell the guest yourself. It can't be undone here.`)) return;
     setSaving(true);
     try {
       await adminApi.cancelBooking(String(row.id));

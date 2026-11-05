@@ -2,6 +2,7 @@
 // Verified Resend domain: all.in.trips.madmonkeyhostels.com
 
 import type { Summary } from "./trip-builder-crew.ts";
+import { SALE_TERMS_URL } from "./black-friday.ts";
 
 export const EMAIL_FROM = "ALL IN - Mad Monkey <hello@all.in.trips.madmonkeyhostels.com>";
 export const EMAIL_REPLY_TO = "cs@madmonkeyhostels.com";
@@ -233,7 +234,7 @@ export function bookingConfirmedEmail(v: {
   nothingChargedToday?: boolean;
 }): { subject: string; html: string } {
   const balanceBlock = v.hasBalance
-    ? `${v.nothingChargedToday ? `<p style="margin:0 0 12px 0">Nothing has been charged today. Your card is saved for the payment below. If you cancel before it's charged, you owe nothing. Once it's charged, our normal refund policy applies.</p>
+    ? `${v.nothingChargedToday ? `<p style="margin:0 0 12px 0">Nothing has been charged today. Your card is saved for the payment below. If you cancel before it's charged, you owe nothing. Once it's charged, our normal refund policy applies. <a href="${SALE_TERMS_URL}" style="color:#0a0a0a">Black Friday terms and conditions</a>.</p>
 ` : ""}<p style="margin:0 0 12px 0"><strong>Balance to settle:</strong></p>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #0a0a0a;margin:0 0 16px 0">
 <tr><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a"><strong>Spots</strong></td><td style="padding:10px 14px;border-bottom:1px solid #0a0a0a">{{spots}}</td></tr>
@@ -319,6 +320,39 @@ ${whatsappBox(v.whatsappUrl)}
   return {
     subject: `${daysLabel(v.daysToGo)} to ${v.tripCountry} 🎒 Balance + final details`,
     html: shell(`${daysLabel(v.daysToGo)} to go`, inner),
+  };
+}
+
+export function balanceHeadsUpEmail(v: {
+  firstName: string;
+  tripName: string;
+  departureDate: string;
+  chargeDate: string;
+  amount: string;
+  bookingRef: string;
+  payBalanceUrl: string;
+  /** Black Friday $0 deposit: cancelling before the charge costs them nothing (Lexie, 5 Nov 2026). */
+  nothingPaidYet: boolean;
+}): { subject: string; html: string } {
+  const cancelBlock = v.nothingPaidYet
+    ? `<p style="margin:0 0 12px 0">Change of plans? If you cancel before it's charged, you owe nothing. Once it's charged, it's non-refundable. To cancel, email <a href="mailto:${EMAIL_REPLY_TO}" style="color:#0a0a0a">${EMAIL_REPLY_TO}</a>. <a href="${SALE_TERMS_URL}" style="color:#0a0a0a">Black Friday terms and conditions</a>.</p>`
+    : `<p style="margin:0 0 12px 0">Any questions, email <a href="mailto:${EMAIL_REPLY_TO}" style="color:#0a0a0a">${EMAIL_REPLY_TO}</a>.</p>`;
+  const inner = render(
+    `<tr><td style="padding:16px 24px 8px 24px">
+<h1 style="margin:0;font-size:28px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em">Your card gets charged on {{chargeDate}} 💳</h1>
+</td></tr>
+<tr><td style="padding:0 24px 16px 24px;font-size:16px;line-height:1.5">
+<p style="margin:0 0 12px 0">Hey {{firstName}},</p>
+<p style="margin:0 0 12px 0">Your <strong>{{tripName}}</strong> trip leaves on <strong>{{departureDate}}</strong>. On <strong>{{chargeDate}}</strong> we'll automatically charge <strong>{{amount}}</strong> to the card you saved when you booked, so there's nothing you need to do.</p>
+${cancelBlock}
+<p style="margin:18px 0"><a href="{{payBalanceUrl}}" style="display:inline-block;background:#ff6600;color:#0a0a0a;font-weight:900;text-transform:uppercase;padding:14px 22px;border:2px solid #0a0a0a;text-decoration:none">Pay it now instead</a></p>
+<p style="margin:0 0 20px 0;font-size:13px;color:#555">Booking ref: <strong>{{bookingRef}}</strong></p>
+</td></tr>`,
+    { firstName: v.firstName, tripName: v.tripName, departureDate: v.departureDate, chargeDate: v.chargeDate, amount: v.amount, bookingRef: v.bookingRef, payBalanceUrl: v.payBalanceUrl },
+  );
+  return {
+    subject: `Your card gets charged on ${v.chargeDate} for ${v.tripName} 💳`,
+    html: shell(`${v.amount} on ${v.chargeDate}`, inner),
   };
 }
 
@@ -1152,12 +1186,53 @@ export function tripBuilderConfirmedEmail(v: { firstName: string; ref: string; r
   const e = escapeHtml;
   const body = [
     tbP(`Hey ${e(v.firstName)},`),
-    tbP(`We've got your <strong>${e(v.paid)}</strong>, so you're paid in full and your beds are locked in for <strong>${e(v.route)}</strong>.`),
-    tbP("The crew will be in touch with anything you need before you go."),
+    tbP(`We've got your <strong>${e(v.paid)}</strong>, so you're paid in full. The crew are booking each part of your trip now and will be in touch before you go.`),
     `<p style="margin:18px 0">${tbButton(v.statusUrl, "My trip")}</p>`,
     `<p style="margin:0;font-size:13px;color:#555">Reference: <strong>${e(v.ref)}</strong></p>`,
   ].join("\n");
   return { subject: `You're booked: ${v.route} (${v.ref})`, html: tbShell("You're all set", "You're all set 🎉", body) };
+}
+
+/** Ops: a trip builder payment has booked someone. Taking the money books nothing, so this is every part of the trip still to book, in the look of the "Trip to check" stop cards. */
+export function tripBuilderToBookBlock(v: {
+  ref: string; name: string; people: number; /** "paid in full $927", or "paid $99 of $927". */ paid: string;
+  items: { key: string; kind: string; text: string }[];
+  /** What happened to each ALL IN when it was put into bookings. */
+  allIn: { key: string; added: boolean; problem?: string }[];
+}): string {
+  const e = escapeHtml;
+  const D = "color:#0a0a0a";
+  const allIn = new Map(v.allIn.map((a) => [a.key, a]));
+  const row = (text: string, box: string, tag = "", bg = "#ffffff", fg = "#0a0a0a") =>
+    `<tr><td width="34" valign="top" align="center" style="background:${bg === "#ffffff" ? "#ccff01" : bg};border-top:2px solid #0a0a0a;border-right:2px solid #0a0a0a;font-weight:900;font-size:16px;color:${fg};padding:9px 0">${box}</td><td style="background:${bg};border-top:2px solid #0a0a0a;padding:9px 12px;font-size:14px;color:${fg}"><strong>${e(text)}</strong>${tag}</td></tr>`;
+  const rows = v.items.map((i) => {
+    const a = i.kind === "allin" ? allIn.get(i.key) : undefined;
+    if (a?.added) return row(i.text, "&#10003;", `<div style="font-size:12px;margin-top:2px">In ALL IN bookings: the spaces are counted and the ALL IN team can see them.</div>`);
+    if (i.kind === "allin") {
+      return row(i.text, "&#9744;", `<div style="font-size:12px;margin-top:2px;font-weight:900">NOT IN ALL IN BOOKINGS: BOOK THIS BY HAND. ${e(a?.problem ?? "")}</div>`, "#d40000", "#ffffff");
+    }
+    return row(i.text, "&#9744;");
+  }).join("");
+  const none = v.items.length ? "" : `<tr><td colspan="2" style="border-top:2px solid #0a0a0a;padding:9px 12px;font-size:14px;${D}">This trip was sent before we kept a stop-by-stop list. Book it from the plan in Admin &gt; Trip builder.</td></tr>`;
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #0a0a0a;margin:0 0 16px 0;border-collapse:collapse">
+<tr><td colspan="2" style="background:#0a0a0a;color:#ccff01;padding:10px 12px;font-size:14px;font-weight:900;text-transform:uppercase">TO BOOK: ${e(v.ref)} · ${e(v.name)} · ${v.people} ${v.people === 1 ? "person" : "people"} · ${e(v.paid)}</td></tr>
+${rows}${none}
+<tr><td colspan="2" style="border-top:2px solid #0a0a0a;background:#f5efe2;padding:8px 12px;font-size:13px;${D}">Flights: not ours to book.</td></tr>
+</table>`;
+}
+
+/** Guest: the crew has moved the dates of a booked trip. */
+export function tripBuilderDatesMovedEmail(v: { firstName: string; ref: string; route: string; startDate: string; nextAmount: string; nextDue: string; statusUrl: string }): { subject: string; html: string } {
+  const e = escapeHtml;
+  const body = [
+    tbP(`Hey ${e(v.firstName)},`),
+    tbP(`Your new dates are in: <strong>${e(v.route)}</strong> now starts on <strong>${e(v.startDate)}</strong>. The crew are updating each part of your trip now.`),
+    v.nextAmount ? tbP(`Your next payment moves with it: <strong>${e(v.nextAmount)}</strong> on <strong>${e(v.nextDue)}</strong>, to the card on file.`) : "",
+    tbP("If those dates look wrong, just reply to this email."),
+    `<p style="margin:18px 0">${tbButton(v.statusUrl, "My trip")}</p>`,
+    `<p style="margin:0;font-size:13px;color:#555">Reference: <strong>${e(v.ref)}</strong></p>`,
+  ].join("\n");
+  return { subject: `Your new trip dates: ${v.route} (${v.ref})`, html: tbShell("Your new dates", "Your new dates", body) };
 }
 
 /** Guest: the crew couldn't make it work; deposit refunded. */

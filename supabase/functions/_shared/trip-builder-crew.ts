@@ -82,7 +82,7 @@ export type Next = { to: string; mode: string; hours: string; usd: number; overn
 /** A later stage of a journey (the builder's "Plan my next stage"): where they start, where they have already been, and which trip came before. */
 export type Stage = { n: number; parent: string; from: { id: string; name: string } | null; been: string[]; arrival: { to: string; mode: string; hours: string; usd: number; overnight: boolean; date: string } | null };
 export type Stop = {
-  kind: "stop" | "allin"; name: string; country: string; nights: number; days: number; usd: number; from: string; to: string;
+  id: string; kind: "stop" | "allin"; name: string; country: string; nights: number; days: number; usd: number; from: string; to: string;
   route: string; bedUsd: number; bedsUsd: number; partner: boolean; tours: Tour[]; next: Next | null;
 };
 export type Budget = {
@@ -109,7 +109,7 @@ export function readSummary(payload: unknown): Summary | null {
     headline: s(x.headline), days: n(x.days), nights: n(x.nights), stopCount: n(x.stopCount), countries: (Array.isArray(x.countries) ? x.countries : []).slice(0, 10).map((c) => s(c, 40)),
     start: isoDay(x.start), end: isoDay(x.end), datesLabel: s(x.datesLabel, 60), people: Math.min(8, Math.max(1, n(x.people) || 1)), pref: s(x.pref, 40),
     stops: (x.stops as Record<string, unknown>[]).slice(0, 40).map((t) => ({
-      kind: t.kind === "allin" ? "allin" : "stop", name: s(t.name, 80), country: s(t.country, 40), nights: n(t.nights), days: n(t.days), usd: n(t.usd), from: isoDay(t.from), to: isoDay(t.to),
+      id: s(t.id, 40), kind: t.kind === "allin" ? "allin" : "stop", name: s(t.name, 80), country: s(t.country, 40), nights: n(t.nights), days: n(t.days), usd: n(t.usd), from: isoDay(t.from), to: isoDay(t.to),
       route: s(t.route, 200), bedUsd: n(t.bedUsd), bedsUsd: n(t.bedsUsd), partner: t.partner === true,
       tours: (Array.isArray(t.tours) ? (t.tours as Record<string, unknown>[]) : []).slice(0, 30).map((a) => ({
         name: s(a.name, 120), usd: a.usd == null ? null : n(a.usd), est: a.est === true, payOnDay: a.payOnDay === true, date: isoDay(a.date), day: n(a.day), fits: a.fits !== false, includesBeds: a.includesBeds === true,

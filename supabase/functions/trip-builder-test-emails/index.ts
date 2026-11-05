@@ -15,6 +15,7 @@ import {
   TRIP_BUILDER_CONTACT,
   tripBuilderBookedEmail,
   tripBuilderConfirmedEmail,
+  tripBuilderToBookBlock,
   tripBuilderDeclinedEmail,
   tripBuilderOpsEmail,
   tripBuilderPaymentFailedEmail,
@@ -99,6 +100,18 @@ Deno.serve(async (req) => {
     { tpl: "trip_builder_test_receipt", m: tripBuilderReceiptEmail({ firstName: "Charlie", ref, route, amount: "$171", remaining: "$170", nextDue: "Fri 18 Dec", nextAmount: "$170", statusUrl }) },
     { tpl: "trip_builder_test_payment_failed", m: tripBuilderPaymentFailedEmail({ firstName: "Charlie", ref, route, amount: "$171", nextTry: "Fri 20 Nov", final: false, statusUrl }) },
     { tpl: "trip_builder_test_confirmed", m: tripBuilderConfirmedEmail({ firstName: "Charlie", ref, route, paid: "$512", statusUrl }) },
+    { tpl: "trip_builder_test_to_book", m: {
+      subject: `Trip builder: Charlie paid $927 and is paid in full · ${ref}`,
+      html: `<p><strong>Charlie</strong> paid $927 for ${route} (${ref}) and is paid in full.</p>${tripBuilderToBookBlock({
+        ref, name: "Charlie", people: 1, paid: "paid in full $927",
+        items: [
+          { key: "allin:vietnam:2026-11-25", kind: "allin", text: "ALL IN Vietnam · Wed 25 Nov to Tue 8 Dec · 1 person" },
+          { key: "bed:hoi-an:2026-12-08", kind: "bed", text: "Mad Monkey Hoi An · 2 nights · in Tue 8 Dec, out Thu 10 Dec · 1 bed" },
+          { key: "tour:ba-na-hills:2026-12-09", kind: "tour", text: "Ba Na Hills + Golden Bridge · Wed 9 Dec · 1 person" },
+        ],
+        allIn: [{ key: "allin:vietnam:2026-11-25", added: true }],
+      })}`,
+    } },
     { tpl: "trip_builder_test_declined", m: tripBuilderDeclinedEmail({
       firstName: "Charlie", ref, route, note: "Koh Sdach is full on those nights. Want to swap it for Koh Rong Samloem?", refunded: "", statusUrl,
     }) },

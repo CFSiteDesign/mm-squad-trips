@@ -9,6 +9,7 @@ import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { APP_URL, balanceFailedEmail, balanceFailedOpsEmail, balancePaidEmail, EMAIL_REPLY_TO, sendEmail } from "../_shared/email.ts";
 import { enqueueKlaviyo } from "../_shared/klaviyo.ts";
+import { financeBreakdown } from "../_shared/finance-breakdown.ts";
 
 function fmtUsd(n: number): string {
   return `$${n.toFixed(2)} USD`;
@@ -206,6 +207,14 @@ Deno.serve(async (req) => {
       continue;
     }
 
+    // Never holds up the charge: without it the payment just has no breakdown for finance.
+    let bookedWith: Record<string, string> = {};
+    try {
+      bookedWith = (await stripe.checkout.sessions.retrieve(sessionId)).metadata ?? {};
+    } catch (e) {
+      console.warn("no checkout session to copy the breakdown from", sessionId, e);
+    }
+
     try {
       const pi = await stripe.paymentIntents.create({
         amount: totalCents,
@@ -220,6 +229,7 @@ Deno.serve(async (req) => {
           kind: "balance",
           trip_id: String(row.trip_id ?? ""),
           departure_id: String(row.departure_id ?? ""),
+          ...financeBreakdown(bookedWith),
         },
       }, {
         // Idempotency: if this run double-fires (or a charge succeeds but the DB
@@ -275,8 +285,7 @@ Deno.serve(async (req) => {
       // this product isn't stuck at the deposit amount. The GA client id was
       // captured at booking and lives on the original Checkout Session metadata.
       try {
-        const checkoutSession = await stripe.checkout.sessions.retrieve(sessionId);
-        const gaClientId = (checkoutSession.metadata?.ga_client_id as string | undefined) ?? "";
+        const gaClientId = bookedWith.ga_client_id ?? "";
         const gaStatus = await sendBalancePurchaseToGa4({
           clientId: gaClientId,
           sessionId,

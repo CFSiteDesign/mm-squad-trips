@@ -19,6 +19,7 @@ type Req = {
   deposit_amount: number; deposit_paid_at: string | null; hold_until: string | null; balance_amount: number | null;
   balance_url: string | null; balance_paid_at: string | null; refunded_at: string | null; crew_note: string | null; created_at: string;
   pay_plan: string | null; pay_schedule: { n: number; amount: number; due: string; status: string }[] | null;
+  to_book?: { key: string; kind: string; text: string; in_bookings: boolean }[]; booked_items?: Record<string, unknown> | null;
 };
 
 const STATUS: Record<string, { label: string; cls: string }> = {
@@ -63,6 +64,7 @@ export default function TripBuilderAdmin({ refreshKey }: { refreshKey?: number }
   const [busy, setBusy] = useState<string | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [amounts, setAmounts] = useState<Record<string, string>>({});
+  const [moves, setMoves] = useState<Record<string, string>>({});
 
   async function load() {
     if (isAdminPreview()) { setRows([]); return; }
@@ -85,8 +87,10 @@ export default function TripBuilderAdmin({ refreshKey }: { refreshKey?: number }
       const d = await call({ action, ref: r.ref, note: notes[r.ref] ?? r.crew_note ?? "", ...extra });
       toast.success(
         action === "balance" ? (d.emailed ? "Final price sent: they choose how to pay" : "Price saved (no email on file: send them the link yourself)")
-        : action === "cancel-payments" ? `Stopped: ${usd(d.cancelled)} won't be charged. Refund what they paid in Stripe, and tell them yourself.`
+        : action === "cancel-payments" ? `Trip closed${d.cancelled > 0 ? `, ${usd(d.cancelled)} won't be charged` : ""}. Any ALL IN spot is back on sale. Refund what they paid in Stripe, and tell them yourself.`
+        : action === "move-dates" ? "Trip moved. The guest, the crew and the ALL IN team have been emailed."
         : action === "decline" ? (d.refunded ? `Declined, ${usd(d.refunded)} refunded` : "Declined")
+        : action === "add-all-in" ? "Added to ALL IN bookings. The ALL IN team have been emailed."
         : "Saved",
       );
       await load();
@@ -196,6 +200,29 @@ export default function TripBuilderAdmin({ refreshKey }: { refreshKey?: number }
                                   ))}
                                 </ul>
                               )}
+                              {r.status === "approved" && (
+                                <div className="mt-3 border-[2px] border-mm-black bg-mm-bone">
+                                  <div className="bg-mm-black px-3 py-2 font-sticker text-[10px] tracking-[0.15em] text-mm-lime">TO BOOK</div>
+                                  {(r.to_book ?? []).length === 0 && <p className="px-3 py-2 text-sm">No stop-by-stop list on this trip. Book it from the plan below.</p>}
+                                  {(r.to_book ?? []).map((i) => (
+                                    i.kind === "allin" ? (
+                                      <div key={i.key} className={`flex flex-wrap items-center justify-between gap-2 border-t-[1px] border-mm-black/10 px-3 py-2 text-sm ${i.in_bookings ? "bg-mm-lime/40" : "bg-red-700 text-white"}`}>
+                                        <span><b>{i.text}</b><span className="block text-xs">{i.in_bookings ? "In ALL IN bookings" : "Not in ALL IN bookings"}</span></span>
+                                        {!i.in_bookings && (
+                                          <button disabled={busy === r.ref} onClick={() => act(r, "add-all-in", {}, `Add ${r.name} to ALL IN bookings for: ${i.text}? This takes their spot on that departure and emails the ALL IN team.`)}
+                                            className="border-[2px] border-mm-black bg-mm-lime px-2 py-1 font-sticker text-[10px] tracking-[0.15em] text-mm-black disabled:opacity-60">ADD TO ALL IN BOOKINGS</button>
+                                        )}
+                                      </div>
+                                    ) : (
+                                      <label key={i.key} className="flex cursor-pointer items-start gap-2 border-t-[1px] border-mm-black/10 px-3 py-2 text-sm">
+                                        <input type="checkbox" className="mt-0.5 h-4 w-4" disabled={busy === r.ref} checked={!!r.booked_items?.[i.key]} onChange={(e) => act(r, "to-book-tick", { key: i.key, done: e.target.checked })} />
+                                        <span className={r.booked_items?.[i.key] ? "line-through opacity-60" : ""}>{i.text}</span>
+                                      </label>
+                                    )
+                                  ))}
+                                  <p className="border-t-[1px] border-mm-black/10 px-3 py-2 text-xs text-mm-black/60">Flights: not ours to book.</p>
+                                </div>
+                              )}
                               {r.notes && <p className="mt-3 text-sm"><b>Their note:</b> {r.notes}</p>}
                               <pre className="mt-3 max-h-80 overflow-auto whitespace-pre-wrap border-[2px] border-mm-black bg-mm-bone p-3 font-mono text-[11px] leading-relaxed">{r.itinerary || "No itinerary text."}</pre>
                             </div>
@@ -228,9 +255,19 @@ export default function TripBuilderAdmin({ refreshKey }: { refreshKey?: number }
                                     className="w-full px-3 py-1 text-xs underline disabled:opacity-60">Paid another way: mark as booked</button>
                                 </>
                               )}
-                              {r.status === "approved" && (r.pay_schedule ?? []).some((i) => i.status === "pending" || i.status === "failed") && (
-                                <button disabled={busy === r.ref} onClick={() => act(r, "cancel-payments", {}, `Stop the ${usd((r.pay_schedule ?? []).filter((i) => i.status === "pending" || i.status === "failed").reduce((a, i) => a + i.amount, 0))} still to come from ${r.name} and close ${r.ref}? This doesn't refund anything (do that in Stripe) and doesn't email them.`)}
-                                  className="w-full border-[2px] border-mm-black bg-mm-paper px-3 py-2 font-sticker text-[10px] tracking-[0.15em] disabled:opacity-60">TRIP'S OFF: STOP THE REMAINING PAYMENTS</button>
+                              {r.status === "approved" && r.start_date && (
+                                <div className="border-[2px] border-mm-black bg-mm-bone p-3">
+                                  <span className="font-sticker text-[10px] tracking-[0.15em] text-mm-black/60">MOVE THE TRIP: NEW START DATE</span>
+                                  <div className="mt-1 flex gap-2">
+                                    <input type="date" value={moves[r.ref] ?? r.start_date} onChange={(e) => setMoves((m) => ({ ...m, [r.ref]: e.target.value }))} className="w-40 border-[2px] border-mm-black bg-mm-paper px-2 py-1 text-sm" />
+                                    <button disabled={busy === r.ref || !moves[r.ref] || moves[r.ref] === r.start_date} onClick={() => act(r, "move-dates", { start: moves[r.ref] }, `Move ${r.ref} to start on ${day(moves[r.ref])}? Their ALL IN, later payments and every date on the trip move together, and ${r.name}, the crew and the ALL IN team are emailed. Beds and tours still need rebooking by hand.`)}
+                                      className="flex-1 border-[2px] border-mm-black bg-mm-lime px-2 py-1 font-sticker text-[10px] tracking-[0.15em] disabled:opacity-60">MOVE IT</button>
+                                  </div>
+                                </div>
+                              )}
+                              {r.status === "approved" && (
+                                <button disabled={busy === r.ref} onClick={() => { const left = (r.pay_schedule ?? []).filter((i) => i.status === "pending" || i.status === "failed").reduce((a, i) => a + i.amount, 0); return act(r, "cancel-payments", {}, `Close ${r.ref} for ${r.name}?${left > 0 ? ` This stops the ${usd(left)} still to come.` : ""} Any ALL IN spot goes back on sale. This doesn't refund anything (do that in Stripe) and doesn't email them.`); }}
+                                  className="w-full border-[2px] border-mm-black bg-mm-paper px-3 py-2 font-sticker text-[10px] tracking-[0.15em] disabled:opacity-60">TRIP'S OFF: CLOSE IT</button>
                               )}
                               <button disabled={busy === r.ref} onClick={() => act(r, "note")} className="w-full border-[2px] border-mm-black bg-mm-bone px-3 py-1.5 font-sticker text-[10px] tracking-[0.15em] disabled:opacity-60">SAVE NOTE ONLY</button>
                             </div>

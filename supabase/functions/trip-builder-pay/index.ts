@@ -95,7 +95,7 @@ Deno.serve(async (req) => {
       if (uErr) return json({ error: "Couldn't save that. Try again." }, 500);
       // A double tap: the other request booked it first, so don't send the emails twice.
       if (!won || !won.length) return json({ ok: true, booked: true, plan });
-      await notifyBooked({ ...row, pay_plan: "later", status: "approved" }, items, origin, gkey);
+      await notifyBooked(sb, { ...row, pay_plan: "later", status: "approved" }, items, origin, gkey);
       return json({ ok: true, booked: true, plan, schedule: items });
     }
 

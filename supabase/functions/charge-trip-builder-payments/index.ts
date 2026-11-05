@@ -20,6 +20,7 @@ import {
 import { guestTripUrl, signGuestKey } from "../_shared/trip-builder-crew.ts";
 import { addDays, allPaid, dueNow, isoDay, type Item, MAX_ATTEMPTS, needReminder, paidSoFar, RETRY_DAYS, readSchedule } from "../_shared/trip-builder-pay.ts";
 import { fmtDay, teamCc, usd } from "../_shared/trip-builder.ts";
+import { syncAllInBookings } from "../_shared/trip-builder-book.ts";
 
 const LIVE_ORIGIN = "https://madmonkeyhostels.com";
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -106,6 +107,8 @@ Deno.serve(async (req) => {
       const done = allPaid(items);
       const { error: uErr } = await sb.from("trip_builder_requests").update({ pay_schedule: items, balance_paid_at: done ? now.toISOString() : null, updated_at: now.toISOString() }).eq("ref", ref);
       if (uErr) console.error(`trip builder schedule save failed for ${ref}:`, uErr.message);
+      // Keeps the money on the ALL IN part up to date in bookings.
+      await syncAllInBookings(sb, { ...row, pay_schedule: items });
       if (done) await alertEwan(`Trip builder: ${row.name} is paid in full · ${ref}`, `<p><strong>${esc(String(row.name))}</strong> (${ref}), ${esc(route)}: all ${items.length} payments are in (${usd(paidSoFar(items))}${Number(row.deposit_amount) > 0 ? " on top of the deposit" : ""}).</p>`, "trip_builder_paid_ops");
     }
   }

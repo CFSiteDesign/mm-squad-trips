@@ -6,6 +6,7 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { appBase } from "../_shared/app-base.ts";
+import { financeBreakdown } from "../_shared/finance-breakdown.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -73,6 +74,14 @@ Deno.serve(async (req) => {
     });
   }
 
+  // An old pay link can't charge someone whose booking has since been cancelled.
+  if (lead.balance_status === "cancelled") {
+    return new Response(JSON.stringify({ error: "booking cancelled" }), {
+      status: 409,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   const totalCents = Math.round(Number(lead.balance_amount) * Number(lead.group_size) * 100);
   if (totalCents <= 0) {
     return new Response(JSON.stringify({ error: "no balance due" }), {
@@ -84,6 +93,14 @@ Deno.serve(async (req) => {
   const dep = lead.departures as { trips?: { name?: string } | null } | null;
   const tripName = dep?.trips?.name || "Your trip";
   const origin = appBase(req.headers.get("origin"));
+
+  // Never holds up the payment: without it the payment just has no breakdown for finance.
+  let bookedWith: Record<string, string> = {};
+  try {
+    bookedWith = (await stripe.checkout.sessions.retrieve(lead.stripe_session_id as string)).metadata ?? {};
+  } catch (e) {
+    console.warn("no checkout session to copy the breakdown from", lead.stripe_session_id, e);
+  }
 
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
@@ -117,6 +134,7 @@ Deno.serve(async (req) => {
         kind: "balance",
         booking_ref: bookingRef,
         original_session_id: lead.stripe_session_id as string,
+        ...financeBreakdown(bookedWith),
       },
     },
   });

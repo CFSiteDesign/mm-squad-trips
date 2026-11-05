@@ -1,7 +1,7 @@
 // Validate a discount code against discount_codes (Postgres) with squad_leaders fallback.
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { previewAllowed, saleOffPerSpot } from "../_shared/black-friday.ts";
+import { saleAccessFor, saleOffPerSpot } from "../_shared/black-friday.ts";
 
 const SLUG_TO_LABEL: Record<string, string> = {
   indonesia: "Indonesia",
@@ -18,7 +18,7 @@ const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Se
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
-    const { code, secondCode, tripSlug, amount, departureDate, salePreview } = await req.json();
+    const { code, secondCode, tripSlug, amount, departureDate, saleKey } = await req.json();
     if (!code || !tripSlug || typeof amount !== "number") {
       return jr({ valid: false, reason: "Missing fields" }, 400);
     }
@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
     if (firstErr) return jr({ valid: false, reason: firstErr });
 
     // Black Friday already takes money off; creator codes are the only ones that work on top (Lexie, 4 Nov 2026).
-    if (saleOffPerSpot(tripSlug, Date.now(), previewAllowed(salePreview, Deno.env.get("BLACK_FRIDAY_PREVIEW_KEY"))) > 0 && d.is_creator !== true) {
+    if (saleOffPerSpot(tripSlug, Date.now(), await saleAccessFor(saleKey), departureDate) > 0 && d.is_creator !== true) {
       return jr({ valid: false, reason: "Black Friday prices are already applied. Only creator codes work this weekend." });
     }
 

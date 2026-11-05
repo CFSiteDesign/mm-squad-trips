@@ -17,12 +17,14 @@ import {
   tripBuilderDepositEmail,
   tripBuilderOpsEmail,
   tripBuilderReceivedEmail,
+  tripBuilderToBookBlock,
   TRIP_BUILDER_CONTACT,
 } from "./email.ts";
+import { type AllInResult, syncAllInBookings, toBookList } from "./trip-builder-book.ts";
 import { crewAnswers } from "./trip-builder-find-crew.ts";
 import { crewReviewUrl, guestTripUrl, readSummary, signCrewKey, signGuestKey, suggestBalance } from "./trip-builder-crew.ts";
 import type { Update } from "./trip-builder-revise.ts";
-import { allPaid, buildSchedule, daysUntil, type Item, LATE_DAYS, laterDepositTotal, parseLaterDeposit, paymentFits, type Plan, readSchedule } from "./trip-builder-pay.ts";
+import { allPaid, buildSchedule, daysUntil, type Item, LATE_DAYS, laterDepositTotal, paidSoFar, parseLaterDeposit, paymentFits, type Plan, readSchedule } from "./trip-builder-pay.ts";
 
 // Trip builder enquiries are Ewan's (Charlie, 19 Oct 2026): every alert goes to
 // him and every guest email replies to him, not the ALL IN ops list or cs@.
@@ -114,7 +116,13 @@ function stripeFromEnv(): Stripe | null {
 }
 
 /** The guest has chosen how to pay and is booked: tell them (with their payment table) and tell Ewan. */
-export async function notifyBooked(row: Row, items: Item[], origin: string | null, key: string): Promise<void> {
+/** The "to book" list in the crew's emails. */
+function toBookHtml(row: Row, paid: string, allIn: AllInResult[]): string {
+  const people = Number(row.party_size ?? 1);
+  return tripBuilderToBookBlock({ ref: row.ref, name: String(row.name), people, paid, items: toBookList(readSummary(row.payload), people), allIn });
+}
+
+export async function notifyBooked(sb: SupabaseClient, row: Row, items: Item[], origin: string | null, key: string): Promise<void> {
   const first = String(row.name ?? "").trim().split(/\s+/)[0] || "there";
   const to = (row.guest_email as string | null) || (row.email as string | null);
   const statusUrl = guestTripUrl(origin, row.ref, key);
@@ -126,10 +134,13 @@ export async function notifyBooked(row: Row, items: Item[], origin: string | nul
     await sendEmail({ to, subject: m.subject, html: m.html, replyTo: EWAN, templateName: "trip_builder_booked" }).catch((e) => console.warn("trip builder booked email failed", e));
   }
   const rows = items.map((i) => `${i.status === "paid" ? "Paid" : "Due"} ${fmtDay(i.due)}: ${usd(i.amount)}`).join("<br>");
+  const allIn = await syncAllInBookings(sb, { ...row, pay_schedule: items });
+  const total = items.reduce((a, i) => a + i.amount, 0) + (Number(row.deposit_amount) > 0 && row.deposit_paid_at ? Number(row.deposit_amount) : 0);
+  const soFar = paidSoFar(items) + (Number(row.deposit_amount) > 0 && row.deposit_paid_at ? Number(row.deposit_amount) : 0);
   await sendEmail({
     to: EWAN, cc: teamCc(),
     subject: `Trip builder: ${row.name} is booked and will ${planLabel(plan, depositPaid > 0)} · ${row.ref}`,
-    html: `<p><strong>${esc(String(row.name))}</strong> approved ${esc(String(row.route ?? ""))} (${row.ref}) and chose to ${esc(planLabel(plan, depositPaid > 0))}. It's booked: make sure the beds are locked in.</p><p>${rows}</p>`,
+    html: `<p><strong>${esc(String(row.name))}</strong> approved ${esc(String(row.route ?? ""))} (${row.ref}) and chose to ${esc(planLabel(plan, depositPaid > 0))}.</p>${toBookHtml(row, `paid ${usd(soFar)} of ${usd(total)}`, allIn)}<p>${rows}</p>`,
     templateName: "trip_builder_booked_ops",
   }).catch((e) => console.warn("trip builder booked ops email failed", e));
 }
@@ -271,7 +282,7 @@ export async function handleTripBuilderPaid(sb: SupabaseClient, session: Stripe.
     const { data: won, error: bErr } = await sb.from("trip_builder_requests").update({ ...cardPatch, status: "approved", pay_plan: "later", pay_schedule: items, plan_chosen_at: now.toISOString() }).eq("ref", row.ref).eq("status", "ready").select("ref");
     if (bErr) throw new Error(`trip builder card save: ${bErr.message}`);
     if (!won || !won.length) return;                                            // another delivery booked it first
-    await notifyBooked({ ...row, ...cardPatch, pay_plan: "later", status: "approved" } as Row, items, meta.origin || null, await signGuestKey(row.ref));
+    await notifyBooked(sb, { ...row, ...cardPatch, pay_plan: "later", status: "approved" } as Row, items, meta.origin || null, await signGuestKey(row.ref));
     return;
   }
 
@@ -317,16 +328,20 @@ export async function handleTripBuilderPaid(sb: SupabaseClient, session: Stripe.
         const m = tripBuilderConfirmedEmail({ firstName: first, ref: row.ref, route: row.route ?? "your trip", paid, statusUrl });
         await sendEmail({ to: guestEmail, subject: m.subject, html: m.html, replyTo: EWAN, templateName: "trip_builder_confirmed" }).catch((e) => console.warn("trip builder confirmed email failed", e));
       }
+      // Paid in full on the last of several payments: the list went out when they were first booked, and this brings the money on the ALL IN up to date.
+      const allIn = await syncAllInBookings(sb, { ...row, pay_schedule: items, balance_paid_at: now.toISOString() });
+      const total = items.length ? items.reduce((a, i) => a + i.amount, 0) + (row.deposit_paid_at ? Number(row.deposit_amount) : 0) : paidNow;
       await sendEmail({
         to: EWAN, cc: teamCc(),
         subject: `Trip builder: ${row.name} paid ${paid} and is paid in full · ${row.ref}`,
-        html: `<p><strong>${esc(String(row.name))}</strong> paid ${paid} for ${esc(String(row.route ?? ""))} (${row.ref}) and is paid in full. ${firstBooking ? "It's booked: make sure the beds are locked in." : ""}</p>`,
+        html: `<p><strong>${esc(String(row.name))}</strong> paid ${paid} for ${esc(String(row.route ?? ""))} (${row.ref}) and is paid in full.</p>${firstBooking ? toBookHtml(row, `paid in full ${usd(total)}`, allIn) : ""}`,
         templateName: "trip_builder_balance_ops",
       }).catch((e) => console.warn("trip builder balance ops email failed", e));
     } else if (firstBooking) {
       // First payment in (the first instalment, or the "week before" deposit): they're booked, with the rest scheduled.
-      await notifyBooked({ ...row, pay_plan: plan, plan_chosen_at: now.toISOString() } as Row, items, meta.origin || null, await signGuestKey(row.ref));
+      await notifyBooked(sb, { ...row, pay_plan: plan, plan_chosen_at: now.toISOString() } as Row, items, meta.origin || null, await signGuestKey(row.ref));
     } else {
+      await syncAllInBookings(sb, { ...row, pay_schedule: items });
       await sendEmail({
         to: EWAN, subject: `Trip builder: ${row.name} paid ${paid} (instalment ${n} of ${items.length}) · ${row.ref}`,
         html: `<p><strong>${esc(String(row.name))}</strong> paid ${paid} towards ${esc(String(row.route ?? ""))} (${row.ref}).</p>`, templateName: "trip_builder_instalment_ops",

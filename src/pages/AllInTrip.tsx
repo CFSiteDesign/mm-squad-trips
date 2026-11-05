@@ -10,7 +10,7 @@ import { Check, X, ChevronDown, Star, ArrowRight } from "lucide-react";
 import { fetchTrip } from "@/lib/api";
 import { getTripFallback } from "@/data/tripFallbacks";
 import { formatPrice } from "@/lib/trip-helpers";
-import { depositText, saleOff } from "@/lib/black-friday";
+import { depositText, saleOff, SALE_TERMS_URL } from "@/lib/black-friday";
 import { SaleStrip } from "@/components/allin/SaleStrip";
 import { SiteFooter } from "@/components/trip/SiteFooter";
 import { TripCrossSell } from "@/components/trip/TripCrossSell";
@@ -141,7 +141,7 @@ export default function AllInTrip({ slug: slugProp, unlisted = false }: { slug?:
   const deposit = depositText(slug);
   // During Black Friday the deal is the first question. Cancellation wording per Lexie, 4 Nov 2026.
   const FAQS = off > 0
-    ? [{ q: "How does the Black Friday deal work?", a: `Book by Sunday 29 Nov, 23:59 Bali time, and you get $${off} off per person and pay nothing today. You save your card, and the full price is charged to it automatically 7 days before departure. Trips leaving inside 7 days are paid in full when you book, still with the money off. Creator codes work on top. If you cancel before your card is charged, you owe nothing. Once it's charged, our normal refund policy applies.` }, ...content.faqs]
+    ? [{ q: "How does the Black Friday deal work?", a: `Book by Sunday 29 Nov, 23:59 Bali time, for any departure from Monday 30 Nov, and you get $${off} off per person and pay nothing today. You save your card, and the full price is charged to it automatically 7 days before departure. Trips leaving inside 7 days are paid in full when you book, still with the money off. Creator codes work on top. If you cancel before your card is charged, you owe nothing. Once it's charged, our normal refund policy applies.` }, ...content.faqs]
     : content.faqs;
   // Customers see finished tiles only.
   const HIGHLIGHTS = content.highlights.filter((h) => h.image);
@@ -487,7 +487,12 @@ export default function AllInTrip({ slug: slugProp, unlisted = false }: { slug?:
                   <ChevronDown className={`h-5 w-5 shrink-0 transition-transform ${openFaq === i ? "rotate-180" : ""}`} />
                 </button>
                 {openFaq === i && (
-                  <p className="whitespace-pre-line border-t-[2px] border-mm-black/15 bg-mm-paper p-4 text-sm leading-relaxed text-mm-black/80">{f.a}</p>
+                  <p className="whitespace-pre-line border-t-[2px] border-mm-black/15 bg-mm-paper p-4 text-sm leading-relaxed text-mm-black/80">
+                    {f.a}
+                    {off > 0 && i === 0 && (
+                      <> <a href={SALE_TERMS_URL} target="_blank" rel="noreferrer" className="underline underline-offset-2">Read the full terms and conditions.</a></>
+                    )}
+                  </p>
                 )}
               </div>
             ))}
