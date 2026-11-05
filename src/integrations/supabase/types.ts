@@ -840,6 +840,7 @@ export type Database = {
           balance_payment_intent: string | null
           balance_session_id: string | null
           balance_url: string | null
+          booked_items: Json
           campaign_ref: string | null
           contact_via: string | null
           countries: string[]
@@ -889,6 +890,7 @@ export type Database = {
           balance_payment_intent?: string | null
           balance_session_id?: string | null
           balance_url?: string | null
+          booked_items?: Json
           campaign_ref?: string | null
           contact_via?: string | null
           countries?: string[]
@@ -938,6 +940,7 @@ export type Database = {
           balance_payment_intent?: string | null
           balance_session_id?: string | null
           balance_url?: string | null
+          booked_items?: Json
           campaign_ref?: string | null
           contact_via?: string | null
           countries?: string[]

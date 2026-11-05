@@ -71,6 +71,13 @@
       "when": 1793711815354,
       "tag": "0009_trip_builder_find_crew",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793862718442,
+      "tag": "0010_trip_builder_booked_items",
+      "breakpoints": true
     }
   ]
 }
