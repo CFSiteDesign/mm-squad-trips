@@ -58,7 +58,7 @@ export const journeyEmails = {
   balanceFailed: async (g: GuestEmailData): Promise<RenderedEmail> =>
     (await email()).balanceFailedEmail({
       firstName: g.first, tripName: g.tripName, departureDate: g.date, amountDue: usd(g.balance),
-      attempts: 1, nextAttemptDate: "in 2 days", bookingRef: g.ref,
+      attempts: 1, nextAttemptDate: "in 2 days", bookingRef: g.ref, payBalanceUrl: g.bookingUrl,
     }),
   manifest: async (g: GuestEmailData, daysOut: 7 | 1, travellers: number): Promise<RenderedEmail> =>
     (await email()).departureTeamReminderEmail({
