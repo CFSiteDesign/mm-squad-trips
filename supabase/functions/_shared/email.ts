@@ -803,7 +803,7 @@ export function departureCancelledEmail(v: {
 // Crew heads-up, 10 days out, when a departure is still under 5 travellers.
 // Charlie, 6 Oct 2026: crew trips now run regardless (the 30-day auto-cancel
 // is gone). Tell them early, sell them on going anyway, and offer the deposit
-// back through cs@ if they'd rather not.
+// back through Ewan if they'd rather not (Lexie, 9 Nov 2026: "Need to speak to a human?").
 export function underfilledCrewNoticeEmail(v: {
   firstName: string;
   /** "14-day Vietnam" */
@@ -837,8 +837,8 @@ export function underfilledCrewNoticeEmail(v: {
 <li style="margin:0 0 4px 0">More say in how you spend your free time</li>
 <li style="margin:0">Easier to bond fast, then bring new friends into the mix</li>
 </ul>
-<p style="margin:0 0 6px 0"><strong>Changed your mind?</strong></p>
-<p style="margin:0 0 16px 0">No problem. Email <a href="mailto:cs@madmonkeyhostels.com" style="color:#0a0a0a">cs@madmonkeyhostels.com</a> with your booking reference <strong>{{bookingRef}}</strong> and we'll refund your deposit.${balanceLine}</p>
+<p style="margin:0 0 6px 0"><strong>Need to speak to a human?</strong></p>
+<p style="margin:0 0 16px 0">No problem. Email <a href="mailto:ewan@madmonkeyhostels.com" style="color:#0a0a0a">ewan@madmonkeyhostels.com</a> with your booking reference <strong>{{bookingRef}}</strong> and we'll refund your deposit.${balanceLine}</p>
 <p style="margin:0">See you in {{country}} {{flag}}</p>
 </td></tr>`,
     { ...v, flag } as unknown as Record<string, string>,

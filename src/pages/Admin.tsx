@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { GuestJourneys } from "@/components/admin/GuestJourneys";
+import { BookingJourney } from "@/components/admin/BookingJourney";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 
 import { AdminWalkthrough } from "@/components/admin/AdminWalkthrough";
@@ -351,8 +353,11 @@ export default function Admin({ preview = false }: { preview?: boolean } = {}) {
             <TripBuilderAdmin refreshKey={refreshKey} />
           </div>
         ) : (
-          <Tabs defaultValue="trips" className="mx-auto max-w-7xl">
+          <Tabs defaultValue={preview ? "journeys" : "trips"} className="mx-auto max-w-7xl">
             <TabsList className="flex flex-wrap gap-1 rounded-none border-[2px] border-mm-black bg-mm-bone p-1">
+              <TabsTrigger value="journeys" className="rounded-none data-[state=active]:bg-mm-pink data-[state=active]:text-mm-bone">
+                Guest journeys
+              </TabsTrigger>
               {TABS.map((t) => (
                 <TabsTrigger key={t.id} value={t.id} className="rounded-none data-[state=active]:bg-mm-pink data-[state=active]:text-mm-bone">
                   {t.label}
@@ -373,6 +378,9 @@ export default function Admin({ preview = false }: { preview?: boolean } = {}) {
                 <TableEditor table={t.id} refreshKey={refreshKey} />
               </TabsContent>
             ))}
+            <TabsContent value="journeys" className="mt-4">
+              <GuestJourneys />
+            </TabsContent>
             <TabsContent value="leaderboard" className="mt-4">
               <StaffLeaderboard refreshKey={refreshKey} />
             </TabsContent>
@@ -463,6 +471,10 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
   const [loading, setLoading] = useState(() => !tableCache[table]);
   const [editing, setEditing] = useState<Row | null>(null);
   const [creating, setCreating] = useState(false);
+  // Bookings only: the guest journey drawer, always for the lead booker's row.
+  const [journeyFor, setJourneyFor] = useState<Row | null>(null);
+  const leadRowOf = (r: Row) =>
+    Number(r.spot_number ?? 1) === 1 ? r : rows.find((x) => x.stripe_session_id === r.stripe_session_id && Number(x.spot_number ?? 1) === 1) ?? r;
   const [compOpen, setCompOpen] = useState(false);
   const [klaviyoOpen, setKlaviyoOpen] = useState(false);
   const [runDateOpen, setRunDateOpen] = useState(false);
@@ -790,6 +802,9 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
                     );
                   })}
                   <td className="px-3 py-2 text-right">
+                    {table === "bookings" && (
+                      <button onClick={() => setJourneyFor(leadRowOf(r))} className="mr-3 font-bold underline">journey</button>
+                    )}
                     <button onClick={() => setEditing(r)} className="mr-3 underline">edit</button>
                     <button onClick={() => handleDelete(String(r.id))} className="text-red-600 underline">del</button>
                   </td>
@@ -811,6 +826,10 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
           onClose={() => { setEditing(null); setCreating(false); }}
           onSaved={() => { setEditing(null); setCreating(false); reload(); }}
         />
+      )}
+
+      {journeyFor && (
+        <BookingJourney lead={journeyFor} allBookings={rows} onClose={() => setJourneyFor(null)} />
       )}
 
       {klaviyoOpen && (
