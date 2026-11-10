@@ -6,6 +6,7 @@ import { fetchTrip } from "@/lib/api";
 import { formatPrice } from "@/lib/trip-helpers";
 import { depositText } from "@/lib/black-friday";
 import { SaleStrip } from "@/components/allin/SaleStrip";
+import { PostFestivalSection } from "@/components/allin/PostFestivalSection";
 import { TRIPS } from "@/data/trips";
 import { SiteFooter } from "@/components/trip/SiteFooter";
 import { StickyCta } from "@/components/allin/Chrome";
@@ -184,6 +185,9 @@ export default function AllInHome() {
           </div>
         </div>
       </section>
+
+      {/* ============ KOH RONG POST-FESTIVAL PACKAGE ============ */}
+      <PostFestivalSection />
 
       {/* ============ WHAT YOUR $99 DEPOSIT UNLOCKS ============ */}
       <section className="border-b-[4px] border-mm-black bg-mm-paper py-14">

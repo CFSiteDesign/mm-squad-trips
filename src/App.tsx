@@ -26,6 +26,7 @@ import NotFound from "./pages/NotFound";
 import AllInHome from "./pages/AllInHome";
 import AllInTrip from "./pages/AllInTrip";
 import AllInCheckout from "./pages/AllInCheckout";
+import KohRongPackage from "./pages/KohRongPackage";
 import { gtmPushEvent } from "@/utils/gtmTracker";
 import { BASE_PATH } from "@/lib/base-path";
 import { TravellerModeProvider } from "@/lib/traveller-mode";
@@ -113,6 +114,9 @@ const App = () => (
           {/* Unlisted again (Charlie, 19 Oct 2026): link-only, noindex, not on the home page. Still bookable. */}
           <Route path="/thailand" element={<AllInTrip slug="thailand" unlisted />} />
           <Route path="/laos" element={<AllInTrip slug="laos" />} />
+          {/* Koh Rong post-festival package (brief 9 Nov 2026), linked from the home page. */}
+          <Route path="/koh-rong-post-festival" element={<KohRongPackage />} />
+          <Route path="/cambodia-post-festival" element={<KohRongPackage />} />
 
           {/* Student variant */}
           <Route path="/students" element={<StudentIndex />} />

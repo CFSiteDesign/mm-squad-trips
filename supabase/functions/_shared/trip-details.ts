@@ -50,6 +50,8 @@ const CAMBODIA_CHATS: PropertyChat[] = [
   { property: "Koh Sdach", url: "https://chat.whatsapp.com/KcCxhxFGWISBS8qL6ZQ3Gw" },
 ];
 
+const KOH_RONG_CHAT: PropertyChat[] = CAMBODIA_CHATS.filter((c) => c.property === "Koh Rong");
+
 const INDONESIA7_CHATS: PropertyChat[] = [
   { property: "Kuta Lombok", url: "https://chat.whatsapp.com/FuOjWvIRMwBFFyoB0mKYDk" },
   // Gili Trawangan chat: pending verification
@@ -79,6 +81,19 @@ const TRIP_DETAILS: Record<string, TripFinalDetails> = {
         "<strong>Add-ons:</strong> a hot air balloon ride (+$110) and the ethical elephant experience at MandaLao (+$99). Ask us online or at the hostel for times and booking.",
         "<strong>Trip ends:</strong> Vang Vieng, with checkout on Day 10.",
       ]),
+  },
+  // Koh Rong post-festival package (brief, 9 Nov 2026): only what the brief and
+  // its itinerary sheet state.
+  "cambodia-post-festival": {
+    whatsappUrl: KOH_RONG_CHAT[0].url,
+    finalDetailsHtml:
+      block("Final details: Koh Rong Post-Festival Package", [
+        "<strong>Wed 16 Dec:</strong> transfer from Koh Sdach to Koh Rong, then 2 hours of free-flow beer, spirits and cocktails and the hostel's social activities.",
+        "<strong>Where you're staying:</strong> 5 nights at Mad Monkey Koh Rong, with breakfast every day.",
+        "<strong>Fri 18 Dec:</strong> the Koh Rong Boat Party, with $10 of bar credit.",
+        "<strong>Sat 19 Dec:</strong> Nestival.",
+        "<strong>Check out:</strong> Mon 21 Dec.",
+      ]) + chatsBlock(KOH_RONG_CHAT),
   },
   thailand: {
     // No verified Thailand chat yet; the old value was the Phnom Penh group.
@@ -182,6 +197,7 @@ export function tripCountryFromSlug(slug: string | null | undefined): string {
     indonesia: "Indonesia",
     "indonesia-7": "Indonesia",
     cambodia: "Cambodia",
+    "cambodia-post-festival": "Cambodia",
   };
   return map[slug.toLowerCase()] ?? slug;
 }
