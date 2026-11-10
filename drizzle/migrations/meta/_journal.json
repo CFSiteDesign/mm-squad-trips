@@ -85,6 +85,13 @@
       "when": 1793862745021,
       "tag": "0011_balance_heads_up",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1794278450366,
+      "tag": "0012_koh_rong_post_festival",
+      "breakpoints": true
     }
   ]
 }
