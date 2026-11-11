@@ -72,6 +72,7 @@ Deno.serve(async (req) => {
     // so the trip reads as sold out once it's gone. create-checkout-session enforces it; this is what guests see.
     const cap = saleCapFor(trip.slug);
     let capLeft: number | null = null;
+    const capCacheSecs = Math.max(0, Math.min(60, Math.floor((SALE_CAP_TO_MS - Date.now()) / 1000)));
     if (cap !== null) {
       const { data: left, error: cErr } = await sb.rpc("sale_cap_left", {
         p_trip_id: trip.id,
@@ -127,9 +128,10 @@ Deno.serve(async (req) => {
         // never sit in a shared cache where another visitor could receive it.
         "Cache-Control": revealCode
           ? "private, no-store"
-          // A capped trip can sell out within minutes, so it's cached for a minute, not five.
+          // A capped trip can sell out within minutes, so it's cached for a minute, not five, and never past
+          // the end of the sale, so the cap lifts on the page at the same moment the deal ends.
           : cap !== null
-          ? "public, s-maxage=60, stale-while-revalidate=60"
+          ? `public, s-maxage=${capCacheSecs}, stale-while-revalidate=${capCacheSecs}`
           : "public, s-maxage=300, stale-while-revalidate=600",
       },
     });
