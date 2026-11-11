@@ -617,6 +617,41 @@ export type Database = {
           },
         ]
       }
+      sale_cap_holds: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          spots: number
+          stripe_session_id: string | null
+          trip_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          spots: number
+          stripe_session_id?: string | null
+          trip_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          spots?: number
+          stripe_session_id?: string | null
+          trip_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_cap_holds_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       squad_bookings: {
         Row: {
           booker_email: string | null
@@ -1133,6 +1168,21 @@ export type Database = {
       recompute_discount_used: {
         Args: { _discount_id: string }
         Returns: undefined
+      }
+      sale_cap_claim: {
+        Args: {
+          p_cap: number
+          p_from: string
+          p_hold_minutes: number
+          p_spots: number
+          p_to: string
+          p_trip_id: string
+        }
+        Returns: string
+      }
+      sale_cap_left: {
+        Args: { p_cap: number; p_from: string; p_to: string; p_trip_id: string }
+        Returns: number
       }
     }
     Enums: {
