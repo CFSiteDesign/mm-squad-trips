@@ -138,7 +138,7 @@ const TRIP_DETAILS: Record<string, TripFinalDetails> = {
       block("Final details: Cambodia", [
         "<strong>Meeting point:</strong> Mad Monkey Phnom Penh. Free pre-trip night included: arrive the day before your departure date.",
         "<strong>Day 1:</strong> a Welcome Khmer Family Dinner with your crew, 6:30pm to 8pm.",
-        "<strong>What to pack:</strong> light cotton clothes, modest cover-up for temples (shoulders + knees), trainers for Angkor, swimwear for Sihanoukville, mozzy spray.",
+        "<strong>What to pack:</strong> light cotton clothes, modest cover-up for temples (shoulders + knees), trainers for Angkor, swimwear for Koh Rong and Koh Sdach, mozzy spray.",
         "<strong>Cash:</strong> USD is widely accepted. Bring small bills (~$150) for tips, tuk-tuks and markets.",
         "<strong>Weather right now:</strong> hot, occasional rain. Stay hydrated.",
         "<strong>Nearest airport:</strong> arrive into PNH (Phnom Penh). The trip ends with the bus back to Phnom Penh, so you fly home from PNH too.",
