@@ -48,3 +48,23 @@ export function saleOffPerSpot(slug: string, now = Date.now(), access: SaleAcces
   if (departureDate && departureDate < FIRST_SALE_DEPARTURE) return 0;
   return OFF_PER_SPOT[slug] ?? 0;
 }
+
+// Most spots a trip can sell over the sale (Charlie, 11 Nov 2026: Vietnam 7 days, max 50). Counted per traveller,
+// from early access opening to the sale's end, full-price or not. Once it's reached the trip is sold out until the
+// sale ends. Counting and holds live in the database (sale_cap_left / sale_cap_claim).
+const SALE_SPOT_CAPS: Record<string, number> = {
+  "vietnam-7": 50,
+};
+
+/** The window the cap counts bookings in. */
+export const SALE_CAP_FROM_MS = EARLY_ACCESS_START_MS;
+export const SALE_CAP_TO_MS = SALE_END_MS;
+
+/** A held checkout spot outlives Stripe's one-hour sale checkout by a few minutes, so a late payment still counts. */
+export const SALE_CAP_HOLD_MINUTES = 65;
+
+/** The cap on this trip right now, or null when there isn't one (other trips, or outside the sale). */
+export function saleCapFor(slug: string, now = Date.now()): number | null {
+  if (now < SALE_CAP_FROM_MS || now >= SALE_CAP_TO_MS) return null;
+  return SALE_SPOT_CAPS[slug] ?? null;
+}

@@ -6,11 +6,20 @@
 // - 7-day rule: $99/spot deposit if departure ≥7 days out, else pay in full
 // - Black Friday (_shared/black-friday.ts): money off per spot, and the deposit is $0: a Stripe
 //   setup session saves the card and the webhook schedules the whole price for 7 days before.
+//   Some trips are capped over the sale (Vietnam 7 days: 50 spots): each checkout holds its spots until it
+//   expires or turns into a booking, so the cap can't be oversold.
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { appBase } from "../_shared/app-base.ts";
-import { saleAccessFor, saleOffPerSpot } from "../_shared/black-friday.ts";
+import {
+  SALE_CAP_FROM_MS,
+  SALE_CAP_HOLD_MINUTES,
+  SALE_CAP_TO_MS,
+  saleAccessFor,
+  saleCapFor,
+  saleOffPerSpot,
+} from "../_shared/black-friday.ts";
 
 const DEPOSIT_PER_SPOT = 99;
 const DEPOSIT_THRESHOLD_DAYS = 7;
@@ -105,6 +114,9 @@ Deno.serve(async (req) => {
   if (!leadBooker || typeof leadBooker !== "object") return err("leadBooker required");
   const lead = leadBooker as Record<string, string>;
   if (!lead.name || !lead.email || !lead.phone) return err("Lead booker name, email, phone required");
+
+  // Spots held under a Black Friday cap for this checkout; let go again if Stripe fails.
+  let capHoldId: string | null = null;
 
   try {
     // 1. Trip
@@ -329,6 +341,31 @@ Deno.serve(async (req) => {
       ? `${trip.name} — Deposit ($99 × ${groupSize})`
       : `${trip.name} — Pay in full`;
 
+    // Black Friday cap. Last check before Stripe, so a request that fails anything above never holds a spot.
+    const cap = saleCapFor(tripSlug);
+    if (cap !== null) {
+      const capWindow = {
+        p_trip_id: trip.id,
+        p_cap: cap,
+        p_from: new Date(SALE_CAP_FROM_MS).toISOString(),
+        p_to: new Date(SALE_CAP_TO_MS).toISOString(),
+      };
+      const { data: hold, error: hErr } = await sb.rpc("sale_cap_claim", {
+        ...capWindow,
+        p_spots: groupSize,
+        p_hold_minutes: SALE_CAP_HOLD_MINUTES,
+      });
+      if (hErr) return err(hErr.message, 500);
+      if (!hold) {
+        const { data: left } = await sb.rpc("sale_cap_left", capWindow);
+        const n = Number(left) || 0;
+        return err(n > 0
+          ? `Only ${n} spot${n === 1 ? "" : "s"} left on this trip for the Black Friday weekend`
+          : "Sorry, this trip has sold out for the Black Friday weekend");
+      }
+      capHoldId = String(hold);
+    }
+
     // 6. Stripe Checkout
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     const origin = appBase(req.headers.get("origin"));
@@ -430,8 +467,12 @@ Deno.serve(async (req) => {
     }
     const lineUnitAmount = discountsParam ? originalPrice : amountToday;
 
-    // A checkout started during the sale can't sit open for Stripe's usual 24 hours and keep the price.
-    const saleExpiry = onSale ? { expires_at: Math.floor(Date.now() / 1000) + 3600 } : {};
+    // A checkout started during the sale can't sit open for Stripe's usual 24 hours and keep the price,
+    // and one holding capped spots has to close before its hold runs out.
+    const saleExpiry = onSale || capHoldId ? { expires_at: Math.floor(Date.now() / 1000) + 3600 } : {};
+    const attachHold = async (sessionId: string) => {
+      if (capHoldId) await sb.from("sale_cap_holds").update({ stripe_session_id: sessionId }).eq("id", capHoldId);
+    };
     const checkoutUrls = {
       success_url: `${origin}/booking-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/${tripSlug}?cancelled=1#booking`,
@@ -466,6 +507,7 @@ Deno.serve(async (req) => {
         ...saleExpiry,
         ...checkoutUrls,
       });
+      await attachHold(session.id);
       return new Response(JSON.stringify({ url: session.url }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -517,7 +559,7 @@ Deno.serve(async (req) => {
       ...saleExpiry,
       ...checkoutUrls,
     });
-
+    await attachHold(session.id);
 
     return new Response(JSON.stringify({ url: session.url }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -525,6 +567,7 @@ Deno.serve(async (req) => {
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error("create-checkout-session error", msg);
+    if (capHoldId) await sb.from("sale_cap_holds").delete().eq("id", capHoldId);
     return err(msg, 500);
   }
 });

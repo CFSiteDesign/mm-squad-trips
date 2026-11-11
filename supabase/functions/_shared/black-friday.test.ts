@@ -1,5 +1,5 @@
 import { assert, assertEquals } from "jsr:@std/assert@1";
-import { EARLY_ACCESS_START_MS, SALE_END_MS, SALE_START_MS, saleAccessFor, saleOffPerSpot } from "./black-friday.ts";
+import { EARLY_ACCESS_START_MS, SALE_END_MS, SALE_START_MS, saleAccessFor, saleCapFor, saleOffPerSpot } from "./black-friday.ts";
 import { balanceHeadsUpEmail, bookingConfirmedEmail } from "./email.ts";
 import { headsUpDue } from "./balance-heads-up.ts";
 import { financeBreakdown } from "./finance-breakdown.ts";
@@ -100,4 +100,14 @@ Deno.test("the confirmation says nothing was charged only on a $0 deposit", () =
   const base = { firstName: "Sam", tripCountry: "Vietnam", tripName: "ALL IN Vietnam", departureDate: "2027-02-01", spots: 1, balanceAmount: "$650.00 USD", balanceDueDate: "2027-01-25", payBalanceUrl: "https://example.com", bookingRef: "SOL-VNM-001", bookingUrl: "https://example.com", hasBalance: true };
   assert(bookingConfirmedEmail({ ...base, nothingChargedToday: true }).html.includes("Nothing has been charged today"));
   assert(!bookingConfirmedEmail(base).html.includes("Nothing has been charged today"));
+});
+
+Deno.test("Vietnam 7 days is capped at 50 spots from early access to the end of the sale, nothing else is", () => {
+  assertEquals(saleCapFor("vietnam-7", EARLY_ACCESS_START_MS - 1), null);
+  assertEquals(saleCapFor("vietnam-7", EARLY_ACCESS_START_MS), 50);
+  assertEquals(saleCapFor("vietnam-7", SALE_END_MS - 1), 50);
+  assertEquals(saleCapFor("vietnam-7", SALE_END_MS), null);
+  for (const slug of ["vietnam", "indonesia", "indonesia-7", "cambodia", "laos"]) {
+    assertEquals(saleCapFor(slug, SALE_START_MS), null, slug);
+  }
 });

@@ -1,6 +1,7 @@
 // GET trip by slug + future departures. Reads from Postgres.
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { SALE_CAP_FROM_MS, SALE_CAP_TO_MS, saleCapFor } from "../_shared/black-friday.ts";
 
 function todayPlusDays(d: number): string {
   const t = new Date();
@@ -67,6 +68,21 @@ Deno.serve(async (req) => {
     const visibleDeps = (deps ?? []).filter(
       (d) => d.force_bookable === true || (d.departure_date as string) > minDate,
     );
+    // Black Friday cap (Vietnam 7 days: 50 spots over the sale): no date shows more spots than the cap has left,
+    // so the trip reads as sold out once it's gone. create-checkout-session enforces it; this is what guests see.
+    const cap = saleCapFor(trip.slug);
+    let capLeft: number | null = null;
+    if (cap !== null) {
+      const { data: left, error: cErr } = await sb.rpc("sale_cap_left", {
+        p_trip_id: trip.id,
+        p_cap: cap,
+        p_from: new Date(SALE_CAP_FROM_MS).toISOString(),
+        p_to: new Date(SALE_CAP_TO_MS).toISOString(),
+      });
+      if (cErr) console.error("sale_cap_left failed", cErr.message);
+      else capLeft = Math.max(0, Number(left) || 0);
+    }
+
     const resolvedDepartures = visibleDeps.map((d) => {
       const month = (d.departure_date as string).slice(0, 7);
       const pm = priceByMonth.get(month);
@@ -74,7 +90,9 @@ Deno.serve(async (req) => {
         id: d.id,
         departureId: d.departure_code ?? `${trip.code}-${d.departure_date}`,
         date: d.departure_date,
-        spotsRemaining: d.spots_remaining ?? d.total_spots ?? 0,
+        spotsRemaining: capLeft === null
+          ? d.spots_remaining ?? d.total_spots ?? 0
+          : Math.min(capLeft, d.spots_remaining ?? d.total_spots ?? 0),
         bookable: d.bookable === true,
         isPrivate: d.visibility === "private",
         forceBookable: d.force_bookable === true,
@@ -109,6 +127,9 @@ Deno.serve(async (req) => {
         // never sit in a shared cache where another visitor could receive it.
         "Cache-Control": revealCode
           ? "private, no-store"
+          // A capped trip can sell out within minutes, so it's cached for a minute, not five.
+          : cap !== null
+          ? "public, s-maxage=60, stale-while-revalidate=60"
           : "public, s-maxage=300, stale-while-revalidate=600",
       },
     });
