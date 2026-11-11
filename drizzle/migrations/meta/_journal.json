@@ -92,6 +92,13 @@
       "when": 1794278450366,
       "tag": "0012_koh_rong_post_festival",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1794368326267,
+      "tag": "0013_black_friday_sale_cap",
+      "breakpoints": true
     }
   ]
 }
