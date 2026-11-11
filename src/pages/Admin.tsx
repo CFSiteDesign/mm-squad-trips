@@ -219,7 +219,8 @@ const COLUMNS: Record<AdminTable, ColumnDef[]> = {
     { key: "balance_due_date", label: "Balance Due Date", tooltip: "Date the remaining balance must be paid by", readOnly: true, format: "date-only" },
     { key: "card_on_file", label: "Card on File", tooltip: "Whether a saved payment method exists for automatic charging", readOnly: true, hideInCsv: true, compute: (r) => !!r.stripe_payment_method_id },
     { key: "status", label: "Status", tooltip: "Overall booking status (e.g. Confirmed, Cancelled)", readOnly: true },
-    { key: "stripe_session_id", label: "Stripe Session ID", tooltip: "Stripe Checkout session ID for this payment", readOnly: true },
+    // Finance search Stripe by customer, so the table shows the Customer ID; the session ID is still in the CSV (Charlie, 11 Nov 2026).
+    { key: "stripe_customer_id", label: "Stripe Customer ID", tooltip: "Stripe customer for this booking: search it in Stripe to see every payment on it", readOnly: true },
     { key: "created_at", label: "Created", tooltip: "Date and time this booking was first created", readOnly: true, format: "date-only" },
 
     // ===== Columns below are hidden from the on-screen table but included in CSV export =====
@@ -238,7 +239,7 @@ const COLUMNS: Record<AdminTable, ColumnDef[]> = {
     { key: "utm_medium", label: "UTM Medium", readOnly: true, hideInTable: true },
     { key: "utm_campaign", label: "UTM Campaign", readOnly: true, hideInTable: true },
     { key: "utm_content", label: "UTM Content", readOnly: true, hideInTable: true },
-    { key: "stripe_customer_id", label: "Stripe Customer ID", readOnly: true, hideInTable: true },
+    { key: "stripe_session_id", label: "Stripe Session ID", readOnly: true, hideInTable: true },
     { key: "stripe_payment_method_id", label: "Stripe Payment Method ID", readOnly: true, hideInTable: true },
     { key: "stripe_payment_intent_id", label: "Stripe Payment Intent ID", readOnly: true, hideInTable: true },
     { key: "stripe_balance_payment_intent_id", label: "Stripe Balance Payment Intent ID", readOnly: true, hideInTable: true },
@@ -784,14 +785,15 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
                         ) : ci === 0 && inGroup ? (
                           <span className="mr-2 inline-block h-2 w-2 rounded-full bg-mm-pink align-middle" aria-hidden />
                         ) : null}
-                        {c.key === "stripe_session_id" && display ? (
+                        {c.key === "stripe_customer_id" && display ? (
                           <button
-                            onClick={() => { navigator.clipboard.writeText(display); toast.success("Copied session ID"); }}
-                            className="inline-flex items-center text-mm-black/60 hover:text-mm-pink"
-                            title={`Copy session ID (${display})`}
-                            aria-label="Copy Stripe session ID"
+                            onClick={() => { navigator.clipboard.writeText(display); toast.success("Copied customer ID"); }}
+                            className="inline-flex items-center gap-1.5 font-mono text-xs text-mm-black/80 hover:text-mm-pink"
+                            title={`Copy customer ID (${display})`}
+                            aria-label="Copy Stripe customer ID"
                           >
-                            <Copy size={14} />
+                            <span>{display}</span>
+                            <Copy size={14} className="shrink-0" />
                           </button>
                         ) : display}
 

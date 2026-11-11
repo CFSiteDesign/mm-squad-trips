@@ -518,8 +518,9 @@ Deno.serve(async (req) => {
       customer: customerId,
       customer_email: customerId ? undefined : lead.email,
       // Stripe rejects customer + customer_creation together — only ask Stripe to
-      // create a customer when we don't already have one for this email.
-      ...(isDeposit && !customerId ? { customer_creation: "always" as const } : {}),
+      // create a customer when we don't already have one for this email. Pay-in-full
+      // gets one too, so every booking has a Customer ID for finance (11 Nov 2026).
+      ...(!customerId ? { customer_creation: "always" as const } : {}),
       line_items: [{
         price_data: {
           currency: "usd",

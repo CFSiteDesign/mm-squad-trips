@@ -218,6 +218,8 @@ async function writeBookings(session: Stripe.Checkout.Session) {
 
   const groupSize = Math.max(1, Number(m.group_size || "1"));
   const paymentType = m.payment_type === "deposit" ? "Deposit" : "Full";
+  // On every row, pay-in-full too: finance find bookings in Stripe by customer (admin shows it, 11 Nov 2026).
+  const stripeCustomerId = (typeof session.customer === "string" ? session.customer : session.customer?.id) ?? null;
   const amountPaidTotal = (session.amount_total ?? 0) / 100;
   const subtotal = Number(m.subtotal || "0");
   const discountAmount = Number(m.discount_amount || "0");
@@ -271,6 +273,7 @@ async function writeBookings(session: Stripe.Checkout.Session) {
     amount_paid: Math.round(perSpotPaid * 100) / 100,
     status: "Confirmed",
     stripe_session_id: sessionId,
+    stripe_customer_id: stripeCustomerId,
     utm_source: m.utm_source || null,
     utm_medium: m.utm_medium || null,
     utm_campaign: m.utm_campaign || null,
@@ -304,6 +307,7 @@ async function writeBookings(session: Stripe.Checkout.Session) {
       amount_paid: Math.round(perSpotPaid * 100) / 100,
       status: "Confirmed",
       stripe_session_id: sessionId,
+      stripe_customer_id: stripeCustomerId,
       advisor_ref: m.advisor_ref || null,
       traveller_mode: m.traveller_mode || null,
     });
