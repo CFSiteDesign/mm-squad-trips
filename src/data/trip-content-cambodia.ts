@@ -19,9 +19,8 @@ import s21 from "@/assets/kh-hl-s21.jpg";
 import angkor from "@/assets/kh-hl-angkor.jpg";
 import floating from "@/assets/kh-hl-floating.jpg";
 import nestival from "@/assets/kh-hl-nestival.jpg";
-// Stand-in until the brief's photo (PHOTO-2026-11-09-19-26-06.jpg) arrives: a Koh Rong boat party shot from
-// Hayley's post-festival package brief. The Kampot Pepper Farm tile has no photo yet, so the page hides it.
-import boatParty from "@/assets/koh-rong-package/boat-party-4.jpg";
+import pepperFarm from "@/assets/kh-hl-pepper-farm.jpg";
+import boatParty from "@/assets/kh-hl-boat-party.jpg";
 import privateBeach from "@/assets/kh-hl-private-beach.jpg";
 import type { Day } from "@/data/trip-content-indonesia";
 import type { Highlight } from "@/data/trip-content";
@@ -48,7 +47,7 @@ export const KH_HIGHLIGHTS: Highlight[] = [
   { title: "Angkor Wat Temple", image: angkor },
   { title: "Floating Village", image: floating },
   { title: "Nestival Access", image: nestival },
-  { title: "Kampot Pepper Farm", image: null },
+  { title: "Kampot Pepper Farm", image: pepperFarm },
   { title: "Private Beach, Koh Sdach", image: privateBeach },
   { title: "Koh Rong Boat Party", image: boatParty },
 ];
