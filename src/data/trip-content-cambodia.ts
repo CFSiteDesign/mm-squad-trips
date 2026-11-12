@@ -18,7 +18,6 @@
 import s21 from "@/assets/kh-hl-s21.jpg";
 import angkor from "@/assets/kh-hl-angkor.jpg";
 import floating from "@/assets/kh-hl-floating.jpg";
-import nestival from "@/assets/kh-hl-nestival.jpg";
 import pepperFarm from "@/assets/kh-hl-pepper-farm.jpg";
 import boatParty from "@/assets/kh-hl-boat-party.jpg";
 import privateBeach from "@/assets/kh-hl-private-beach.jpg";
@@ -46,7 +45,6 @@ export const KH_HIGHLIGHTS: Highlight[] = [
   { title: "S21 & Killing Fields", image: s21 },
   { title: "Angkor Wat Temple", image: angkor },
   { title: "Floating Village", image: floating },
-  { title: "Nestival Access", image: nestival },
   { title: "Kampot Pepper Farm", image: pepperFarm },
   { title: "Private Beach, Koh Sdach", image: privateBeach },
   { title: "Koh Rong Boat Party", image: boatParty },
