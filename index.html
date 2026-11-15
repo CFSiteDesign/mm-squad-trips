@@ -76,8 +76,12 @@
     <script>
       (function () {
         var CLARITY_ID = '%VITE_CLARITY_ID%';
+        // Never record staff screens full of guest details: admin, admin preview,
+        // student admin and the squad leader dashboards.
+        var PRIVATE_PAGE = /\/(admin|adminpreview|dashboard)\/?$/;
         function loadClarity() {
           if (window.__clarityLoaded) return;
+          if (PRIVATE_PAGE.test(window.location.pathname)) return;
           if (typeof Cookiebot === 'undefined' || !Cookiebot.consent || !Cookiebot.consent.statistics) return;
           window.__clarityLoaded = true;
           (function (c, l, a, r, i, t, y) {
