@@ -31,6 +31,7 @@ import { gtmPushEvent } from "@/utils/gtmTracker";
 import { BASE_PATH } from "@/lib/base-path";
 import { TravellerModeProvider } from "@/lib/traveller-mode";
 import { ModeGate } from "@/components/allin/ModeGate";
+import { StagingBadge } from "@/lib/staging";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -84,6 +85,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <StagingBadge />
       <BrowserRouter basename={BASE_PATH || "/"}>
         <TravellerModeProvider>
         <ConditionalNavbar />

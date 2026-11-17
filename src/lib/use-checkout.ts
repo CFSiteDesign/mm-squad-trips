@@ -14,6 +14,7 @@ import { modeParams } from "@/lib/traveller-mode";
 import { buildTripEcommerceItem, CONVERSION_TYPE_ALL_IN, markCheckoutEventOnce } from "@/utils/ecommerceDataLayer";
 import { readGaClientId, readUtm } from "@/lib/ga";
 import type { Trip, Departure } from "@/types/trip";
+import { IS_STAGING } from "@/lib/staging";
 
 export const MAX_SPOTS = 5;
 
@@ -150,6 +151,10 @@ export function useCheckout(trip: Trip, departure: Departure | null, opts: UseCh
   );
 
   async function submit() {
+    if (IS_STAGING) {
+      toast("Staging preview: booking is switched off here.");
+      return;
+    }
     if (!departure) return;
     if (!form.firstName || !form.lastName || !form.email || !form.phone) {
       toast.error("Fill in your name, email and phone");
