@@ -7,7 +7,7 @@ const words = (html: string) => html.replace(/<[^>]+>/g, " ").split(/\s+/).filte
 describe("prerendered ALL IN pages", () => {
   it("covers home and every trip", () => {
     expect(pages.map((p) => p.file).sort()).toEqual(
-      ["index.html", "cambodia/index.html", "indonesia/index.html", "indonesia-7/index.html", "laos/index.html", "thailand/index.html", "vietnam/index.html", "vietnam-7/index.html"].sort(),
+      ["index.html", "cambodia/index.html", "cambodia-7/index.html", "indonesia/index.html", "indonesia-7/index.html", "laos/index.html", "thailand/index.html", "vietnam/index.html", "vietnam-7/index.html"].sort(),
     );
   });
 

@@ -10,10 +10,10 @@ export const ALLIN_URL = `${SITE_ORIGIN}/all-in-trips`;
 export const SOCIAL_IMAGE =
   "https://storage.googleapis.com/gpt-engineer-file-uploads/tzR2PpIkesUVrzz7XGJoD3wIFsL2/social-images/social-1779854602939-mmsquad.webp";
 
-export type SeoSlug = "indonesia" | "indonesia-7" | "vietnam" | "vietnam-7" | "cambodia" | "thailand" | "laos";
+export type SeoSlug = "indonesia" | "indonesia-7" | "vietnam" | "vietnam-7" | "cambodia" | "cambodia-7" | "thailand" | "laos";
 
 /** The home page's trip cards, in order. Laos joined on 15 Oct 2026; Thailand is link-only again (19 Oct 2026). */
-export const LISTED_SLUGS = ["indonesia", "indonesia-7", "vietnam", "vietnam-7", "cambodia", "laos"] as const;
+export const LISTED_SLUGS = ["indonesia", "indonesia-7", "vietnam", "vietnam-7", "cambodia", "cambodia-7", "laos"] as const;
 
 export const pageUrl = (slug?: string) => (slug ? `${ALLIN_URL}/${slug}` : ALLIN_URL);
 export const priceOf = (slug: string) => TRIPS.find((t) => t.slug === slug)?.price ?? 0;
@@ -49,6 +49,10 @@ export const TRIP_SEO: Record<SeoSlug, TripSeo> = {
   cambodia: {
     title: "Cambodia 14-Day Backpacker Trip: Angkor to Koh Rong | Mad Monkey",
     description: `14 days from Phnom Penh to Koh Sdach: Angkor Wat, Koh Rong beach parties and island chill. ${sorted}, from $${priceOf("cambodia")}. ${deposit}`,
+  },
+  "cambodia-7": {
+    title: "Koh Rong and Koh Sdach 8-Day Island Trip | Mad Monkey ALL IN",
+    description: `8 days on Koh Rong and Koh Sdach: the Koh Rong Boat Party, Nestival, a rest day, then snorkelling, fishing and cocktails on Koh Sdach. ${sorted}, from $${priceOf("cambodia-7")}. ${deposit}`,
   },
   thailand: {
     title: "Thailand 11-Day Backpacker Trip: Bangkok, Chiang Mai, Pai | Mad Monkey",

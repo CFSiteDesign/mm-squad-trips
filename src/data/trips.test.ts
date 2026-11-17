@@ -9,6 +9,7 @@ import { I7_ITINERARY, I7_SNAPSHOT } from "@/data/trip-content-indonesia7";
 import { VN7_ITINERARY, VN7_SNAPSHOT } from "@/data/trip-content-vietnam7";
 import { ITINERARY as ID_ITINERARY, SNAPSHOT as ID_SNAPSHOT } from "@/data/trip-content-indonesia";
 import { KH_ITINERARY, KH_SNAPSHOT } from "@/data/trip-content-cambodia";
+import { K7_ITINERARY, K7_SNAPSHOT } from "@/data/trip-content-cambodia7";
 import { VN_ITINERARY, VN_SNAPSHOT } from "@/data/trip-content-vietnam";
 import { TH_ITINERARY, TH_SNAPSHOT } from "@/data/trip-content-thailand";
 import { LA_ITINERARY, LA_SNAPSHOT } from "@/data/trip-content-laos";
@@ -18,6 +19,7 @@ const CONTENT = {
   "vietnam-7": { itinerary: VN7_ITINERARY, snapshot: VN7_SNAPSHOT },
   indonesia: { itinerary: ID_ITINERARY, snapshot: ID_SNAPSHOT },
   cambodia: { itinerary: KH_ITINERARY, snapshot: KH_SNAPSHOT },
+  "cambodia-7": { itinerary: K7_ITINERARY, snapshot: K7_SNAPSHOT },
   vietnam: { itinerary: VN_ITINERARY, snapshot: VN_SNAPSHOT },
   thailand: { itinerary: TH_ITINERARY, snapshot: TH_SNAPSHOT },
   laos: { itinerary: LA_ITINERARY, snapshot: LA_SNAPSHOT },

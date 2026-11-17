@@ -64,6 +64,8 @@ export type Day = {
   transport?: string;
   activities?: string;
   meals?: string;
+  /** A photo for this day in the day-by-day. null = the brief wants one but it isn't supplied yet (placeholder tile). */
+  image?: string | null;
 };
 
 export const ITINERARY: Day[] = [

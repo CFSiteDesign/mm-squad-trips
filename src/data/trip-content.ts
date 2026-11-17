@@ -39,8 +39,11 @@ import {
   LA_ADD_ONS, LA_ADD_ONS_NOTE, LA_GOOD_TO_KNOW,
 } from "@/data/trip-content-laos";
 import khHero from "@/assets/kh-hero.png";
+import {
+  K7_HERO, K7_SNAPSHOT, K7_IS_THIS_FOR_ME, K7_HIGHLIGHTS, K7_INCLUDED, K7_NOT_INCLUDED, K7_ITINERARY,
+} from "@/data/trip-content-cambodia7";
 
-export const TRIP_CONTENT_SLUGS = ["indonesia", "indonesia-7", "vietnam", "vietnam-7", "cambodia", "thailand", "laos"] as const;
+export const TRIP_CONTENT_SLUGS = ["indonesia", "indonesia-7", "vietnam", "vietnam-7", "cambodia", "cambodia-7", "thailand", "laos"] as const;
 export type TripSlug = (typeof TRIP_CONTENT_SLUGS)[number];
 
 /** The small print under the free pre-night in "What's included" (Charlie, 24 Oct 2026). */
@@ -144,6 +147,20 @@ function fromTrip(trip: Trip, slug: TripSlug): TripContent {
 }
 
 export function getTripContent(trip: Trip, slug: TripSlug): TripContent {
+  if (slug === "cambodia-7") {
+    return {
+      hero: K7_HERO, // the brief's Koh Rong drone shot
+      snapshot: K7_SNAPSHOT,
+      isThisForMe: K7_IS_THIS_FOR_ME,
+      highlights: K7_HIGHLIGHTS,
+      included: K7_INCLUDED,
+      notIncluded: K7_NOT_INCLUDED,
+      itinerary: K7_ITINERARY,
+      reviews: [],
+      faqs: DEFAULT_FAQS,
+      pending: ["Day 4 and Day 5 photos", "Day 7 photo (stand-in)", "Property reviews"],
+    };
+  }
   if (slug === "cambodia") {
     return {
       hero: khPreviewHero,

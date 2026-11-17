@@ -85,6 +85,25 @@ const FALLBACKS: Record<string, Trip> = {
     defaultStrikethrough: 1050,
     departures: [],
   },
+  "cambodia-7": {
+    ...BASE,
+    testimonials: DUMMY_TESTIMONIALS,
+    id: "placeholder-cambodia-7",
+    code: "CAM7",
+    name: "ALL IN · Cambodia 7-Day Koh Rong + Koh Sdach",
+    slug: "cambodia-7",
+    startWeekday: 4, // Thursday: boat party Friday, Nestival Saturday
+    days: 8,
+    stops: [
+      { name: "Koh Rong", nights: 4, description: "", photos: [], activities: [] },
+      { name: "Koh Sdach", nights: 3, description: "", photos: [], activities: [] },
+    ],
+    activityCount: 12,
+    heroVideoUrl: "",
+    defaultPrice: 295,
+    defaultStrikethrough: 0,
+    departures: [],
+  },
   vietnam: {
     ...BASE,
     testimonials: DUMMY_TESTIMONIALS,

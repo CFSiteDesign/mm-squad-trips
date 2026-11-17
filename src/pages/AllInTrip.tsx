@@ -372,6 +372,18 @@ export default function AllInTrip({ slug: slugProp, unlisted = false }: { slug?:
             <div className="grid gap-4 md:grid-cols-2">
               {ITINERARY.map((d) => (
                 <article key={d.label} className="border-[3px] border-mm-black bg-mm-bone p-4 shadow-mm-sm">
+                  {/* Per-day photos (Cambodia 7-day brief). null = photo still to come. */}
+                  {d.image !== undefined && (
+                    <div className="-mx-4 -mt-4 mb-4 border-b-[3px] border-mm-black">
+                      {d.image
+                        ? <img src={d.image} alt={d.place} className="aspect-[16/10] w-full object-cover" loading="lazy" />
+                        : (
+                          <div className="flex aspect-[16/10] w-full items-center justify-center bg-mm-black/5">
+                            <span className="border-[2px] border-dashed border-mm-black/40 px-3 py-1.5 font-sticker text-[9px] tracking-[0.14em] text-mm-black/50">PHOTO COMING SOON</span>
+                          </div>
+                        )}
+                    </div>
+                  )}
                   <div className="mb-2 flex flex-wrap items-center gap-2">
                     <span className="border-[2px] border-mm-black bg-mm-pink px-2 py-1 font-sticker text-[9px] tracking-[0.12em] text-mm-black">{d.label}</span>
                     <span className="font-display text-base text-mm-black">{d.place}</span>

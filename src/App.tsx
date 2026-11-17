@@ -109,6 +109,7 @@ const App = () => (
           <Route path="/vietnam" element={<AllInTrip slug="vietnam" />} />
           <Route path="/vietnam-7" element={<AllInTrip slug="vietnam-7" />} />
           <Route path="/cambodia" element={<AllInTrip slug="cambodia" />} />
+          <Route path="/cambodia-7" element={<AllInTrip slug="cambodia-7" />} />
           <Route path="/indonesia" element={<AllInTrip slug="indonesia" />} />
           <Route path="/indonesia-7" element={<AllInTrip slug="indonesia-7" />} />
           {/* Unlisted again (Charlie, 19 Oct 2026): link-only, noindex, not on the home page. Still bookable. */}
