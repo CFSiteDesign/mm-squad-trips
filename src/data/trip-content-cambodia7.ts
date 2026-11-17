@@ -16,9 +16,6 @@ import kohRongDrone from "@/assets/kh7-koh-rong-drone.jpg";
 import boatParty from "@/assets/kh7-boat-party.jpg";
 import nestival from "@/assets/kh7-nestival.jpg";
 import kohSdach from "@/assets/kh7-koh-sdach.jpg";
-// The brief links a second Koh Sdach photo for Day 7 that wasn't supplied;
-// the Koh Sdach private beach shot from the 14-day page stands in.
-import kohSdachBeach from "@/assets/kh-hl-private-beach.jpg";
 import type { Day } from "@/data/trip-content-indonesia";
 import type { Highlight } from "@/data/trip-content";
 
@@ -81,7 +78,7 @@ export const K7_ITINERARY: Day[] = [
   { label: "Day 6", place: "Koh Sdach (Explore the island)", image: kohSdach,
     body: "A guided e-bike loop through the fishing village, then snorkel and kayak hire. Meet Up later, with a free cocktail.",
     activities: "Guided e-bike loop, snorkel and kayak hire, Meet Up and a free cocktail" },
-  { label: "Day 7", place: "Koh Sdach (Villa vibes)", image: kohSdachBeach,
+  { label: "Day 7", place: "Koh Sdach (Villa vibes)", image: kohSdach,
     body: "An optional beach clean-up, then the infinity pool and the wellness facilities. Finish with a make-your-own-pizza night in the wood-fired oven.",
     activities: "Optional beach clean-up, infinity pool, wellness facilities, make-your-own-pizza night" },
   { label: "Day 8", place: "Koh Sdach → Onwards",

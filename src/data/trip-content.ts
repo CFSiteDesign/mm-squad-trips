@@ -158,7 +158,7 @@ export function getTripContent(trip: Trip, slug: TripSlug): TripContent {
       itinerary: K7_ITINERARY,
       reviews: [],
       faqs: DEFAULT_FAQS,
-      pending: ["Day 4 and Day 5 photos", "Day 7 photo (stand-in)", "Property reviews"],
+      pending: ["Day 4 and Day 5 photos", "Property reviews"],
     };
   }
   if (slug === "cambodia") {
