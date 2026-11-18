@@ -9,9 +9,9 @@
 // (Charlie: leave those as placeholders for now); Day 8 is "Not needed", so it
 // has no photo slot at all.
 //
-// The brief calls it "7-Day" but heads the page "CAMBODIA · 8 DAYS" with
-// "8 days, 7 nights" under it, so the page says 8 days. Flagged with Charlie:
-// the other 7-day trips (Indonesia, Vietnam) say 7.
+// The brief calls it "7-Day" but heads the page "CAMBODIA · 8 DAYS". Charlie,
+// 18 Nov 2026: "make it say 7 days", like the Indonesia and Vietnam 7-day trips.
+// Still 7 nights: Day 8 is the check-out morning.
 import kohRongDrone from "@/assets/kh7-koh-rong-drone.jpg";
 import boatParty from "@/assets/kh7-boat-party.jpg";
 import nestival from "@/assets/kh7-nestival.jpg";
@@ -23,12 +23,12 @@ export const K7_HERO = kohRongDrone;
 
 export const K7_SNAPSHOT = {
   tripCode: "CAM07",
-  days: 8,
+  days: 7,
   from: "Koh Rong",
   to: "Koh Sdach",
   countries: "Cambodia",
   blurb:
-    "Eight days, two islands, one price. Land on Koh Rong for a weekend of boat parties, beach parties and sunsets you'll struggle to describe later. Then a full rest day, because you'll need it. From there it's a 45-minute speedboat to Koh Sdach, the Maldives of Cambodia, for snorkelling, fishing, cocktails and very little else.",
+    "Seven days, two islands, one price. Land on Koh Rong for a weekend of boat parties, beach parties and sunsets you'll struggle to describe later. Then a full rest day, because you'll need it. From there it's a 45-minute speedboat to Koh Sdach, the Maldives of Cambodia, for snorkelling, fishing, cocktails and very little else.",
 };
 
 // Not in the brief: the standard ALL IN rows every trip page carries.
@@ -42,7 +42,7 @@ export const K7_IS_THIS_FOR_ME = [
 export const K7_HIGHLIGHTS: Highlight[] = [];
 
 export const K7_INCLUDED = [
-  "8 days, 7 nights on 2 islands: Koh Rong and Koh Sdach",
+  "7 days on 2 islands: Koh Rong and Koh Sdach",
   "6 breakfasts",
   "The 45-minute speedboat from Koh Rong to Koh Sdach",
   "Koh Rong Boat Party and Nestival",

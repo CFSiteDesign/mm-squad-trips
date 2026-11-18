@@ -93,7 +93,7 @@ const FALLBACKS: Record<string, Trip> = {
     name: "ALL IN · Cambodia 7-Day Koh Rong + Koh Sdach",
     slug: "cambodia-7",
     startWeekday: 4, // Thursday: boat party Friday, Nestival Saturday
-    days: 8,
+    days: 7,
     stops: [
       { name: "Koh Rong", nights: 4, description: "", photos: [], activities: [] },
       { name: "Koh Sdach", nights: 3, description: "", photos: [], activities: [] },
