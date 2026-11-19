@@ -31,13 +31,9 @@ const CLIPS: Clip[] = [
     href: "https://www.tiktok.com/@clairekellyh/video/7637195070298410247" },
 ];
 
-/** Ceiling on the number shown in the "spots left" badge. Client's call: the
- *  badge reads at most this, so an untouched departure still says "ONLY 8
- *  SPOTS LEFT"; once real availability drops below it the real number shows.
- *  It only ever understates what's left, never oversells. */
-const SPOTS_FLOOR = 8;
-
-/** Live "next departure" badge per trip, read from the real departures table. */
+/** Live "next departure" badge per trip, read from the real departures table.
+ *  No spots count (19 Nov 2026): the old "ONLY 8 SPOTS LEFT" was capped at 8,
+ *  so every card said it. */
 function RouteCard({ slug, solo }: { slug: string; solo: boolean }) {
   const meta = TRIPS.find((t) => t.slug === slug);
   const { data: trip } = useQuery({ queryKey: ["trip", slug], queryFn: () => fetchTrip(slug), retry: false });
@@ -45,17 +41,13 @@ function RouteCard({ slug, solo }: { slug: string; solo: boolean }) {
   // "From" is the cheapest bookable departure, same rule as the trip page.
   const priced = (trip?.departures ?? []).filter((d) => d.bookable).map((d) => d.price).filter((n) => n > 0);
   const price = priced.length ? Math.min(...priced) : trip?.defaultPrice ?? meta?.price ?? 0;
-  const spotsShown = next ? Math.min(SPOTS_FLOOR, next.spotsRemaining) : 0;
-  // Spots only matter to a crew; an independent booking runs regardless.
-  const urgent = !solo && next && next.spotsRemaining <= SPOTS_FLOOR;
 
   return (
     <article className="flex flex-col border-[3px] border-mm-black bg-mm-bone shadow-mm-sm transition-transform duration-200 hover:-translate-y-1.5">
       <div className="flex-1 p-4">
         {next && (
-          <span className={`inline-block border-[2px] border-mm-black px-2 py-1 font-sans text-[11px] font-bold tracking-[0.02em] text-mm-black ${urgent ? "bg-mm-orange" : "bg-mm-yellow"}`}>
-            {urgent ? "🔥 " : ""}NEXT TRIP: {new Date(next.date + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" }).toUpperCase()}
-            {solo ? "" : ` (ONLY ${spotsShown} SPOTS LEFT)`}
+          <span className="inline-block border-[2px] border-mm-black bg-mm-yellow px-2 py-1 font-sans text-[11px] font-bold tracking-[0.02em] text-mm-black">
+            NEXT TRIP: {new Date(next.date + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" }).toUpperCase()}
           </span>
         )}
         <h3 className="mt-3 font-display text-2xl leading-none text-mm-black">{meta?.name?.toUpperCase() ?? slug.toUpperCase()}</h3>
