@@ -31,33 +31,33 @@ const deposit = "A $99 deposit holds your spot.";
 
 export const TRIP_SEO: Record<SeoSlug, TripSeo> = {
   indonesia: {
-    title: "Indonesia 12-Day Backpacker Trip: Bali to Lombok | Mad Monkey",
+    title: "Indonesia Ultimate: 12-Day Backpacker Trip, Bali to Lombok | Mad Monkey",
     description: `12 days from Uluwatu to Kuta Lombok: Mount Batur sunrise, Nusa Penida snorkelling, Gili T and Lombok surf camp. ${sorted}, from $${priceOf("indonesia")}. ${deposit}`,
   },
   "indonesia-7": {
-    title: "Gili T and Lombok 7-Day Backpacker Trip | Mad Monkey ALL IN",
+    title: "Indonesia Essentials: 7-Day Gili T and Lombok Trip | Mad Monkey ALL IN",
     description: `7 days on Gili Trawangan and Lombok: island bike tours, boat parties, snorkelling and surf camp. ${sorted}, from $${priceOf("indonesia-7")}. ${deposit}`,
   },
   vietnam: {
-    title: "Vietnam 14-Day Backpacker Trip: Hanoi to Hoi An | Mad Monkey",
+    title: "Vietnam Ultimate: 14-Day Backpacker Trip, Hanoi to Hoi An | Mad Monkey",
     description: `14 days from Hanoi to Hoi An: a Ha Long Bay cruise, Ninh Binh, the Ha Giang Loop and Hoi An nights. ${sorted}, from $${priceOf("vietnam")}. ${deposit}`,
   },
   "vietnam-7": {
-    title: "Ha Giang Loop 7-Day Backpacker Trip from Hanoi | Mad Monkey",
+    title: "Vietnam Essentials: 7-Day Ha Giang Loop Trip from Hanoi | Mad Monkey",
     description: `7 days from Hanoi to the Ha Giang Loop: street food, a 4-day mountain ride and village homestays. ${sorted}, from $${priceOf("vietnam-7")}. ${deposit}`,
   },
   cambodia: {
-    title: "Cambodia 14-Day Backpacker Trip: Angkor to Koh Rong | Mad Monkey",
+    title: "Cambodia Ultimate: 14-Day Backpacker Trip, Angkor to Koh Rong | Mad Monkey",
     description: `14 days from Phnom Penh to Koh Sdach: Angkor Wat, Koh Rong beach parties and island chill. ${sorted}, from $${priceOf("cambodia")}. ${deposit}`,
   },
   thailand: {
-    title: "Thailand 11-Day Backpacker Trip: Bangkok, Chiang Mai, Pai | Mad Monkey",
+    title: "Thailand Ultimate: 11-Day Trip, Bangkok, Chiang Mai, Pai | Mad Monkey",
     description: `11 days from Bangkok to Chiang Mai and Pai. ${sorted}, from $${priceOf("thailand")}. ${deposit}`,
     // Link-only (App.tsx: unlisted, 19 Oct 2026). Kept out of search, the sitemap and llms.txt.
     noindex: true,
   },
   laos: {
-    title: "Laos Ultimate 10-Day Backpacker Trip: Luang Prabang to Vang Vieng | Mad Monkey",
+    title: "Laos Ultimate: 10-Day Backpacker Trip, Luang Prabang to Vang Vieng | Mad Monkey",
     description: `10 days from Luang Prabang to Nong Khiaw, Muang Ngoi and Vang Vieng. ${sorted}, from $${priceOf("laos")}. ${deposit}`,
   },
 };

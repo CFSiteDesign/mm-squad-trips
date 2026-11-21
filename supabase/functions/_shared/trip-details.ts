@@ -99,7 +99,7 @@ const TRIP_DETAILS: Record<string, TripFinalDetails> = {
     // No verified Thailand chat yet; the old value was the Phnom Penh group.
     whatsappUrl: "",
     finalDetailsHtml:
-      block("Final details: Thailand", [
+      block("Final details: Thailand Ultimate", [
         "<strong>Meeting point:</strong> Mad Monkey Bangkok. Check-in from 2pm on departure day (a Tuesday).",
         "<strong>Day-1 kick-off:</strong> Beats + Bingo at 8pm at the hostel. Don't miss it, that's where you meet your crew.",
         "<strong>Heading north:</strong> Day 3 is the overnight bus to Chiang Mai (departs 5pm), then minivans to Pai and back. 762 bends on the Pai road, so pack motion sickness tablets if that's you.",
@@ -111,7 +111,7 @@ const TRIP_DETAILS: Record<string, TripFinalDetails> = {
   vietnam: {
     whatsappUrl: VIETNAM_CHATS[0].url,
     finalDetailsHtml:
-      block("Final details: Vietnam", [
+      block("Final details: Vietnam Ultimate", [
         "<strong>Meeting point:</strong> Mad Monkey Hanoi (Old Quarter). Free pre-trip night included: arrive the day before your departure date.",
         "<strong>Day 1:</strong> settle into Hanoi, then a welcome drink at the hostel to meet your crew, with optional free karaoke and a pub crawl.",
         "<strong>What to pack:</strong> light layers + warm jacket for Ha Giang (cold at altitude), swimwear for Lan Ha Bay, sturdy shoes, rain shell, reef-safe sunscreen.",
@@ -123,7 +123,7 @@ const TRIP_DETAILS: Record<string, TripFinalDetails> = {
   indonesia: {
     whatsappUrl: INDONESIA_CHATS[0].url,
     finalDetailsHtml:
-      block("Final details: Indonesia", [
+      block("Final details: Indonesia Ultimate", [
         "<strong>Meeting point:</strong> Mad Monkey Uluwatu. Free pre-trip night included: arrive the day before your departure date.",
         "<strong>Day 1:</strong> a Welcome Sunset session at Panorama Point with your crew, and a welcome drink to kick things off.",
         "<strong>What to pack:</strong> swimwear x3, reef-safe sunscreen, light layers, sandals + closed shoes for hikes, dry bag for boats.",
@@ -135,7 +135,7 @@ const TRIP_DETAILS: Record<string, TripFinalDetails> = {
   cambodia: {
     whatsappUrl: CAMBODIA_CHATS[0].url,
     finalDetailsHtml:
-      block("Final details: Cambodia", [
+      block("Final details: Cambodia Ultimate", [
         "<strong>Meeting point:</strong> Mad Monkey Phnom Penh. Free pre-trip night included: arrive the day before your departure date.",
         "<strong>Day 1:</strong> a Welcome Khmer Family Dinner with your crew, 6:30pm to 8pm.",
         "<strong>What to pack:</strong> light cotton clothes, modest cover-up for temples (shoulders + knees), trainers for Angkor, swimwear for Koh Rong and Koh Sdach, mozzy spray.",
@@ -147,7 +147,7 @@ const TRIP_DETAILS: Record<string, TripFinalDetails> = {
   "indonesia-7": {
     whatsappUrl: INDONESIA7_CHATS[0].url,
     finalDetailsHtml:
-      block("Final details: Indonesia (7-day)", [
+      block("Final details: Indonesia Essentials", [
         "<strong>Meeting point:</strong> Mad Monkey Gili Trawangan. Free pre-trip night included: arrive the day before your departure date.",
         "<strong>Welcome dinner:</strong> traditional Mexican family dinner at the hostel on arrival night.",
         "<strong>Day 1:</strong> settle into Gili T, with the beach, the pool and meeting the crew before dinner.",
@@ -161,7 +161,7 @@ const TRIP_DETAILS: Record<string, TripFinalDetails> = {
   "vietnam-7": {
     whatsappUrl: VIETNAM7_CHATS[0].url,
     finalDetailsHtml:
-      block("Final details: Vietnam (7-day)", [
+      block("Final details: Vietnam Essentials", [
         "<strong>Meeting point:</strong> Mad Monkey Hanoi (Old Quarter). Free pre-trip night included: arrive the day before your departure date.",
         "<strong>Welcome drinks:</strong> at the hostel bar on arrival night.",
         "<strong>Day 1:</strong> settle into Hanoi, then a welcome drink at the hostel to meet your crew, with optional free karaoke and a pub crawl.",

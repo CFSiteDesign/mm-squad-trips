@@ -19,15 +19,16 @@ export type TripCard = {
   hiddenOn?: Array<"default" | "student">;
 };
 
+// Names (Charlie, 21 Nov 2026): "<Country> Ultimate" for the longer trips, "<Country> Essentials" for the shorter ones.
 export const TRIPS: TripCard[] = [
-  { slug: "indonesia-7", country: "Indonesia", name: "Indonesia 7-Day Gili T + Lombok", sub: "Short + spicy",       route: "Gili T → Kuta Lombok",                                    days: 7,  nights: 7,  price: 450, accent: "cyan"   },
-  { slug: "vietnam-7",   country: "Vietnam",   name: "Vietnam 7-Day Adventure",         sub: "Short + spicy",       route: "Hanoi → Ha Giang Loop",                                   days: 7,  nights: 7,  price: 310, accent: "cyan"   },
-  { slug: "indonesia",   country: "Indonesia", name: "Indonesia",  sub: "Island hopping",  route: "Bali → Gili T → Lombok → Uluwatu",                days: 12, nights: 12, price: 700, accent: "orange" },
-  { slug: "cambodia",    country: "Cambodia",  name: "Cambodia",   sub: "Coast to coast",  route: "Phnom Penh → Siem Reap → Kampot → Koh Rong → Koh Sdach", days: 14, nights: 14, price: 650, accent: "lime", comingSoonOn: ["student"]   },
-  { slug: "vietnam",     country: "Vietnam",   name: "Vietnam",    sub: "Northern + Central Vietnam",      route: "Hanoi → Ha Long Bay → Ha Giang Loop → Danang → Hoi An",    days: 14, nights: 13, price: 850, accent: "pink"   },
+  { slug: "indonesia-7", country: "Indonesia", name: "Indonesia Essentials", sub: "Short + spicy",       route: "Gili T → Kuta Lombok",                                    days: 7,  nights: 7,  price: 450, accent: "cyan"   },
+  { slug: "vietnam-7",   country: "Vietnam",   name: "Vietnam Essentials",             sub: "Short + spicy",       route: "Hanoi → Ha Giang Loop",                                   days: 7,  nights: 7,  price: 310, accent: "cyan"   },
+  { slug: "indonesia",   country: "Indonesia", name: "Indonesia Ultimate",  sub: "Island hopping",  route: "Bali → Gili T → Lombok → Uluwatu",                days: 12, nights: 12, price: 700, accent: "orange" },
+  { slug: "cambodia",    country: "Cambodia",  name: "Cambodia Ultimate",   sub: "Coast to coast",  route: "Phnom Penh → Siem Reap → Kampot → Koh Rong → Koh Sdach", days: 14, nights: 14, price: 650, accent: "lime", comingSoonOn: ["student"]   },
+  { slug: "vietnam",     country: "Vietnam",   name: "Vietnam Ultimate",    sub: "Northern + Central Vietnam",      route: "Hanoi → Ha Long Bay → Ha Giang Loop → Danang → Hoi An",    days: 14, nights: 13, price: 850, accent: "pink"   },
   // Laos published 15 Oct 2026. Thailand went public the same day and back to link-only on 19 Oct
   // (Charlie): reachable and bookable at /thailand, never on the home page, student index or cross-sell.
-  { slug: "thailand",    country: "Thailand",  name: "Thailand",   sub: "Bangkok to the mountains", route: "Bangkok → Chiang Mai → Pai → Chiang Mai",           days: 11, nights: 10, price: 340, accent: "orange", hiddenOn: ["default", "student"] },
+  { slug: "thailand",    country: "Thailand",  name: "Thailand Ultimate",   sub: "Bangkok to the mountains", route: "Bangkok → Chiang Mai → Pai → Chiang Mai",           days: 11, nights: 10, price: 340, accent: "orange", hiddenOn: ["default", "student"] },
   { slug: "laos",        country: "Laos",      name: "Laos Ultimate", sub: "Northern Laos", route: "Luang Prabang → Nong Khiaw → Muang Ngoi → Vang Vieng",     days: 10, nights: 9,  price: 400, accent: "cyan", comingSoonOn: ["student"] },
 ];
 
