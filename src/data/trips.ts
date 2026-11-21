@@ -25,7 +25,7 @@ export const TRIPS: TripCard[] = [
   { slug: "indonesia",   country: "Indonesia", name: "Indonesia",  sub: "Island hopping",  route: "Bali → Gili T → Lombok → Uluwatu",                days: 12, nights: 12, price: 700, accent: "orange" },
   { slug: "cambodia",    country: "Cambodia",  name: "Cambodia",   sub: "Coast to coast",  route: "Phnom Penh → Siem Reap → Kampot → Koh Rong → Koh Sdach", days: 14, nights: 14, price: 650, accent: "lime", comingSoonOn: ["student"]   },
   // Brief 17 Nov 2026, staging until the Koh Rong boat party is ready. Not on the student site.
-  { slug: "cambodia-7",  country: "Cambodia",  name: "Cambodia 7-Day Koh Rong + Koh Sdach", sub: "Short + spicy", route: "Koh Rong → Koh Sdach",                       days: 7,  nights: 7,  price: 295, accent: "lime", hiddenOn: ["student"] },
+  { slug: "cambodia-7",  country: "Cambodia",  name: "Cambodia Essentials", sub: "Short + spicy", route: "Koh Rong → Koh Sdach",                       days: 7,  nights: 7,  price: 295, accent: "lime", hiddenOn: ["student"] },
   { slug: "vietnam",     country: "Vietnam",   name: "Vietnam",    sub: "Northern + Central Vietnam",      route: "Hanoi → Ha Long Bay → Ha Giang Loop → Danang → Hoi An",    days: 14, nights: 13, price: 850, accent: "pink"   },
   // Laos published 15 Oct 2026. Thailand went public the same day and back to link-only on 19 Oct
   // (Charlie): reachable and bookable at /thailand, never on the home page, student index or cross-sell.

@@ -90,7 +90,7 @@ const FALLBACKS: Record<string, Trip> = {
     testimonials: DUMMY_TESTIMONIALS,
     id: "placeholder-cambodia-7",
     code: "CAM7",
-    name: "ALL IN · Cambodia 7-Day Koh Rong + Koh Sdach",
+    name: "Cambodia Essentials",
     slug: "cambodia-7",
     startWeekday: 4, // Thursday: boat party Friday, Nestival Saturday
     days: 7,

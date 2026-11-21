@@ -51,7 +51,7 @@ export const TRIP_SEO: Record<SeoSlug, TripSeo> = {
     description: `14 days from Phnom Penh to Koh Sdach: Angkor Wat, Koh Rong beach parties and island chill. ${sorted}, from $${priceOf("cambodia")}. ${deposit}`,
   },
   "cambodia-7": {
-    title: "Koh Rong and Koh Sdach 7-Day Island Trip | Mad Monkey ALL IN",
+    title: "Cambodia Essentials: 7-Day Koh Rong and Koh Sdach Trip | Mad Monkey ALL IN",
     description: `7 days on Koh Rong and Koh Sdach: the Koh Rong Boat Party, Nestival, a rest day, then snorkelling, fishing and cocktails on Koh Sdach. ${sorted}, from $${priceOf("cambodia-7")}. ${deposit}`,
   },
   thailand: {
