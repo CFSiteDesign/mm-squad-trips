@@ -10,8 +10,8 @@ import { FESTIVAL_BANNER, PACKAGE, PACKAGE_PATH, PACKAGE_SLUG } from "@/data/koh
 
 export function PostFestivalSection() {
   const { data: trip } = useQuery({ queryKey: ["trip", PACKAGE_SLUG], queryFn: () => fetchTrip(PACKAGE_SLUG), retry: false });
-  const open = trip?.departures?.find((d) => d.bookable && d.spotsRemaining > 0);
-  // Once it's gone (sold out or past), the card leaves the page.
+  const open = trip?.departures?.find((d) => d.bookable);
+  // Once it's gone (closed or past), the card leaves the page.
   if (trip && !open) return null;
   const price = open?.price ?? trip?.defaultPrice ?? PACKAGE.price;
 

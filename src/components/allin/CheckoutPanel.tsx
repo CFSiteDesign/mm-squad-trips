@@ -58,24 +58,17 @@ export function CheckoutPanel({ trip, departure, checkout, independent = false }
         <p className="mt-1 text-[12px] leading-snug text-mm-black/60">Independent bookings are for one traveller. Bringing mates? Switch to With a crew at the top of the page.</p>
       )}
       <div className="mt-2 flex flex-wrap gap-2">
-        {Array.from({ length: maxSpots }, (_, i) => i + 1).map((n) => {
-          const available = n <= departure.spotsRemaining;
-          return (
-            <button
-              key={n}
-              onClick={() => available && setSpots(n)}
-              disabled={!available}
-              title={available ? undefined : `Only ${departure.spotsRemaining} left on this date`}
-              className={`h-10 w-10 border-[3px] border-mm-black font-display text-lg transition-colors ${
-                spots === n ? "bg-mm-pink text-mm-bone"
-                  : available ? "bg-mm-bone text-mm-black hover:bg-mm-yellow"
-                  : "cursor-not-allowed bg-mm-bone text-mm-black/25"
-              }`}
-            >
-              {n}
-            </button>
-          );
-        })}
+        {Array.from({ length: maxSpots }, (_, i) => i + 1).map((n) => (
+          <button
+            key={n}
+            onClick={() => setSpots(n)}
+            className={`h-10 w-10 border-[3px] border-mm-black font-display text-lg transition-colors ${
+              spots === n ? "bg-mm-pink text-mm-bone" : "bg-mm-bone text-mm-black hover:bg-mm-yellow"
+            }`}
+          >
+            {n}
+          </button>
+        ))}
         <span className="self-center pl-2 text-sm text-mm-black/70">
           departing <strong className="text-mm-black">{dayLabel(departure.date)}</strong>
         </span>

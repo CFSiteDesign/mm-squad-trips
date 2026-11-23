@@ -1,6 +1,6 @@
 // Server-side price resolution + Stripe Checkout session creation.
 // - Reads Trip / Departure / Pricing Calendar / Discount from Postgres
-// - Re-checks Bookable? and Spots Remaining >= groupSize
+// - Re-checks Bookable? (no capacity check: departures take everyone, Charlie 23 Nov 2026)
 // - Resolves price: month override → trip default
 // - Applies validated discount code (full price only — not deposits)
 // - 7-day rule: $99/spot deposit if departure ≥7 days out, else pay in full
@@ -145,14 +145,12 @@ Deno.serve(async (req) => {
       if (data.trip_id !== trip.id) return err("Departure does not belong to this trip");
       dep = data;
       depDate = data.departure_date as string;
-      const spotsRemaining = data.spots_remaining ?? data.total_spots ?? 0;
       if (data.bookable !== true) return err("This departure is no longer bookable");
       // Backstop: never sell a spot on a cancelled departure, even if bookable
       // was left true or the guest is on a stale page.
       if (data.status === "cancelled") return err("This departure has been cancelled — please pick another date.");
-      if (spotsRemaining < groupSize) {
-        return err(`Only ${spotsRemaining} spot${spotsRemaining === 1 ? "" : "s"} left`);
-      }
+      // No capacity check (Charlie, 23 Nov 2026): departures take everyone who books. spots_remaining still counts
+      // bookings for admin; only the Black Friday cap below can turn anyone away.
     } else {
       // Custom date: must be a real ISO date on this trip's start weekday.
       const iso = String(customDate);
@@ -185,10 +183,6 @@ Deno.serve(async (req) => {
       if (existing) {
         if (existing.status === "cancelled" || existing.bookable !== true) {
           return err("That date is no longer available — please pick another.");
-        }
-        const spotsRemaining = existing.spots_remaining ?? existing.total_spots ?? 0;
-        if (spotsRemaining < groupSize) {
-          return err(`Only ${spotsRemaining} spot${spotsRemaining === 1 ? "" : "s"} left on that date`);
         }
         dep = existing;
       }

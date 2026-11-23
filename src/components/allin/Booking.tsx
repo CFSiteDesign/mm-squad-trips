@@ -96,7 +96,8 @@ export function Booking({ trip }: { trip: Trip }) {
   const toAdvisor = () => advisorRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
 
   const DateRow = ({ d }: { d: Departure }) => {
-    const soldOut = !d.bookable || d.spotsRemaining <= 0;
+    // No capacity (Charlie, 23 Nov 2026): a date only closes when admin (or the Black Friday cap) turns bookable off.
+    const soldOut = !d.bookable;
     const open = chosen?.id === d.id;
     const pay = paymentLine(d.date, 1, d.price, trip.slug);
     return (
@@ -113,7 +114,7 @@ export function Booking({ trip }: { trip: Trip }) {
           <div className="flex min-w-[128px] items-center gap-1.5 text-sm">
             {soldOut
               ? <><AlertCircle className="h-4 w-4 text-mm-orange" /> <span className="text-mm-black/70">Sold out</span></>
-              : <><Check className="h-4 w-4 text-mm-black" strokeWidth={3} /> <span className="text-mm-black/80">{solo ? "Guaranteed to run" : `${d.spotsRemaining} available${d.isPrivate ? " · your squad's date" : ""}`}</span></>}
+              : <><Check className="h-4 w-4 text-mm-black" strokeWidth={3} /> <span className="text-mm-black/80">{solo ? "Guaranteed to run" : `Available${d.isPrivate ? " · your squad's date" : ""}`}</span></>}
           </div>
           <div className="ml-auto flex items-center gap-4">
             <div className="text-right">
@@ -169,7 +170,7 @@ export function Booking({ trip }: { trip: Trip }) {
                 <p className="font-sticker text-[10px] tracking-[0.14em] text-mm-black">★ NEXT DEPARTURE</p>
                 <p className="mt-1 font-display text-3xl leading-none text-mm-black">{dayLabel(next.date)}</p>
                 <p className="mt-1.5 text-sm text-mm-black/75">
-                  Back {dayLabel(tripEndDate(next.date, trip))} · {tripNights(trip)} nights · {solo ? "independent solo travel" : `${next.spotsRemaining} spot${next.spotsRemaining === 1 ? "" : "s"} left`}
+                  Back {dayLabel(tripEndDate(next.date, trip))} · {tripNights(trip)} nights{solo ? " · independent solo travel" : ""}
                 </p>
               </div>
               <div className="ml-auto flex items-center gap-4">

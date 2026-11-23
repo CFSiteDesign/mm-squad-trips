@@ -67,11 +67,6 @@ export function useCheckout(trip: Trip, departure: Departure | null, opts: UseCh
   const setField = <K extends keyof CheckoutFields>(k: K, v: CheckoutFields[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
 
-  // Spots can't exceed what the chosen departure has left.
-  useEffect(() => {
-    if (departure && spots > departure.spotsRemaining) setSpots(Math.max(1, departure.spotsRemaining));
-  }, [departure, spots, setSpots]);
-
   const subtotal = (departure?.price ?? trip.defaultPrice) * spots;
 
   // Squad code: must resolve to a squad leader. A discount code typed here is

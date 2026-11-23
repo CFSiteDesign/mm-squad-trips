@@ -125,11 +125,11 @@ function CheckoutBody({ trip, link }: { trip: Trip; link: LinkParams }) {
   // they arrived with comes along, and so does the advisor's token.
   const [pickedId, setPickedId] = useState<string | null>(null);
   const openDates = useMemo(
-    () => trip.departures.filter((d) => !d.isPrivate && d.bookable && d.spotsRemaining > 0),
+    () => trip.departures.filter((d) => !d.isPrivate && d.bookable),
     [trip.departures],
   );
   const linked = trip.departures.find((d) => d.date === link.date);
-  const linkedOpen = linked && linked.bookable && linked.spotsRemaining > 0 && !linked.isPrivate ? linked : null;
+  const linkedOpen = linked && linked.bookable && !linked.isPrivate ? linked : null;
   const chosen: Departure | null = pickedId ? openDates.find((d) => d.id === pickedId) ?? null : linkedOpen;
 
   const checkout = useCheckout(trip, chosen, {
@@ -172,7 +172,7 @@ function CheckoutBody({ trip, link }: { trip: Trip; link: LinkParams }) {
               <p className="font-display text-2xl leading-none text-mm-black">{dayLabel(tripEndDate(chosen.date, trip))}</p>
             </div>
             <div className="flex items-center gap-1.5 text-sm text-mm-black/80">
-              <Check className="h-4 w-4 text-mm-black" strokeWidth={3} /> {chosen.spotsRemaining} available
+              <Check className="h-4 w-4 text-mm-black" strokeWidth={3} /> Available
             </div>
             <div className="ml-auto text-right">
               {chosen.strikethrough && chosen.strikethrough > chosen.price && (
@@ -220,7 +220,7 @@ function CheckoutBody({ trip, link }: { trip: Trip; link: LinkParams }) {
                 className="flex w-full flex-wrap items-center gap-x-6 gap-y-1 border-[3px] border-mm-black bg-mm-bone px-4 py-3 text-left transition-colors hover:bg-mm-yellow"
               >
                 <span className="font-display text-lg text-mm-black">{dayLabel(d.date)} → {dayLabel(tripEndDate(d.date, trip))}</span>
-                <span className="text-sm text-mm-black/70">{d.spotsRemaining} available</span>
+                <span className="text-sm text-mm-black/70">Available</span>
                 <span className="ml-auto font-display text-lg text-mm-black">{formatPrice(d.price)}<span className="text-xs text-mm-black/60">/person</span></span>
               </button>
             ))}

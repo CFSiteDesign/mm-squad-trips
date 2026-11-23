@@ -44,13 +44,9 @@ export interface SpotBadge {
   flame?: boolean;
 }
 
-export function spotBadge(n: number): SpotBadge {
-  if (n <= 0) return { label: "Sold out · Join waitlist", tone: "grey" };
-  if (n <= 2) return { label: `Last ${n} spot${n === 1 ? "" : "s"}`, tone: "red", flame: true };
-  if (n <= 5) return { label: `Almost full — only ${n} left`, tone: "orange" };
-  if (n <= 10) return { label: `Filling — ${n} spots left`, tone: "amber" };
-  if (n <= 15) return { label: `${n} spots left`, tone: "green" };
-  return { label: `Open · ${n} spots`, tone: "green" };
+/** No spots counts on any page (Charlie, 23 Nov 2026): every open date just reads "Open for booking". */
+export function spotBadge(): SpotBadge {
+  return { label: "Open for booking", tone: "green" };
 }
 
 export function visibleDepartures(deps: Departure[], requestedSpots: number, slug?: string): Departure[] {
@@ -58,7 +54,6 @@ export function visibleDepartures(deps: Departure[], requestedSpots: number, slu
   return deps.filter(
     (d) =>
       d.bookable &&
-      d.spotsRemaining >= requestedSpots &&
       (d.forceBookable === true ? daysUntil(d.date) >= 0 : daysUntil(d.date) >= cutoff),
   );
 }

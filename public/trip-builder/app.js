@@ -249,6 +249,7 @@
      ============================================================ */
   var HERO_ROUTES = [['bangkok', 'chiang-mai', 'luang-prabang', 'vang-vieng', 'hanoi', 'hoi-an', 'phnom-penh', 'koh-rong'], ['uluwatu', 'nusa-lembongan', 'gili-trawangan', 'kuta-lombok'], ['manila', 'panglao', 'siargao']];
   function spotsPill(t) {
+    return ''; // No spots counts (Charlie, 23 Nov 2026): people just book.
     var s = MM.LIVE && MM.LIVE.spots && MM.LIVE.spots[t.id]; if (!s || s.left == null) return '';
     return '<div class="tcard__spots pill pill--sm ' + (s.left <= 5 ? 'pill--pink' : 'pill--lime') + '">' + (s.left === 0 ? 'Full: join the waitlist' : s.left + (s.left === 1 ? ' spot left' : ' spots left')) + '</div>';
   }

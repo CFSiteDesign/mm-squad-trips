@@ -37,7 +37,7 @@ const CLIPS: Clip[] = [
 function RouteCard({ slug, solo }: { slug: string; solo: boolean }) {
   const meta = TRIPS.find((t) => t.slug === slug);
   const { data: trip } = useQuery({ queryKey: ["trip", slug], queryFn: () => fetchTrip(slug), retry: false });
-  const next = trip?.departures?.find((d) => d.bookable && d.spotsRemaining > 0);
+  const next = trip?.departures?.find((d) => d.bookable);
   // "From" is the cheapest bookable departure, same rule as the trip page.
   const priced = (trip?.departures ?? []).filter((d) => d.bookable).map((d) => d.price).filter((n) => n > 0);
   const price = priced.length ? Math.min(...priced) : trip?.defaultPrice ?? meta?.price ?? 0;

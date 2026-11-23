@@ -31,7 +31,7 @@ function H({ children }: { children: React.ReactNode }) {
 export default function KohRongPackage() {
   usePageTitle(`${PACKAGE.name} | Mad Monkey`);
   const { data: trip, isLoading } = useQuery({ queryKey: ["trip", PACKAGE_SLUG], queryFn: () => fetchTrip(PACKAGE_SLUG), retry: false });
-  const open = trip?.departures?.find((d) => d.bookable && d.spotsRemaining > 0 && !d.isPrivate) ?? null;
+  const open = trip?.departures?.find((d) => d.bookable && !d.isPrivate) ?? null;
   const price = open?.price ?? trip?.defaultPrice ?? PACKAGE.price;
 
   useEffect(() => {

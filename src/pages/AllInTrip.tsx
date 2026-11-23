@@ -122,7 +122,7 @@ export default function AllInTrip({ slug: slugProp, unlisted = false }: { slug?:
   const departures = useMemo(() => trip?.departures ?? [], [trip]);
   // "From" must always be the cheapest bookable departure, not whichever one
   // happens to sort first — they were showing $700 against a $650 date.
-  const bookable = departures.filter((d) => d.bookable && d.spotsRemaining > 0);
+  const bookable = departures.filter((d) => d.bookable);
   const priced = (bookable.length ? bookable : departures).map((d) => d.price).filter((n) => n > 0);
   const price = priced.length ? Math.min(...priced) : trip?.defaultPrice ?? meta?.price ?? 0;
   // Pair the strike price with the same departure the "from" price came from,

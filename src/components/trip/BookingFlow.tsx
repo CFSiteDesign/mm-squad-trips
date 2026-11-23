@@ -607,7 +607,7 @@ function FormStep({ n, label, children }: { n: number; label: string; children: 
 function DepartureCard({
   dep, slug, groupSize, selected, onSelect,
 }: { dep: Departure; slug: string; groupSize: number; selected: boolean; onSelect: () => void }) {
-  const badge = spotBadge(dep.spotsRemaining);
+  const badge = spotBadge();
   const pay = paymentLine(dep.date, groupSize, dep.price, slug);
   return (
     <button

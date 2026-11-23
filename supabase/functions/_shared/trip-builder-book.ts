@@ -100,8 +100,6 @@ export async function syncAllInBookings(sb: SupabaseClient, row: Row): Promise<A
       const { data: dep } = await sb.from("departures").select("id,departure_code,spots_remaining,total_spots,status").eq("trip_id", trip.id).eq("departure_date", s.from).maybeSingle();
       if (!dep) { say(`There is no departure on ${day(s.from)}.`); continue; }
       if (dep.status === "cancelled") { say(`The ${day(s.from)} departure is cancelled.`); continue; }
-      const spots = dep.spots_remaining ?? dep.total_spots ?? 0;
-      if (spots < people) { say(`The ${day(s.from)} departure only has ${spots} ${spots === 1 ? "spot" : "spots"} left, and this needs ${people}.`); continue; }
 
       const guest = (row.guest_email as string | null) || (row.email as string | null) || null;
       const base = {
@@ -196,8 +194,6 @@ export async function moveAllInBookings(sb: SupabaseClient, row: Row, days: numb
     if (!trip) return { problem: `There is no ALL IN trip "${slug}" on the site.`, moved: [] };
     const { data: dep } = await sb.from("departures").select("id,spots_remaining,total_spots,status,bookable").eq("trip_id", trip.id).eq("departure_date", to).maybeSingle();
     if (!dep || dep.status === "cancelled" || dep.bookable !== true) return { problem: `${s.name} has no departure on ${day(to)}, so nothing has moved. Pick a date it runs on.`, moved: [] };
-    const spots = dep.spots_remaining ?? dep.total_spots ?? 0;
-    if (spots < people) return { problem: `${s.name} on ${day(to)} only has ${spots} ${spots === 1 ? "spot" : "spots"} left and this needs ${people}, so nothing has moved.`, moved: [] };
     const { data: there } = await sb.from("bookings").select("id").eq("stripe_session_id", sessionIdFor(ref, slug, s.from)).neq("status", "Cancelled").limit(1);
     moves.push({ name: s.name, slug, from: s.from, to, departureId: dep.id, there: !!there?.length });
   }

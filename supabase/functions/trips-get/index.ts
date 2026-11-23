@@ -68,8 +68,9 @@ Deno.serve(async (req) => {
     const visibleDeps = (deps ?? []).filter(
       (d) => d.force_bookable === true || (d.departure_date as string) > minDate,
     );
-    // Black Friday cap (Vietnam 7 days: 50 spots over the sale): no date shows more spots than the cap has left,
-    // so the trip reads as sold out once it's gone. create-checkout-session enforces it; this is what guests see.
+    // Black Friday cap (Vietnam 7 days: 50 spots over the sale): once it's used up every date reads as closed
+    // (bookable false). Pages show no spots counts and departures have no capacity (Charlie, 23 Nov 2026), so this
+    // is the only limit guests can meet. create-checkout-session enforces it.
     const cap = saleCapFor(trip.slug);
     let capLeft: number | null = null;
     const capCacheSecs = Math.max(0, Math.min(60, Math.floor((SALE_CAP_TO_MS - Date.now()) / 1000)));
@@ -94,7 +95,7 @@ Deno.serve(async (req) => {
         spotsRemaining: capLeft === null
           ? d.spots_remaining ?? d.total_spots ?? 0
           : Math.min(capLeft, d.spots_remaining ?? d.total_spots ?? 0),
-        bookable: d.bookable === true,
+        bookable: d.bookable === true && (capLeft === null || capLeft > 0),
         isPrivate: d.visibility === "private",
         forceBookable: d.force_bookable === true,
         price: pm?.price ?? Number(trip.default_price),
