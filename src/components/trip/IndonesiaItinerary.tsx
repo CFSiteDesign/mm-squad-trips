@@ -77,7 +77,7 @@ const STOPS: Stop[] = [
       "Bucket List Bike Tour around the island",
       "Foam Party + Live DJ back at Mad Monkey",
       "Boat Party (2–6PM) → unlimited BBQ & drinks after",
-      "Monkey See, Monkey Do snorkel trip on the way out",
+      "Three Turtles Snorkeling trip on the way out",
     ],
   },
   {
@@ -170,10 +170,10 @@ const DAYS: Day[] = [
   },
   {
     day: 9,
-    title: "Monkey sea, monkey do",
+    title: "Three Turtles Snorkeling",
     image: assetUrl(stuGiliSnorkel.url),
     body:
-      "One last Gili morning, and it's a good one: the Monkey Sea, Monkey Do snorkelling trip from 10:30 to 4, out over the reefs and turtles in that ridiculous clear water. Lunch is included on the boat. Then a short crossing back to Lombok and a two-hour drive down to Mad Monkey Kuta Lombok, checking in around dinner. This is where you learn to surf.",
+      "One last Gili morning, and it's a good one: the Three Turtles Snorkeling trip from 10:30 to 4, out over the reefs and turtles in that ridiculous clear water. Lunch is included on the boat. Then a short crossing back to Lombok and a two-hour drive down to Mad Monkey Kuta Lombok, checking in around dinner. This is where you learn to surf.",
     meals: "Lunch",
   },
   {

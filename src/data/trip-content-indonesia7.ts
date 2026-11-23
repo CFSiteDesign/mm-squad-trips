@@ -26,7 +26,7 @@ export const I7_IS_THIS_FOR_ME = [
 ];
 
 export const I7_HIGHLIGHTS: Highlight[] = [
-  { title: "Monkey See, Monkey Do Snorkeling Trip", image: snorkeling },
+  { title: "Three Turtles Snorkeling Trip", image: snorkeling },
   { title: "Mexican Family Dinner", image: mexican },
   { title: "Mad Monkey Boat Party", image: boatParty },
   { title: "Kuta Lombok Surf Camp", image: surfCamp },
@@ -57,9 +57,9 @@ export const I7_ITINERARY: Day[] = [
     body: "Set sail for the iconic Mad Monkey Boat Party (2:00 PM – 6:00 PM). Dance, swim, and soak up the tropical vibes out on the water. Keep the night going back at the hostel with an unlimited BBQ feast and drinks.",
     activities: "Mad Monkey Boat Party", meals: "Unlimited hostel BBQ & drinks" },
   { label: "Day 4", place: "Gili Trawangan → Kuta Lombok",
-    body: "Dive into the turquoise ocean on the “Monkey See, Monkey Do” Snorkeling Trip (10:30 AM – 4:00 PM) to spot local marine life. Afterward, take a short boat transfer to mainland Lombok followed by a shuttle to Mad Monkey Kuta Lombok.",
+    body: "Dive into the turquoise ocean on the Three Turtles Snorkeling Trip (10:30 AM – 4:00 PM) to spot local marine life. Afterward, take a short boat transfer to mainland Lombok followed by a shuttle to Mad Monkey Kuta Lombok.",
     transport: "Boat & shuttle transfer to Kuta Lombok",
-    activities: "“Monkey See, Monkey Do” Snorkeling Trip", meals: "Lunch" },
+    activities: "Three Turtles Snorkeling Trip", meals: "Lunch" },
   { label: "Day 5", place: "Kuta Lombok (Surf Camp Day 1)",
     body: "Welcome to Surf Camp! Meet your instructors for a welcome session, get fitted for your gear, receive your welcome pack, and practice your pop-ups on land. Cover surf theory, grab lunch with the crew, and regroup at the hostel tonight for a family dinner and karaoke.",
     activities: "Surf camp intro session (pop-up practice & theory breakdown), nightly hostel karaoke",
@@ -80,7 +80,7 @@ export const I7_FAQ_OVERRIDES: Record<string, string> = {
   "What's included?":
     "7 days across 2 destinations, all scheduled transport including the boat and private transfer from Gili T to Kuta Lombok, 24/7 local crew, a free pre-trip night, 4 breakfasts and 5 dinners, lots of free drinks, every activity in the itinerary, and dorm beds at Mad Monkey.",
   "What are the main highlights of this trip?":
-    "The Gili T Bucket List Bike Tour, the Mad Monkey Pool Party with live DJ, the Mad Monkey Boat Party, the unlimited hostel BBQ, the “Monkey See, Monkey Do” snorkeling trip, the 3-day Kuta Lombok surf camp (pop-up practice, theory breakdown, daily ocean sessions, photo and video analysis), the optional morning run club, and Mad Monkey karaoke night and afternoon pool party.",
+    "The Gili T Bucket List Bike Tour, the Mad Monkey Pool Party with live DJ, the Mad Monkey Boat Party, the unlimited hostel BBQ, the Three Turtles Snorkeling trip, the 3-day Kuta Lombok surf camp (pop-up practice, theory breakdown, daily ocean sessions, photo and video analysis), the optional morning run club, and Mad Monkey karaoke night and afternoon pool party.",
   "What meals are included?": "4 breakfasts and 5 dinners, plus lots of free drinks.",
   "What are the modes of transportation?":
     "A private transfer to Kuta Lombok by land, and a short boat ride across from Gili T.",

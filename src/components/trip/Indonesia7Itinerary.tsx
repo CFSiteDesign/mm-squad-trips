@@ -24,7 +24,7 @@ const STOPS: Stop[] = [
       "Bucket List Bike Tour looping the island",
       "Pool party with a live DJ running till late",
       "Mad Monkey Boat Party (2–6PM) → unlimited BBQ & drinks after",
-      "Monkey Sea, Monkey Do snorkel trip on the way out",
+      "Three Turtles Snorkeling trip on the way out",
     ],
   },
   {

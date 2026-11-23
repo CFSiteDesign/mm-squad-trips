@@ -33,7 +33,7 @@ export const IS_THIS_FOR_ME = [
 export const HIGHLIGHTS: { title: string; image: string | null }[] = [
   { title: "Mt Batur Sunrise Trekking", image: mtBatur },
   { title: "Island Hopping around Nusa Penida", image: nusaPenida },
-  { title: "Monkey See, Monkey Do Snorkeling Trip", image: snorkeling },
+  { title: "Three Turtles Snorkeling Trip", image: snorkeling },
   { title: "Kuta Lombok Surf Camp", image: surfCamp },
   { title: "Mexican Family Dinner", image: mexicanDinner },
   { title: "Mad Monkey Foam Party", image: foamParty },
@@ -114,9 +114,9 @@ export const ITINERARY: Day[] = [
   },
   {
     label: "Day 9", place: "Gili Trawangan → Kuta Lombok",
-    body: "Dive into the crystal-clear waters on the \"Monkey See, Monkey Do\" Snorkeling Trip (10:30 AM to 4:00 PM) to spot tropical marine life. Afterwards, take a short boat transfer to mainland Lombok followed by a shuttle to Mad Monkey Kuta Lombok.",
+    body: "Dive into the crystal-clear waters on the Three Turtles Snorkeling Trip (10:30 AM to 4:00 PM) to spot tropical marine life. Afterwards, take a short boat transfer to mainland Lombok followed by a shuttle to Mad Monkey Kuta Lombok.",
     transport: "Boat & shuttle to Kuta Lombok",
-    activities: "\"Monkey See, Monkey Do\" Snorkeling Trip",
+    activities: "Three Turtles Snorkeling Trip",
   },
   {
     label: "Days 10–12", place: "Kuta Lombok Surf Camp",
@@ -152,7 +152,7 @@ export const REVIEWS = [
 
 export const FAQS = [
   { q: "What's included?", a: "12 days across 4 destinations, all transfers and island boats, 24/7 local crew, a free pre-trip night (arrive the night before and it's on us), 4 breakfasts, 5 lunches and 5 dinners, lots of free drinks, every activity in the itinerary, and dorm beds at Mad Monkey throughout." },
-  { q: "What are the main highlights of this trip?", a: "Mt Batur sunrise trek, Panorama Point, the Manta Ray Snorkeling Experience, Nusa Penida island hopping, the Gili T Bucket List Bike Tour, the Monkey See Monkey Do snorkelling tour, and a 3-day surf camp." },
+  { q: "What are the main highlights of this trip?", a: "Mt Batur sunrise trek, Panorama Point, the Manta Ray Snorkeling Experience, Nusa Penida island hopping, the Gili T Bucket List Bike Tour, the Three Turtles Snorkeling Tour, and a 3-day surf camp." },
   { q: "What is the maximum and typical number of participants?", a: "Max 20, average 12." },
   { q: "What meals are included?", a: "4 breakfasts, 5 lunches and 5 dinners, plus lots of free drinks." },
   { q: "What are the modes of transportation?", a: "Private vehicle and boat." },
