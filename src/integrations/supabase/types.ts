@@ -65,6 +65,36 @@ export type Database = {
         }
         Relationships: []
       }
+      booking_sheets: {
+        Row: {
+          booking_ref: string
+          content_type: string | null
+          file_name: string
+          file_path: string
+          id: string
+          size_bytes: number | null
+          uploaded_at: string
+        }
+        Insert: {
+          booking_ref: string
+          content_type?: string | null
+          file_name: string
+          file_path: string
+          id?: string
+          size_bytes?: number | null
+          uploaded_at?: string
+        }
+        Update: {
+          booking_ref?: string
+          content_type?: string | null
+          file_name?: string
+          file_path?: string
+          id?: string
+          size_bytes?: number | null
+          uploaded_at?: string
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           additional_travelers: Json | null

@@ -99,6 +99,13 @@
       "when": 1794368326267,
       "tag": "0013_black_friday_sale_cap",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1795505859039,
+      "tag": "0014_booking_sheets_service_role_only",
+      "breakpoints": true
     }
   ]
 }
