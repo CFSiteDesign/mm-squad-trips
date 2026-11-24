@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { RefreshCw, Copy } from "lucide-react";
-import { adminLogin, adminApi, addCompBooking, queueMmkReminder, backfillMmkReminders, listMmkReminderJobs, getAdminToken, setAdminToken, setAdminPreview, type AdminTable, type MmkQueueJob } from "@/lib/admin";
+import { RefreshCw, Copy, Paperclip, Download, Trash2 } from "lucide-react";
+import { adminLogin, adminApi, bookingSheets, sheetProblem, SHEET_ACCEPT, type BookingSheet, addCompBooking, queueMmkReminder, backfillMmkReminders, listMmkReminderJobs, getAdminToken, setAdminToken, setAdminPreview, type AdminTable, type MmkQueueJob } from "@/lib/admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -444,6 +444,8 @@ function Login({ onSuccess }: { onSuccess: () => void }) {
 
 // Module-level cache: persists across tab switches (and component unmount/remount)
 const tableCache: Partial<Record<AdminTable, Row[]>> = {};
+// Booking sheets for every booking, loaded with the Bookings tab.
+let sheetsCache: BookingSheet[] | null = null;
 const lookupCache: {
   trip?: Record<string, string>;
   departure?: Record<string, string>;
@@ -474,6 +476,18 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
   const [creating, setCreating] = useState(false);
   // Bookings only: the guest journey drawer, always for the lead booker's row.
   const [journeyFor, setJourneyFor] = useState<Row | null>(null);
+  // Bookings only: the booking sheets (Excel booking endorsement) per booking ref.
+  const [sheets, setSheets] = useState<BookingSheet[]>(() => sheetsCache ?? []);
+  const [sheetsFor, setSheetsFor] = useState<Row | null>(null);
+  const sheetsByRef = useMemo(() => {
+    const m: Record<string, BookingSheet[]> = {};
+    for (const sh of sheets) (m[sh.booking_ref] ??= []).push(sh);
+    return m;
+  }, [sheets]);
+  function updateSheets(next: BookingSheet[]) {
+    sheetsCache = next;
+    setSheets(next);
+  }
   const leadRowOf = (r: Row) =>
     Number(r.spot_number ?? 1) === 1 ? r : rows.find((x) => x.stripe_session_id === r.stripe_session_id && Number(x.spot_number ?? 1) === 1) ?? r;
   const [compOpen, setCompOpen] = useState(false);
@@ -527,6 +541,10 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
           }
         }),
       ];
+      if (table === "bookings") {
+        // A failed sheets load mustn't hide the bookings.
+        tasks.push(bookingSheets.list().then(updateSheets).catch((e) => toast.error(`Booking sheets: ${e instanceof Error ? e.message : "failed to load"}`)));
+      }
       if (needsTripLookup && (force || !lookupCache.trip)) {
         tasks.push(adminApi.list<Row>("trips", { limit: 1000 }).then((ts) => {
           const m: Record<string, string> = {};
@@ -785,6 +803,21 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
                         ) : ci === 0 && inGroup ? (
                           <span className="mr-2 inline-block h-2 w-2 rounded-full bg-mm-pink align-middle" aria-hidden />
                         ) : null}
+                        {isBookings && c.key === "booking_ref" && r.booking_ref ? (() => {
+                          const n = sheetsByRef[String(r.booking_ref)]?.length ?? 0;
+                          const label = n ? `${n} booking sheet${n === 1 ? "" : "s"} attached` : "Attach the booking sheet";
+                          return (
+                            <button
+                              onClick={() => setSheetsFor(r)}
+                              className={`mr-2 inline-flex items-center gap-0.5 rounded-sm border-[1.5px] border-mm-black px-1 py-0.5 align-middle font-sticker text-[9px] leading-none ${n ? "bg-mm-lime text-mm-black hover:bg-mm-pink hover:text-mm-bone" : "bg-mm-bone text-mm-black/50 hover:bg-mm-pink hover:text-mm-bone"}`}
+                              title={label}
+                              aria-label={label}
+                            >
+                              <Paperclip size={12} className="shrink-0" />
+                              {n > 0 && <span>{n}</span>}
+                            </button>
+                          );
+                        })() : null}
                         {c.key === "stripe_customer_id" && display ? (
                           <button
                             onClick={() => { navigator.clipboard.writeText(display); toast.success("Copied customer ID"); }}
@@ -830,6 +863,16 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
         />
       )}
 
+      {sheetsFor && (
+        <BookingSheetsDialog
+          booking={sheetsFor}
+          sheets={sheetsByRef[String(sheetsFor.booking_ref)] ?? []}
+          onAdded={(sh) => updateSheets([sh, ...sheets])}
+          onRemoved={(id) => updateSheets(sheets.filter((x) => x.id !== id))}
+          onClose={() => setSheetsFor(null)}
+        />
+      )}
+
       {journeyFor && (
         <BookingJourney lead={journeyFor} allBookings={rows} onClose={() => setJourneyFor(null)} />
       )}
@@ -850,6 +893,136 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
           onSaved={() => { setRunDateOpen(false); reload(true); }}
         />
       )}
+    </div>
+  );
+}
+
+/* Booking sheets (Charlie, 24 Nov 2026): revenue attach the Excel booking endorsement
+   to the booking once it's done, so every booking sheet is tracked and stored with it.
+   Private: the file only opens through a five-minute link from admin-api. */
+function BookingSheetsDialog({ booking, sheets, onAdded, onRemoved, onClose }: {
+  booking: Row;
+  sheets: BookingSheet[];
+  onAdded: (sheet: BookingSheet) => void;
+  onRemoved: (id: string) => void;
+  onClose: () => void;
+}) {
+  const ref = String(booking.booking_ref ?? "");
+  const [busy, setBusy] = useState<string | null>(null);
+  const [dragging, setDragging] = useState(false);
+
+  async function upload(files: FileList | File[] | null) {
+    const list = Array.from(files ?? []);
+    if (!list.length || busy) return;
+    setBusy("upload");
+    try {
+      for (const file of list) {
+        const problem = sheetProblem(file);
+        if (problem) { toast.error(`${file.name}: ${problem}`); continue; }
+        const sheet = await bookingSheets.upload(ref, file);
+        onAdded(sheet);
+        toast.success(`Attached ${file.name} to ${ref}`);
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function download(sheet: BookingSheet) {
+    setBusy(sheet.id);
+    try {
+      const url = await bookingSheets.downloadUrl(sheet.id);
+      const a = document.createElement("a");
+      a.href = url; a.rel = "noopener"; a.click();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't open the file");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function remove(sheet: BookingSheet) {
+    if (!confirm(`Remove ${sheet.file_name} from ${ref}?\n\nThe file is deleted for good.`)) return;
+    setBusy(sheet.id);
+    try {
+      await bookingSheets.remove(sheet.id);
+      onRemoved(sheet.id);
+      toast.success("Booking sheet removed");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't remove it");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  const kb = (n: number | null) => (n == null ? "" : n < 1024 * 1024 ? `${Math.max(1, Math.round(n / 1024))} KB` : `${(n / 1024 / 1024).toFixed(1)} MB`);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-mm-black/60 p-4" onClick={onClose}>
+      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto border-[3px] border-mm-black bg-mm-paper p-5 shadow-mm-lg" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-1 flex items-center justify-between">
+          <h2 className="font-display text-2xl">BOOKING SHEET</h2>
+          <button onClick={onClose} className="text-mm-black/60 hover:text-mm-black" aria-label="Close">✕</button>
+        </div>
+        <p className="mb-4 text-sm">
+          <span className="font-mono font-bold">{ref}</span>
+          {booking.lead_name ? <span className="text-mm-black/70"> · {String(booking.lead_name)}</span> : null}
+        </p>
+
+        <div className="border-[2px] border-mm-black">
+          <div className="bg-mm-black px-3 py-1 font-sticker text-[10px] tracking-[0.15em] text-mm-bone">ATTACHED</div>
+          {sheets.length === 0 ? (
+            <p className="px-3 py-3 text-sm text-mm-black/60">No booking sheet yet.</p>
+          ) : sheets.map((sh) => (
+            <div key={sh.id} className="flex items-center gap-2 border-t border-mm-black/20 px-3 py-2 first:border-t-0">
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm font-bold" title={sh.file_name}>{sh.file_name}</div>
+                <div className="text-xs text-mm-black/60">
+                  {new Date(sh.uploaded_at).toLocaleString(undefined, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                  {sh.size_bytes != null ? ` · ${kb(sh.size_bytes)}` : ""}
+                </div>
+              </div>
+              <button
+                onClick={() => download(sh)}
+                disabled={!!busy}
+                className="inline-flex items-center gap-1 border-[2px] border-mm-black bg-mm-bone px-2 py-1 font-sticker text-[10px] tracking-[0.1em] hover:bg-mm-lime disabled:opacity-50"
+              >
+                <Download size={12} /> {busy === sh.id ? "…" : "OPEN"}
+              </button>
+              <button
+                onClick={() => remove(sh)}
+                disabled={!!busy}
+                className="inline-flex items-center border-[2px] border-mm-black bg-mm-bone p-1 text-red-600 hover:bg-red-600 hover:text-mm-bone disabled:opacity-50"
+                title="Remove this file"
+                aria-label={`Remove ${sh.file_name}`}
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <label
+          onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+          onDragLeave={() => setDragging(false)}
+          onDrop={(e) => { e.preventDefault(); setDragging(false); upload(e.dataTransfer.files); }}
+          className={`mt-4 flex cursor-pointer flex-col items-center justify-center gap-1 border-[2px] border-dashed border-mm-black px-4 py-6 text-center ${dragging ? "bg-mm-lime" : "bg-mm-bone hover:bg-mm-lime/40"} ${busy === "upload" ? "pointer-events-none opacity-60" : ""}`}
+        >
+          <Paperclip size={18} />
+          <span className="font-sticker text-xs tracking-[0.12em]">{busy === "upload" ? "UPLOADING…" : "ADD THE BOOKING SHEET"}</span>
+          <span className="text-xs text-mm-black/60">Drop the Excel booking endorsement here, or click to choose it. Excel, CSV or PDF, up to 10 MB.</span>
+          <input
+            type="file"
+            accept={SHEET_ACCEPT}
+            multiple
+            className="sr-only"
+            onChange={(e) => { upload(e.target.files); e.target.value = ""; }}
+          />
+        </label>
+        <p className="mt-3 text-xs text-mm-black/60">Stored privately with this booking. Only people logged in to this admin can open it.</p>
+      </div>
     </div>
   );
 }

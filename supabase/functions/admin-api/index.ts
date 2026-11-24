@@ -1,12 +1,14 @@
 // Admin CRUD over the five tables. Token-gated.
 // POST body: { table, op, ...args }
 //   op = "list" | "create" | "update" | "delete" | "cancel-booking"
+//   Booking sheets (table "bookings"): "sheets-list" | "sheet-upload-url" | "sheet-save" | "sheet-download-url" | "sheet-delete"
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { verifyAdminToken, adminAuthHeaderToken } from "../_shared/admin-auth.ts";
 import { cancelBookingValues } from "../_shared/booking-cancel.ts";
 import { closeTrip, tripRefFromSession } from "../_shared/trip-builder-book.ts";
 import { triggerCommissionPush } from "../_shared/push-commission.ts";
+import { SHEETS_BUCKET, sheetPath, sheetPathBelongsTo, sheetProblem } from "../_shared/booking-sheets.ts";
 
 const TABLES = new Set([
   "trips",
@@ -97,6 +99,80 @@ Deno.serve(async (req) => {
       if (error) return jr({ error: error.message }, 400);
       await triggerCommissionPush(sb);
       return jr({ ok: true, spots: done?.length ?? 0 });
+    }
+
+    // Booking sheets (Charlie, 24 Nov 2026): the Excel booking endorsement revenue attach to each booking.
+    // The browser uploads straight to the private bucket with a one-off signed URL, then "sheet-save" lists it.
+    if (op?.startsWith("sheet")) {
+      if (table !== "bookings") return jr({ error: "Booking sheets belong to bookings" }, 400);
+      const SHEET_COLS = "id,booking_ref,file_name,size_bytes,uploaded_at";
+
+      if (op === "sheets-list") {
+        const { data, error } = await sb.from("booking_sheets").select(SHEET_COLS).order("uploaded_at", { ascending: false }).limit(5000);
+        if (error) return jr({ error: error.message }, 400);
+        return jr({ sheets: data ?? [] });
+      }
+
+      if (op === "sheet-upload-url") {
+        const ref = String(body.booking_ref ?? "").trim();
+        const fileName = String(body.file_name ?? "").trim();
+        if (!ref) return jr({ error: "booking_ref required" }, 400);
+        const problem = sheetProblem(fileName, Number(body.size));
+        if (problem) return jr({ error: problem }, 400);
+        const { count, error: refErr } = await sb.from("bookings").select("id", { count: "exact", head: true }).eq("booking_ref", ref);
+        if (refErr) return jr({ error: refErr.message }, 400);
+        if (!count) return jr({ error: "Booking not found" }, 404);
+        const { data, error } = await sb.storage.from(SHEETS_BUCKET).createSignedUploadUrl(sheetPath(ref, fileName));
+        if (error || !data) return jr({ error: error?.message ?? "Couldn't start the upload" }, 400);
+        return jr({ path: data.path, token: data.token });
+      }
+
+      if (op === "sheet-save") {
+        const ref = String(body.booking_ref ?? "").trim();
+        const path = String(body.path ?? "");
+        const fileName = String(body.file_name ?? "").trim();
+        if (!ref || !sheetPathBelongsTo(path, ref)) return jr({ error: "That upload doesn't belong to this booking" }, 400);
+        const [folder, name] = path.split("/");
+        // Only list what really arrived, at the size storage says it is.
+        const { data: found, error: findErr } = await sb.storage.from(SHEETS_BUCKET).list(folder, { search: name, limit: 10 });
+        if (findErr) return jr({ error: findErr.message }, 400);
+        const file = found?.find((f) => f.name === name);
+        if (!file) return jr({ error: "The file didn't arrive, try again" }, 400);
+        const size = Number((file.metadata as { size?: number } | null)?.size ?? body.size);
+        const problem = sheetProblem(fileName, size);
+        if (problem) {
+          await sb.storage.from(SHEETS_BUCKET).remove([path]);
+          return jr({ error: problem }, 400);
+        }
+        const { data, error } = await sb.from("booking_sheets").insert({
+          booking_ref: ref,
+          file_path: path,
+          file_name: fileName.slice(0, 200),
+          content_type: body.content_type ? String(body.content_type).slice(0, 120) : null,
+          size_bytes: size,
+        }).select(SHEET_COLS).single();
+        if (error) return jr({ error: error.message }, 400);
+        return jr({ sheet: data });
+      }
+
+      if (op === "sheet-download-url" || op === "sheet-delete") {
+        const { id } = body;
+        if (!id) return jr({ error: "id required" }, 400);
+        const { data: sheet, error: readErr } = await sb.from("booking_sheets").select("file_path,file_name").eq("id", id).maybeSingle();
+        if (readErr) return jr({ error: readErr.message }, 400);
+        if (!sheet) return jr({ error: "Booking sheet not found" }, 404);
+        if (op === "sheet-download-url") {
+          // Five minutes is plenty to open it; the link is useless after that.
+          const { data, error } = await sb.storage.from(SHEETS_BUCKET).createSignedUrl(sheet.file_path, 300, { download: sheet.file_name });
+          if (error || !data) return jr({ error: error?.message ?? "Couldn't open the file" }, 400);
+          return jr({ url: data.signedUrl });
+        }
+        const { error: rmErr } = await sb.storage.from(SHEETS_BUCKET).remove([sheet.file_path]);
+        if (rmErr) return jr({ error: rmErr.message }, 400);
+        const { error } = await sb.from("booking_sheets").delete().eq("id", id);
+        if (error) return jr({ error: error.message }, 400);
+        return jr({ ok: true });
+      }
     }
 
     return jr({ error: "Unknown op" }, 400);

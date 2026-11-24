@@ -1,6 +1,6 @@
 // Fake data used ONLY by /adminpreview so the layout can be reviewed without a login.
 // Nothing here touches the real database.
-import type { AdminTable } from "@/lib/admin";
+import type { AdminTable, BookingSheet } from "@/lib/admin";
 import type { SquadAdminData } from "@/lib/squad";
 
 const TRIP_IDS = {
@@ -151,6 +151,12 @@ export const previewTables: Record<AdminTable, Record<string, unknown>[]> = {
   bookings: [...nearBookings, ...bookings],
   email_send_log,
 };
+
+// Two demo bookings already have their booking sheet attached, so both button states show.
+export const previewBookingSheets: BookingSheet[] = [
+  { id: "88888888-8888-4888-8888-888888888801", booking_ref: "DEMO-1000", file_name: "DEMO-1000 booking endorsement.xlsx", size_bytes: 48213, uploaded_at: iso(-2) },
+  { id: "88888888-8888-4888-8888-888888888802", booking_ref: "DEMO-1002", file_name: "DEMO-1002 booking endorsement.xlsx", size_bytes: 51877, uploaded_at: iso(-1) },
+];
 
 export const previewSquadAdmin: SquadAdminData = {
   leaders: [
