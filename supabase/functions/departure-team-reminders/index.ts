@@ -12,7 +12,7 @@
 // POST {"dry_run": true} lists what would go out without sending or stamping.
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { APP_URL, departureTeamReminderEmail, opsCcForTrip, sendEmail, type TeamReminderBooking } from "../_shared/email.ts";
+import { departureTeamReminderEmail, opsCcForTrip, sendEmail, type TeamReminderBooking } from "../_shared/email.ts";
 
 const RECEPTION = "reception@madmonkeyhostels.com";
 const VIETNAM_TRAVEL_DESKS = ["travel.hanoi@madmonkeyhostels.com", "travel.hoian@madmonkeyhostels.com"];
@@ -168,7 +168,6 @@ Deno.serve(async (req) => {
       departureCode: dep.departure_code as string | null,
       travellers,
       bookings,
-      adminUrl: `${APP_URL}/admin`,
     });
 
     const summary = { departure: dep.id, date: dep.departure_date, trip: trip.slug, kind: window.kind, daysOut, travellers, bookings: bookings.length, to, subject };

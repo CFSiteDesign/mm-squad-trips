@@ -596,7 +596,6 @@ async function writeBookings(session: Stripe.Checkout.Session) {
           squadCode: (m.squad_code as string) || undefined,
           staffRecommendation: (m.staff_recommendation as string) || undefined,
           discountCode: (m.discount_code as string) || undefined,
-          bookingUrl: `${APP_URL}/admin`,
           bookingType: isSoloLead || groupSize === 1 ? "solo" : "group",
           travellerMode: m.traveller_mode === "independent" || m.traveller_mode === "crew" ? m.traveller_mode : undefined,
         });

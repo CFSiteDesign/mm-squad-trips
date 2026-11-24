@@ -387,6 +387,7 @@ ${whatsappBox(v.whatsappUrl)}
   };
 }
 
+// No "View in admin" button: country GMs are CC'd and don't use the admin (Cai, 24 Nov 2026).
 export function bookingOpsNotificationEmail(v: {
   leadName: string;
   leadEmail: string;
@@ -399,7 +400,6 @@ export function bookingOpsNotificationEmail(v: {
   squadCode?: string;
   discountCode?: string;
   staffRecommendation?: string;
-  bookingUrl: string;
   /** Solo = one traveller. Group = several spots on one booking. Falls back
    *  to the spot count when a caller doesn't say. */
   bookingType?: "solo" | "group";
@@ -448,7 +448,6 @@ ${badge}
 <tr><td style="padding:8px 12px;border-bottom:1px solid #0a0a0a"><strong>Staff rec</strong></td><td style="padding:8px 12px;border-bottom:1px solid #0a0a0a">{{staffRecommendation}}</td></tr>
 <tr><td style="padding:8px 12px"><strong>Ref</strong></td><td style="padding:8px 12px">{{bookingRef}}</td></tr>
 </table>
-<a href="{{bookingUrl}}" style="display:inline-block;background:#0a0a0a;color:#ccff01;font-weight:900;text-transform:uppercase;padding:12px 18px;border:2px solid #0a0a0a;text-decoration:none">View in admin</a>
 </td></tr>`,
     {
       ...v,
@@ -804,6 +803,7 @@ export function departureCancelledEmail(v: {
 // Charlie, 6 Oct 2026: crew trips now run regardless (the 30-day auto-cancel
 // is gone). Tell them early, sell them on going anyway, and offer the deposit
 // back through Ewan if they'd rather not (Lexie, 9 Nov 2026: "Need to speak to a human?").
+// WhatsApp line next to Ewan's email: Lexie, 24 Nov 2026.
 export function underfilledCrewNoticeEmail(v: {
   firstName: string;
   /** "14-day Vietnam" */
@@ -838,7 +838,7 @@ export function underfilledCrewNoticeEmail(v: {
 <li style="margin:0">Easier to bond fast, then bring new friends into the mix</li>
 </ul>
 <p style="margin:0 0 6px 0"><strong>Need to speak to a human?</strong></p>
-<p style="margin:0 0 16px 0">No problem. Email <a href="mailto:ewan@madmonkeyhostels.com" style="color:#0a0a0a">ewan@madmonkeyhostels.com</a> with your booking reference <strong>{{bookingRef}}</strong> and we'll refund your deposit.${balanceLine}</p>
+<p style="margin:0 0 16px 0">No problem. Email <a href="mailto:ewan@madmonkeyhostels.com" style="color:#0a0a0a">ewan@madmonkeyhostels.com</a> or speak to a human quickly on WhatsApp <a href="https://wa.me/66966894646" style="color:#0a0a0a">+66 96 689 4646</a> with your booking reference <strong>{{bookingRef}}</strong> and we'll refund your deposit.${balanceLine}</p>
 <p style="margin:0">See you in {{country}} {{flag}}</p>
 </td></tr>`,
     { ...v, flag } as unknown as Record<string, string>,
@@ -1282,7 +1282,7 @@ export function countryForSlug(slug?: string | null): string {
 // Property-team reminder, 7 days and 1 day before a departure. Charlie, 10 Sep
 // 2026: to the country GM list, reception@, and for Vietnam the travel desks.
 // The manifest is built by hand (escapeHtml per cell) because render() only
-// fills scalars.
+// fills scalars. No "View in admin" button: GMs don't use the admin (Cai, 24 Nov 2026).
 export type TeamReminderBooking = {
   ref: string;
   leadName: string;
@@ -1303,7 +1303,6 @@ export function departureTeamReminderEmail(v: {
   departureCode?: string | null;
   travellers: number;
   bookings: TeamReminderBooking[];
-  adminUrl: string;
 }): { subject: string; html: string } {
   const when = v.daysOut <= 0 ? "TODAY" : v.daysOut === 1 ? "TOMORROW" : `IN ${v.daysOut} DAYS`;
   const whenLower = v.daysOut <= 0 ? "today" : v.daysOut === 1 ? "tomorrow" : `in ${v.daysOut} days`;
@@ -1335,7 +1334,6 @@ export function departureTeamReminderEmail(v: {
 <tr>${head("Ref")}${head("Lead")}${head("Contact")}${head("Spots")}${head("Payment")}</tr>
 ${rows}
 </table>
-<a href="${escapeHtml(v.adminUrl)}" style="display:inline-block;background:#0a0a0a;color:#ccff01;font-weight:900;text-transform:uppercase;padding:12px 18px;border:2px solid #0a0a0a;text-decoration:none">View in admin</a>
 <p style="margin:16px 0 0 0;font-size:12px;color:#555">Automatic reminder, sent 7 days and 1 day before every ALL IN departure with bookings. Questions: reply to this email.</p>
 </td></tr>`;
   return {

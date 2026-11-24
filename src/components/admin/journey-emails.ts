@@ -42,7 +42,7 @@ export const journeyEmails = {
   opsAlert: async (g: GuestEmailData): Promise<RenderedEmail> =>
     (await email()).bookingOpsNotificationEmail({
       leadName: g.name, leadEmail: g.email, leadPhone: g.phone, tripName: g.tripName, departureDate: g.date,
-      spots: g.spots, amount: usd(g.paidToday), bookingRef: g.ref, bookingUrl: g.bookingUrl,
+      spots: g.spots, amount: usd(g.paidToday), bookingRef: g.ref,
       travellerMode: g.crew ? "crew" : "independent",
     }),
   headsUp: async (g: GuestEmailData): Promise<RenderedEmail> =>
@@ -63,7 +63,7 @@ export const journeyEmails = {
   manifest: async (g: GuestEmailData, daysOut: 7 | 1, travellers: number): Promise<RenderedEmail> =>
     (await email()).departureTeamReminderEmail({
       daysOut, tripName: g.tripName, tripDays: null, departureDate: g.date,
-      travellers, adminUrl: "https://madmonkeyhostels.com/all-in-trips/admin",
+      travellers,
       bookings: [{
         ref: g.ref, leadName: g.name, email: g.email, phone: g.phone, spots: g.spots,
         type: g.crew ? "With a crew" : "Independent", payment: g.hasBalance ? "Deposit paid" : "Paid in full", members: "",

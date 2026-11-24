@@ -3,7 +3,7 @@
 // toBookList and allInPaidPerSpot are pure and covered by trip-builder-book.test.ts.
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { cancelBookingValues } from "./booking-cancel.ts";
-import { APP_URL, bookingOpsNotificationEmail, OPS_NOTIFY_EMAILS, opsCcForTrip, sendEmail } from "./email.ts";
+import { bookingOpsNotificationEmail, OPS_NOTIFY_EMAILS, opsCcForTrip, sendEmail } from "./email.ts";
 import { readSummary, type Stop, type Summary } from "./trip-builder-crew.ts";
 import { addDays, cancelUnpaid, type Item, paidSoFar, readSchedule } from "./trip-builder-pay.ts";
 
@@ -117,7 +117,7 @@ export async function syncAllInBookings(sb: SupabaseClient, row: Row): Promise<A
       const ops = bookingOpsNotificationEmail({
         leadName: String(row.name ?? "Unknown"), leadEmail: guest ?? "", leadPhone: (row.whatsapp as string | null) ?? undefined,
         tripName: `${s.name} (trip builder ${ref})`, departureDate: s.from, spots: people, amount: `$${(paid[i] * people).toFixed(2)} USD through the trip builder`,
-        bookingRef: ref, bookingUrl: `${APP_URL}/admin`, bookingType: people === 1 ? "solo" : "group",
+        bookingRef: ref, bookingType: people === 1 ? "solo" : "group",
       });
       const cc = opsCcForTrip(s.name, slug);
       await sendEmail({ to: OPS_NOTIFY_EMAILS, cc: cc.length ? cc : undefined, subject: ops.subject, html: ops.html, templateName: "booking_ops_notification" }).catch((e) => console.warn("trip builder ALL IN ops email failed", e));
