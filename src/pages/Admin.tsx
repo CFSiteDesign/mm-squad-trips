@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { RefreshCw, Copy, Paperclip, Download, Trash2 } from "lucide-react";
-import { adminLogin, adminApi, bookingSheets, sheetProblem, SHEET_ACCEPT, type BookingSheet, addCompBooking, queueMmkReminder, backfillMmkReminders, listMmkReminderJobs, getAdminToken, setAdminToken, setAdminPreview, type AdminTable, type MmkQueueJob } from "@/lib/admin";
+import { RefreshCw, Copy, Paperclip, ExternalLink, Trash2 } from "lucide-react";
+import { adminLogin, adminApi, bookingSheets, driveLink, driveLinkProblem, type BookingSheet, addCompBooking, queueMmkReminder, backfillMmkReminders, listMmkReminderJobs, getAdminToken, setAdminToken, setAdminPreview, type AdminTable, type MmkQueueJob } from "@/lib/admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -805,7 +805,7 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
                         ) : null}
                         {isBookings && c.key === "booking_ref" && r.booking_ref ? (() => {
                           const n = sheetsByRef[String(r.booking_ref)]?.length ?? 0;
-                          const label = n ? `${n} booking sheet${n === 1 ? "" : "s"} attached` : "Attach the booking sheet";
+                          const label = n ? `${n} booking sheet link${n === 1 ? "" : "s"} attached` : "Attach the booking sheet's Google Drive link";
                           return (
                             <button
                               onClick={() => setSheetsFor(r)}
@@ -897,9 +897,9 @@ function TableEditor({ table, refreshKey }: { table: AdminTable; refreshKey?: nu
   );
 }
 
-/* Booking sheets (Charlie, 24 Nov 2026): revenue attach the Excel booking endorsement
-   to the booking once it's done, so every booking sheet is tracked and stored with it.
-   Private: the file only opens through a five-minute link from admin-api. */
+/* Booking sheets (Charlie, 24 Nov 2026; Drive links since 26 Nov): revenue paste the
+   Google Drive link to the booking endorsement once the booking is done, so every
+   booking sheet is tracked with its booking. The sheet stays in Drive. */
 function BookingSheetsDialog({ booking, sheets, onAdded, onRemoved, onClose }: {
   booking: Row;
   sheets: BookingSheet[];
@@ -909,55 +909,43 @@ function BookingSheetsDialog({ booking, sheets, onAdded, onRemoved, onClose }: {
 }) {
   const ref = String(booking.booking_ref ?? "");
   const [busy, setBusy] = useState<string | null>(null);
-  const [dragging, setDragging] = useState(false);
+  const [link, setLink] = useState("");
+  const [problem, setProblem] = useState<string | null>(null);
 
-  async function upload(files: FileList | File[] | null) {
-    const list = Array.from(files ?? []);
-    if (!list.length || busy) return;
-    setBusy("upload");
+  async function add(e: React.FormEvent) {
+    e.preventDefault();
+    if (busy) return;
+    const why = driveLinkProblem(link);
+    if (why) { setProblem(why); return; }
+    const url = driveLink(link)!;
+    if (sheets.some((sh) => sh.drive_url === url)) { setProblem("That link is already attached to this booking"); return; }
+    setBusy("add");
     try {
-      for (const file of list) {
-        const problem = sheetProblem(file);
-        if (problem) { toast.error(`${file.name}: ${problem}`); continue; }
-        const sheet = await bookingSheets.upload(ref, file);
-        onAdded(sheet);
-        toast.success(`Attached ${file.name} to ${ref}`);
-      }
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Upload failed");
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  async function download(sheet: BookingSheet) {
-    setBusy(sheet.id);
-    try {
-      const url = await bookingSheets.downloadUrl(sheet.id);
-      const a = document.createElement("a");
-      a.href = url; a.rel = "noopener"; a.click();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Couldn't open the file");
+      const sheet = await bookingSheets.addLink(ref, url);
+      onAdded(sheet);
+      setLink("");
+      setProblem(null);
+      toast.success(`Attached the ${sheet.file_name} link to ${ref}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Couldn't attach the link");
     } finally {
       setBusy(null);
     }
   }
 
   async function remove(sheet: BookingSheet) {
-    if (!confirm(`Remove ${sheet.file_name} from ${ref}?\n\nThe file is deleted for good.`)) return;
+    if (!confirm(`Remove this ${sheet.file_name} link from ${ref}?\n\nThe sheet itself stays in Google Drive.`)) return;
     setBusy(sheet.id);
     try {
       await bookingSheets.remove(sheet.id);
       onRemoved(sheet.id);
-      toast.success("Booking sheet removed");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Couldn't remove it");
+      toast.success("Link removed");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Couldn't remove it");
     } finally {
       setBusy(null);
     }
   }
-
-  const kb = (n: number | null) => (n == null ? "" : n < 1024 * 1024 ? `${Math.max(1, Math.round(n / 1024))} KB` : `${(n / 1024 / 1024).toFixed(1)} MB`);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-mm-black/60 p-4" onClick={onClose}>
@@ -974,54 +962,73 @@ function BookingSheetsDialog({ booking, sheets, onAdded, onRemoved, onClose }: {
         <div className="border-[2px] border-mm-black">
           <div className="bg-mm-black px-3 py-1 font-sticker text-[10px] tracking-[0.15em] text-mm-bone">ATTACHED</div>
           {sheets.length === 0 ? (
-            <p className="px-3 py-3 text-sm text-mm-black/60">No booking sheet yet.</p>
-          ) : sheets.map((sh) => (
-            <div key={sh.id} className="flex items-center gap-2 border-t border-mm-black/20 px-3 py-2 first:border-t-0">
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-bold" title={sh.file_name}>{sh.file_name}</div>
-                <div className="text-xs text-mm-black/60">
-                  {new Date(sh.uploaded_at).toLocaleString(undefined, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
-                  {sh.size_bytes != null ? ` · ${kb(sh.size_bytes)}` : ""}
+            <p className="px-3 py-3 text-sm text-mm-black/60">No booking sheet link yet.</p>
+          ) : sheets.map((sh) => {
+            const href = driveLink(sh.drive_url);
+            return (
+              <div key={sh.id} className="flex items-center gap-2 border-t border-mm-black/20 px-3 py-2 first:border-t-0">
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-bold">{sh.file_name}</div>
+                  <div className="truncate text-xs text-mm-black/60" title={sh.drive_url}>
+                    {new Date(sh.uploaded_at).toLocaleString(undefined, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                    {" · "}{sh.drive_url.replace(/^https:\/\//, "")}
+                  </div>
                 </div>
+                {href && (
+                  <a
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 border-[2px] border-mm-black bg-mm-bone px-2 py-1 font-sticker text-[10px] tracking-[0.1em] hover:bg-mm-lime"
+                  >
+                    <ExternalLink size={12} /> OPEN
+                  </a>
+                )}
+                <button
+                  onClick={() => remove(sh)}
+                  disabled={!!busy}
+                  className="inline-flex items-center border-[2px] border-mm-black bg-mm-bone p-1 text-red-600 hover:bg-red-600 hover:text-mm-bone disabled:opacity-50"
+                  title="Remove this link"
+                  aria-label={`Remove the ${sh.file_name} link`}
+                >
+                  <Trash2 size={14} />
+                </button>
               </div>
-              <button
-                onClick={() => download(sh)}
-                disabled={!!busy}
-                className="inline-flex items-center gap-1 border-[2px] border-mm-black bg-mm-bone px-2 py-1 font-sticker text-[10px] tracking-[0.1em] hover:bg-mm-lime disabled:opacity-50"
-              >
-                <Download size={12} /> {busy === sh.id ? "…" : "OPEN"}
-              </button>
-              <button
-                onClick={() => remove(sh)}
-                disabled={!!busy}
-                className="inline-flex items-center border-[2px] border-mm-black bg-mm-bone p-1 text-red-600 hover:bg-red-600 hover:text-mm-bone disabled:opacity-50"
-                title="Remove this file"
-                aria-label={`Remove ${sh.file_name}`}
-              >
-                <Trash2 size={14} />
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
-        <label
-          onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-          onDragLeave={() => setDragging(false)}
-          onDrop={(e) => { e.preventDefault(); setDragging(false); upload(e.dataTransfer.files); }}
-          className={`mt-4 flex cursor-pointer flex-col items-center justify-center gap-1 border-[2px] border-dashed border-mm-black px-4 py-6 text-center ${dragging ? "bg-mm-lime" : "bg-mm-bone hover:bg-mm-lime/40"} ${busy === "upload" ? "pointer-events-none opacity-60" : ""}`}
-        >
-          <Paperclip size={18} />
-          <span className="font-sticker text-xs tracking-[0.12em]">{busy === "upload" ? "UPLOADING…" : "ADD THE BOOKING SHEET"}</span>
-          <span className="text-xs text-mm-black/60">Drop the Excel booking endorsement here, or click to choose it. Excel, CSV or PDF, up to 10 MB.</span>
-          <input
-            type="file"
-            accept={SHEET_ACCEPT}
-            multiple
-            className="sr-only"
-            onChange={(e) => { upload(e.target.files); e.target.value = ""; }}
-          />
-        </label>
-        <p className="mt-3 text-xs text-mm-black/60">Stored privately with this booking. Only people logged in to this admin can open it.</p>
+        <form onSubmit={add} className="mt-4 border-[2px] border-mm-black bg-mm-bone p-3">
+          <label htmlFor="sheet-link" className="font-sticker text-xs tracking-[0.12em]">ADD THE GOOGLE DRIVE LINK</label>
+          <div className="mt-2 flex gap-2">
+            <Input
+              id="sheet-link"
+              type="text"
+              inputMode="url"
+              autoComplete="off"
+              autoFocus
+              placeholder="https://docs.google.com/spreadsheets/d/…"
+              value={link}
+              onChange={(e) => { setLink(e.target.value); setProblem(null); }}
+              aria-invalid={!!problem}
+              aria-describedby="sheet-link-help"
+              className="min-w-0 flex-1 rounded-none border-[2px] border-mm-black bg-mm-paper"
+            />
+            <button
+              type="submit"
+              disabled={!!busy || !link.trim()}
+              className="inline-flex shrink-0 items-center gap-1 border-[2px] border-mm-black bg-mm-lime px-3 font-sticker text-xs tracking-[0.1em] hover:bg-mm-pink hover:text-mm-bone disabled:opacity-50"
+            >
+              <Paperclip size={14} /> {busy === "add" ? "ADDING…" : "ATTACH"}
+            </button>
+          </div>
+          {problem ? (
+            <p id="sheet-link-help" role="alert" className="mt-2 text-xs font-bold text-red-600">{problem}</p>
+          ) : (
+            <p id="sheet-link-help" className="mt-2 text-xs text-mm-black/60">In Drive, open the booking endorsement, then Share &gt; Copy link and paste it here.</p>
+          )}
+        </form>
+        <p className="mt-3 text-xs text-mm-black/60">Only the link is saved here. The sheet stays in Google Drive, so share it with the team there or they won't be able to open it.</p>
       </div>
     </div>
   );

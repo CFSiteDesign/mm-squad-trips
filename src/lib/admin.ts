@@ -87,26 +87,18 @@ export const adminApi = {
     call<{ ok: true; spots?: number; trip?: string }>({ table: "bookings", op: "cancel-booking", id }),
 };
 
-// Booking sheets (Charlie, 24 Nov 2026): revenue attach the Excel booking endorsement
-// to each booking. Stored in a private bucket; only admin-api can hand out a link.
+// Booking sheets (Charlie, 24 Nov 2026; Drive links since 26 Nov): revenue attach the
+// Google Drive link to each booking's endorsement. Only the link is stored.
 export type BookingSheet = {
   id: string;
   booking_ref: string;
+  /** What the link points at, e.g. "Google Sheet". */
   file_name: string;
-  size_bytes: number | null;
+  drive_url: string;
   uploaded_at: string;
 };
-export const SHEET_ACCEPT = ".xlsx,.xls,.xlsm,.csv,.pdf";
-const SHEET_MAX_BYTES = 10 * 1024 * 1024;
-
-/** Same rules as the server (supabase/functions/_shared/booking-sheets.ts), checked first so a wrong file fails fast. */
-export function sheetProblem(file: { name: string; size: number }): string | null {
-  const ext = /\.([a-z0-9]+)$/i.exec(file.name.trim())?.[1]?.toLowerCase() ?? "";
-  if (!["xlsx", "xls", "xlsm", "csv", "pdf"].includes(ext)) return "Attach an Excel file (.xlsx, .xls, .xlsm), a .csv or a .pdf";
-  if (file.size <= 0) return "That file is empty";
-  if (file.size > SHEET_MAX_BYTES) return "That file is over 10 MB";
-  return null;
-}
+// Same rules as the server, so a wrong link fails before it's sent.
+export { driveLink, driveLinkProblem } from "../../supabase/functions/_shared/booking-sheets";
 
 export const bookingSheets = {
   list: async (): Promise<BookingSheet[]> => {
@@ -116,23 +108,8 @@ export const bookingSheets = {
     }
     return call<{ sheets: BookingSheet[] }>({ table: "bookings", op: "sheets-list" }).then((r) => r.sheets ?? []);
   },
-  upload: async (bookingRef: string, file: File): Promise<BookingSheet> => {
-    const problem = sheetProblem(file);
-    if (problem) throw new Error(problem);
-    const { path, token } = await call<{ path: string; token: string }>({
-      table: "bookings", op: "sheet-upload-url", booking_ref: bookingRef, file_name: file.name, size: file.size,
-    });
-    const { error } = await supabase.storage.from("booking-sheets").uploadToSignedUrl(path, token, file, {
-      contentType: file.type || "application/octet-stream",
-    });
-    if (error) throw new Error(error.message);
-    return call<{ sheet: BookingSheet }>({
-      table: "bookings", op: "sheet-save", booking_ref: bookingRef, path, file_name: file.name, content_type: file.type || null, size: file.size,
-    }).then((r) => r.sheet);
-  },
-  /** A five-minute download link. */
-  downloadUrl: (id: string) =>
-    call<{ url: string }>({ table: "bookings", op: "sheet-download-url", id }).then((r) => r.url),
+  addLink: (bookingRef: string, url: string): Promise<BookingSheet> =>
+    call<{ sheet: BookingSheet }>({ table: "bookings", op: "sheet-link-save", booking_ref: bookingRef, url }).then((r) => r.sheet),
   remove: (id: string) =>
     call<{ ok: true }>({ table: "bookings", op: "sheet-delete", id }),
 };

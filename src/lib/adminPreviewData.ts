@@ -152,10 +152,10 @@ export const previewTables: Record<AdminTable, Record<string, unknown>[]> = {
   email_send_log,
 };
 
-// Two demo bookings already have their booking sheet attached, so both button states show.
+// Two demo bookings already have their booking sheet link attached, so both button states show.
 export const previewBookingSheets: BookingSheet[] = [
-  { id: "88888888-8888-4888-8888-888888888801", booking_ref: "DEMO-1000", file_name: "DEMO-1000 booking endorsement.xlsx", size_bytes: 48213, uploaded_at: iso(-2) },
-  { id: "88888888-8888-4888-8888-888888888802", booking_ref: "DEMO-1002", file_name: "DEMO-1002 booking endorsement.xlsx", size_bytes: 51877, uploaded_at: iso(-1) },
+  { id: "88888888-8888-4888-8888-888888888801", booking_ref: "DEMO-1000", file_name: "Google Sheet", drive_url: "https://docs.google.com/spreadsheets/d/demo-1000-booking-endorsement/edit", uploaded_at: iso(-2) },
+  { id: "88888888-8888-4888-8888-888888888802", booking_ref: "DEMO-1002", file_name: "Drive file", drive_url: "https://drive.google.com/file/d/demo-1002-booking-endorsement/view", uploaded_at: iso(-1) },
 ];
 
 export const previewSquadAdmin: SquadAdminData = {

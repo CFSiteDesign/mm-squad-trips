@@ -1,42 +1,52 @@
-// Booking sheets (Charlie, 24 Nov 2026): revenue attach the Excel booking
-// endorsement to a booking in Admin > Bookings. The files sit in the private
-// "booking-sheets" bucket under a folder per booking ref; only admin-api
-// (service role) can read or write them.
+// Booking sheets (Charlie, 24 Nov 2026): revenue attach the booking endorsement
+// to a booking in Admin > Bookings so every booking sheet is tracked with it.
+//
+// 26 Nov 2026 (Charlie): a Google Drive link instead of an uploaded Excel/PDF.
+// The sheet stays in Drive and Drive's sharing decides who can open it; we only
+// keep the link. admin-api (service role) is the only thing that reads or writes
+// public.booking_sheets. The admin page imports this file too, so the browser
+// and the server check links the same way.
 
-export const SHEETS_BUCKET = "booking-sheets";
-export const SHEET_MAX_BYTES = 10 * 1024 * 1024;
-/** Excel first; CSV and PDF in case the sheet gets exported. */
-export const SHEET_EXTENSIONS = ["xlsx", "xls", "xlsm", "csv", "pdf"];
+export const DRIVE_LINK_MAX = 2000;
+const DRIVE_HOSTS = ["drive.google.com", "docs.google.com", "sheets.google.com"];
 
-export function sheetExtension(fileName: string): string | null {
-  const m = /\.([a-z0-9]+)$/i.exec(String(fileName ?? "").trim());
-  const ext = m ? m[1].toLowerCase() : "";
-  return SHEET_EXTENSIONS.includes(ext) ? ext : null;
+/** The pasted link as a clean https Google Drive URL, or null when it isn't one. */
+export function driveLink(input: unknown): string | null {
+  const raw = String(input ?? "").trim();
+  if (!raw || raw.length > DRIVE_LINK_MAX) return null;
+  let url: URL;
+  try {
+    url = new URL(/^[a-z][a-z0-9+.-]*:/i.test(raw) ? raw : `https://${raw}`);
+  } catch {
+    return null;
+  }
+  if (url.protocol !== "https:" || url.username || url.password || url.port) return null;
+  if (!DRIVE_HOSTS.includes(url.hostname.toLowerCase())) return null;
+  if (url.pathname === "/" || url.pathname === "") return null;
+  return url.toString();
 }
 
-/** Why a file can't be attached, or null when it's fine. */
-export function sheetProblem(fileName: string, size: number): string | null {
-  if (!sheetExtension(fileName)) return "Attach an Excel file (.xlsx, .xls, .xlsm), a .csv or a .pdf";
-  if (!Number.isFinite(size) || size <= 0) return "That file is empty";
-  if (size > SHEET_MAX_BYTES) return "That file is over 10 MB";
-  return null;
+/** Why a link can't be attached, or null when it's fine. */
+export function driveLinkProblem(input: unknown): string | null {
+  const raw = String(input ?? "").trim();
+  if (!raw) return "Paste the Google Drive link";
+  if (raw.length > DRIVE_LINK_MAX) return "That link is too long";
+  return driveLink(raw) ? null : "That isn't a Google Drive link. Copy it from Drive with Share > Copy link";
 }
 
-/** "GRP-CAM-001" stays as it is; anything that isn't a plain ref character becomes "_". */
-export function sheetFolder(bookingRef: string): string {
-  return String(bookingRef ?? "").trim().replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 80);
-}
-
-/** Where a new upload goes: "<ref>/<stamp>-<clean name>.<ext>". The stamp keeps re-uploads apart. */
-export function sheetPath(bookingRef: string, fileName: string, stamp = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`): string {
-  const ext = sheetExtension(fileName) ?? "xlsx";
-  const base = String(fileName ?? "").trim().replace(/\.[^.]+$/, "").replace(/[^A-Za-z0-9_-]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 80) || "booking-sheet";
-  return `${sheetFolder(bookingRef)}/${stamp}-${base}.${ext}`;
-}
-
-/** A path handed back by the browser must sit straight inside that booking's folder. */
-export function sheetPathBelongsTo(path: string, bookingRef: string): boolean {
-  const folder = sheetFolder(bookingRef);
-  const parts = String(path ?? "").split("/");
-  return !!folder && parts.length === 2 && parts[0] === folder && /^[A-Za-z0-9_.-]+$/.test(parts[1]) && !parts[1].startsWith(".");
+/** What the link points at, shown as the sheet's name in the admin. */
+export function driveLinkKind(link: string): string {
+  let url: URL;
+  try {
+    url = new URL(link);
+  } catch {
+    return "Google Drive link";
+  }
+  const path = url.pathname;
+  if (url.hostname === "sheets.google.com" || path.startsWith("/spreadsheets/")) return "Google Sheet";
+  if (path.startsWith("/document/")) return "Google Doc";
+  if (path.startsWith("/presentation/")) return "Google Slides";
+  if (/\/folders\//.test(path)) return "Drive folder";
+  if (path.startsWith("/file/") || path === "/open" || path === "/uc") return "Drive file";
+  return "Google Drive link";
 }
