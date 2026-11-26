@@ -69,8 +69,9 @@ export type Database = {
         Row: {
           booking_ref: string
           content_type: string | null
+          drive_url: string | null
           file_name: string
-          file_path: string
+          file_path: string | null
           id: string
           size_bytes: number | null
           uploaded_at: string
@@ -78,8 +79,9 @@ export type Database = {
         Insert: {
           booking_ref: string
           content_type?: string | null
+          drive_url?: string | null
           file_name: string
-          file_path: string
+          file_path?: string | null
           id?: string
           size_bytes?: number | null
           uploaded_at?: string
@@ -87,8 +89,9 @@ export type Database = {
         Update: {
           booking_ref?: string
           content_type?: string | null
+          drive_url?: string | null
           file_name?: string
-          file_path?: string
+          file_path?: string | null
           id?: string
           size_bytes?: number | null
           uploaded_at?: string
