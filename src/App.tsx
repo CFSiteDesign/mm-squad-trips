@@ -114,7 +114,9 @@ const App = () => (
           {/* Unlisted again (Charlie, 19 Oct 2026): link-only, noindex, not on the home page. Still bookable. */}
           <Route path="/thailand" element={<AllInTrip slug="thailand" unlisted />} />
           <Route path="/laos" element={<AllInTrip slug="laos" />} />
-          {/* Koh Rong post-festival package (brief 9 Nov 2026), linked from the home page. */}
+          {/* Koh Rong Ultimate Party Package (briefs 9 + 27 Nov 2026), linked from the home page.
+              The old post-festival address and the trip slug's own path still open it. */}
+          <Route path="/koh-rong-party-package" element={<KohRongPackage />} />
           <Route path="/koh-rong-post-festival" element={<KohRongPackage />} />
           <Route path="/cambodia-post-festival" element={<KohRongPackage />} />
 

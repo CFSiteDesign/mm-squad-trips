@@ -178,7 +178,7 @@ export default function AllInHome() {
         </div>
       </section>
 
-      {/* ============ KOH RONG POST-FESTIVAL PACKAGE ============ */}
+      {/* ============ KOH RONG ULTIMATE PARTY PACKAGE ============ */}
       <PostFestivalSection />
 
       {/* ============ WHAT YOUR $99 DEPOSIT UNLOCKS ============ */}

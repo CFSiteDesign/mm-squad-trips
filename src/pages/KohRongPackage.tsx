@@ -1,14 +1,15 @@
-// /koh-rong-post-festival: the Koh Rong post-festival package (brief, 9 Nov
-// 2026). A scaled-down trip page: what's included, the day plan, and the same
-// checkout as every trip (useCheckout + CheckoutPanel), so payment, the guest
-// and team emails and admin all work as they do for ALL IN.
-import { useEffect } from "react";
+// /koh-rong-party-package: the Koh Rong Ultimate Party Package (brief 9 Nov
+// 2026, made weekly by the 27 Nov 2026 brief). A scaled-down trip page: what's
+// included, the day plan, a pick of Wednesdays, and the same checkout as every
+// trip (useCheckout + CheckoutPanel), so payment, the guest and team emails and
+// admin all work as they do for ALL IN.
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { ArrowRight, Check, AlertCircle } from "lucide-react";
 import { fetchTrip } from "@/lib/api";
 import { formatPrice, paymentLine } from "@/lib/trip-helpers";
-import { dayLabel, tripEndDate } from "@/lib/trip-dates";
+import { dayLabel, monthKey, monthLabel, tripEndDate } from "@/lib/trip-dates";
 import { useCheckout } from "@/lib/use-checkout";
 import { CheckoutPanel } from "@/components/allin/CheckoutPanel";
 import { SiteFooter } from "@/components/trip/SiteFooter";
@@ -31,7 +32,13 @@ function H({ children }: { children: React.ReactNode }) {
 export default function KohRongPackage() {
   usePageTitle(`${PACKAGE.name} | Mad Monkey`);
   const { data: trip, isLoading } = useQuery({ queryKey: ["trip", PACKAGE_SLUG], queryFn: () => fetchTrip(PACKAGE_SLUG), retry: false });
-  const open = trip?.departures?.find((d) => d.bookable && !d.isPrivate) ?? null;
+  // Every public Wednesday that can still be booked, soonest first.
+  const weeks = useMemo(
+    () => (trip?.departures ?? []).filter((d) => d.bookable && !d.isPrivate).sort((a, b) => a.date.localeCompare(b.date)),
+    [trip],
+  );
+  const [pickedId, setPickedId] = useState<string | null>(null);
+  const open = weeks.find((d) => d.id === pickedId) ?? weeks[0] ?? null;
   const price = open?.price ?? trip?.defaultPrice ?? PACKAGE.price;
 
   useEffect(() => {
@@ -49,8 +56,7 @@ export default function KohRongPackage() {
       <section className="relative isolate overflow-hidden border-b-[4px] border-mm-black bg-mm-black text-mm-bone">
         <img src={PACKAGE.hero} alt="" className="absolute inset-0 -z-10 h-full w-full object-cover opacity-60" />
         <div className="mx-auto max-w-6xl px-5 pb-14 pt-28 md:px-6 md:pb-20 md:pt-36">
-          <span className="inline-block border-[2px] border-mm-black bg-mm-yellow px-2 py-1 font-sticker text-[10px] tracking-[0.14em] text-mm-black">{PACKAGE.eyebrow}</span>
-          <h1 className="mt-4 max-w-3xl font-display text-[clamp(2.4rem,8vw,5rem)] leading-[0.9]">KOH RONG<br /><span className="text-mm-lime">POST-FESTIVAL</span><br />PACKAGE</h1>
+          <h1 className="max-w-3xl font-display text-[clamp(2.4rem,8vw,5rem)] leading-[0.9]">KOH RONG<br /><span className="text-mm-lime">ULTIMATE PARTY</span><br />PACKAGE</h1>
           <p className="mt-4 font-sticker text-xs tracking-[0.14em] text-mm-bone/90">{PACKAGE.when.toUpperCase()}</p>
           <div className="mt-6 flex flex-wrap items-center gap-4">
             <p className="font-display text-4xl leading-none">{formatPrice(price)}<span className="ml-1 font-sans text-sm text-mm-bone/70">/person</span></p>
@@ -66,8 +72,8 @@ export default function KohRongPackage() {
         <div className="mx-auto grid max-w-6xl gap-8 px-5 md:grid-cols-2 md:px-6">
           <div>
             <H>FIVE MORE NIGHTS<br />ON KOH RONG</H>
-            <p className="mt-5 text-[15px] leading-snug text-mm-black/80">{PACKAGE.pitch}</p>
-            <p className="mt-3 text-[15px] leading-snug text-mm-black/80">{PACKAGE.urgency}</p>
+            <p className="mt-5 text-[15px] leading-snug text-mm-black/80">{PACKAGE.intro}</p>
+            <p className="mt-3 text-[15px] leading-snug text-mm-black/80">{PACKAGE.pitch}</p>
           </div>
           <div>
             <h3 className="mb-3 font-sticker text-[11px] tracking-[0.16em] text-mm-black">WHAT'S INCLUDED</h3>
@@ -91,7 +97,7 @@ export default function KohRongPackage() {
               <li key={d.day} className="flex gap-4 border-[3px] border-mm-black bg-mm-bone p-4 shadow-mm-sm">
                 <div className="w-20 shrink-0">
                   <p className="font-sticker text-[10px] tracking-[0.14em] text-mm-pink">DAY {d.day}</p>
-                  <p className="mt-1 text-xs text-mm-black/60">{d.date}</p>
+                  <p className="mt-1 text-xs text-mm-black/60">{d.weekday}</p>
                 </div>
                 <div>
                   <h3 className="font-display text-xl leading-none text-mm-black">{d.title.toUpperCase()}</h3>
@@ -121,7 +127,10 @@ export default function KohRongPackage() {
             {isLoading ? (
               <div className="h-64 w-full border-[3px] border-mm-black/20 bg-mm-black/5" />
             ) : trip && open ? (
-              <PackageCheckout trip={trip} departure={open} />
+              <>
+                <WeekPicker weeks={weeks} picked={open} onPick={setPickedId} />
+                <PackageCheckout key={open.id} trip={trip} departure={open} />
+              </>
             ) : (
               <div className="border-[3px] border-mm-black bg-mm-bone p-5 shadow-mm-sm">
                 <p className="flex items-center gap-2 font-sticker text-[11px] tracking-[0.14em] text-mm-black">
@@ -138,6 +147,43 @@ export default function KohRongPackage() {
 
       <SiteFooter />
       {open && <StickyCta onClick={scrollToBooking} label={`BOOK FOR ${formatPrice(price)}`} />}
+    </div>
+  );
+}
+
+/** The Wednesdays you can check in on, by month. */
+function WeekPicker({ weeks, picked, onPick }: { weeks: Departure[]; picked: Departure; onPick: (id: string) => void }) {
+  const months = useMemo(() => {
+    const m = new Map<string, Departure[]>();
+    for (const w of weeks) m.set(monthKey(w.date), [...(m.get(monthKey(w.date)) ?? []), w]);
+    return [...m.entries()];
+  }, [weeks]);
+  return (
+    <div className="mb-5">
+      <p className="font-sticker text-[11px] tracking-[0.16em] text-mm-black">PICK YOUR {PACKAGE.startDay.toUpperCase()} CHECK-IN</p>
+      <div className="mt-3 space-y-3">
+        {months.map(([k, list]) => (
+          <div key={k}>
+            <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-mm-black/60">{monthLabel(k)}</p>
+            <div className="flex flex-wrap gap-2">
+              {list.map((w) => {
+                const on = w.id === picked.id;
+                return (
+                  <button
+                    key={w.id}
+                    type="button"
+                    onClick={() => onPick(w.id)}
+                    aria-pressed={on}
+                    className={`border-[3px] border-mm-black px-3 py-2 font-sticker text-[11px] tracking-[0.1em] text-mm-black transition-transform ${on ? "bg-mm-lime shadow-mm-sm" : "bg-mm-bone hover:-translate-y-[1px] hover:bg-mm-yellow"}`}
+                  >
+                    {dayLabel(w.date).toUpperCase()}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

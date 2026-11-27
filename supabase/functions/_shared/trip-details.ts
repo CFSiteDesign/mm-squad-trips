@@ -82,17 +82,18 @@ const TRIP_DETAILS: Record<string, TripFinalDetails> = {
         "<strong>Trip ends:</strong> Vang Vieng, with checkout on Day 10.",
       ]),
   },
-  // Koh Rong post-festival package (brief, 9 Nov 2026): only what the brief and
-  // its itinerary sheet state.
+  // Koh Rong Ultimate Party Package (briefs 9 + 27 Nov 2026): weekly from a
+  // Wednesday, so weekdays rather than dates. Only what the brief and its
+  // itinerary sheet state.
   "cambodia-post-festival": {
     whatsappUrl: KOH_RONG_CHAT[0].url,
     finalDetailsHtml:
-      block("Final details: Koh Rong Post-Festival Package", [
-        "<strong>Wed 16 Dec:</strong> transfer from Koh Sdach to Koh Rong, then 2 hours of free-flow beer, spirits and cocktails and the hostel's social activities.",
-        "<strong>Where you're staying:</strong> 5 nights at Mad Monkey Koh Rong, with breakfast every day.",
-        "<strong>Fri 18 Dec:</strong> the Koh Rong Boat Party, with $10 of bar credit.",
-        "<strong>Sat 19 Dec:</strong> Nestival.",
-        "<strong>Check out:</strong> Mon 21 Dec.",
+      block("Final details: Koh Rong Ultimate Party Package", [
+        "<strong>Wednesday:</strong> arrive on Koh Rong and join the Mad Monkey Meet Up for a welcome cocktail, then 2 hours of free-flow beer, spirits and cocktails and the hostel's social activities.",
+        "<strong>Where you're staying:</strong> 5 nights at Mad Monkey Koh Rong, with breakfast every day and a free drink every night at the Meet Up.",
+        "<strong>Friday:</strong> pre-party at Treehouse, the Koh Rong Boat Party with $10 of bar credit, then the after party at Soundgarden.",
+        "<strong>Saturday:</strong> Nestival. Doors open at midday, with free-flow beer from 1-3pm.",
+        "<strong>Check out:</strong> Monday.",
       ]) + chatsBlock(KOH_RONG_CHAT),
   },
   thailand: {
