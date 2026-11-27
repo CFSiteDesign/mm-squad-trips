@@ -156,7 +156,8 @@ async function processSession(
     });
   }
 
-  const { data: inserted, error: insErr } = await sb.from("bookings").insert(rows).select("id");
+  // Missing fields take the column default, not NULL (see stripe-webhook, 27 Nov 2026).
+  const { data: inserted, error: insErr } = await sb.from("bookings").insert(rows, { defaultToNull: false }).select("id");
   if (insErr) return { session_id: sessionId, status: "error", detail: insErr.message };
 
   if (!isSolo && (inserted?.length ?? 0) > 1) {

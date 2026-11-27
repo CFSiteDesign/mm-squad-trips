@@ -43,3 +43,14 @@ Deno.test("booking save: a paid booking shows what was taken", () => {
   assertStringIncludes(html, "$99.00");
   assert(!html.includes("card saved"));
 });
+
+Deno.test("booking save: group bookings insert with column defaults, so member rows don't send NULL", async () => {
+  // Since 13 Oct 2026 every 2+ person booking failed: member rows lack whatsapp_opt_in (NOT NULL),
+  // and a multi-row supabase-js insert sends a missing column as NULL unless defaultToNull is false.
+  for (const fn of ["stripe-webhook", "admin-backfill-booking"]) {
+    const src = await Deno.readTextFile(new URL(`../${fn}/index.ts`, import.meta.url));
+    const inserts = src.match(/from\("bookings"\)\.insert\(rows[^)]*\)/g) ?? [];
+    assert(inserts.length > 0, `${fn} inserts bookings`);
+    for (const i of inserts) assertStringIncludes(i, "defaultToNull: false", `${fn}: ${i}`);
+  }
+});

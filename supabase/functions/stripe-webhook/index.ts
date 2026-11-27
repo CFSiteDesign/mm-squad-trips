@@ -333,7 +333,11 @@ async function writeBookings(session: Stripe.Checkout.Session, progress: { saved
     });
   }
 
-  const { data: inserted, error: insErr } = await sb.from("bookings").insert(rows).select("id");
+  // defaultToNull: false (27 Nov 2026). In a multi-row insert, supabase-js sends any column one row
+  // has and another lacks as NULL for the row that lacks it, unless told to use the column default.
+  // Member rows have no whatsapp_opt_in (NOT NULL, default false), so since 13 Oct every booking of
+  // 2+ people failed here and was lost: Allie's group had to be backfilled, Holly's vanished.
+  const { data: inserted, error: insErr } = await sb.from("bookings").insert(rows, { defaultToNull: false }).select("id");
   if (insErr && isDuplicateSave(insErr)) {
     // Stripe delivered the same event twice at once and the other delivery saved it first.
     progress.saved = true;
