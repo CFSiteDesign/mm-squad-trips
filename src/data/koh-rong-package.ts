@@ -2,7 +2,9 @@
 // package (brief 9 Nov 2026: one week after The Collective on Koh Sdach);
 // brief "Changing Post Festival Package to Koh Rong Party Package" (27 Nov
 // 2026) made it weekly: every Wednesday, December to March, $220, and nothing
-// about the festival or December dates.
+// about the festival or December dates. Same day the brief owner asked for
+// April too (rainy season comes later) and for the boat-party photo in place
+// of the beach one as the main picture.
 //
 // Sold through the normal ALL IN checkout, emails and admin. The trip row is
 // still `cambodia-post-festival` (migrations 20261110090000 + 20261127090000):
@@ -13,7 +15,7 @@
 //
 // Copy is the brief's; the day plan is the itinerary sheet's (KOH RONG
 // ULTIMATE PARTY PACKAGE.xlsx). Nothing here was written for it.
-import heroBeach from "@/assets/koh-rong-package/hero-beach.jpg";
+import heroBoatParty from "@/assets/koh-rong-package/hero-boat-party.jpg";
 import fireShow from "@/assets/koh-rong-package/fire-show.jpg";
 import boat1 from "@/assets/koh-rong-package/boat-party-1.jpg";
 import boat2 from "@/assets/koh-rong-package/boat-party-2.jpg";
@@ -25,7 +27,7 @@ export const PACKAGE_PATH = "/koh-rong-party-package";
 
 export const PACKAGE = {
   name: "Koh Rong Ultimate Party Package",
-  when: "December - March | 5 nights | Koh Rong, Cambodia",
+  when: "December - April | 5 nights | Koh Rong, Cambodia",
   /** Every departure is a Wednesday. */
   startDay: "Wednesday",
   nights: 5,
@@ -36,7 +38,7 @@ export const PACKAGE = {
   pitch:
     "Keep the good times going with five more nights on Koh Rong, including accommodation at Mad Monkey, daily breakfast, an all you can drink package on your first night, tickets to the Koh Rong Boat Party, Nestival, Soundgarden and plenty more good times on the island.",
   cta: "EXPLORE THE PACKAGE",
-  hero: heroBeach,
+  hero: heroBoatParty,
   photos: [
     { src: boat1, alt: "Koh Rong Boat Party" },
     { src: fireShow, alt: "Fire show on the beach" },

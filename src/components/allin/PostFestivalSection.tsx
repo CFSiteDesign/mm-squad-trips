@@ -1,6 +1,6 @@
 // Home page section straight under the trips: the Koh Rong Ultimate Party
 // Package card, which links to its own page. Brief 9 Nov 2026; the 27 Nov 2026
-// brief made it weekly (December to March) and took the festival out, so the
+// brief made it weekly (December to April) and took the festival out, so the
 // festival banner that used to sit above the card is gone.
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
@@ -20,7 +20,7 @@ export function PostFestivalSection() {
     <section id="post-festival" className="border-b-[4px] border-mm-black bg-mm-paper py-14">
       <div className="mx-auto max-w-6xl px-5 md:px-6">
         <article className="grid overflow-hidden border-[3px] border-mm-black bg-mm-bone shadow-mm-sm md:grid-cols-2">
-          <img src={PACKAGE.hero} alt="Running into the sea on Koh Rong" className="h-64 w-full object-cover md:h-full" loading="lazy" />
+          <img src={PACKAGE.hero} alt="Koh Rong Boat Party" className="h-64 w-full object-cover md:h-full" loading="lazy" />
           <div className="flex flex-col p-5 md:p-7">
             <h2 className="font-display text-[clamp(1.9rem,5vw,3rem)] leading-[0.95] text-mm-black">KOH RONG ULTIMATE<br />PARTY PACKAGE</h2>
             <span className="mt-3 self-start border-[2px] border-mm-black bg-mm-yellow px-2 py-1 font-sticker text-[10px] tracking-[0.14em] text-mm-black">{PACKAGE.when.toUpperCase()}</span>
