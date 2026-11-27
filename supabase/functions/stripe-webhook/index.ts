@@ -17,7 +17,9 @@ import {
   countryForSlug,
   squadMemberJoinedEmail,
   squadMilestoneEmail,
+  bookingNotSavedOpsEmail,
 } from "../_shared/email.ts";
+import { BOOKING_NOT_SAVED_TEMPLATE, isDuplicateSave } from "../_shared/booking-save.ts";
 import { triggerCommissionPush } from "../_shared/push-commission.ts";
 import { enqueueKlaviyo } from "../_shared/klaviyo.ts";
 import { handleTripBuilderPaid } from "../_shared/trip-builder.ts";
@@ -80,7 +82,25 @@ Deno.serve(async (req) => {
         // Ewan's trip builder (public/trip-builder): not an ALL IN booking.
         await handleTripBuilderPaid(envClient(), session);
       } else {
-        await writeBookings(session);
+        // 27 Nov 2026: a booking that didn't save answers 500, so Stripe retries it (live mode
+        // keeps trying for up to 3 days), and the ops team hears about it once. Until now this
+        // answered 200 even when the save failed, so a guest's booking vanished with no retry
+        // and no alert (Holly, 26 Nov). Once the rows are in, a later hiccup never asks for a
+        // retry: the retry would find the booking and stop anyway.
+        const progress = { saved: false };
+        try {
+          await writeBookings(session, progress);
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          if (!progress.saved) {
+            console.error("Booking not saved, asking Stripe to retry:", session.id, msg);
+            await alertBookingNotSaved(session, msg);
+            return new Response(JSON.stringify({ received: false, error: msg }), {
+              status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+          console.error("Booking saved, a follow-up step failed:", session.id, msg);
+        }
       }
       // Keep the Creator Revenue Hub in sync (new booking → pending
       // commission; balance paid → confirmed). Fire-and-forget.
@@ -125,7 +145,7 @@ async function nextSequencedRef(
 }
 
 
-async function writeBookings(session: Stripe.Checkout.Session) {
+async function writeBookings(session: Stripe.Checkout.Session, progress: { saved: boolean } = { saved: false }) {
   const sb = envClient();
   const m = session.metadata ?? {};
   const sessionId = session.id;
@@ -314,7 +334,14 @@ async function writeBookings(session: Stripe.Checkout.Session) {
   }
 
   const { data: inserted, error: insErr } = await sb.from("bookings").insert(rows).select("id");
+  if (insErr && isDuplicateSave(insErr)) {
+    // Stripe delivered the same event twice at once and the other delivery saved it first.
+    progress.saved = true;
+    console.log("Booking already saved by another delivery for", sessionId);
+    return;
+  }
   if (insErr) throw new Error(`bookings insert: ${insErr.message}`);
+  progress.saved = true;
   console.log(`Created ${inserted?.length ?? 0} booking row(s) for ${sessionId} group ${groupId}`);
   // Klaviyo hears about it via the outbox; never blocks the booking.
   await enqueueKlaviyo(sb, sessionId, "booking_placed", {
@@ -609,6 +636,41 @@ async function writeBookings(session: Stripe.Checkout.Session) {
     }
   } catch (e) {
     console.warn("booking confirmation email build failed:", e instanceof Error ? e.message : e);
+  }
+}
+
+/** Tells the ops team once per Stripe session that a finished checkout didn't become a booking. Never throws. */
+async function alertBookingNotSaved(session: Stripe.Checkout.Session, reason: string) {
+  try {
+    const sb = envClient();
+    const { count } = await sb
+      .from("email_send_log")
+      .select("id", { count: "exact", head: true })
+      .eq("template_name", BOOKING_NOT_SAVED_TEMPLATE)
+      .contains("metadata", { session_id: session.id });
+    if (count) return;
+    const m = (session.metadata ?? {}) as Record<string, string>;
+    const { subject, html } = bookingNotSavedOpsEmail({
+      guestName: m.lead_name || "Unknown guest",
+      guestEmail: m.lead_email || "",
+      tripName: m.trip_name || m.trip_slug || "Unknown trip",
+      departureDate: m.departure_date || m.custom_date || "",
+      spots: Number(m.group_size || "1"),
+      paidToday: (session.amount_total ?? 0) / 100,
+      cardSavedOnly: session.mode === "setup",
+      sessionId: session.id,
+      reason,
+    });
+    await sendEmail({
+      to: OPS_NOTIFY_EMAILS,
+      replyTo: m.lead_email || undefined,
+      subject,
+      html,
+      templateName: BOOKING_NOT_SAVED_TEMPLATE,
+      metadata: { session_id: session.id },
+    });
+  } catch (e) {
+    console.warn("booking-not-saved alert failed:", e instanceof Error ? e.message : e);
   }
 }
 

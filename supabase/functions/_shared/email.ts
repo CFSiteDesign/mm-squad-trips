@@ -723,6 +723,51 @@ export function balanceFailedEmail(v: {
 }
 
 /** CS copy of every failed balance charge (Charlie, 30 Oct 2026), so the team hears it from us, not Stripe. */
+/** Ops alert (27 Nov 2026): a guest finished checkout but the booking didn't save. Stripe retries on its own. */
+export function bookingNotSavedOpsEmail(v: {
+  guestName: string;
+  guestEmail: string;
+  tripName: string;
+  departureDate: string;
+  spots: number;
+  /** What Stripe took today, in USD. */
+  paidToday: number;
+  /** Black Friday $0 deposit: nothing taken, card saved for the balance. */
+  cardSavedOnly: boolean;
+  sessionId: string;
+  /** The error the save hit. */
+  reason: string;
+}): { subject: string; html: string } {
+  const row = (k: string, val: string) =>
+    `<tr><td style="padding:8px 12px;border-bottom:1px solid #0a0a0a;width:38%"><strong>${k}</strong></td><td style="padding:8px 12px;border-bottom:1px solid #0a0a0a;word-break:break-all">${val}</td></tr>`;
+  const paid = v.cardSavedOnly
+    ? `$${v.paidToday.toFixed(2)} (card saved, balance charged later)`
+    : `$${v.paidToday.toFixed(2)}`;
+  const inner = render(
+    `<tr><td style="padding:16px 24px 8px 24px">
+<h1 style="margin:0;font-size:22px;font-weight:900;text-transform:uppercase;letter-spacing:-.01em">Booking didn't save</h1>
+</td></tr>
+<tr><td style="padding:0 24px 16px 24px;font-size:15px;line-height:1.5">
+<p style="margin:0 0 12px 0"><strong>{{guestName}}</strong> finished checkout, but their booking didn't save. They have no booking ref and no confirmation email yet.</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #0a0a0a;margin:0 0 16px 0">
+${row("Guest", "{{guestName}}")}
+${row("Email", "{{guestEmail}}")}
+${row("Trip", "{{tripName}}")}
+${row("Departure", "{{departureDate}}")}
+${row("Spots", "{{spots}}")}
+${row("Paid today", "{{paid}}")}
+${row("Stripe session", "{{sessionId}}")}
+${row("Error", "{{reason}}")}
+</table>
+<p style="margin:0 0 12px 0">Stripe will try again on its own, for up to 3 days. If it works, you'll get the usual booking email for this guest and they'll get their confirmation.</p>
+<p style="margin:0;font-size:13px;color:#555">If that booking email hasn't arrived within an hour, forward this to tech with the Stripe session above. Replying to this email goes to the guest.</p>
+</td></tr>`,
+    { ...v, spots: String(v.spots), paid } as unknown as Record<string, string>,
+  );
+  const subject = `ACTION NEEDED: ALL IN booking didn't save · ${v.guestName} · ${v.tripName}`;
+  return { subject, html: shell("Booking didn't save", inner) };
+}
+
 export function balanceFailedOpsEmail(v: {
   guestName: string;
   guestEmail: string;
